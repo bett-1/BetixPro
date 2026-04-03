@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Download,
   Edit,
@@ -22,8 +23,29 @@ import {
   adminTableClassName,
   adminTableHeadCellClassName,
 } from "../../components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Users() {
+  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [viewUserOpen, setViewUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(
+    null
+  );
+  const [confirmActionOpen, setConfirmActionOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "lock" | "unlock";
+    userId: string;
+  } | null>(null);
   return (
     <div className="space-y-6">
       <AdminSectionHeader
