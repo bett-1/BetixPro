@@ -1,14 +1,13 @@
 import { QueryClient } from "@tanstack/react-query";
 import {
-  Outlet,
   createRootRouteWithContext,
   createRoute,
   createRouter,
   redirect,
 } from "@tanstack/react-router";
+import AdminRouteLayout from "./layouts/admin-route-layout";
 import RootLayout from "./layouts/root-layout";
 import UserLayout from "./layouts/user-layout";
-import AdminLayout from "@/features/admin/components/layout";
 import UserHomePage from "./pages/user-home-page";
 import LoginPage from "@/features/auth/pages/login-page";
 import RegisterPage from "@/features/auth/pages/register-page";
@@ -66,14 +65,6 @@ const userPaymentsRoute = createRoute({
   path: "/payments",
   component: PaymentsPage,
 });
-
-function AdminRouteLayout() {
-  return (
-    <AdminLayout>
-      <Outlet />
-    </AdminLayout>
-  );
-}
 
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
