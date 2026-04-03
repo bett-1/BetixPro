@@ -10,7 +10,6 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Settings,
-  History,
   LogOut,
 } from "lucide-react";
 
@@ -120,16 +119,16 @@ export default function Navbar() {
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="w-52" align="end" forceMount>
-              <div className="mb-1 border-b p-2 sm:hidden">
-                <p className="mb-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+            <DropdownMenuContent className="w-52 border-admin-border bg-[rgba(10,14,26,0.95)] text-admin-text-primary" align="end" forceMount>
+              <div className="mb-1 border-b border-admin-border p-2 sm:hidden">
+                <p className="mb-0.5 text-[11px] uppercase tracking-wider text-admin-text-muted">
                   Current Balance
                 </p>
-                <p className="text-base font-bold text-emerald-600">
+                <p className="text-base font-bold text-admin-accent">
                   {balance}
                 </p>
                 <Button
-                  className="mt-2 h-7 w-full gap-1 bg-emerald-600 text-xs hover:bg-emerald-700"
+                  className="mt-2 h-7 w-full gap-1 bg-admin-accent text-xs font-semibold text-black hover:bg-[#00d492]"
                   asChild
                 >
                   <Link to="/user/payments/deposit">
@@ -138,53 +137,47 @@ export default function Navbar() {
                 </Button>
               </div>
 
-              <DropdownMenuSeparator className="sm:hidden" />
+              <DropdownMenuSeparator className="bg-admin-border sm:hidden" />
 
-              <DropdownMenuLabel className="py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+              <DropdownMenuLabel className="py-1.5 text-[11px] uppercase tracking-wider text-admin-text-muted">
                 Finance
               </DropdownMenuLabel>
               <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer py-1.5" asChild>
+                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim" asChild>
                   <Link to="/user/payments/deposit">
-                    <ArrowDownToLine className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                    <ArrowDownToLine className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                     <span>Deposit</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-1.5" asChild>
+                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim" asChild>
                   <Link to="/user/payments/withdrawal">
-                    <ArrowUpFromLine className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                    <ArrowUpFromLine className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                     <span>Withdrawal</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-1.5" asChild>
+                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim" asChild>
                   <Link to="/user/payments/history">
-                    <Wallet className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Wallet className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                     <span>Transaction History</span>
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
 
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-admin-border" />
 
-              <DropdownMenuLabel className="py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-                Activity
+              <DropdownMenuLabel className="py-1.5 text-[11px] uppercase tracking-wider text-admin-text-muted">
+                Settings
               </DropdownMenuLabel>
               <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer py-1.5">
-                  <Settings className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim">
+                  <Settings className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                   <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-1.5" asChild>
-                  <Link to="/user/payments/history">
-                    <History className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                    <span>Transaction History</span>
-                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
 
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-admin-border" />
 
-              <DropdownMenuItem className="cursor-pointer py-1.5 text-red-600 focus:bg-red-100 focus:text-red-600 dark:focus:bg-red-900/30">
+              <DropdownMenuItem className="cursor-pointer py-1.5 text-red-500 hover:bg-red-500/10">
                 <LogOut className="mr-2 h-3.5 w-3.5" />
                 <span>Logout</span>
               </DropdownMenuItem>

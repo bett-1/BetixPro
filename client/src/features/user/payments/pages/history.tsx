@@ -80,10 +80,10 @@ export default function PaymentsHistoryPage() {
               setTypeFilter(value as "all" | TransactionType)
             }
           >
-            <SelectTrigger className="h-10 w-full rounded-xl border-admin-border bg-[rgba(22,29,53,0.65)] text-admin-text-primary">
+            <SelectTrigger className="h-10 w-full rounded-xl border border-admin-border bg-[rgba(22,29,53,0.65)] text-admin-text-primary placeholder:text-admin-text-muted focus:border-admin-accent/35 focus:outline-none">
               <SelectValue placeholder="Transaction type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="border-admin-border bg-[rgba(10,14,26,0.95)] text-admin-text-primary">
               <SelectItem value="all">All types</SelectItem>
               <SelectItem value="deposit">Deposit</SelectItem>
               <SelectItem value="withdrawal">Withdrawal</SelectItem>
@@ -100,10 +100,10 @@ export default function PaymentsHistoryPage() {
               setStatusFilter(value as "all" | TransactionStatus)
             }
           >
-            <SelectTrigger className="h-10 w-full rounded-xl border-admin-border bg-[rgba(22,29,53,0.65)] text-admin-text-primary">
+            <SelectTrigger className="h-10 w-full rounded-xl border border-admin-border bg-[rgba(22,29,53,0.65)] text-admin-text-primary placeholder:text-admin-text-muted focus:border-admin-accent/35 focus:outline-none">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="border-admin-border bg-[rgba(10,14,26,0.95)] text-admin-text-primary">
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
