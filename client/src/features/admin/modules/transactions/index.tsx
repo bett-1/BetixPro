@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CheckCircle, Download, Eye, XCircle } from "lucide-react";
 import { transactionStats, transactions } from "../../data/mock-data";
 import {
@@ -13,8 +14,23 @@ import {
   adminTableClassName,
   adminTableHeadCellClassName,
 } from "../../components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Transactions() {
+  const [selectedTxn, setSelectedTxn] = useState<(typeof transactions)[0] | null>(
+    null
+  );
+  const [rejectReason, setRejectReason] = useState("");
   return (
     <div className="space-y-6">
       <AdminSectionHeader
