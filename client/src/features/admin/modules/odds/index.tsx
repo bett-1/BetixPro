@@ -27,7 +27,7 @@ import {
 
 export default function Odds() {
   const [selectedOdds, setSelectedOdds] = useState<(typeof oddsRows)[0] | null>(
-    null
+    null,
   );
   const [suspendReason, setSuspendReason] = useState("");
   const [editMargin, setEditMargin] = useState("");
@@ -183,7 +183,9 @@ export default function Odds() {
                                       className="mt-2 border-admin-border bg-admin-surface text-admin-text-primary"
                                     />
                                   </div>
-                                )}\n                                {selectedOdds.selectionThree && (
+                                )}
+                                \n{" "}
+                                {selectedOdds.selectionThree && (
                                   <div>
                                     <label className="text-sm font-semibold text-admin-text-primary">
                                       {selectedOdds.selectionThree}
@@ -194,13 +196,17 @@ export default function Odds() {
                                       className="mt-2 border-admin-border bg-admin-surface text-admin-text-primary"
                                     />
                                   </div>
-                                )}\n                                <div>
+                                )}
+                                \n{" "}
+                                <div>
                                   <label className="text-sm font-semibold text-admin-text-primary">
                                     Margin %
                                   </label>
                                   <Input
                                     value={editMargin}
-                                    onChange={(e) => setEditMargin(e.target.value)}
+                                    onChange={(e) =>
+                                      setEditMargin(e.target.value)
+                                    }
                                     placeholder="2.5"
                                     className="mt-2 border-admin-border bg-admin-surface text-admin-text-primary"
                                   />
@@ -235,7 +241,10 @@ export default function Odds() {
                         <DialogContent className="border-admin-border bg-admin-card">
                           <DialogHeader>
                             <DialogTitle>
-                              {row.status === "active" ? "Suspend" : "Reactivate"} Market
+                              {row.status === "active"
+                                ? "Suspend"
+                                : "Reactivate"}{" "}
+                              Market
                             </DialogTitle>
                             <DialogDescription>
                               {row.status === "active"
@@ -251,11 +260,15 @@ export default function Odds() {
                               <Input
                                 placeholder="E.g., Line movement, Technical issue"
                                 value={suspendReason}
-                                onChange={(e) => setSuspendReason(e.target.value)}
+                                onChange={(e) =>
+                                  setSuspendReason(e.target.value)
+                                }
                                 className="mt-2 border-admin-border bg-admin-surface text-admin-text-primary"
                               />
                             </div>
-                          )}\n                          <div className="flex gap-2 pt-4">
+                          )}
+                          \n{" "}
+                          <div className="flex gap-2 pt-4">
                             <Button variant="outline" className="flex-1">
                               Cancel
                             </Button>
@@ -266,7 +279,9 @@ export default function Odds() {
                                   : "bg-admin-accent text-black hover:bg-[#00d492]"
                               }`}
                             >
-                              {row.status === "active" ? "Suspend" : "Reactivate"}
+                              {row.status === "active"
+                                ? "Suspend"
+                                : "Reactivate"}
                             </Button>
                           </div>
                         </DialogContent>
