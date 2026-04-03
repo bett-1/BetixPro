@@ -22,7 +22,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Events() {
   const [selectedEvent, setSelectedEvent] = useState<(typeof events)[0] | null>(
-    null
+    null,
   );
   const [closeReason, setCloseReason] = useState("");
   return (
@@ -84,10 +84,7 @@ export default function Events() {
                   />
                 </div>
                 <div className="flex gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                  >
+                  <Button variant="outline" className="flex-1">
                     Cancel
                   </Button>
                   <Button className="flex-1 bg-admin-accent text-black hover:bg-[#00d492]">
@@ -190,9 +187,7 @@ export default function Events() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-admin-text-muted">
-                            MATCH
-                          </p>
+                          <p className="text-xs text-admin-text-muted">MATCH</p>
                           <p className="text-sm font-semibold text-admin-text-primary">
                             {selectedEvent.home} vs {selectedEvent.away}
                           </p>
@@ -206,9 +201,7 @@ export default function Events() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-admin-text-muted">
-                            DATE
-                          </p>
+                          <p className="text-xs text-admin-text-muted">DATE</p>
                           <p className="text-sm text-admin-text-primary">
                             {selectedEvent.date}
                           </p>
@@ -336,5 +329,3 @@ export default function Events() {
     </div>
   );
 }
-
-

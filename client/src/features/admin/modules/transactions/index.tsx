@@ -27,9 +27,9 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Transactions() {
-  const [selectedTxn, setSelectedTxn] = useState<(typeof transactions)[0] | null>(
-    null
-  );
+  const [selectedTxn, setSelectedTxn] = useState<
+    (typeof transactions)[0] | null
+  >(null);
   const [rejectReason, setRejectReason] = useState("");
   return (
     <div className="space-y-6">
