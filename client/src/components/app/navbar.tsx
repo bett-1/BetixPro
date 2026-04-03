@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Bell,
   Moon,
@@ -40,26 +41,26 @@ export default function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Left: Logo & Brand */}
         <div className="flex items-center gap-8">
-          <a
-            href="/"
+          <Link
+            to="/"
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
             <Balloon className="h-7 w-7 text-emerald-500" />
             <span className="text-xl font-bold tracking-tight text-primary">
               BETTCENIC
             </span>
-          </a>
+          </Link>
 
           {/* Main Navigation (Desktop) */}
           <div className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" className="text-sm font-medium">
-              Home
+            <Button asChild variant="ghost" className="text-sm font-medium">
+              <Link to="/">Home</Link>
             </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              Pre-match
+            <Button asChild variant="ghost" className="text-sm font-medium">
+              <Link to="/payments">Payments</Link>
             </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              Live
+            <Button asChild variant="ghost" className="text-sm font-medium">
+              <Link to="/admin">Admin</Link>
             </Button>
           </div>
         </div>
@@ -135,9 +136,11 @@ export default function Navbar() {
               </div>
 
               <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer">
-                  <LayoutDashboard className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Dashboard</span>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/admin">
+                    <LayoutDashboard className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span>Dashboard</span>
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
 
