@@ -325,156 +325,46 @@ export function TableShell({ children }: { children: ReactNode }) {
 }
 
 export function MiniChart() {
-  const width = 680;
-  const height = 180;
-  const padding = 40;
-  const chartWidth = width - padding * 2;
-  const chartHeight = height - padding * 2;
-
-  const maxValue = Math.max(
-    ...revenueTrend.map((d) => Math.max(d.revenue, d.bets)),
-  );
-  const xStep = chartWidth / (revenueTrend.length - 1);
-
-  const getRevenuePoint = (index: number, value: number) => ({
-    x: padding + index * xStep,
-    y: padding + chartHeight - (value / maxValue) * chartHeight,
-  });
-
-  const getBetsPoint = (index: number, value: number) => ({
-    x: padding + index * xStep,
-    y: padding + chartHeight - (value / maxValue) * chartHeight,
-  });
-
-  const revenuePath = revenueTrend
-    .map((d, i) => {
-      const point = getRevenuePoint(i, d.revenue);
-      return `${point.x},${point.y}`;
-    })
-    .join(" L ");
-
-  const betsPath = revenueTrend
-    .map((d, i) => {
-      const point = getBetsPoint(i, d.bets);
-      return `${point.x},${point.y}`;
-    })
-    .join(" L ");
-
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      className="mt-3 w-full"
-      style={{ minHeight: "180px" }}
-    >
-      <defs>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Grid lines */}
-      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
-        <line
-          key={`grid-${ratio}`}
-          x1={padding}
-          y1={padding + chartHeight * (1 - ratio)}
-          x2={width - padding}
-          y2={padding + chartHeight * (1 - ratio)}
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth="1"
+    <ResponsiveContainer width="100%" height={250}>
+      <LineChart data={revenueTrend} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+        <XAxis
+          dataKey="day"
+          stroke="rgba(255,255,255,0.5)"
+          style={{ fontSize: "12px" }}
         />
-      ))}
-
-      {/* Revenue line - bright solid color */}
-      <polyline
-        points={revenuePath}
-        fill="none"
-        stroke="#00e5a0"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#glow)"
-      />
-
-      {/* Bets line - dashed with bright color */}
-      <polyline
-        points={betsPath}
-        fill="none"
-        stroke="#00b37a"
-        strokeWidth="4"
-        strokeDasharray="8,4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#glow)"
-      />
-
-      {/* Data points for Revenue */}
-      {revenueTrend.map((d, i) => {
-        const point = getRevenuePoint(i, d.revenue);
-        return (
-          <circle
-            key={`revenue-point-${i}`}
-            cx={point.x}
-            cy={point.y}
-            r="4.5"
-            fill="#00e5a0"
-            opacity="1"
-          />
-        );
-      })}
-
-      {/* Data points for Bets */}
-      {revenueTrend.map((d, i) => {
-        const point = getBetsPoint(i, d.bets);
-        return (
-          <circle
-            key={`bets-point-${i}`}
-            cx={point.x}
-            cy={point.y}
-            r="4.5"
-            fill="#00b37a"
-            opacity="1"
-          />
-        );
-      })}
-
-      {/* X axis labels */}
-      {revenueTrend.map((d, i) => (
-        <text
-          key={`label-${i}`}
-          x={padding + i * xStep}
-          y={height - 10}
-          textAnchor="middle"
-          className="text-[11px] fill-admin-text-muted"
-        >
-          {d.day}
-        </text>
-      ))}
-
-      {/* Y axis */}
-      <line
-        x1={padding}
-        y1={padding}
-        x2={padding}
-        y2={padding + chartHeight}
-        stroke="rgba(255,255,255,0.1)"
-        strokeWidth="1"
-      />
-
-      {/* X axis */}
-      <line
-        x1={padding}
-        y1={padding + chartHeight}
-        x2={width - padding}
-        y2={padding + chartHeight}
-        stroke="rgba(255,255,255,0.1)"
-        strokeWidth="1"
-      />
-    </svg>
+        <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: "12px" }} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "rgba(10,14,26,0.95)",
+            border: "1px solid rgba(0,229,160,0.2)",
+            borderRadius: "8px",
+          }}
+          labelStyle={{ color: "#00e5a0" }}
+          itemStyle={{ color: "#00e5a0" }}
+        />
+        <Line
+          type="monotone"
+          dataKey="revenue"
+          stroke="#00e5a0"
+          strokeWidth={3}
+          dot={{ fill: "#00e5a0", r: 5 }}
+          activeDot={{ r: 6 }}
+          name="Revenue"
+        />
+        <Line
+          type="monotone"
+          dataKey="bets"
+          stroke="#00b37a"
+          strokeWidth={3}
+          strokeDasharray="8 4"
+          dot={{ fill: "#00b37a", r: 5 }}
+          activeDot={{ r: 6 }}
+          name="Volume"
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }
 
