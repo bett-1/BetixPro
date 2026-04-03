@@ -18,13 +18,13 @@ export default function Footer() {
         <div>
           <h4 className="text-sm font-semibold">Quick Links</h4>
           <nav className="mt-3 grid gap-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-foreground">
+            <Link to="/user" className="hover:text-foreground">
               Home
             </Link>
-            <Link to="/payments" className="hover:text-foreground">
+            <Link to="/user/payments" className="hover:text-foreground">
               Deposit
             </Link>
-            <Link to="/login" className="hover:text-foreground">
+            <Link to="/user/login" className="hover:text-foreground">
               Login
             </Link>
           </nav>
