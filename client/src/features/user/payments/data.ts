@@ -1,4 +1,10 @@
-export type TransactionType = "deposit" | "withdrawal" | "bet-stake" | "bet-win" | "refund" | "bonus";
+export type TransactionType =
+  | "deposit"
+  | "withdrawal"
+  | "bet-stake"
+  | "bet-win"
+  | "refund"
+  | "bonus";
 
 export type TransactionStatus = "completed" | "pending" | "failed" | "reversed";
 

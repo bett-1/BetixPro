@@ -22,7 +22,9 @@ export default function PaymentsDepositPage() {
 
   const isFormValid = useMemo(() => {
     const amountValue = Number(amount);
-    return phone.trim().length >= 10 && amountValue >= 1 && amountValue <= 250000;
+    return (
+      phone.trim().length >= 10 && amountValue >= 1 && amountValue <= 250000
+    );
   }, [amount, phone]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -37,16 +39,23 @@ export default function PaymentsDepositPage() {
     setResponse(null);
 
     try {
-      const { data } = await api.post<StkPushResponse>("/payments/mpesa/stk-push", {
-        phone,
-        amount: Number(amount),
-      });
+      const { data } = await api.post<StkPushResponse>(
+        "/payments/mpesa/stk-push",
+        {
+          phone,
+          amount: Number(amount),
+        },
+      );
 
       setResponse(data);
       toast.success(data.customerMessage ?? "STK push sent. Check your phone.");
     } catch (error: unknown) {
-      const messageFromApi = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(messageFromApi || "Could not start M-Pesa payment. Try again.");
+      const messageFromApi = (
+        error as { response?: { data?: { message?: string } } }
+      )?.response?.data?.message;
+      toast.error(
+        messageFromApi || "Could not start M-Pesa payment. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -57,18 +66,31 @@ export default function PaymentsDepositPage() {
       <article className="rounded-2xl border border-admin-border bg-admin-card p-5">
         <div className="mb-5 flex items-start justify-between gap-3 border-b border-admin-border pb-4">
           <div>
-            <h2 className="text-lg font-bold text-admin-text-primary">Deposit Funds</h2>
-            <p className="mt-1 text-sm text-admin-text-muted">Instant top-up through M-Pesa STK Push.</p>
+            <h2 className="text-lg font-bold text-admin-text-primary">
+              Deposit Funds
+            </h2>
+            <p className="mt-1 text-sm text-admin-text-muted">
+              Instant top-up through M-Pesa STK Push.
+            </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(0,229,160,0.22)] bg-admin-accent-dim px-3 py-1.5">
-            <img src="/images/mpesa/logo.png" alt="M-Pesa" className="h-5 w-auto object-contain" />
-            <span className="text-[11px] font-bold tracking-[0.04em] text-admin-accent">M-PESA</span>
+            <img
+              src="/images/mpesa/logo.png"
+              alt="M-Pesa"
+              className="h-5 w-auto object-contain"
+            />
+            <span className="text-[11px] font-bold tracking-[0.04em] text-admin-accent">
+              M-PESA
+            </span>
           </div>
         </div>
 
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-2">
-            <label htmlFor="phone" className="text-sm font-semibold text-admin-text-primary">
+            <label
+              htmlFor="phone"
+              className="text-sm font-semibold text-admin-text-primary"
+            >
               M-Pesa phone number
             </label>
             <input
@@ -83,14 +105,21 @@ export default function PaymentsDepositPage() {
 
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="amount" className="text-sm font-semibold text-admin-text-primary">
+              <label
+                htmlFor="amount"
+                className="text-sm font-semibold text-admin-text-primary"
+              >
                 Amount
               </label>
-              <span className="text-xs text-admin-text-muted">Min: KES 1 | Max: KES 250,000</span>
+              <span className="text-xs text-admin-text-muted">
+                Min: KES 1 | Max: KES 250,000
+              </span>
             </div>
 
             <div className="flex w-full items-center overflow-hidden rounded-xl border border-admin-border bg-[rgba(22,29,53,0.65)] transition focus-within:border-[rgba(0,229,160,0.35)] focus-within:shadow-[0_0_0_3px_rgba(0,229,160,0.12)]">
-              <span className="flex h-11 items-center border-r border-admin-border px-3 text-[11px] font-bold text-admin-text-muted">KES</span>
+              <span className="flex h-11 items-center border-r border-admin-border px-3 text-[11px] font-bold text-admin-text-muted">
+                KES
+              </span>
               <input
                 id="amount"
                 className="h-11 w-full border-0 bg-transparent px-3 text-sm text-admin-text-primary outline-none placeholder:text-admin-text-muted"
@@ -117,16 +146,24 @@ export default function PaymentsDepositPage() {
             </div>
           </div>
 
-          <Button type="submit" disabled={!isFormValid || isSubmitting} className="h-11 rounded-xl bg-admin-accent text-sm font-bold text-black hover:bg-[#00d492]">
+          <Button
+            type="submit"
+            disabled={!isFormValid || isSubmitting}
+            className="h-11 rounded-xl bg-admin-accent text-sm font-bold text-black hover:bg-[#00d492]"
+          >
             {isSubmitting ? "Initiating payment..." : "Deposit now"}
           </Button>
         </form>
 
         {response ? (
           <div className="mt-4 rounded-2xl border border-[rgba(0,229,160,0.28)] bg-[rgba(0,229,160,0.08)] p-4">
-            <p className="text-sm font-semibold text-[#bfffe9]">{response.message}</p>
+            <p className="text-sm font-semibold text-[#bfffe9]">
+              {response.message}
+            </p>
             {response.customerMessage ? (
-              <p className="mt-1 text-sm text-[#94e5ca]">{response.customerMessage}</p>
+              <p className="mt-1 text-sm text-[#94e5ca]">
+                {response.customerMessage}
+              </p>
             ) : null}
             {response.checkoutRequestId ? (
               <p className="mt-2 break-all rounded-lg border border-[rgba(191,255,233,0.2)] bg-[rgba(5,40,29,0.3)] px-2 py-1.5 text-xs text-[#bfffe9]">
@@ -138,11 +175,19 @@ export default function PaymentsDepositPage() {
       </article>
 
       <article className="rounded-2xl border border-admin-border bg-[rgba(22,29,53,0.5)] p-5">
-        <h3 className="text-sm font-semibold text-admin-text-primary">Deposit Guidelines</h3>
+        <h3 className="text-sm font-semibold text-admin-text-primary">
+          Deposit Guidelines
+        </h3>
         <div className="mt-3 grid gap-2 text-sm text-admin-text-secondary">
-          <p className="rounded-lg border border-admin-border bg-[rgba(8,11,20,0.6)] px-3 py-2">Use your registered phone number for faster KYC checks.</p>
-          <p className="rounded-lg border border-admin-border bg-[rgba(8,11,20,0.6)] px-3 py-2">Deposits are reflected immediately after STK confirmation.</p>
-          <p className="rounded-lg border border-admin-border bg-[rgba(8,11,20,0.6)] px-3 py-2">High value deposits may trigger extra account verification.</p>
+          <p className="rounded-lg border border-admin-border bg-[rgba(8,11,20,0.6)] px-3 py-2">
+            Use your registered phone number for faster KYC checks.
+          </p>
+          <p className="rounded-lg border border-admin-border bg-[rgba(8,11,20,0.6)] px-3 py-2">
+            Deposits are reflected immediately after STK confirmation.
+          </p>
+          <p className="rounded-lg border border-admin-border bg-[rgba(8,11,20,0.6)] px-3 py-2">
+            High value deposits may trigger extra account verification.
+          </p>
         </div>
       </article>
     </section>

@@ -4,5 +4,7 @@ import { userPaymentsRoute } from "./payments";
 export const userPaymentsWithdrawalRoute = createRoute({
   getParentRoute: () => userPaymentsRoute,
   path: "/withdrawal",
-  component: lazyRouteComponent(() => import("@/features/user/payments/pages/withdrawal")),
+  component: lazyRouteComponent(
+    () => import("@/features/user/payments/pages/withdrawal"),
+  ),
 });
