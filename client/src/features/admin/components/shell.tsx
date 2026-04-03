@@ -210,10 +210,12 @@ export default function AdminShell() {
                   ) : null}
                 </button>
               </DialogTrigger>
-              <DialogContent className="border-admin-border">
+              <DialogContent className="border-admin-border bg-admin-card text-admin-text-primary">
                 <DialogHeader>
-                  <DialogTitle>Notifications</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-admin-text-primary">
+                    Notifications
+                  </DialogTitle>
+                  <DialogDescription className="text-admin-text-muted">
                     You have {notifications} new notification
                     {notifications !== 1 ? "s" : ""}
                   </DialogDescription>
