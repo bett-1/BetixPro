@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Download,
   Edit,
@@ -23,29 +22,8 @@ import {
   adminTableClassName,
   adminTableHeadCellClassName,
 } from "../../components/ui";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Users() {
-  const [addUserOpen, setAddUserOpen] = useState(false);
-  const [viewUserOpen, setViewUserOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(
-    null,
-  );
-  const [confirmActionOpen, setConfirmActionOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{
-    type: "lock" | "unlock";
-    userId: string;
-  } | null>(null);
   return (
     <div className="space-y-6">
       <AdminSectionHeader
@@ -57,64 +35,10 @@ export default function Users() {
               <Download size={13} />
               Export
             </AdminButton>
-            <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
-              <DialogTrigger asChild>
-                <AdminButton>
-                  <Plus size={13} />
-                  Add User
-                </AdminButton>
-              </DialogTrigger>
-              <DialogContent className="border-admin-border bg-admin-card">
-                <DialogHeader>
-                  <DialogTitle>Add New User</DialogTitle>
-                  <DialogDescription>
-                    Create a new user account manually
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-admin-text-primary">
-                      Full Name
-                    </label>
-                    <Input
-                      placeholder="John Doe"
-                      className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-admin-text-primary">
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="john@example.com"
-                      className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-admin-text-primary">
-                      Account Status
-                    </label>
-                    <select className="mt-1 w-full rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-admin-text-primary">
-                      <option>Active</option>
-                      <option>Suspended</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-admin-border hover:bg-admin-surface"
-                      onClick={() => setAddUserOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button className="flex-1 bg-admin-accent text-black hover:bg-[#00d492]">
-                      Create User
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <AdminButton>
+              <Plus size={13} />
+              Add User
+            </AdminButton>
           </>
         }
       />
