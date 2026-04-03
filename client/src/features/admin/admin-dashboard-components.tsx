@@ -252,7 +252,22 @@ export function AdminMiniChart() {
 export function AdminDonutChart() {
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
-  let cumulative = 0;
+  const { segments } = sportShare.reduce<{
+    cumulative: number;
+    segments: Array<(typeof sportShare)[number] & { dash: number; offset: number }>;
+  }>(
+    (accumulator, segment) => {
+      const dash = (segment.percentage / 100) * circumference;
+      const offset =
+        circumference - (accumulator.cumulative * circumference) / 100;
+
+      return {
+        cumulative: accumulator.cumulative + segment.percentage,
+        segments: [...accumulator.segments, { ...segment, dash, offset }],
+      };
+    },
+    { cumulative: 0, segments: [] },
+  );
 
   return (
     <div className="admin-donut">
@@ -265,31 +280,25 @@ export function AdminDonutChart() {
           stroke="var(--admin-surface)"
           strokeWidth={14}
         />
-        {sportShare.map((segment) => {
-          const dash = (segment.percentage / 100) * circumference;
-          const offset = circumference - (cumulative * circumference) / 100;
-          cumulative += segment.percentage;
-
-          return (
-            <circle
-              key={segment.sport}
-              cx={45}
-              cy={45}
-              r={radius}
-              fill="none"
-              stroke={toneToColor(segment.tone)}
-              strokeDasharray={`${dash} ${circumference}`}
-              strokeDashoffset={offset}
-              strokeWidth={14}
-              style={
-                {
-                  transform: "rotate(-90deg)",
-                  transformOrigin: "center",
-                } as CSSProperties
-              }
-            />
-          );
-        })}
+        {segments.map((segment) => (
+          <circle
+            key={segment.sport}
+            cx={45}
+            cy={45}
+            r={radius}
+            fill="none"
+            stroke={toneToColor(segment.tone)}
+            strokeDasharray={`${segment.dash} ${circumference}`}
+            strokeDashoffset={segment.offset}
+            strokeWidth={14}
+            style={
+              {
+                transform: "rotate(-90deg)",
+                transformOrigin: "center",
+              } as CSSProperties
+            }
+          />
+        ))}
         <text
           x={45}
           y={49}

@@ -42,7 +42,7 @@ export default function Navbar() {
         {/* Left: Logo & Brand */}
         <div className="flex items-center gap-8">
           <Link
-            to="/"
+            to="/user"
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
             <Balloon className="h-7 w-7 text-emerald-500" />
@@ -54,10 +54,10 @@ export default function Navbar() {
           {/* Main Navigation (Desktop) */}
           <div className="hidden md:flex items-center gap-1">
             <Button asChild variant="ghost" className="text-sm font-medium">
-              <Link to="/">Home</Link>
+              <Link to="/user">Home</Link>
             </Button>
             <Button asChild variant="ghost" className="text-sm font-medium">
-              <Link to="/payments">Payments</Link>
+              <Link to="/user/payments">Payments</Link>
             </Button>
             <Button asChild variant="ghost" className="text-sm font-medium">
               <Link to="/admin">Admin</Link>

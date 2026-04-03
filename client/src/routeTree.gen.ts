@@ -9,52 +9,53 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UserRouteRouteImport } from './routes/user/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as UserIndexRouteImport } from './routes/user/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as UserRegisterRouteImport } from './routes/user/register'
 import { Route as UserPaymentsRouteImport } from './routes/user/payments'
 import { Route as UserLoginRouteImport } from './routes/user/login'
-import { Route as User_layoutRouteImport } from './routes/user/__layout'
-import { Route as Admin_layoutRouteImport } from './routes/admin/__layout'
 
-const UserIndexRoute = UserIndexRouteImport.update({
-  id: '/user/',
-  path: '/user/',
+const UserRouteRoute = UserRouteRouteImport.update({
+  id: '/user',
+  path: '/user',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIndexRoute = UserIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => UserRouteRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const UserRegisterRoute = UserRegisterRouteImport.update({
-  id: '/user/register',
-  path: '/user/register',
-  getParentRoute: () => rootRouteImport,
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => UserRouteRoute,
 } as any)
 const UserPaymentsRoute = UserPaymentsRouteImport.update({
-  id: '/user/payments',
-  path: '/user/payments',
-  getParentRoute: () => rootRouteImport,
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => UserRouteRoute,
 } as any)
 const UserLoginRoute = UserLoginRouteImport.update({
-  id: '/user/login',
-  path: '/user/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const User_layoutRoute = User_layoutRouteImport.update({
-  id: '/user/__layout',
-  path: '/user',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Admin_layoutRoute = Admin_layoutRouteImport.update({
-  id: '/__layout',
-  getParentRoute: () => AdminRoute,
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => UserRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/admin': typeof Admin_layoutRoute
-  '/user': typeof User_layoutRoute
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/user': typeof UserRouteRouteWithChildren
   '/user/login': typeof UserLoginRoute
   '/user/payments': typeof UserPaymentsRoute
   '/user/register': typeof UserRegisterRoute
@@ -62,16 +63,16 @@ export interface FileRoutesByFullPath {
   '/user/': typeof UserIndexRoute
 }
 export interface FileRoutesByTo {
-  '/admin': typeof AdminIndexRoute
-  '/user': typeof UserIndexRoute
   '/user/login': typeof UserLoginRoute
   '/user/payments': typeof UserPaymentsRoute
   '/user/register': typeof UserRegisterRoute
+  '/admin': typeof AdminIndexRoute
+  '/user': typeof UserIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/admin/__layout': typeof Admin_layoutRoute
-  '/user/__layout': typeof User_layoutRoute
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/user': typeof UserRouteRouteWithChildren
   '/user/login': typeof UserLoginRoute
   '/user/payments': typeof UserPaymentsRoute
   '/user/register': typeof UserRegisterRoute
@@ -89,11 +90,11 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/user/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/admin' | '/user' | '/user/login' | '/user/payments' | '/user/register'
+  to: '/user/login' | '/user/payments' | '/user/register' | '/admin' | '/user'
   id:
     | '__root__'
-    | '/admin/__layout'
-    | '/user/__layout'
+    | '/admin'
+    | '/user'
     | '/user/login'
     | '/user/payments'
     | '/user/register'
@@ -102,73 +103,97 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  User_layoutRoute: typeof User_layoutRoute
-  UserLoginRoute: typeof UserLoginRoute
-  UserPaymentsRoute: typeof UserPaymentsRoute
-  UserRegisterRoute: typeof UserRegisterRoute
-  UserIndexRoute: typeof UserIndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  UserRouteRoute: typeof UserRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/user': {
+      id: '/user'
+      path: '/user'
+      fullPath: '/user'
+      preLoaderRoute: typeof UserRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/user/': {
       id: '/user/'
-      path: '/user'
+      path: '/'
       fullPath: '/user/'
       preLoaderRoute: typeof UserIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof UserRouteRoute
     }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof AdminRouteRoute
     }
     '/user/register': {
       id: '/user/register'
-      path: '/user/register'
+      path: '/register'
       fullPath: '/user/register'
       preLoaderRoute: typeof UserRegisterRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof UserRouteRoute
     }
     '/user/payments': {
       id: '/user/payments'
-      path: '/user/payments'
+      path: '/payments'
       fullPath: '/user/payments'
       preLoaderRoute: typeof UserPaymentsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof UserRouteRoute
     }
     '/user/login': {
       id: '/user/login'
-      path: '/user/login'
+      path: '/login'
       fullPath: '/user/login'
       preLoaderRoute: typeof UserLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/user/__layout': {
-      id: '/user/__layout'
-      path: '/user'
-      fullPath: '/user'
-      preLoaderRoute: typeof User_layoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/__layout': {
-      id: '/admin/__layout'
-      path: ''
-      fullPath: '/admin'
-      preLoaderRoute: typeof Admin_layoutRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof UserRouteRoute
     }
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  User_layoutRoute: User_layoutRoute,
+interface AdminRouteRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
+interface UserRouteRouteChildren {
+  UserLoginRoute: typeof UserLoginRoute
+  UserPaymentsRoute: typeof UserPaymentsRoute
+  UserRegisterRoute: typeof UserRegisterRoute
+  UserIndexRoute: typeof UserIndexRoute
+}
+
+const UserRouteRouteChildren: UserRouteRouteChildren = {
   UserLoginRoute: UserLoginRoute,
   UserPaymentsRoute: UserPaymentsRoute,
   UserRegisterRoute: UserRegisterRoute,
   UserIndexRoute: UserIndexRoute,
+}
+
+const UserRouteRouteWithChildren = UserRouteRoute._addFileChildren(
+  UserRouteRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  AdminRouteRoute: AdminRouteRouteWithChildren,
+  UserRouteRoute: UserRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
