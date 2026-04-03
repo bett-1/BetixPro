@@ -327,7 +327,10 @@ export function TableShell({ children }: { children: ReactNode }) {
 export function MiniChart() {
   return (
     <ResponsiveContainer width="100%" height={250}>
-      <LineChart data={revenueTrend} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+      <LineChart
+        data={revenueTrend}
+        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
         <XAxis
           dataKey="day"
