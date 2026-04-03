@@ -44,20 +44,45 @@ function normalizePhoneNumber(phone: string) {
 
 function getMpesaConfig() {
   const env = process.env.MPESA_ENV === "live" ? "live" : "sandbox";
-  const consumerKey = process.env.MPESA_CONSUMER_KEY;
-  const consumerSecret = process.env.MPESA_CONSUMER_SECRET;
-  const shortcode = process.env.MPESA_SHORTCODE;
-  const passkey = process.env.MPESA_PASSKEY;
-  const callbackUrl = process.env.MPESA_CALLBACK_URL;
+  const consumerKey = process.env.MPESA_CONSUMER_KEY ?? process.env.CONSUMER_KEY;
+  const consumerSecret =
+    process.env.MPESA_CONSUMER_SECRET ?? process.env.CONSUMER_SECRET;
+  const shortcode =
+    process.env.MPESA_SHORTCODE ??
+    process.env.BUSINESS_SHORTCODE ??
+    process.env.SHORTCODE;
+  const passkey = process.env.MPESA_PASSKEY ?? process.env.PASSKEY;
+  const callbackUrl = process.env.MPESA_CALLBACK_URL ?? process.env.CALLBACK_URL;
 
-  if (
-    !consumerKey ||
-    !consumerSecret ||
-    !shortcode ||
-    !passkey ||
-    !callbackUrl
-  ) {
-    return null;
+  const missingVars: string[] = [];
+
+  if (!consumerKey) {
+    missingVars.push("MPESA_CONSUMER_KEY (or CONSUMER_KEY)");
+  }
+
+  if (!consumerSecret) {
+    missingVars.push("MPESA_CONSUMER_SECRET (or CONSUMER_SECRET)");
+  }
+
+  if (!shortcode) {
+    missingVars.push(
+      "MPESA_SHORTCODE (or BUSINESS_SHORTCODE / SHORTCODE)",
+    );
+  }
+
+  if (!passkey) {
+    missingVars.push("MPESA_PASSKEY (or PASSKEY)");
+  }
+
+  if (!callbackUrl) {
+    missingVars.push("MPESA_CALLBACK_URL (or CALLBACK_URL)");
+  }
+
+  if (missingVars.length > 0) {
+    return {
+      isConfigured: false as const,
+      missingVars,
+    };
   }
 
   const baseUrl =
@@ -66,6 +91,7 @@ function getMpesaConfig() {
       : "https://sandbox.safaricom.co.ke";
 
   return {
+    isConfigured: true as const,
     baseUrl,
     consumerKey,
     consumerSecret,
@@ -96,10 +122,9 @@ paymentRouter.post("/payments/mpesa/stk-push", async (req, res, next) => {
     }
 
     const config = getMpesaConfig();
-    if (!config) {
+    if (!config.isConfigured) {
       return res.status(500).json({
-        message:
-          "M-Pesa is not configured. Set MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY and MPESA_CALLBACK_URL.",
+        message: `M-Pesa is not configured. Missing: ${config.missingVars.join(", ")}.`,
       });
     }
 
