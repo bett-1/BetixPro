@@ -57,10 +57,64 @@ export default function Users() {
               <Download size={13} />
               Export
             </AdminButton>
-            <AdminButton>
-              <Plus size={13} />
-              Add User
-            </AdminButton>
+            <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
+              <DialogTrigger asChild>
+                <AdminButton>
+                  <Plus size={13} />
+                  Add User
+                </AdminButton>
+              </DialogTrigger>
+              <DialogContent className="border-admin-border bg-admin-card">
+                <DialogHeader>
+                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogDescription>
+                    Create a new user account manually
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-semibold text-admin-text-primary">
+                      Full Name
+                    </label>
+                    <Input
+                      placeholder="John Doe"
+                      className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-admin-text-primary">
+                      Email
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="john@example.com"
+                      className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-admin-text-primary">
+                      Account Status
+                    </label>
+                    <select className="mt-1 w-full rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-admin-text-primary">
+                      <option>Active</option>
+                      <option>Suspended</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-admin-border hover:bg-admin-surface"
+                      onClick={() => setAddUserOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button className="flex-1 bg-admin-accent text-black hover:bg-[#00d492]">
+                      Create User
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         }
       />
