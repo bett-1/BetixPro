@@ -1,1375 +1,819 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import {
-  Activity,
-  BarChart3,
-  Bell,
-  ChevronRight,
-  Crown,
-  DollarSign,
-  Plus,
-  Search,
-  Settings,
-  Shield,
-  Users,
-  Wallet
+  LayoutDashboard, Users, Trophy, DollarSign, TrendingUp, Shield,
+  BarChart3, Settings, Bell, Search, ChevronDown, ChevronRight,
+  ArrowUpRight, ArrowDownRight, Eye, EyeOff, MoreHorizontal,
+  CheckCircle, XCircle, Clock, AlertTriangle, Filter, Download,
+  RefreshCw, Plus, Edit, Trash2, Lock, Unlock, Flag, Zap,
+  Activity, Globe, CreditCard, PieChart, Target, Layers,
+  LogOut, Menu, X, Star, Hash, Calendar, SlidersHorizontal,
+  TrendingDown, UserCheck, UserX, Flame
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
-type SectionKey = "overview" | "users" | "markets" | "finance" | "settings";
-type Status = "active" | "pending" | "inactive";
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  status: Status;
-  wager: string;
-  joinedAt: string;
+const COLORS = {
+  bg: "#0a0e1a",
+  bgCard: "#0f1425",
+  bgElevated: "#161d35",
+  bgHover: "#1c2540",
+  accent: "#00e5a0",
+  accentDim: "rgba(0,229,160,0.12)",
+  accentGlow: "rgba(0,229,160,0.25)",
+  gold: "#f5a623",
+  goldDim: "rgba(245,166,35,0.12)",
+  red: "#ff4d6a",
+  redDim: "rgba(255,77,106,0.12)",
+  blue: "#3d8ef8",
+  blueDim: "rgba(61,142,248,0.12)",
+  purple: "#9b59f5",
+  purpleDim: "rgba(155,89,245,0.12)",
+  textPrimary: "#e8eaf2",
+  textSecondary: "#6b7a99",
+  textMuted: "#3d4b6e",
+  border: "rgba(255,255,255,0.06)",
+  borderStrong: "rgba(255,255,255,0.1)",
 };
 
-type Market = {
-  id: string;
-  event: string;
-  sport: string;
-  status: Status;
-  odds: string;
-  liquidity: string;
-};
-
-type FinanceRow = {
-  id: string;
-  user: string;
-  type: "Deposit" | "Withdrawal" | "Refund";
-  amount: string;
-  channel: string;
-  status: Status;
-  at: string;
-};
-
-const sections: Array<{
-  key: SectionKey;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}> = [
-  { key: "overview", label: "Overview", icon: Activity },
-  { key: "users", label: "Users", icon: Users },
-  { key: "markets", label: "Markets", icon: BarChart3 },
-  { key: "finance", label: "Finance", icon: Wallet },
-  { key: "settings", label: "Settings", icon: Settings },
+const navSections = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "users", label: "User Management", icon: Users },
+  { id: "bets", label: "Bet Management", icon: Target },
+  { id: "events", label: "Events & Sports", icon: Trophy },
+  { id: "odds", label: "Odds Control", icon: SlidersHorizontal },
+  { id: "transactions", label: "Transactions", icon: CreditCard },
+  { id: "risk", label: "Risk Management", icon: Shield },
+  { id: "reports", label: "Reports & Analytics", icon: BarChart3 },
+  { id: "settings", label: "Settings", icon: Settings },
 ];
 
-const initialUsers: User[] = [
-  {
-    id: "USR-1001",
-    name: "Amina Njoroge",
-    email: "amina@betwise.com",
-    status: "active",
-    wager: "KES 124,000",
-    joinedAt: "2024-01-12",
-  },
-  {
-    id: "USR-1002",
-    name: "Brian Otieno",
-    email: "brian@betwise.com",
-    status: "pending",
-    wager: "KES 18,200",
-    joinedAt: "2024-02-02",
-  },
-  {
-    id: "USR-1003",
-    name: "Caren Wambui",
-    email: "caren@betwise.com",
-    status: "inactive",
-    wager: "KES 6,100",
-    joinedAt: "2023-12-20",
-  },
-  {
-    id: "USR-1004",
-    name: "Daniel Kiptoo",
-    email: "daniel@betwise.com",
-    status: "active",
-    wager: "KES 310,600",
-    joinedAt: "2024-01-29",
-  },
+const kpiData = [
+  { label: "Total Revenue", value: "$2,847,392", change: "+12.4%", up: true, icon: DollarSign, color: COLORS.accent },
+  { label: "Active Users", value: "48,291", change: "+8.7%", up: true, icon: Users, color: COLORS.blue },
+  { label: "Open Bets", value: "12,847", change: "+3.2%", up: true, icon: Target, color: COLORS.gold },
+  { label: "House Edge", value: "4.82%", change: "-0.3%", up: false, icon: TrendingUp, color: COLORS.purple },
+  { label: "GGR Today", value: "$184,230", change: "+22.1%", up: true, icon: Zap, color: COLORS.accent },
+  { label: "Flagged Bets", value: "23", change: "+5", up: false, icon: AlertTriangle, color: COLORS.red },
 ];
 
-const initialMarkets: Market[] = [
-  {
-    id: "MKT-2001",
-    event: "Arsenal vs Chelsea",
-    sport: "Football",
-    status: "active",
-    odds: "2.05",
-    liquidity: "KES 3.2M",
-  },
-  {
-    id: "MKT-2002",
-    event: "Lakers vs Heat",
-    sport: "Basketball",
-    status: "active",
-    odds: "1.72",
-    liquidity: "KES 2.6M",
-  },
-  {
-    id: "MKT-2003",
-    event: "India vs Australia",
-    sport: "Cricket",
-    status: "pending",
-    odds: "3.20",
-    liquidity: "KES 980K",
-  },
-  {
-    id: "MKT-2004",
-    event: "Gor Mahia vs AFC Leopards",
-    sport: "Football",
-    status: "inactive",
-    odds: "1.96",
-    liquidity: "KES 420K",
-  },
+const recentBets = [
+  { id: "#BT-9812", user: "alex_m", sport: "Football", event: "Man City vs Arsenal", market: "Match Winner", odds: "2.40", stake: "$500", status: "pending", time: "2m ago" },
+  { id: "#BT-9811", user: "sarah_k", sport: "Tennis", event: "Djokovic vs Alcaraz", market: "Total Sets", odds: "1.85", stake: "$250", status: "won", time: "5m ago" },
+  { id: "#BT-9810", user: "mike_t", sport: "Basketball", event: "Lakers vs Warriors", market: "Spread -3.5", odds: "1.91", stake: "$1,200", status: "lost", time: "8m ago" },
+  { id: "#BT-9809", user: "priya_v", sport: "Football", event: "Real Madrid vs Barca", market: "Both Score", odds: "1.72", stake: "$300", status: "won", time: "12m ago" },
+  { id: "#BT-9808", user: "chen_w", sport: "UFC", event: "Jones vs Miocic", market: "Method of Victory", odds: "3.50", stake: "$800", status: "flagged", time: "15m ago" },
+  { id: "#BT-9807", user: "omar_a", sport: "Cricket", event: "IND vs AUS", market: "Top Batsman", odds: "5.00", stake: "$100", status: "pending", time: "18m ago" },
 ];
 
-const financeRows: FinanceRow[] = [
-  {
-    id: "TX-9001",
-    user: "Amina Njoroge",
-    type: "Deposit",
-    amount: "KES 4,500",
-    channel: "STK Push",
-    status: "active",
-    at: "10:31",
-  },
-  {
-    id: "TX-9002",
-    user: "Brian Otieno",
-    type: "Withdrawal",
-    amount: "KES 3,000",
-    channel: "B2C",
-    status: "pending",
-    at: "10:42",
-  },
-  {
-    id: "TX-9003",
-    user: "Caren Wambui",
-    type: "Refund",
-    amount: "KES 2,250",
-    channel: "Reversal",
-    status: "inactive",
-    at: "10:48",
-  },
+const users = [
+  { id: "USR-001", name: "Alexander Mitchell", email: "alex_m@email.com", balance: "$4,200", totalBets: 342, won: 156, kyc: "verified", status: "active", risk: "low", joined: "Jan 2023" },
+  { id: "USR-002", name: "Sarah Kowalski", email: "sarah_k@email.com", balance: "$12,800", totalBets: 891, won: 401, kyc: "verified", status: "active", risk: "medium", joined: "Mar 2022" },
+  { id: "USR-003", name: "Mike Torres", email: "mike_t@email.com", balance: "$320", totalBets: 1204, won: 487, kyc: "pending", status: "active", risk: "high", joined: "Jun 2022" },
+  { id: "USR-004", name: "Priya Vasquez", email: "priya_v@email.com", balance: "$7,550", totalBets: 203, won: 98, kyc: "verified", status: "active", risk: "low", joined: "Sep 2023" },
+  { id: "USR-005", name: "Chen Wei", email: "chen_w@email.com", balance: "$28,400", totalBets: 2341, won: 1122, kyc: "verified", status: "suspended", risk: "high", joined: "Feb 2021" },
+  { id: "USR-006", name: "Omar Ahmed", email: "omar_a@email.com", balance: "$1,100", totalBets: 87, won: 44, kyc: "failed", status: "active", risk: "low", joined: "Dec 2023" },
 ];
 
-const statusStyles: Record<Status, string> = {
-  active: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  inactive: "border-zinc-200 bg-zinc-100 text-zinc-700",
-};
+const events = [
+  { id: "EVT-001", sport: "Football", league: "Premier League", home: "Man City", away: "Arsenal", date: "Apr 5, 2026 15:00", status: "upcoming", markets: 48, totalBets: 2841, exposure: "$84,200" },
+  { id: "EVT-002", sport: "Tennis", league: "ATP Tour", home: "Djokovic", away: "Alcaraz", date: "Apr 3, 2026 13:00", status: "live", markets: 24, totalBets: 1203, exposure: "$42,100" },
+  { id: "EVT-003", sport: "Basketball", league: "NBA", home: "Lakers", away: "Warriors", date: "Apr 3, 2026 20:30", status: "live", markets: 62, totalBets: 3892, exposure: "$128,400" },
+  { id: "EVT-004", sport: "Football", league: "La Liga", home: "Real Madrid", away: "Barcelona", date: "Apr 6, 2026 20:00", status: "upcoming", markets: 56, totalBets: 4102, exposure: "$195,800" },
+  { id: "EVT-005", sport: "UFC", league: "UFC 310", home: "Jones", away: "Miocic", date: "Apr 10, 2026 22:00", status: "upcoming", markets: 18, totalBets: 891, exposure: "$31,200" },
+];
 
-function StatusBadge({ value }: { value: Status }) {
-  const label = value.charAt(0).toUpperCase() + value.slice(1);
-  return (
-    <Badge className={cn("border px-2.5 py-1", statusStyles[value])}>
-      {label}
-    </Badge>
-  );
-}
+const transactions = [
+  { id: "TXN-8821", user: "alex_m", type: "deposit", method: "Visa **4242", amount: "+$1,000", status: "completed", time: "10m ago" },
+  { id: "TXN-8820", user: "sarah_k", type: "withdrawal", method: "Bank Transfer", amount: "-$3,500", status: "pending", time: "25m ago" },
+  { id: "TXN-8819", user: "chen_w", type: "withdrawal", method: "Crypto BTC", amount: "-$10,000", status: "flagged", time: "1h ago" },
+  { id: "TXN-8818", user: "priya_v", type: "deposit", method: "Mastercard **8891", amount: "+$500", status: "completed", time: "2h ago" },
+  { id: "TXN-8817", user: "mike_t", type: "deposit", method: "PayPal", amount: "+$200", status: "completed", time: "3h ago" },
+  { id: "TXN-8816", user: "omar_a", type: "withdrawal", method: "Bank Transfer", amount: "-$800", status: "completed", time: "4h ago" },
+];
 
-function MiniProgress({ value }: { value: number }) {
-  return (
-    <div className="h-2 rounded-full bg-zinc-100">
-      <div
-        className="h-2 rounded-full bg-lime-400"
-        style={{ width: `${value}%` }}
-      />
-    </div>
-  );
-}
+const riskAlerts = [
+  { id: 1, type: "high", user: "chen_w", message: "Unusual betting pattern — 5 large bets on correlated outcomes", time: "15m ago" },
+  { id: 2, type: "high", user: "TXN-8819", message: "Large crypto withdrawal flagged for AML review ($10,000)", time: "1h ago" },
+  { id: 3, type: "medium", user: "mike_t", message: "Win rate deviation detected — 94% accuracy last 20 bets", time: "2h ago" },
+  { id: 4, type: "medium", user: "System", message: "Exposure limit approaching for Man City vs Arsenal ($84k / $100k)", time: "3h ago" },
+  { id: 5, type: "low", user: "priya_v", message: "Multiple accounts sharing same IP address detected", time: "5h ago" },
+];
 
-function SectionIconCard({
-  title,
-  value,
-  icon: Icon,
-  chip,
-  tone,
-}: {
-  title: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  chip: string;
-  tone: "lime" | "amber" | "rose";
-}) {
-  const gradients = {
-    lime: "from-lime-400/25 to-lime-500/10 border-lime-300/30",
-    amber: "from-amber-400/25 to-orange-500/10 border-amber-300/30",
-    rose: "from-rose-400/25 to-rose-700/10 border-rose-300/30",
-  };
+const oddsData = [
+  { event: "Man City vs Arsenal", market: "Match Winner", sel1: "Man City", odds1: "1.95", sel2: "Draw", odds2: "3.80", sel3: "Arsenal", odds3: "4.20", margin: "4.8%", status: "active" },
+  { event: "Djokovic vs Alcaraz", market: "Match Winner", sel1: "Djokovic", odds1: "2.10", sel2: "", odds2: "", sel3: "Alcaraz", odds3: "1.75", margin: "5.1%", status: "suspended" },
+  { event: "Lakers vs Warriors", market: "Spread -3.5", sel1: "Lakers -3.5", odds1: "1.91", sel2: "", odds2: "", sel3: "Warriors +3.5", odds3: "1.91", margin: "4.7%", status: "active" },
+  { event: "Real Madrid vs Barca", market: "Both Score", sel1: "Yes", odds1: "1.72", sel2: "", odds2: "", sel3: "No", odds3: "2.10", margin: "5.2%", status: "active" },
+];
 
-  return (
-    <Card
-      className={cn("border bg-linear-to-br backdrop-blur", gradients[tone])}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <span className="grid h-10 w-10 place-content-center rounded-full bg-black/40 text-lime-200">
-            <Icon className="h-4 w-4" />
-          </span>
-          <span className="rounded-full border border-lime-300/40 bg-lime-400/20 px-2 py-0.5 text-xs font-semibold text-lime-200">
-            {chip}
-          </span>
-        </div>
-        <p className="mt-5 text-sm text-zinc-300">{title}</p>
-        <p className="font-['Space_Grotesk'] text-4xl font-semibold text-white">
-          {value}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+const chartBars = [
+  { day: "Mon", revenue: 68, bets: 52 },
+  { day: "Tue", revenue: 82, bets: 71 },
+  { day: "Wed", revenue: 55, bets: 44 },
+  { day: "Thu", revenue: 91, bets: 88 },
+  { day: "Fri", revenue: 74, bets: 65 },
+  { day: "Sat", revenue: 100, bets: 94 },
+  { day: "Sun", revenue: 88, bets: 81 },
+];
 
-function ProfitDial() {
-  return (
-    <Card className="overflow-hidden border-white/10 bg-white/5 text-white">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 pb-0">
-        <div>
-          <CardTitle className="text-2xl">Top 5 Sport Categories</CardTitle>
-          <CardDescription className="text-zinc-400">
-            Live revenue split by category
-          </CardDescription>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-zinc-300 hover:bg-white/10 hover:text-white"
-        >
-          <ChevronRight className="h-4 w-4 rotate-90" />
-        </Button>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="mx-auto flex aspect-square max-w-sm items-center justify-center rounded-full bg-[conic-gradient(#d9f216_0deg_145deg,#f59e0b_145deg_245deg,#ef4444_245deg_320deg,#4f46e5_320deg_360deg)] p-8">
-          <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-950 text-center">
-            <div>
-              <p className="font-['Space_Grotesk'] text-4xl font-bold">
-                $3,223.55
-              </p>
-              <p className="text-sm text-zinc-300">Total profit</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+const sportShare = [
+  { sport: "Football", pct: 38, color: COLORS.accent },
+  { sport: "Basketball", pct: 24, color: COLORS.blue },
+  { sport: "Tennis", pct: 18, color: COLORS.gold },
+  { sport: "Cricket", pct: 12, color: COLORS.purple },
+  { sport: "Other", pct: 8, color: COLORS.textMuted },
+];
 
 export default function AdminDashboardPage() {
-  const [activeSection, setActiveSection] = useState<SectionKey>("overview");
+  const [activeNav, setActiveNav] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [markets, setMarkets] = useState<Market[]>(initialMarkets);
-  const [userDialogOpen, setUserDialogOpen] = useState(false);
-  const [marketDialogOpen, setMarketDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editingMarket, setEditingMarket] = useState<Market | null>(null);
-  const [userForm, setUserForm] = useState({
-    name: "",
-    email: "",
-    status: "active" as Status,
-  });
-  const [marketForm, setMarketForm] = useState({
-    event: "",
-    sport: "",
-    odds: "",
-    status: "active" as Status,
-  });
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [mfaRequired, setMfaRequired] = useState(true);
-  const [oddsGuard, setOddsGuard] = useState(true);
+  const [notifications, setNotifications] = useState(7);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [oddsEdit, setOddsEdit] = useState(null);
 
-  const filteredUsers = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return users;
-    return users.filter((user) =>
-      [
-        user.id,
-        user.name,
-        user.email,
-        user.status,
-        user.wager,
-        user.joinedAt,
-      ].some((value) => value.toLowerCase().includes(query)),
-    );
-  }, [searchQuery, users]);
-
-  const filteredMarkets = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return markets;
-    return markets.filter((market) =>
-      [
-        market.id,
-        market.event,
-        market.sport,
-        market.status,
-        market.odds,
-        market.liquidity,
-      ].some((value) => value.toLowerCase().includes(query)),
-    );
-  }, [searchQuery, markets]);
-
-  const handleUserSave = () => {
-    if (!userForm.name || !userForm.email) {
-      toast.error("Name and email are required");
-      return;
-    }
-
-    if (editingUser) {
-      setUsers((current) =>
-        current.map((user) =>
-          user.id === editingUser.id ? { ...user, ...userForm } : user,
-        ),
-      );
-      toast.success("User updated");
-    } else {
-      setUsers((current) => [
-        ...current,
-        {
-          id: `USR-${Date.now()}`,
-          ...userForm,
-          wager: "KES 0",
-          joinedAt: new Date().toISOString().slice(0, 10),
-        },
-      ]);
-      toast.success("User created");
-    }
-
-    setUserDialogOpen(false);
-    setEditingUser(null);
-    setUserForm({ name: "", email: "", status: "active" });
+  const s = {
+    root: { display: "flex", height: "100vh", background: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" },
+    sidebar: { width: sidebarOpen ? 240 : 64, minWidth: sidebarOpen ? 240 : 64, background: COLORS.bgCard, borderRight: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column", transition: "all 0.25s cubic-bezier(.4,0,.2,1)", overflow: "hidden" },
+    logo: { padding: "20px 16px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 12, minHeight: 64 },
+    logoMark: { width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg, ${COLORS.accent}, #00b37a)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+    navItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderRadius: 8, margin: "2px 8px", cursor: "pointer", transition: "all 0.15s", background: active ? COLORS.accentDim : "transparent", color: active ? COLORS.accent : COLORS.textSecondary, borderLeft: active ? `2px solid ${COLORS.accent}` : "2px solid transparent", whiteSpace: "nowrap", overflow: "hidden" }),
+    main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" },
+    topbar: { height: 64, background: COLORS.bgCard, borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 16, padding: "0 24px", flexShrink: 0 },
+    searchBox: { flex: 1, maxWidth: 400, display: "flex", alignItems: "center", gap: 8, background: COLORS.bgElevated, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "8px 12px" },
+    content: { flex: 1, overflow: "auto", padding: 24 },
+    card: { background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 },
+    kpiCard: (color) => ({ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, position: "relative", overflow: "hidden" }),
+    badge: (color, bg) => ({ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, color, background: bg, letterSpacing: "0.03em" }),
+    table: { width: "100%", borderCollapse: "collapse" },
+    th: { padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 600, color: COLORS.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: `1px solid ${COLORS.border}` },
+    td: { padding: "12px 12px", fontSize: 13, color: COLORS.textSecondary, borderBottom: `1px solid ${COLORS.border}` },
+    btn: (color = COLORS.accent, ghost = false) => ({ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: "pointer", border: ghost ? `1px solid ${COLORS.border}` : "none", background: ghost ? "transparent" : color, color: ghost ? COLORS.textSecondary : "#000", transition: "all 0.15s", outline: "none" }),
+    sectionTitle: { fontSize: 16, fontWeight: 600, color: COLORS.textPrimary, marginBottom: 4 },
+    sectionSub: { fontSize: 13, color: COLORS.textMuted, marginBottom: 20 },
   };
 
-  const handleMarketSave = () => {
-    if (!marketForm.event || !marketForm.sport || !marketForm.odds) {
-      toast.error("Event, sport, and odds are required");
-      return;
-    }
-
-    if (editingMarket) {
-      setMarkets((current) =>
-        current.map((market) =>
-          market.id === editingMarket.id
-            ? { ...market, ...marketForm }
-            : market,
-        ),
-      );
-      toast.success("Market updated");
-    } else {
-      setMarkets((current) => [
-        ...current,
-        {
-          id: `MKT-${Date.now()}`,
-          ...marketForm,
-          liquidity: "KES 0",
-        },
-      ]);
-      toast.success("Market created");
-    }
-
-    setMarketDialogOpen(false);
-    setEditingMarket(null);
-    setMarketForm({ event: "", sport: "", odds: "", status: "active" });
+  const StatusBadge = ({ status }) => {
+    const map = {
+      pending: [COLORS.gold, COLORS.goldDim, Clock],
+      won: [COLORS.accent, COLORS.accentDim, CheckCircle],
+      lost: [COLORS.red, COLORS.redDim, XCircle],
+      flagged: [COLORS.red, COLORS.redDim, Flag],
+      completed: [COLORS.accent, COLORS.accentDim, CheckCircle],
+      active: [COLORS.accent, COLORS.accentDim, CheckCircle],
+      suspended: [COLORS.red, COLORS.redDim, Lock],
+      live: ["#ff6b35", "rgba(255,107,53,0.15)", Flame],
+      upcoming: [COLORS.blue, COLORS.blueDim, Clock],
+      verified: [COLORS.accent, COLORS.accentDim, UserCheck],
+      failed: [COLORS.red, COLORS.redDim, UserX],
+      high: [COLORS.red, COLORS.redDim, AlertTriangle],
+      medium: [COLORS.gold, COLORS.goldDim, AlertTriangle],
+      low: [COLORS.blue, COLORS.blueDim, CheckCircle],
+    };
+    const [color, bg, Icon] = map[status] || [COLORS.textMuted, COLORS.border, Clock];
+    return <span style={s.badge(color, bg)}><Icon size={10} />{status}</span>;
   };
 
-  return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(217,242,22,0.16),transparent_30%),radial-gradient(circle_at_90%_90%,rgba(245,158,11,0.12),transparent_28%),linear-gradient(180deg,#eceee4,#dfe2d5_35%,#f8faf7)] p-3 sm:p-5">
-      <div className="mx-auto max-w-[1600px] rounded-[32px] border border-black/10 bg-[linear-gradient(135deg,rgba(10,12,10,0.98),rgba(13,15,12,0.96))] text-white shadow-[0_40px_120px_rgba(0,0,0,0.4)]">
-        <div className="grid min-h-[calc(100vh-2rem)] lg:grid-cols-[72px_minmax(0,1fr)_320px]">
-          <aside className="hidden border-r border-white/10 bg-black/25 p-3 lg:flex lg:flex-col lg:items-center lg:gap-3">
-            <div className="mb-2 mt-2 grid h-11 w-11 place-content-center rounded-full border border-lime-300/30 bg-lime-300/15 text-lime-200">
-              <Crown className="h-5 w-5" />
+  const NavItem = ({ item }) => {
+    const Icon = item.icon;
+    const active = activeNav === item.id;
+    return (
+      <div style={s.navItem(active)} onClick={() => setActiveNav(item.id)}>
+        <Icon size={18} style={{ flexShrink: 0 }} />
+        {sidebarOpen && <span style={{ fontSize: 13, fontWeight: active ? 600 : 400 }}>{item.label}</span>}
+      </div>
+    );
+  };
+
+  const MiniChart = () => (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 48, marginTop: 12 }}>
+      {chartBars.map((b, i) => (
+        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+          <div style={{ width: "100%", background: COLORS.accentDim, borderRadius: 3, height: `${b.bets * 0.44}px` }} />
+          <div style={{ width: "100%", background: COLORS.accent, borderRadius: 3, height: `${b.revenue * 0.44}px`, opacity: 0.85 }} />
+          <span style={{ fontSize: 9, color: COLORS.textMuted }}>{b.day}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const DonutChart = () => {
+    let cumulative = 0;
+    const radius = 36;
+    const circ = 2 * Math.PI * radius;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <svg width={90} height={90} viewBox="0 0 90 90">
+          <circle cx={45} cy={45} r={radius} fill="none" stroke={COLORS.bgElevated} strokeWidth={14} />
+          {sportShare.map((s, i) => {
+            const dash = (s.pct / 100) * circ;
+            const offset = circ - cumulative * circ / 100;
+            cumulative += s.pct;
+            return <circle key={i} cx={45} cy={45} r={radius} fill="none" stroke={s.color} strokeWidth={14} strokeDasharray={`${dash} ${circ}`} strokeDashoffset={offset} style={{ transform: "rotate(-90deg)", transformOrigin: "center" }} />;
+          })}
+          <text x={45} y={49} textAnchor="middle" fill={COLORS.textPrimary} fontSize={11} fontWeight={600}>Bets</text>
+        </svg>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {sportShare.map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: COLORS.textSecondary }}>{s.sport}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.textPrimary, marginLeft: "auto" }}>{s.pct}%</span>
             </div>
-            {sections.map(({ key, icon: Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setActiveSection(key)}
-                className={cn(
-                  "grid h-10 w-10 place-content-center rounded-xl border transition",
-                  activeSection === key
-                    ? "border-lime-300/40 bg-lime-300/15 text-lime-200"
-                    : "border-white/10 text-zinc-400 hover:border-white/20 hover:bg-white/5 hover:text-white",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </button>
-            ))}
-          </aside>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
-          <section className="min-w-0 border-r border-white/10">
-            <header className="flex flex-col gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+  const Dashboard = () => (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Overview</h1>
+        <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>Friday, April 3, 2026 — Live Platform Snapshot</p>
+      </div>
+
+      {/* KPI Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
+        {kpiData.map((k, i) => {
+          const Icon = k.icon;
+          return (
+            <div key={i} style={s.kpiCard(k.color)}>
+              <div style={{ position: "absolute", top: 0, right: 0, width: 80, height: 80, background: `radial-gradient(circle at 80% 20%, ${k.color}18, transparent 70%)`, borderRadius: "0 12px 0 0" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
-                  <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-lime-200">
-                    <Shield className="h-3.5 w-3.5" />
-                    Sportsbook Control Center
-                  </p>
-                  <h1 className="mt-3 font-['Space_Grotesk'] text-4xl font-semibold tracking-tight sm:text-5xl">
-                    Dashboard
-                  </h1>
-                  <p className="mt-2 max-w-2xl text-sm text-zinc-300 sm:text-base">
-                    Client-side admin dashboard with reusable shadcn components,
-                    responsive tabs, editable tables, and working dialogs.
-                  </p>
+                  <p style={{ fontSize: 11, color: COLORS.textMuted, margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{k.label}</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: COLORS.textPrimary, margin: "6px 0 8px" }}>{k.value}</p>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: k.up ? COLORS.accent : COLORS.red, fontWeight: 600 }}>
+                    {k.up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}{k.change}
+                  </span>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="border-emerald-200/30 bg-emerald-400/15 text-emerald-100">
-                    Live feed synced
-                  </Badge>
-                  <Badge className="border-amber-200/30 bg-amber-400/15 text-amber-100">
-                    12 Pending Reviews
-                  </Badge>
-                  <Badge className="border-white/20 bg-white/10 text-white">
-                    API v1.12.4
-                  </Badge>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: `${k.color}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon size={18} color={k.color} />
                 </div>
               </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <label className="flex h-11 w-full items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-zinc-300 sm:max-w-md">
-                  <Search className="h-4 w-4" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search users, markets, transactions"
-                    className="h-auto border-0 bg-transparent p-0 text-white shadow-none placeholder:text-zinc-500 focus-visible:ring-0"
-                  />
-                </label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                  >
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    className="gap-2 bg-lime-400 text-black hover:bg-lime-300"
-                    onClick={() => {
-                      setActiveSection("users");
-                      setEditingUser(null);
-                      setUserForm({ name: "", email: "", status: "active" });
-                      setUserDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                    New Record
-                  </Button>
-                </div>
-              </div>
-            </header>
-
-            <div className="space-y-6 p-4 sm:p-6">
-              <Tabs
-                value={activeSection}
-                onValueChange={(value) => setActiveSection(value as SectionKey)}
-              >
-                <TabsList className="mb-6 flex w-full flex-wrap justify-start gap-2 rounded-none border-b border-white/10 bg-transparent p-0">
-                  {sections.map(({ key, label }) => (
-                    <TabsTrigger
-                      key={key}
-                      value={key}
-                      className="rounded-full border border-transparent px-4 py-2 text-zinc-400 data-[state=active]:border-lime-300/40 data-[state=active]:bg-lime-300/15 data-[state=active]:text-lime-100"
-                    >
-                      {label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                <TabsContent
-                  value="overview"
-                  className="space-y-6 outline-none"
-                >
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <SectionIconCard
-                      title="Total Income"
-                      value="$3,433.0"
-                      chip="+4.5%"
-                      tone="lime"
-                      icon={DollarSign}
-                    />
-                    <SectionIconCard
-                      title="Total Payers"
-                      value="11,443"
-                      chip="+2.8%"
-                      tone="amber"
-                      icon={Users}
-                    />
-                    <SectionIconCard
-                      title="Total Time"
-                      value="11,443"
-                      chip="-1.8%"
-                      tone="rose"
-                      icon={Activity}
-                    />
-                  </div>
-
-                  <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                    <ProfitDial />
-
-                    <div className="space-y-6">
-                      <Card className="border-white/10 bg-white/5 text-white">
-                        <CardHeader>
-                          <CardTitle className="text-2xl">
-                            Total Wagered
-                          </CardTitle>
-                          <CardDescription className="text-zinc-400">
-                            Activity across all live markets
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
-                            <div className="flex items-center justify-between text-sm text-zinc-300">
-                              <span>Percentage of Total Bets</span>
-                              <strong className="text-white">34%</strong>
-                            </div>
-                          </div>
-                          <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
-                            <div className="flex items-center justify-between text-sm text-zinc-300">
-                              <span>Event Count</span>
-                              <strong className="text-white">35</strong>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="border-white/10 bg-white/5 text-white">
-                        <CardHeader>
-                          <CardTitle className="text-2xl">
-                            Best Players
-                          </CardTitle>
-                          <CardDescription className="text-zinc-400">
-                            Top active users this week
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {users.slice(0, 4).map((user) => (
-                              <div
-                                key={user.id}
-                                className="grid h-10 w-10 place-content-center rounded-full border border-white/15 bg-zinc-800 text-xs"
-                              >
-                                {user.name
-                                  .split(" ")
-                                  .slice(0, 2)
-                                  .map((part) => part[0])
-                                  .join("")}
-                              </div>
-                            ))}
-                            <span className="text-sm text-zinc-400">+145</span>
-                          </div>
-                          <div className="mt-4 grid grid-cols-2 gap-3">
-                            <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
-                              <p className="text-xs text-zinc-400">Users</p>
-                              <p className="font-['Space_Grotesk'] text-2xl text-white">
-                                67
-                              </p>
-                            </div>
-                            <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
-                              <p className="text-xs text-zinc-400">Funds</p>
-                              <p className="font-['Space_Grotesk'] text-2xl text-white">
-                                $22.4k
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="border-white/10 bg-white/5 text-white">
-                        <CardHeader>
-                          <CardTitle className="text-2xl">
-                            Week Activity
-                          </CardTitle>
-                          <CardDescription className="text-zinc-400">
-                            Revenue and movement by day
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {["Mon", "Tue", "Wed", "Thu", "Fri"].map(
-                            (day, index) => (
-                              <div key={day}>
-                                <div className="mb-1 flex items-center justify-between text-xs text-zinc-400">
-                                  <span>{day}</span>
-                                  <span>{[24, 32, 48, 37, 41][index]}%</span>
-                                </div>
-                                <MiniProgress
-                                  value={[24, 32, 48, 37, 41][index]}
-                                />
-                              </div>
-                            ),
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-6 xl:grid-cols-2">
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardHeader>
-                        <CardTitle className="text-2xl">
-                          Top 5 Leagues
-                        </CardTitle>
-                        <CardDescription className="text-zinc-400">
-                          League distribution and betting strength
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {[
-                          { name: "NFL", progress: 38 },
-                          { name: "NHL", progress: 78 },
-                          { name: "NBA", progress: 63 },
-                          { name: "EPL", progress: 82 },
-                        ].map((league) => (
-                          <div key={league.name}>
-                            <div className="mb-1 flex items-center justify-between text-sm text-zinc-300">
-                              <span>{league.name}</span>
-                              <span>{league.progress}%</span>
-                            </div>
-                            <MiniProgress value={league.progress} />
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardHeader>
-                        <CardTitle className="text-2xl">
-                          Funds Activity
-                        </CardTitle>
-                        <CardDescription className="text-zinc-400">
-                          Tracked movement and live balances
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                          <div className="relative h-44 overflow-hidden rounded-xl bg-zinc-950/60">
-                            <div className="absolute inset-x-4 top-10 h-1 rounded-full bg-lime-400/70" />
-                            <div className="absolute inset-x-4 top-16 h-1 rounded-full bg-amber-400/70" />
-                            <div className="absolute inset-x-4 top-22 h-1 rounded-full bg-lime-300/70" />
-                            <div className="absolute inset-x-4 bottom-4 grid grid-cols-2 gap-3 text-sm text-zinc-300">
-                              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                                <p className="text-xs text-zinc-400">Active</p>
-                                <p className="font-['Space_Grotesk'] text-2xl text-white">
-                                  $1,443
-                                </p>
-                              </div>
-                              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                                <p className="text-xs text-zinc-400">Playing</p>
-                                <p className="font-['Space_Grotesk'] text-2xl text-white">
-                                  $440
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="users" className="space-y-4 outline-none">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <h2 className="font-['Space_Grotesk'] text-2xl font-semibold text-white">
-                        Users
-                      </h2>
-                      <p className="text-sm text-zinc-400">
-                        Manage accounts, wallet activity, and statuses.
-                      </p>
-                    </div>
-                    <Button
-                      className="gap-2 self-start bg-lime-400 text-black hover:bg-lime-300"
-                      onClick={() => {
-                        setEditingUser(null);
-                        setUserForm({ name: "", email: "", status: "active" });
-                        setUserDialogOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add User
-                    </Button>
-                  </div>
-
-                  <Card className="border-white/10 bg-white/5 text-white">
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-white/10 hover:bg-white/5">
-                            <TableHead className="text-zinc-300">
-                              User
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Email
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Status
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Wager
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Joined
-                            </TableHead>
-                            <TableHead className="text-right text-zinc-300">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredUsers.map((user) => (
-                            <TableRow
-                              key={user.id}
-                              className="border-white/10 hover:bg-white/5"
-                            >
-                              <TableCell className="font-medium text-white">
-                                {user.name}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {user.email}
-                              </TableCell>
-                              <TableCell>
-                                <StatusBadge value={user.status} />
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {user.wager}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {user.joinedAt}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="mr-2 border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => {
-                                    setEditingUser(user);
-                                    setUserForm({
-                                      name: user.name,
-                                      email: user.email,
-                                      status: user.status,
-                                    });
-                                    setUserDialogOpen(true);
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => {
-                                    setUsers((current) =>
-                                      current.filter(
-                                        (item) => item.id !== user.id,
-                                      ),
-                                    );
-                                    toast.success("User deleted");
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="markets" className="space-y-4 outline-none">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <h2 className="font-['Space_Grotesk'] text-2xl font-semibold text-white">
-                        Markets
-                      </h2>
-                      <p className="text-sm text-zinc-400">
-                        Create and manage betting markets.
-                      </p>
-                    </div>
-                    <Button
-                      className="gap-2 self-start bg-lime-400 text-black hover:bg-lime-300"
-                      onClick={() => {
-                        setEditingMarket(null);
-                        setMarketForm({
-                          event: "",
-                          sport: "",
-                          odds: "",
-                          status: "active",
-                        });
-                        setMarketDialogOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Market
-                    </Button>
-                  </div>
-
-                  <Card className="border-white/10 bg-white/5 text-white">
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-white/10 hover:bg-white/5">
-                            <TableHead className="text-zinc-300">
-                              Event
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Sport
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Status
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Odds
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Liquidity
-                            </TableHead>
-                            <TableHead className="text-right text-zinc-300">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredMarkets.map((market) => (
-                            <TableRow
-                              key={market.id}
-                              className="border-white/10 hover:bg-white/5"
-                            >
-                              <TableCell className="font-medium text-white">
-                                {market.event}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {market.sport}
-                              </TableCell>
-                              <TableCell>
-                                <StatusBadge value={market.status} />
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {market.odds}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {market.liquidity}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="mr-2 border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => {
-                                    setEditingMarket(market);
-                                    setMarketForm({
-                                      event: market.event,
-                                      sport: market.sport,
-                                      odds: market.odds,
-                                      status: market.status,
-                                    });
-                                    setMarketDialogOpen(true);
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => {
-                                    setMarkets((current) =>
-                                      current.filter(
-                                        (item) => item.id !== market.id,
-                                      ),
-                                    );
-                                    toast.success("Market deleted");
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="finance" className="space-y-4 outline-none">
-                  <div>
-                    <h2 className="font-['Space_Grotesk'] text-2xl font-semibold text-white">
-                      Finance
-                    </h2>
-                    <p className="text-sm text-zinc-400">
-                      Monitor deposits, withdrawals, and refunds.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardContent className="p-4">
-                        <p className="text-sm text-zinc-400">
-                          Gross Gaming Revenue
-                        </p>
-                        <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
-                          KES 18.4M
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardContent className="p-4">
-                        <p className="text-sm text-zinc-400">Net Revenue</p>
-                        <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
-                          KES 12.9M
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardContent className="p-4">
-                        <p className="text-sm text-zinc-400">Refund Ratio</p>
-                        <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
-                          1.9%
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardContent className="p-4">
-                        <p className="text-sm text-zinc-400">
-                          M-Pesa Success Rate
-                        </p>
-                        <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
-                          97.8%
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Card className="border-white/10 bg-white/5 text-white">
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-white/10 hover:bg-white/5">
-                            <TableHead className="text-zinc-300">Ref</TableHead>
-                            <TableHead className="text-zinc-300">
-                              User
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Type
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Amount
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Channel
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Status
-                            </TableHead>
-                            <TableHead className="text-zinc-300">
-                              Time
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {financeRows.map((row) => (
-                            <TableRow
-                              key={row.id}
-                              className="border-white/10 hover:bg-white/5"
-                            >
-                              <TableCell className="text-white">
-                                {row.id}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {row.user}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {row.type}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {row.amount}
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {row.channel}
-                              </TableCell>
-                              <TableCell>
-                                <StatusBadge value={row.status} />
-                              </TableCell>
-                              <TableCell className="text-zinc-300">
-                                {row.at}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent
-                  value="settings"
-                  className="space-y-4 outline-none"
-                >
-                  <div>
-                    <h2 className="font-['Space_Grotesk'] text-2xl font-semibold text-white">
-                      Settings
-                    </h2>
-                    <p className="text-sm text-zinc-400">
-                      System toggles and access controls.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardHeader>
-                        <CardTitle>System Toggles</CardTitle>
-                        <CardDescription className="text-zinc-400">
-                          Operational switches for platform safety
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {[
-                          {
-                            label: "Maintenance Mode",
-                            desc: "Temporarily pause betting access",
-                            active: maintenanceMode,
-                            setActive: setMaintenanceMode,
-                          },
-                          {
-                            label: "Mandatory Admin MFA",
-                            desc: "Force 2FA for privileged accounts",
-                            active: mfaRequired,
-                            setActive: setMfaRequired,
-                          },
-                          {
-                            label: "Odds Drift Guard",
-                            desc: "Block odds outside safe range",
-                            active: oddsGuard,
-                            setActive: setOddsGuard,
-                          },
-                        ].map((toggle) => (
-                          <div
-                            key={toggle.label}
-                            className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4"
-                          >
-                            <div>
-                              <p className="font-medium text-white">
-                                {toggle.label}
-                              </p>
-                              <p className="text-sm text-zinc-400">
-                                {toggle.desc}
-                              </p>
-                            </div>
-                            <Button
-                              variant={toggle.active ? "default" : "outline"}
-                              className={cn(
-                                toggle.active
-                                  ? "bg-lime-400 text-black hover:bg-lime-300"
-                                  : "border-white/10 bg-white/5 text-white hover:bg-white/10",
-                              )}
-                              onClick={() => {
-                                toggle.setActive(!toggle.active);
-                                toast.success(`${toggle.label} updated`);
-                              }}
-                            >
-                              {toggle.active ? "On" : "Off"}
-                            </Button>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-white/10 bg-white/5 text-white">
-                      <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                        <CardDescription className="text-zinc-400">
-                          Frequently used administrative actions
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <Button
-                          className="w-full justify-start gap-2 bg-lime-400 text-black hover:bg-lime-300"
-                          onClick={() => toast.success("Security policy saved")}
-                        >
-                          Save Security Policy
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10"
-                          onClick={() => toast.success("System export queued")}
-                        >
-                          Export Audit Logs
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10"
-                          onClick={() => toast.success("API keys rotated")}
-                        >
-                          Rotate API Keys
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-              </Tabs>
             </div>
-          </section>
+          );
+        })}
+      </div>
 
-          <aside className="space-y-4 p-4 sm:p-6">
-            <Card className="border-white/10 bg-white/5 text-white">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-14 w-14 place-content-center rounded-full border border-lime-300/30 bg-lime-300/10 text-lime-200">
-                    JW
-                  </div>
-                  <div>
-                    <p className="font-['Space_Grotesk'] text-2xl font-semibold text-white">
-                      John Williams
-                    </p>
-                    <p className="text-xs text-zinc-400">
-                      Last activity: 6 Dec, 2025
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="grid grid-cols-2 gap-3 border-white/10 bg-white/5 p-4 text-white">
-              <div className="rounded-2xl border border-lime-300/30 bg-lime-300/10 p-3">
-                <p className="text-sm text-zinc-300">Earned</p>
-                <p className="font-['Space_Grotesk'] text-3xl font-semibold text-white">
-                  $3,433.0
-                </p>
-              </div>
-              <div className="rounded-2xl border border-rose-300/30 bg-rose-300/10 p-3">
-                <p className="text-sm text-zinc-300">Lost</p>
-                <p className="font-['Space_Grotesk'] text-3xl font-semibold text-white">
-                  $11,443
-                </p>
-              </div>
-            </Card>
-
-            <Card className="border-white/10 bg-white/5 text-white">
-              <CardHeader>
-                <CardTitle>Funds Activity</CardTitle>
-                <CardDescription className="text-zinc-400">
-                  Day-by-day revenue curve
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { label: "Sat", value: 42 },
-                  { label: "Mon", value: 68 },
-                  { label: "Tue", value: 74 },
-                  { label: "Wed", value: 58 },
-                  { label: "Fri", value: 81 },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="mb-1 flex items-center justify-between text-xs text-zinc-400">
-                      <span>{item.label}</span>
-                      <span>{item.value}%</span>
-                    </div>
-                    <MiniProgress value={item.value} />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="border-white/10 bg-white/5 text-white">
-              <CardHeader>
-                <CardTitle>Transactions</CardTitle>
-                <CardDescription className="text-zinc-400">
-                  Recent income and payouts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {financeRows.slice(0, 3).map((row) => (
-                  <div
-                    key={row.id}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        {row.type}
-                      </p>
-                      <p className="text-xs text-zinc-400">{row.user}</p>
-                    </div>
-                    <p className="font-semibold text-lime-300">{row.amount}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </aside>
+      {/* Charts Row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 14, marginBottom: 24 }}>
+        <div style={s.card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <div>
+              <p style={s.sectionTitle}>Revenue & Bet Volume</p>
+              <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0 }}>Last 7 days</p>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.textSecondary }}><span style={{ width: 8, height: 8, background: COLORS.accent, borderRadius: 2, display: "inline-block" }} />Revenue</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.textSecondary }}><span style={{ width: 8, height: 8, background: COLORS.accentDim, borderRadius: 2, display: "inline-block" }} />Volume</span>
+            </div>
+          </div>
+          <MiniChart />
+        </div>
+        <div style={s.card}>
+          <p style={s.sectionTitle}>Sport Distribution</p>
+          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "0 0 16px" }}>By bet count</p>
+          <DonutChart />
         </div>
       </div>
 
-      <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingUser ? "Edit User" : "Add User"}</DialogTitle>
-            <DialogDescription>
-              Update user details and status.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input
-              value={userForm.name}
-              onChange={(e) =>
-                setUserForm((current) => ({ ...current, name: e.target.value }))
-              }
-              placeholder="Name"
-            />
-            <Input
-              value={userForm.email}
-              onChange={(e) =>
-                setUserForm((current) => ({
-                  ...current,
-                  email: e.target.value,
-                }))
-              }
-              placeholder="Email"
-            />
-            <Select
-              value={userForm.status}
-              onValueChange={(value) =>
-                setUserForm((current) => ({
-                  ...current,
-                  status: value as Status,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Live Bets */}
+      <div style={s.card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div>
+            <p style={s.sectionTitle}>Recent Bets</p>
+            <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0 }}>Live feed — auto-updating</p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUserDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUserSave}>
-              {editingUser ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={s.btn(COLORS.accent, true)}><Filter size={13} />Filter</button>
+            <button style={s.btn(COLORS.accent, true)}><Download size={13} />Export</button>
+          </div>
+        </div>
+        <table style={s.table}>
+          <thead><tr>
+            {["Bet ID", "User", "Sport", "Event", "Market", "Odds", "Stake", "Status", "Time", "Action"].map(h => <th key={h} style={s.th}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {recentBets.map((b, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : `${COLORS.bgElevated}50` }}>
+                <td style={{ ...s.td, color: COLORS.blue, fontWeight: 600, fontSize: 12 }}>{b.id}</td>
+                <td style={s.td}><span style={{ color: COLORS.textPrimary, fontWeight: 500 }}>{b.user}</span></td>
+                <td style={s.td}>{b.sport}</td>
+                <td style={{ ...s.td, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.event}</td>
+                <td style={s.td}>{b.market}</td>
+                <td style={{ ...s.td, color: COLORS.gold, fontWeight: 600 }}>{b.odds}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary, fontWeight: 500 }}>{b.stake}</td>
+                <td style={s.td}><StatusBadge status={b.status} /></td>
+                <td style={{ ...s.td, color: COLORS.textMuted, fontSize: 11 }}>{b.time}</td>
+                <td style={s.td}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button style={{ ...s.btn(COLORS.blue, true), padding: "4px 8px", fontSize: 11 }}><Eye size={11} /></button>
+                    <button style={{ ...s.btn(COLORS.red, true), padding: "4px 8px", fontSize: 11 }}><Flag size={11} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
-      <Dialog open={marketDialogOpen} onOpenChange={setMarketDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingMarket ? "Edit Market" : "Add Market"}
-            </DialogTitle>
-            <DialogDescription>
-              Update event details and status.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input
-              value={marketForm.event}
-              onChange={(e) =>
-                setMarketForm((current) => ({
-                  ...current,
-                  event: e.target.value,
-                }))
-              }
-              placeholder="Event"
-            />
-            <Input
-              value={marketForm.sport}
-              onChange={(e) =>
-                setMarketForm((current) => ({
-                  ...current,
-                  sport: e.target.value,
-                }))
-              }
-              placeholder="Sport"
-            />
-            <Input
-              value={marketForm.odds}
-              onChange={(e) =>
-                setMarketForm((current) => ({
-                  ...current,
-                  odds: e.target.value,
-                }))
-              }
-              placeholder="Odds"
-            />
-            <Select
-              value={marketForm.status}
-              onValueChange={(value) =>
-                setMarketForm((current) => ({
-                  ...current,
-                  status: value as Status,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+  const UserManagement = () => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>User Management</h1>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>48,291 registered accounts</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button style={s.btn(COLORS.accent, true)}><Download size={13} />Export</button>
+          <button style={s.btn(COLORS.accent)}><Plus size={13} />Add User</button>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "Total Users", val: "48,291", color: COLORS.blue },
+          { label: "Active Today", val: "8,420", color: COLORS.accent },
+          { label: "Suspended", val: "134", color: COLORS.red },
+          { label: "Pending KYC", val: "892", color: COLORS.gold },
+        ].map((k, i) => (
+          <div key={i} style={{ ...s.card, textAlign: "center" }}>
+            <p style={{ fontSize: 22, fontWeight: 700, color: k.color, margin: 0 }}>{k.val}</p>
+            <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>{k.label}</p>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setMarketDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleMarketSave}>
-              {editingMarket ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        ))}
+      </div>
+
+      <div style={s.card}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: COLORS.bgElevated, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "8px 12px" }}>
+            <Search size={14} color={COLORS.textMuted} /><input placeholder="Search users..." style={{ background: "none", border: "none", outline: "none", color: COLORS.textPrimary, fontSize: 13, flex: 1 }} />
+          </div>
+          <button style={s.btn(COLORS.accent, true)}><Filter size={13} />KYC Status</button>
+          <button style={s.btn(COLORS.accent, true)}><SlidersHorizontal size={13} />Risk Level</button>
+        </div>
+        <table style={s.table}>
+          <thead><tr>
+            {["User ID", "Name", "Email", "Balance", "Bets", "Win Rate", "KYC", "Risk", "Status", "Actions"].map(h => <th key={h} style={s.th}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {users.map((u, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : `${COLORS.bgElevated}50` }}>
+                <td style={{ ...s.td, color: COLORS.blue, fontWeight: 600, fontSize: 12 }}>{u.id}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary, fontWeight: 500 }}>{u.name}</td>
+                <td style={s.td}>{u.email}</td>
+                <td style={{ ...s.td, color: COLORS.accent, fontWeight: 600 }}>{u.balance}</td>
+                <td style={s.td}>{u.totalBets}</td>
+                <td style={s.td}>{Math.round((u.won / u.totalBets) * 100)}%</td>
+                <td style={s.td}><StatusBadge status={u.kyc} /></td>
+                <td style={s.td}><StatusBadge status={u.risk} /></td>
+                <td style={s.td}><StatusBadge status={u.status} /></td>
+                <td style={s.td}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button style={{ ...s.btn(COLORS.blue, true), padding: "4px 8px" }}><Eye size={11} /></button>
+                    <button style={{ ...s.btn(COLORS.gold, true), padding: "4px 8px" }}><Edit size={11} /></button>
+                    <button style={{ ...s.btn(COLORS.red, true), padding: "4px 8px" }}>{u.status === "active" ? <Lock size={11} /> : <Unlock size={11} />}</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const EventsManagement = () => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Events & Sports</h1>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>Manage live and upcoming events</p>
+        </div>
+        <button style={s.btn(COLORS.accent)}><Plus size={13} />Add Event</button>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {["All", "Live", "Upcoming", "Completed", "Suspended"].map(f => (
+          <button key={f} style={{ ...s.btn(COLORS.accent, f !== "All"), ...(f === "All" ? {} : {}) }}>{f}</button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {events.map((e, i) => (
+          <div key={i} style={{ ...s.card, display: "flex", alignItems: "center", gap: 16 }}>
+            {e.status === "live" && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff6b35", boxShadow: "0 0 6px #ff6b35", flexShrink: 0, animation: "pulse 1.5s infinite" }} />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <StatusBadge status={e.status} />
+                <span style={{ fontSize: 11, color: COLORS.textMuted }}>{e.league}</span>
+                <span style={{ fontSize: 11, color: COLORS.textMuted }}>•</span>
+                <span style={{ fontSize: 11, color: COLORS.textMuted }}>{e.date}</span>
+              </div>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: COLORS.textPrimary }}>{e.home} <span style={{ color: COLORS.textMuted }}>vs</span> {e.away}</p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 80px)", gap: 12, textAlign: "center" }}>
+              <div><p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: COLORS.blue }}>{e.markets}</p><p style={{ margin: 0, fontSize: 11, color: COLORS.textMuted }}>Markets</p></div>
+              <div><p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: COLORS.gold }}>{e.totalBets.toLocaleString()}</p><p style={{ margin: 0, fontSize: 11, color: COLORS.textMuted }}>Bets</p></div>
+              <div><p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: COLORS.red }}>{e.exposure}</p><p style={{ margin: 0, fontSize: 11, color: COLORS.textMuted }}>Exposure</p></div>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button style={{ ...s.btn(COLORS.blue, true), padding: "6px 10px" }}><Eye size={13} /></button>
+              <button style={{ ...s.btn(COLORS.gold, true), padding: "6px 10px" }}><Edit size={13} /></button>
+              <button style={{ ...s.btn(COLORS.red, true), padding: "6px 10px" }}><XCircle size={13} /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const OddsControl = () => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Odds Control</h1>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>Manage markets, odds, and margins</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button style={s.btn(COLORS.accent, true)}><RefreshCw size={13} />Sync Feed</button>
+          <button style={s.btn(COLORS.accent)}><Plus size={13} />New Market</button>
+        </div>
+      </div>
+      <div style={s.card}>
+        <table style={s.table}>
+          <thead><tr>
+            {["Event", "Market", "Selection 1", "Odds", "Selection 2", "Odds", "Selection 3", "Odds", "Margin", "Status", "Actions"].map(h => <th key={h} style={s.th}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {oddsData.map((o, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : `${COLORS.bgElevated}50` }}>
+                <td style={{ ...s.td, color: COLORS.textPrimary, fontWeight: 500, fontSize: 12, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.event}</td>
+                <td style={s.td}>{o.market}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary }}>{o.sel1}</td>
+                <td style={{ ...s.td }}><span style={{ background: COLORS.accentDim, color: COLORS.accent, padding: "2px 8px", borderRadius: 5, fontWeight: 700, fontSize: 13 }}>{o.odds1}</span></td>
+                <td style={s.td}>{o.sel2 || "—"}</td>
+                <td style={s.td}>{o.odds2 ? <span style={{ background: COLORS.accentDim, color: COLORS.accent, padding: "2px 8px", borderRadius: 5, fontWeight: 700, fontSize: 13 }}>{o.odds2}</span> : "—"}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary }}>{o.sel3}</td>
+                <td style={s.td}><span style={{ background: COLORS.accentDim, color: COLORS.accent, padding: "2px 8px", borderRadius: 5, fontWeight: 700, fontSize: 13 }}>{o.odds3}</span></td>
+                <td style={{ ...s.td, color: COLORS.gold, fontWeight: 600 }}>{o.margin}</td>
+                <td style={s.td}><StatusBadge status={o.status} /></td>
+                <td style={s.td}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button style={{ ...s.btn(COLORS.gold, true), padding: "4px 8px" }}><Edit size={11} /></button>
+                    <button style={{ ...s.btn(o.status === "active" ? COLORS.red : COLORS.accent, true), padding: "4px 8px" }}>{o.status === "active" ? <Lock size={11} /> : <Unlock size={11} />}</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const Transactions = () => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Transactions</h1>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>Deposits, withdrawals & payment review</p>
+        </div>
+        <button style={s.btn(COLORS.accent, true)}><Download size={13} />Export CSV</button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "Deposits Today", val: "$284,100", color: COLORS.accent },
+          { label: "Withdrawals", val: "$142,800", color: COLORS.red },
+          { label: "Pending Review", val: "14", color: COLORS.gold },
+          { label: "Flagged AML", val: "3", color: COLORS.red },
+        ].map((k, i) => (
+          <div key={i} style={{ ...s.card, textAlign: "center" }}>
+            <p style={{ fontSize: 22, fontWeight: 700, color: k.color, margin: 0 }}>{k.val}</p>
+            <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>{k.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div style={s.card}>
+        <table style={s.table}>
+          <thead><tr>
+            {["TXN ID", "User", "Type", "Method", "Amount", "Status", "Time", "Actions"].map(h => <th key={h} style={s.th}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {transactions.map((t, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : `${COLORS.bgElevated}50` }}>
+                <td style={{ ...s.td, color: COLORS.blue, fontWeight: 600, fontSize: 12 }}>{t.id}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary, fontWeight: 500 }}>{t.user}</td>
+                <td style={s.td}><span style={s.badge(t.type === "deposit" ? COLORS.accent : COLORS.red, t.type === "deposit" ? COLORS.accentDim : COLORS.redDim)}>{t.type}</span></td>
+                <td style={s.td}>{t.method}</td>
+                <td style={{ ...s.td, color: t.amount.startsWith("+") ? COLORS.accent : COLORS.red, fontWeight: 700 }}>{t.amount}</td>
+                <td style={s.td}><StatusBadge status={t.status} /></td>
+                <td style={{ ...s.td, color: COLORS.textMuted, fontSize: 11 }}>{t.time}</td>
+                <td style={s.td}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button style={{ ...s.btn(COLORS.blue, true), padding: "4px 8px" }}><Eye size={11} /></button>
+                    {t.status === "pending" && <><button style={{ ...s.btn(COLORS.accent, true), padding: "4px 8px" }}><CheckCircle size={11} /></button><button style={{ ...s.btn(COLORS.red, true), padding: "4px 8px" }}><XCircle size={11} /></button></>}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const RiskManagement = () => (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Risk Management</h1>
+        <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>Fraud detection, AML & exposure monitoring</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
+        {/* Alerts */}
+        <div style={s.card}>
+          <p style={{ ...s.sectionTitle, marginBottom: 4 }}>Active Alerts</p>
+          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "0 0 16px" }}>{riskAlerts.length} alerts requiring attention</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {riskAlerts.map((a, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, padding: "10px 12px", background: COLORS.bgElevated, borderRadius: 8, borderLeft: `3px solid ${a.type === "high" ? COLORS.red : a.type === "medium" ? COLORS.gold : COLORS.blue}` }}>
+                <AlertTriangle size={14} color={a.type === "high" ? COLORS.red : a.type === "medium" ? COLORS.gold : COLORS.blue} style={{ flexShrink: 0, marginTop: 1 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 12, color: COLORS.textPrimary, fontWeight: 500 }}>{a.message}</p>
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <span style={{ fontSize: 11, color: COLORS.textMuted }}>{a.user}</span>
+                    <span style={{ fontSize: 11, color: COLORS.textMuted }}>•</span>
+                    <span style={{ fontSize: 11, color: COLORS.textMuted }}>{a.time}</span>
+                  </div>
+                </div>
+                <StatusBadge status={a.type} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Exposure */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={s.card}>
+            <p style={{ ...s.sectionTitle, marginBottom: 16 }}>Event Exposure Limits</p>
+            {[
+              { event: "Man City vs Arsenal", used: 84, limit: 100, color: COLORS.gold },
+              { event: "Real Madrid vs Barca", used: 196, limit: 250, color: COLORS.accent },
+              { event: "Lakers vs Warriors", used: 128, limit: 150, color: COLORS.red },
+            ].map((e, i) => (
+              <div key={i} style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: COLORS.textSecondary }}>{e.event}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: e.color }}>${e.used}k / ${e.limit}k</span>
+                </div>
+                <div style={{ height: 6, background: COLORS.bgElevated, borderRadius: 99 }}>
+                  <div style={{ height: "100%", width: `${Math.min((e.used / e.limit) * 100, 100)}%`, background: e.color, borderRadius: 99, transition: "width 0.5s" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={s.card}>
+            <p style={{ ...s.sectionTitle, marginBottom: 16 }}>Risk Controls</p>
+            {[
+              { label: "Max Single Bet", value: "$10,000", active: true },
+              { label: "Daily Withdrawal Limit", value: "$50,000", active: true },
+              { label: "Auto-suspend on Suspicious Activity", value: "Enabled", active: true },
+              { label: "AML Review Threshold", value: "$5,000", active: true },
+            ].map((r, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i < 3 ? `1px solid ${COLORS.border}` : "none" }}>
+                <span style={{ fontSize: 13, color: COLORS.textSecondary }}>{r.label}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.textPrimary }}>{r.value}</span>
+                  <button style={{ ...s.btn(COLORS.gold, true), padding: "3px 8px", fontSize: 11 }}><Edit size={10} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const Reports = () => (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Reports & Analytics</h1>
+        <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>Financial, operational & compliance reports</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+        {[
+          { title: "Daily P&L Report", desc: "Revenue, GGR, margin breakdown", icon: DollarSign, color: COLORS.accent, last: "Apr 3, 2026" },
+          { title: "User Activity Report", desc: "Registrations, sessions, retention", icon: Users, color: COLORS.blue, last: "Apr 3, 2026" },
+          { title: "Bet Analysis Report", desc: "Volume, sport breakdown, markets", icon: Target, color: COLORS.gold, last: "Apr 2, 2026" },
+          { title: "Risk & Fraud Report", desc: "Flags, alerts, suspicious users", icon: Shield, color: COLORS.red, last: "Apr 3, 2026" },
+          { title: "AML Compliance Report", desc: "Transactions reviewed, escalated", icon: Flag, color: COLORS.purple, last: "Apr 1, 2026" },
+          { title: "Odds & Margin Report", desc: "Margin analysis, odds movement", icon: TrendingUp, color: COLORS.gold, last: "Apr 2, 2026" },
+        ].map((r, i) => {
+          const Icon = r.icon;
+          return (
+            <div key={i} style={{ ...s.card, cursor: "pointer" }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: `${r.color}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon size={16} color={r.color} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: COLORS.textPrimary }}>{r.title}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 11, color: COLORS.textMuted }}>{r.desc}</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 11, color: COLORS.textMuted }}>Last: {r.last}</span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button style={{ ...s.btn(COLORS.accent, true), padding: "4px 10px", fontSize: 11 }}><Eye size={11} />View</button>
+                  <button style={{ ...s.btn(COLORS.accent, true), padding: "4px 10px", fontSize: 11 }}><Download size={11} /></button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const BetManagement = () => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Bet Management</h1>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>All bets, settlements & void management</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button style={s.btn(COLORS.accent, true)}><RefreshCw size={13} />Refresh</button>
+          <button style={s.btn(COLORS.accent, true)}><Download size={13} />Export</button>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "Total Open", val: "12,847", color: COLORS.gold },
+          { label: "Settled Today", val: "4,201", color: COLORS.accent },
+          { label: "Voided", val: "23", color: COLORS.red },
+          { label: "Flagged", val: "18", color: COLORS.red },
+          { label: "Liability", val: "$2.1M", color: COLORS.purple },
+        ].map((k, i) => (
+          <div key={i} style={{ ...s.card, textAlign: "center" }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: k.color, margin: 0 }}>{k.val}</p>
+            <p style={{ fontSize: 11, color: COLORS.textMuted, margin: "4px 0 0" }}>{k.label}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        {["All Bets", "Pending", "Won", "Lost", "Flagged", "Voided"].map(f => (
+          <button key={f} style={s.btn(COLORS.accent, f !== "All Bets")}>{f}</button>
+        ))}
+      </div>
+      <div style={s.card}>
+        <table style={s.table}>
+          <thead><tr>
+            {["Bet ID", "User", "Sport", "Event", "Market", "Odds", "Stake", "Potential Win", "Status", "Time", "Actions"].map(h => <th key={h} style={s.th}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {recentBets.map((b, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : `${COLORS.bgElevated}50` }}>
+                <td style={{ ...s.td, color: COLORS.blue, fontWeight: 600, fontSize: 12 }}>{b.id}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary, fontWeight: 500 }}>{b.user}</td>
+                <td style={s.td}>{b.sport}</td>
+                <td style={{ ...s.td, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.event}</td>
+                <td style={s.td}>{b.market}</td>
+                <td style={{ ...s.td, color: COLORS.gold, fontWeight: 700 }}>{b.odds}</td>
+                <td style={{ ...s.td, color: COLORS.textPrimary, fontWeight: 600 }}>{b.stake}</td>
+                <td style={{ ...s.td, color: COLORS.accent, fontWeight: 600 }}>${(parseFloat(b.stake.replace("$", "").replace(",", "")) * parseFloat(b.odds)).toFixed(0)}</td>
+                <td style={s.td}><StatusBadge status={b.status} /></td>
+                <td style={{ ...s.td, fontSize: 11, color: COLORS.textMuted }}>{b.time}</td>
+                <td style={s.td}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button style={{ ...s.btn(COLORS.blue, true), padding: "4px 8px" }}><Eye size={11} /></button>
+                    <button style={{ ...s.btn(COLORS.red, true), padding: "4px 8px" }}><XCircle size={11} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const AdminSettings = () => (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>Platform Settings</h1>
+        <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "4px 0 0" }}>System configuration & admin preferences</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {[
+          { title: "General", items: ["Platform name", "Default currency", "Supported languages", "Maintenance mode"] },
+          { title: "Betting Rules", items: ["Min bet amount", "Max bet amount", "Max payout per bet", "Accumulator limit"] },
+          { title: "KYC & Compliance", items: ["KYC provider", "Auto-verify threshold", "Document requirements", "Jurisdiction rules"] },
+          { title: "Payment Gateways", items: ["Stripe integration", "Crypto wallets", "Bank transfer", "Withdrawal auto-approve"] },
+        ].map((sec, i) => (
+          <div key={i} style={s.card}>
+            <p style={{ ...s.sectionTitle, marginBottom: 12 }}>{sec.title}</p>
+            {sec.items.map((item, j) => (
+              <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: j < sec.items.length - 1 ? `1px solid ${COLORS.border}` : "none" }}>
+                <span style={{ fontSize: 13, color: COLORS.textSecondary }}>{item}</span>
+                <button style={{ ...s.btn(COLORS.accent, true), padding: "4px 10px", fontSize: 11 }}><Edit size={10} />Edit</button>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderPage = () => {
+    switch (activeNav) {
+      case "dashboard": return <Dashboard />;
+      case "users": return <UserManagement />;
+      case "bets": return <BetManagement />;
+      case "events": return <EventsManagement />;
+      case "odds": return <OddsControl />;
+      case "transactions": return <Transactions />;
+      case "risk": return <RiskManagement />;
+      case "reports": return <Reports />;
+      case "settings": return <AdminSettings />;
+      default: return <Dashboard />;
+    }
+  };
+
+  return (
+    <div style={s.root}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity: 0.4; } }
+        button:hover { opacity: 0.85; }
+      `}</style>
+
+      {/* Sidebar */}
+      <div style={s.sidebar}>
+        <div style={s.logo}>
+          <div style={s.logoMark}><Zap size={16} color="#000" /></div>
+          {sidebarOpen && <div><p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: COLORS.textPrimary, letterSpacing: "0.03em" }}>BetForge</p><p style={{ margin: 0, fontSize: 10, color: COLORS.textMuted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Admin Panel</p></div>}
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
+          {sidebarOpen && <p style={{ fontSize: 10, color: COLORS.textMuted, padding: "0 24px", marginBottom: 6, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Navigation</p>}
+          {navSections.map(item => <NavItem key={item.id} item={item} />)}
+        </div>
+
+        <div style={{ padding: "12px 0", borderTop: `1px solid ${COLORS.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", cursor: "pointer" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${COLORS.purple}, ${COLORS.blue})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>SA</span>
+            </div>
+            {sidebarOpen && <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: COLORS.textPrimary }}>Super Admin</p>
+              <p style={{ margin: 0, fontSize: 11, color: COLORS.textMuted }}>admin@betforge.io</p>
+            </div>}
+          </div>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div style={s.main}>
+        {/* Topbar */}
+        <div style={s.topbar}>
+          <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: COLORS.textSecondary }} onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu size={18} />
+          </button>
+          <div style={s.searchBox}>
+            <Search size={14} color={COLORS.textMuted} />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search users, bets, events..." style={{ background: "none", border: "none", outline: "none", color: COLORS.textPrimary, fontSize: 13, flex: 1, minWidth: 0 }} />
+          </div>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", background: COLORS.accentDim, borderRadius: 20 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: COLORS.accent, animation: "pulse 1.5s infinite" }} />
+              <span style={{ fontSize: 11, color: COLORS.accent, fontWeight: 600 }}>LIVE</span>
+            </div>
+            <div style={{ position: "relative", cursor: "pointer" }} onClick={() => setNotifications(0)}>
+              <Bell size={18} color={COLORS.textSecondary} />
+              {notifications > 0 && <span style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, borderRadius: "50%", background: COLORS.red, fontSize: 8, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{notifications}</span>}
+            </div>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${COLORS.purple}, ${COLORS.blue})`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>SA</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Page Content */}
+        <div style={s.content}>
+          {renderPage()}
+        </div>
+      </div>
     </div>
   );
 }
