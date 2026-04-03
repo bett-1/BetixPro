@@ -1,4 +1,15 @@
+import { useState } from "react";
 import { Download, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { reports } from "../../data/mock-data";
 import {
   AdminButton,
@@ -8,6 +19,10 @@ import {
 } from "../../components/ui";
 
 export default function Reports() {
+  const [selectedReport, setSelectedReport] = useState<
+    (typeof reports)[0] | null
+  >(null);
+
   return (
     <div className="space-y-6">
       <AdminSectionHeader
