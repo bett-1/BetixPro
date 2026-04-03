@@ -100,7 +100,11 @@ export default function Navbar() {
             </DropdownMenuTrigger>
 
             {/* Tightened width to w-52 */}
-            <DropdownMenuContent className="user-dropdown-content w-52" align="end" forceMount>
+            <DropdownMenuContent
+              className="user-dropdown-content w-52"
+              align="end"
+              forceMount
+            >
               {/* Mobile Balance View: Tighter padding and text sizes */}
               <div className="user-dropdown-mobile-balance">
                 <p className="text-[11px] text-muted-foreground mb-0.5 uppercase tracking-wider">
@@ -109,10 +113,7 @@ export default function Navbar() {
                 <p className="text-base font-bold text-emerald-600">
                   {balance}
                 </p>
-                <Button
-                  className="user-dropdown-mobile-deposit"
-                  asChild
-                >
+                <Button className="user-dropdown-mobile-deposit" asChild>
                   <Link to="/user/payments">
                     <PlusCircle className="h-3 w-3" /> Deposit
                   </Link>

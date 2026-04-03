@@ -1296,11 +1296,13 @@ h4 {
   color: var(--admin-text-primary);
 }
 
-.user-dropdown-content [data-slot="dropdown-menu-item"][data-variant="destructive"] {
+.user-dropdown-content
+  [data-slot="dropdown-menu-item"][data-variant="destructive"] {
   color: var(--admin-red);
 }
 
-.user-dropdown-content [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus {
+.user-dropdown-content
+  [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus {
   background: rgba(255, 77, 106, 0.12);
   color: var(--admin-red);
 }
