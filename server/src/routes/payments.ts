@@ -50,7 +50,13 @@ function getMpesaConfig() {
   const passkey = process.env.MPESA_PASSKEY;
   const callbackUrl = process.env.MPESA_CALLBACK_URL;
 
-  if (!consumerKey || !consumerSecret || !shortcode || !passkey || !callbackUrl) {
+  if (
+    !consumerKey ||
+    !consumerSecret ||
+    !shortcode ||
+    !passkey ||
+    !callbackUrl
+  ) {
     return null;
   }
 
@@ -161,7 +167,8 @@ paymentRouter.post("/payments/mpesa/stk-push", async (req, res, next) => {
 
     if (!stkPushResponse.ok || stkData.ResponseCode !== "0") {
       return res.status(502).json({
-        message: stkData.errorMessage ?? "M-Pesa rejected the STK push request.",
+        message:
+          stkData.errorMessage ?? "M-Pesa rejected the STK push request.",
       });
     }
 

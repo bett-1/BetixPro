@@ -19,14 +19,21 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "../ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Mock balance
-  const balance = "KES 0.00"
+  const balance = "KES 0.00";
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
