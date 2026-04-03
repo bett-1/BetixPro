@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export default function AdminShell() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState(7);
+  const [notifications] = useState(7);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const pathname = useLocation({
     select: (location) => location.pathname,

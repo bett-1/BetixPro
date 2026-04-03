@@ -34,7 +34,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Navbar() {
-  const [notifications, setNotifications] = useState(3);
+  const [notifications] = useState(3);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const pathname = useLocation({
     select: (location) => location.pathname,
