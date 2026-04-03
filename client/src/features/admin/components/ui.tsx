@@ -359,10 +359,10 @@ export function MiniChart() {
         <Line
           type="monotone"
           dataKey="loss"
-          stroke="#ef5350"
+          stroke="#ff9800"
           strokeWidth={3}
           strokeDasharray="8 4"
-          dot={{ fill: "#ef5350", r: 5 }}
+          dot={{ fill: "#ff9800", r: 5 }}
           activeDot={{ r: 6 }}
           name="Loss"
         />
