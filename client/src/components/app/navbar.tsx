@@ -119,7 +119,11 @@ export default function Navbar() {
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="w-52 border-admin-border bg-[rgba(10,14,26,0.95)] text-admin-text-primary" align="end" forceMount>
+            <DropdownMenuContent
+              className="w-52 border-admin-border bg-[rgba(10,14,26,0.95)] text-admin-text-primary"
+              align="end"
+              forceMount
+            >
               <div className="mb-1 border-b border-admin-border p-2 sm:hidden">
                 <p className="mb-0.5 text-[11px] uppercase tracking-wider text-admin-text-muted">
                   Current Balance
@@ -143,19 +147,28 @@ export default function Navbar() {
                 Finance
               </DropdownMenuLabel>
               <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim" asChild>
+                <DropdownMenuItem
+                  className="cursor-pointer py-1.5 hover:bg-admin-accent-dim"
+                  asChild
+                >
                   <Link to="/user/payments/deposit">
                     <ArrowDownToLine className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                     <span>Deposit</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim" asChild>
+                <DropdownMenuItem
+                  className="cursor-pointer py-1.5 hover:bg-admin-accent-dim"
+                  asChild
+                >
                   <Link to="/user/payments/withdrawal">
                     <ArrowUpFromLine className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                     <span>Withdrawal</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-1.5 hover:bg-admin-accent-dim" asChild>
+                <DropdownMenuItem
+                  className="cursor-pointer py-1.5 hover:bg-admin-accent-dim"
+                  asChild
+                >
                   <Link to="/user/payments/history">
                     <Wallet className="mr-2 h-3.5 w-3.5 text-admin-text-muted" />
                     <span>Transaction History</span>
