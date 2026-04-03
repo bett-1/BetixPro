@@ -1,4 +1,8 @@
-import { Outlet, createRootRoute, createFileRoute } from "@tanstack/react-router";
+import {
+  Outlet,
+  createRootRoute,
+  createFileRoute,
+} from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import AdminSidebar from "@/components/app/admin-sidebar";
 

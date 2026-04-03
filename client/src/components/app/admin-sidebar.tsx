@@ -7,16 +7,16 @@ export default function AdminSidebar() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-cyan-400">BetWise Admin</h1>
       </div>
-      
+
       <nav className="space-y-2">
-        <Link 
-          to="/admin/" 
+        <Link
+          to="/admin/"
           className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition"
         >
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
         </Link>
-        
+
         <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition text-left">
           <Settings size={20} />
           <span>Settings</span>
