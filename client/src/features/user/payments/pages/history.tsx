@@ -81,16 +81,39 @@ export default function PaymentsHistoryPage() {
             }
           >
             <SelectTrigger className="h-10 w-full rounded-xl border border-admin-border bg-[rgba(22,29,53,0.65)] text-admin-text-primary font-medium hover:border-admin-accent/35 focus:border-admin-accent/35 focus:shadow-[0_0_0_3px_rgba(0,229,160,0.12)] focus:outline-none transition">
-              <SelectValue placeholder="All types" className="text-admin-text-primary" />
+              <SelectValue
+                placeholder="All types"
+                className="text-admin-text-primary"
+              />
             </SelectTrigger>
             <SelectContent className="border-admin-border bg-[rgba(10,14,26,0.98)] text-admin-text-primary">
-              <SelectItem value="all" className="hover:bg-admin-accent-dim">All types</SelectItem>
-              <SelectItem value="deposit" className="hover:bg-admin-accent-dim">Deposit</SelectItem>
-              <SelectItem value="withdrawal" className="hover:bg-admin-accent-dim">Withdrawal</SelectItem>
-              <SelectItem value="bet-stake" className="hover:bg-admin-accent-dim">Bet stake</SelectItem>
-              <SelectItem value="bet-win" className="hover:bg-admin-accent-dim">Bet win</SelectItem>
-              <SelectItem value="refund" className="hover:bg-admin-accent-dim">Refund</SelectItem>
-              <SelectItem value="bonus" className="hover:bg-admin-accent-dim">Bonus</SelectItem>
+              <SelectItem value="all" className="hover:bg-admin-accent-dim">
+                All types
+              </SelectItem>
+              <SelectItem value="deposit" className="hover:bg-admin-accent-dim">
+                Deposit
+              </SelectItem>
+              <SelectItem
+                value="withdrawal"
+                className="hover:bg-admin-accent-dim"
+              >
+                Withdrawal
+              </SelectItem>
+              <SelectItem
+                value="bet-stake"
+                className="hover:bg-admin-accent-dim"
+              >
+                Bet stake
+              </SelectItem>
+              <SelectItem value="bet-win" className="hover:bg-admin-accent-dim">
+                Bet win
+              </SelectItem>
+              <SelectItem value="refund" className="hover:bg-admin-accent-dim">
+                Refund
+              </SelectItem>
+              <SelectItem value="bonus" className="hover:bg-admin-accent-dim">
+                Bonus
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -101,14 +124,33 @@ export default function PaymentsHistoryPage() {
             }
           >
             <SelectTrigger className="h-10 w-full rounded-xl border border-admin-border bg-[rgba(22,29,53,0.65)] text-admin-text-primary font-medium hover:border-admin-accent/35 focus:border-admin-accent/35 focus:shadow-[0_0_0_3px_rgba(0,229,160,0.12)] focus:outline-none transition">
-              <SelectValue placeholder="All statuses" className="text-admin-text-primary" />
+              <SelectValue
+                placeholder="All statuses"
+                className="text-admin-text-primary"
+              />
             </SelectTrigger>
             <SelectContent className="border-admin-border bg-[rgba(10,14,26,0.98)] text-admin-text-primary">
-              <SelectItem value="all" className="hover:bg-admin-accent-dim">All statuses</SelectItem>
-              <SelectItem value="completed" className="hover:bg-admin-accent-dim">Completed</SelectItem>
-              <SelectItem value="pending" className="hover:bg-admin-accent-dim">Pending</SelectItem>
-              <SelectItem value="failed" className="hover:bg-admin-accent-dim">Failed</SelectItem>
-              <SelectItem value="reversed" className="hover:bg-admin-accent-dim">Reversed</SelectItem>
+              <SelectItem value="all" className="hover:bg-admin-accent-dim">
+                All statuses
+              </SelectItem>
+              <SelectItem
+                value="completed"
+                className="hover:bg-admin-accent-dim"
+              >
+                Completed
+              </SelectItem>
+              <SelectItem value="pending" className="hover:bg-admin-accent-dim">
+                Pending
+              </SelectItem>
+              <SelectItem value="failed" className="hover:bg-admin-accent-dim">
+                Failed
+              </SelectItem>
+              <SelectItem
+                value="reversed"
+                className="hover:bg-admin-accent-dim"
+              >
+                Reversed
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

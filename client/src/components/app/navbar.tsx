@@ -149,7 +149,10 @@ export default function Navbar() {
                     className="mx-1 px-3 py-2 rounded-lg cursor-pointer text-sm transition hover:bg-admin-accent-dim hover:text-admin-accent group"
                     asChild
                   >
-                    <Link to="/user/payments/deposit" className="flex items-center gap-2 no-underline">
+                    <Link
+                      to="/user/payments/deposit"
+                      className="flex items-center gap-2 no-underline"
+                    >
                       <ArrowDownToLine className="h-4 w-4 text-admin-text-muted group-hover:text-admin-accent" />
                       <span>Deposit</span>
                     </Link>
@@ -158,7 +161,10 @@ export default function Navbar() {
                     className="mx-1 px-3 py-2 rounded-lg cursor-pointer text-sm transition hover:bg-admin-accent-dim hover:text-admin-accent group"
                     asChild
                   >
-                    <Link to="/user/payments/withdrawal" className="flex items-center gap-2 no-underline">
+                    <Link
+                      to="/user/payments/withdrawal"
+                      className="flex items-center gap-2 no-underline"
+                    >
                       <ArrowUpFromLine className="h-4 w-4 text-admin-text-muted group-hover:text-admin-accent" />
                       <span>Withdrawal</span>
                     </Link>
@@ -167,7 +173,10 @@ export default function Navbar() {
                     className="mx-1 px-3 py-2 rounded-lg cursor-pointer text-sm transition hover:bg-admin-accent-dim hover:text-admin-accent group"
                     asChild
                   >
-                    <Link to="/user/payments/history" className="flex items-center gap-2 no-underline">
+                    <Link
+                      to="/user/payments/history"
+                      className="flex items-center gap-2 no-underline"
+                    >
                       <Wallet className="h-4 w-4 text-admin-text-muted group-hover:text-admin-accent" />
                       <span>Transaction History</span>
                     </Link>
