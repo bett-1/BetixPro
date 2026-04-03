@@ -11,7 +11,6 @@ import {
   ArrowUpFromLine,
   Settings,
   History,
-  BarChart3,
   LogOut,
 } from "lucide-react";
 

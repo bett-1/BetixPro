@@ -25,6 +25,14 @@ export default function PaymentsModule() {
   const pathname = useLocation({
     select: (location) => location.pathname,
   });
+  const navigate = useNavigate();
+
+  // Redirect to deposit if accessing /user/payments directly
+  useEffect(() => {
+    if (pathname === "/user/payments") {
+      navigate({ to: "/user/payments/deposit" });
+    }
+  }, [pathname, navigate]);
 
   return (
     <section className="animate-lift-in grid gap-4 xl:grid-cols-[240px_1fr]">
