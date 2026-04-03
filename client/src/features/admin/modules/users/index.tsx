@@ -39,7 +39,7 @@ export default function Users() {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [viewUserOpen, setViewUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(
-    null
+    null,
   );
   const [confirmActionOpen, setConfirmActionOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
