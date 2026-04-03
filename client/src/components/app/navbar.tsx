@@ -142,7 +142,9 @@ export default function Navbar() {
             </DialogTrigger>
             <DialogContent className="border-admin-border bg-[rgba(10,14,26,0.98)] text-admin-text-primary">
               <DialogHeader>
-                <DialogTitle className="text-admin-text-primary">Notifications</DialogTitle>
+                <DialogTitle className="text-admin-text-primary">
+                  Notifications
+                </DialogTitle>
                 <DialogDescription className="text-admin-text-muted">
                   You have {notifications} new notification
                   {notifications !== 1 ? "s" : ""}
