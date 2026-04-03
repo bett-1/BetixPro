@@ -23,14 +23,30 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Navbar() {
-  const [notifications] = useState(3);
+  const [notifications, setNotifications] = useState(3);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const pathname = useLocation({
     select: (location) => location.pathname,
   });
 
   const balance = "KES 0.00";
+
+  const mockNotifications = [
+    { id: 1, title: "Bet Won!", message: "Your bet on Team A was successful", time: "2 min ago" },
+    { id: 2, title: "Deposit Confirmed", message: "KES 5,000 has been added to your account", time: "1 hour ago" },
+    { id: 3, title: "Event Updated", message: "Match starting in 30 minutes", time: "3 hours ago" },
+  ];
 
   return (
     <nav className="sticky top-0 z-20 border-b border-admin-border bg-[rgba(10,14,26,0.88)] backdrop-blur-[18px]">
@@ -94,18 +110,50 @@ export default function Navbar() {
             </Button>
           </div>
 
-          <button
-            aria-label="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-xl border border-admin-border bg-white/2 text-admin-text-secondary transition hover:bg-admin-hover hover:text-admin-text-primary"
-            type="button"
-          >
-            <Bell size={18} />
-            {notifications > 0 ? (
-              <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-admin-red text-[8px] font-bold text-white">
-                {notifications}
-              </span>
-            ) : null}
-          </button>
+          <Dialog open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+            <DialogTrigger asChild>
+              <button
+                aria-label="Notifications"
+                className="relative text-admin-text-secondary transition hover:text-admin-text-primary"
+                type="button"
+              >
+                <Bell size={18} />
+                {notifications > 0 ? (
+                  <span className="absolute -right-2 -top-2 grid h-4 w-4 place-items-center rounded-full bg-admin-red text-[8px] font-bold text-white">
+                    {notifications}
+                  </span>
+                ) : null}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="border-admin-border">
+              <DialogHeader>
+                <DialogTitle>Notifications</DialogTitle>
+                <DialogDescription>
+                  You have {notifications} new notification{notifications !== 1 ? "s" : ""}
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="h-[300px] w-full pr-4">
+                <div className="flex flex-col gap-3">
+                  {mockNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className="rounded-lg border border-admin-border bg-admin-card-hover p-3 transition hover:bg-white/5"
+                    >
+                      <p className="text-sm font-semibold text-admin-text-primary">
+                        {notification.title}
+                      </p>
+                      <p className="text-xs text-admin-text-muted">
+                        {notification.message}
+                      </p>
+                      <p className="text-[10px] text-admin-text-muted mt-1">
+                        {notification.time}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
