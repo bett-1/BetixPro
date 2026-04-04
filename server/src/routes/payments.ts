@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { prisma } from "../lib/prisma";
+import { emitWalletUpdate } from "../lib/socket";
 
 type WalletTransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "REVERSED";
 type WalletTransactionType =
@@ -13,6 +14,7 @@ type WalletTransactionType =
   | "BONUS";
 
 type PaymentEvent = {
+  userId: string;
   transactionId: string;
   checkoutRequestId?: string | null;
   merchantRequestId?: string | null;
@@ -22,12 +24,16 @@ type PaymentEvent = {
   amount: number;
 };
 
-const walletEventListeners = new Set<(event: PaymentEvent) => void>();
-
 function emitWalletEvent(event: PaymentEvent) {
-  for (const listener of walletEventListeners) {
-    listener(event);
-  }
+  emitWalletUpdate(event.userId, {
+    transactionId: event.transactionId,
+    checkoutRequestId: event.checkoutRequestId,
+    merchantRequestId: event.merchantRequestId,
+    status: event.status,
+    message: event.message,
+    balance: event.balance,
+    amount: event.amount,
+  });
 }
 
 const paymentRouter = Router();
@@ -316,6 +322,7 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
       });
 
       emitWalletEvent({
+        userId: matchedTransaction.userId,
         transactionId: matchedTransaction.id,
         checkoutRequestId,
         merchantRequestId: callback.MerchantRequestID,
@@ -339,6 +346,7 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
     });
 
     emitWalletEvent({
+      userId: matchedTransaction.userId,
       transactionId: matchedTransaction.id,
       checkoutRequestId,
       merchantRequestId: callback.MerchantRequestID,
@@ -388,50 +396,6 @@ paymentRouter.get(
     }
   },
 );
-
-paymentRouter.get("/payments/wallet/stream", authenticate, async (req, res) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const summary = await getWalletSummary(req.user.id);
-
-  res.status(200).setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders?.();
-
-  const send = (event: PaymentEvent) => {
-    res.write(`event: wallet-update\n`);
-    res.write(`data: ${JSON.stringify(event)}\n\n`);
-  };
-
-  const heartbeat = setInterval(() => {
-    res.write(`event: ping\n`);
-    res.write(`data: ${JSON.stringify({ time: Date.now() })}\n\n`);
-  }, 25000);
-
-  const listener = (event: PaymentEvent) => {
-    send(event);
-  };
-
-  walletEventListeners.add(listener);
-  send({
-    transactionId: "",
-    checkoutRequestId: null,
-    merchantRequestId: null,
-    status: "PENDING",
-    message: "Connected to live wallet updates.",
-    balance: summary.balance,
-    amount: 0,
-  });
-
-  req.on("close", () => {
-    clearInterval(heartbeat);
-    walletEventListeners.delete(listener);
-    res.end();
-  });
-});
 
 paymentRouter.post(
   "/payments/mpesa/stk-push",
@@ -550,6 +514,7 @@ paymentRouter.post(
       });
 
       emitWalletEvent({
+        userId,
         transactionId: transaction.id,
         checkoutRequestId: transaction.checkoutRequestId,
         merchantRequestId: transaction.merchantRequestId,

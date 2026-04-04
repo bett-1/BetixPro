@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/axiosConfig";
 
@@ -59,6 +60,16 @@ export type WalletStreamEvent = {
 
 export const walletSummaryQueryKey = ["wallet-summary"] as const;
 
+function resolveSocketBaseUrl() {
+  const rawBaseUrl = api.defaults.baseURL;
+
+  if (typeof rawBaseUrl === "string" && rawBaseUrl.startsWith("http")) {
+    return new URL(rawBaseUrl).origin;
+  }
+
+  return window.location.origin;
+}
+
 export function useWalletSummary() {
   const { isAuthenticated } = useAuth();
 
@@ -79,113 +90,63 @@ export function useWalletSummary() {
 export function useWalletRealtime() {
   const { isAuthenticated, accessToken } = useAuth();
   const queryClient = useQueryClient();
-  const reconnectTimerRef = useRef<number | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
+      socketRef.current?.disconnect();
+      socketRef.current = null;
       return;
     }
 
-    const controller = new AbortController();
+    socketRef.current?.disconnect();
+    const socket = io(resolveSocketBaseUrl(), {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+      auth: {
+        token: accessToken,
+      },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+    });
 
-    const clearReconnectTimer = () => {
-      if (reconnectTimerRef.current) {
-        window.clearTimeout(reconnectTimerRef.current);
-        reconnectTimerRef.current = null;
+    socketRef.current = socket;
+
+    const handleWalletUpdate = (payload: WalletStreamEvent) => {
+      if (!payload.transactionId) {
+        return;
       }
-    };
 
-    const connect = async () => {
-      try {
-        const response = await fetch(
-          `${api.defaults.baseURL ?? "/api"}/payments/wallet/stream`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
+      queryClient.setQueryData<WalletSummaryResponse>(
+        walletSummaryQueryKey,
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          return {
+            ...current,
+            wallet: {
+              ...current.wallet,
+              balance: payload.balance,
             },
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
+          };
+        },
+      );
 
-        if (!response.ok || !response.body) {
-          throw new Error("Unable to open wallet stream.");
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (!controller.signal.aborted) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
-
-          buffer += decoder.decode(value, { stream: true });
-
-          let eventBoundary = buffer.indexOf("\n\n");
-          while (eventBoundary !== -1) {
-            const rawEvent = buffer.slice(0, eventBoundary);
-            buffer = buffer.slice(eventBoundary + 2);
-            eventBoundary = buffer.indexOf("\n\n");
-
-            const lines = rawEvent.split("\n");
-            const eventType = lines
-              .find((line) => line.startsWith("event:"))
-              ?.slice(6)
-              .trim();
-            const dataLine = lines
-              .filter((line) => line.startsWith("data:"))
-              .map((line) => line.slice(5).trim())
-              .join("\n");
-
-            if (eventType !== "wallet-update" || !dataLine) {
-              continue;
-            }
-
-            const payload = JSON.parse(dataLine) as WalletStreamEvent;
-
-            if (payload.transactionId) {
-              queryClient.setQueryData<WalletSummaryResponse>(
-                walletSummaryQueryKey,
-                (current) => {
-                  if (!current) {
-                    return current;
-                  }
-
-                  return {
-                    ...current,
-                    wallet: {
-                      ...current.wallet,
-                      balance: payload.balance,
-                    },
-                  };
-                },
-              );
-
-              void queryClient.invalidateQueries({
-                queryKey: walletSummaryQueryKey,
-              });
-            }
-          }
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          clearReconnectTimer();
-          reconnectTimerRef.current = window.setTimeout(() => {
-            void connect();
-          }, 5000);
-        }
-      }
+      void queryClient.invalidateQueries({ queryKey: walletSummaryQueryKey });
     };
 
-    clearReconnectTimer();
-    void connect();
+    socket.on("wallet:update", handleWalletUpdate);
 
     return () => {
-      controller.abort();
-      clearReconnectTimer();
+      socket.off("wallet:update", handleWalletUpdate);
+      socket.disconnect();
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
     };
   }, [accessToken, isAuthenticated, queryClient]);
 }

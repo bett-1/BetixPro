@@ -1,8 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { CheckCircle2, CircleAlert, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/axios";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { formatMoney } from "../data";
 import { useWalletSummary, type StkPushResponse } from "../wallet";
 
@@ -24,7 +40,10 @@ export default function PaymentsDepositPage() {
   const [submissionBalance, setSubmissionBalance] = useState<number | null>(
     null,
   );
+  const [submissionAmount, setSubmissionAmount] = useState<number | null>(null);
   const [depositConfirmed, setDepositConfirmed] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
   const { data: walletData, isLoading: isWalletLoading } = useWalletSummary();
 
   const isFormValid = useMemo(() => {
@@ -46,7 +65,7 @@ export default function PaymentsDepositPage() {
       setDepositConfirmed(true);
       setSubmissionStartedAt(null);
       setSubmissionBalance(null);
-      toast.success("Deposit confirmed. Wallet balance updated in real time.");
+      toast.success(`Payment successful. New balance is ${formatMoney(currentBalance)}.`);
     }
   }, [currentBalance, isSubmitting, submissionBalance, submissionStartedAt]);
 
@@ -60,9 +79,12 @@ export default function PaymentsDepositPage() {
 
     setIsSubmitting(true);
     setResponse(null);
+    setPaymentFailed(null);
     setDepositConfirmed(false);
+    setFeedbackDialogOpen(true);
     setSubmissionStartedAt(new Date().toISOString());
     setSubmissionBalance(currentBalance);
+    setSubmissionAmount(Number(amount));
 
     try {
       const { data } = await api.post<StkPushResponse>(
@@ -74,13 +96,16 @@ export default function PaymentsDepositPage() {
       );
 
       setResponse(data);
-      toast.success(data.customerMessage ?? "STK push sent. Check your phone.");
+      toast.info("Payment initiated. Please approve the prompt on your phone.");
     } catch (error: unknown) {
       setSubmissionStartedAt(null);
       setSubmissionBalance(null);
       const messageFromApi = (
         error as { response?: { data?: { message?: string } } }
       )?.response?.data?.message;
+      setPaymentFailed(
+        messageFromApi || "Could not start M-Pesa payment. Try again.",
+      );
       toast.error(
         messageFromApi || "Could not start M-Pesa payment. Try again.",
       );
@@ -88,6 +113,20 @@ export default function PaymentsDepositPage() {
       setIsSubmitting(false);
     }
   }
+
+  const paymentStateLabel = paymentFailed
+    ? "Failed"
+    : depositConfirmed
+      ? "Success"
+      : response
+        ? "Awaiting approval"
+        : isSubmitting
+          ? "Initiating"
+          : "Idle";
+
+  const shouldShowDialog =
+    feedbackDialogOpen &&
+    Boolean(isSubmitting || response || depositConfirmed || paymentFailed);
 
   return (
     <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
@@ -127,13 +166,7 @@ export default function PaymentsDepositPage() {
               Deposit status
             </p>
             <p className="mt-2 text-sm font-semibold text-admin-text-primary">
-              {depositConfirmed
-                ? "Confirmed"
-                : isSubmitting
-                  ? "Processing"
-                  : response
-                    ? "Waiting for approval"
-                    : "Idle"}
+              {paymentStateLabel}
             </p>
           </article>
           <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
@@ -216,44 +249,35 @@ export default function PaymentsDepositPage() {
           </Button>
         </form>
 
-        {response ? (
-          <div className="mt-4 rounded-2xl border border-admin-accent/30 bg-admin-accent-dim p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-admin-text-primary">
-                {response.message}
-              </p>
-              <span className="rounded-full border border-admin-accent/30 bg-admin-surface px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-admin-accent">
-                {depositConfirmed ? "Complete" : "Live"}
-              </span>
-            </div>
-            {response.customerMessage ? (
-              <p className="mt-1 text-sm text-admin-text-secondary">
-                {response.customerMessage}
-              </p>
-            ) : null}
-            {response.checkoutRequestId ? (
-              <p className="mt-2 break-all rounded-lg border border-admin-border bg-admin-surface px-2 py-1.5 text-xs text-admin-text-primary">
-                Request ID: {response.checkoutRequestId}
-              </p>
-            ) : null}
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
-              {paymentStages.map((stage, index) => (
+        <Card className="mt-4 border-admin-border bg-admin-surface shadow-none">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-sm text-admin-text-primary">Live Payment Feedback</CardTitle>
+            <CardDescription className="text-admin-text-muted">
+              Status updates change automatically as M-Pesa confirms your request.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 pt-4 sm:grid-cols-3">
+            {paymentStages.map((stage, index) => {
+              const isActive =
+                (index === 0 && (isSubmitting || Boolean(response) || depositConfirmed)) ||
+                (index === 1 && (Boolean(response) || depositConfirmed) && !paymentFailed) ||
+                (index === 2 && depositConfirmed);
+
+              return (
                 <div
                   key={stage}
                   className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                    index === 2 && depositConfirmed
-                      ? "border-admin-accent/30 bg-admin-surface text-admin-accent"
-                      : index === 1 && isSubmitting
-                        ? "border-admin-accent/30 bg-admin-surface text-admin-text-primary"
-                        : "border-admin-border bg-admin-card text-admin-text-secondary"
+                    isActive
+                      ? "border-admin-accent/30 bg-admin-accent-dim text-admin-text-primary"
+                      : "border-admin-border bg-admin-card text-admin-text-secondary"
                   }`}
                 >
                   {stage}
                 </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
+              );
+            })}
+          </CardContent>
+        </Card>
       </article>
 
       <article className="rounded-2xl border border-admin-border bg-admin-surface p-5">
@@ -272,6 +296,80 @@ export default function PaymentsDepositPage() {
           </p>
         </div>
       </article>
+
+      <Dialog open={shouldShowDialog} onOpenChange={setFeedbackDialogOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-md border-admin-border bg-admin-card p-0"
+        >
+          <div className="rounded-2xl p-6">
+            <DialogHeader className="items-center text-center">
+              <div
+                className={`mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full border ${
+                  paymentFailed
+                    ? "border-red-400/30 bg-red-500/10"
+                    : depositConfirmed
+                      ? "border-admin-accent/30 bg-admin-accent-dim"
+                      : "border-admin-border bg-admin-surface"
+                }`}
+              >
+                {paymentFailed ? (
+                  <CircleAlert className="h-7 w-7 text-red-400" />
+                ) : depositConfirmed ? (
+                  <CheckCircle2 className="h-7 w-7 text-admin-accent" />
+                ) : (
+                  <LoaderCircle className="h-7 w-7 animate-spin text-admin-accent" />
+                )}
+              </div>
+              <DialogTitle className="text-xl text-admin-text-primary">
+                {paymentFailed
+                  ? "Payment Failed"
+                  : depositConfirmed
+                    ? "Payment Complete"
+                    : response
+                      ? "Awaiting Confirmation"
+                      : "Payment Initiated"}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-center text-sm text-admin-text-muted">
+                {paymentFailed
+                  ? paymentFailed
+                  : depositConfirmed
+                    ? `Your deposit of ${formatMoney(submissionAmount ?? 0)} has gone through. Your balance is ${formatMoney(currentBalance)}.`
+                    : response
+                      ? "We sent the STK request. Approve it on your phone to complete payment."
+                      : "Payment initiated. Preparing your M-Pesa request..."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {response?.checkoutRequestId ? (
+              <div className="mt-4 rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-xs text-admin-text-secondary">
+                Request ID: {response.checkoutRequestId}
+              </div>
+            ) : null}
+
+            <DialogFooter className="mt-6 sm:justify-center">
+              {depositConfirmed || paymentFailed ? (
+                <Button
+                  type="button"
+                  className="h-10 min-w-28 rounded-xl bg-admin-accent text-black hover:opacity-90"
+                  onClick={() => setFeedbackDialogOpen(false)}
+                >
+                  Okay
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 min-w-28 rounded-xl border-admin-border bg-admin-surface text-admin-text-primary hover:bg-admin-card"
+                  onClick={() => setFeedbackDialogOpen(false)}
+                >
+                  Hide
+                </Button>
+              )}
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
