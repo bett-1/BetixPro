@@ -63,14 +63,15 @@ export default function PaymentsWithdrawalPage() {
   });
 
   const numAmount = Number(amount) || 0;
-  const feeAmount = Math.ceil((numAmount * WITHDRAWAL_FEE_PERCENTAGE) / 100);
+  const feeAmount =
+    numAmount > 0
+      ? Math.ceil((numAmount * WITHDRAWAL_FEE_PERCENTAGE) / 100)
+      : 0;
   const netAmount = numAmount - feeAmount;
-  const balance = walletData?.wallet.balance ?? 0;
+  const balance = walletData?.wallet?.balance ?? 0;
   const totalNeeded = numAmount + feeAmount;
 
-  const isPhoneValid = /^(?:\+254|254|0)?7\d{8}$/.test(
-    phone.replace(/\s+/g, ""),
-  );
+  const isPhoneValid = /^(?:\+?254|0)7\d{8}$/.test(phone.replace(/\s+/g, ""));
 
   const canWithdraw = useMemo(() => {
     return (
@@ -81,9 +82,11 @@ export default function PaymentsWithdrawalPage() {
     );
   }, [numAmount, balance, isPhoneValid, totalNeeded]);
 
-  const recentWithdrawals = (walletData?.transactions ?? [])
-    .filter((item) => item.type === "withdrawal")
-    .slice(0, 4);
+  const recentWithdrawals = Array.isArray(walletData?.transactions)
+    ? walletData.transactions
+        .filter((item) => item.type === "withdrawal")
+        .slice(0, 4)
+    : [];
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,9 +110,15 @@ export default function PaymentsWithdrawalPage() {
 
     setIsSubmitting(true);
     try {
+      // Normalize phone to format: 254XXXXXXXXX
+      let normalizedPhone = phone.replace(/\s+/g, "").replace(/^(\+|00)/, "");
+      if (normalizedPhone.startsWith("0")) {
+        normalizedPhone = "254" + normalizedPhone.slice(1);
+      }
+
       await withdrawalMutation.mutateAsync({
         amount: numAmount,
-        phone: phone.replace(/\s+/g, ""),
+        phone: normalizedPhone,
       });
     } finally {
       setIsSubmitting(false);
@@ -163,17 +172,18 @@ export default function PaymentsWithdrawalPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {quickAmounts.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  disabled={option > balance}
-                  className="rounded-lg border border-admin-border bg-admin-surface px-2.5 py-1 text-xs font-medium text-admin-text-secondary outline-none transition hover:border-admin-accent hover:text-admin-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setAmount(String(option))}
-                >
-                  {formatMoney(option)}
-                </button>
-              ))}
+              {Array.isArray(quickAmounts) &&
+                quickAmounts.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    disabled={option > balance}
+                    className="rounded-lg border border-admin-border bg-admin-surface px-2.5 py-1 text-xs font-medium text-admin-text-secondary outline-none transition hover:border-admin-accent hover:text-admin-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setAmount(String(option))}
+                  >
+                    {formatMoney(option)}
+                  </button>
+                ))}
             </div>
 
             {numAmount > 0 && (
@@ -250,7 +260,7 @@ export default function PaymentsWithdrawalPage() {
           Recent Requests
         </h3>
         <div className="mt-3 grid gap-2">
-          {recentWithdrawals.length > 0 ? (
+          {Array.isArray(recentWithdrawals) && recentWithdrawals.length > 0 ? (
             recentWithdrawals.map((entry) => (
               <div
                 key={entry.id}
