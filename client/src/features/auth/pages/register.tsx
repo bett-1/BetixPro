@@ -148,7 +148,7 @@ export default function Register() {
               setEmail(event.target.value);
               clearFieldError("email");
             }}
-            className="h-9 rounded-lg border border-admin-border bg-(--color-bg-elevated) px-2.5 text-xs text-admin-text-primary outline-none"
+            className="h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 text-xs text-admin-text-primary outline-none"
             required
           />
           {!emailValid && email.length > 0 ? (
