@@ -22,10 +22,35 @@ adminRouter.get(
 
 // User Management
 adminRouter.get("/admin/users", authenticate, requireAdmin, getAllUsers);
-adminRouter.get("/admin/users/:userId", authenticate, requireAdmin, getUserDetails);
-adminRouter.post("/admin/users/:userId/ban", authenticate, requireAdmin, banUser);
-adminRouter.post("/admin/users/:userId/unban", authenticate, requireAdmin, unbanUser);
-adminRouter.post("/admin/users/:userId/suspend", authenticate, requireAdmin, suspendUser);
-adminRouter.post("/admin/users/:userId/unsuspend", authenticate, requireAdmin, unsuspendUser);
+adminRouter.get(
+  "/admin/users/:userId",
+  authenticate,
+  requireAdmin,
+  getUserDetails,
+);
+adminRouter.post(
+  "/admin/users/:userId/ban",
+  authenticate,
+  requireAdmin,
+  banUser,
+);
+adminRouter.post(
+  "/admin/users/:userId/unban",
+  authenticate,
+  requireAdmin,
+  unbanUser,
+);
+adminRouter.post(
+  "/admin/users/:userId/suspend",
+  authenticate,
+  requireAdmin,
+  suspendUser,
+);
+adminRouter.post(
+  "/admin/users/:userId/unsuspend",
+  authenticate,
+  requireAdmin,
+  unsuspendUser,
+);
 
 export { adminRouter };
