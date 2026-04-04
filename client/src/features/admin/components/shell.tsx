@@ -193,57 +193,18 @@ export default function AdminShell() {
             </div>
 
             <button
+              type="button"
               aria-label="View notifications"
               className="relative grid h-10 w-10 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary"
               onClick={() => setNotifications(0)}
-              type="button"
             >
-              <DialogTrigger asChild>
-                <button
-                  aria-label="View notifications"
-                  className="relative text-admin-text-secondary transition hover:text-admin-text-primary"
-                  type="button"
-                >
-                  <Bell size={18} />
-                  {notifications > 0 ? (
-                    <span className="absolute -right-2 -top-2 grid h-4 w-4 place-items-center rounded-full bg-admin-red text-[8px] font-bold text-white">
-                      {notifications}
-                    </span>
-                  ) : null}
-                </button>
-              </DialogTrigger>
-              <DialogContent className="border-admin-border bg-admin-card text-admin-text-primary">
-                <DialogHeader>
-                  <DialogTitle className="text-admin-text-primary">
-                    Notifications
-                  </DialogTitle>
-                  <DialogDescription className="text-admin-text-muted">
-                    You have {notifications} new notification
-                    {notifications !== 1 ? "s" : ""}
-                  </DialogDescription>
-                </DialogHeader>
-                <ScrollArea className="h-[300px] w-full pr-4">
-                  <div className="flex flex-col gap-3">
-                    {mockNotifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className="rounded-lg border border-admin-border bg-admin-card-hover p-3 transition hover:bg-white/5"
-                      >
-                        <p className="text-sm font-semibold text-admin-text-primary">
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-admin-text-muted">
-                          {notification.message}
-                        </p>
-                        <p className="text-[10px] text-admin-text-muted mt-1">
-                          {notification.time}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </DialogContent>
-            </Dialog>
+              <Bell size={18} />
+              {notifications > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-admin-red text-[8px] font-bold text-white">
+                  {notifications}
+                </span>
+              )}
+            </button>
 
             <div className="grid h-8 w-8 place-items-center rounded-full bg-[linear-gradient(135deg,var(--admin-purple),var(--admin-blue))] text-[11px] font-bold text-white">
               SA
