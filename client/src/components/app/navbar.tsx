@@ -1,196 +1,251 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import {
   Bell,
-  Moon,
-  Sun,
+  Clock3,
+  Copy,
+  FileText,
+  Flame,
+  Grid2x2,
+  Plus,
+  Search,
+  Star,
+  Trophy,
   User,
-  ChevronDown,
-  LayoutDashboard,
-  Wallet,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Settings,
-  History,
-  BarChart3,
-  LogOut,
-  PlusCircle,
-  Balloon,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "../ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+import styles from "./navbar.module.css";
+
+type OddsDirection = "up" | "down";
+
+type TickerItem = {
+  match: string;
+  teams: string;
+  odds: string;
+  direction: OddsDirection;
+};
+
+type NavItem = {
+  id: string;
+  label: string;
+  icon?: typeof Grid2x2;
+  badge?: {
+    text: string;
+    tone: "red" | "gold" | "green";
+  };
+  isLive?: boolean;
+};
+
+const tickerItems: TickerItem[] = [
+  {
+    match: "ENG Premier",
+    teams: "Arsenal vs Liverpool",
+    odds: "1.94",
+    direction: "up",
+  },
+  {
+    match: "La Liga",
+    teams: "Real Madrid vs Sevilla",
+    odds: "2.11",
+    direction: "down",
+  },
+  {
+    match: "Serie A",
+    teams: "Inter vs Milan",
+    odds: "1.78",
+    direction: "up",
+  },
+  {
+    match: "UCL",
+    teams: "PSG vs Bayern",
+    odds: "2.33",
+    direction: "down",
+  },
+  {
+    match: "NBA",
+    teams: "Lakers vs Celtics",
+    odds: "1.67",
+    direction: "up",
+  },
+];
+
+const navItems: NavItem[] = [
+  { id: "home", label: "Home", icon: Grid2x2 },
+  {
+    id: "live",
+    label: "Live",
+    isLive: true,
+    badge: { text: "24", tone: "red" },
+  },
+  { id: "upcoming", label: "Upcoming", icon: Clock3 },
+  {
+    id: "jackpot",
+    label: "Jackpot",
+    icon: Trophy,
+    badge: { text: "4.2M", tone: "gold" },
+  },
+  {
+    id: "promotions",
+    label: "Promotions",
+    icon: Star,
+    badge: { text: "New", tone: "green" },
+  },
+  { id: "results", label: "Results", icon: FileText },
+  { id: "casino", label: "Casino", icon: Flame },
+  { id: "my-bets", label: "My Bets", icon: Copy },
+];
+
+const leagueItems = [
+  "âš½ All Sports",
+  "ðŸ† UCL",
+  "ðŸ´ Premier League",
+  "ðŸ‡ªðŸ‡¸ La Liga",
+  "ðŸ‡©ðŸ‡ª Bundesliga",
+  "ðŸ‡®ðŸ‡¹ Serie A",
+  "ðŸ‡«ðŸ‡· Ligue 1",
+  "ðŸ€ NBA",
+  "ðŸŽ¾ Tennis",
+  "ðŸ¥Š MMA/UFC",
+  "ðŸ Cricket",
+  "ðŸ‰ Rugby",
+  "ðŸŽ° Casino",
+  "ðŸƒ Virtual",
+] as const;
 
 export default function Navbar() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Mock balance
-  const balance = "KES 0.00";
+  const tickerLoop = useMemo(() => [...tickerItems, ...tickerItems], []);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
-        {/* Left: Logo & Brand */}
-        <div className="flex items-center gap-8">
-          <a
-            href="/"
-            className="flex items-center gap-2 transition-opacity hover:opacity-80"
-          >
-            <Balloon className="h-7 w-7 text-emerald-500" />
-            <span className="text-xl font-bold tracking-tight text-primary">
-              BETTCENIC
-            </span>
-          </a>
-
-          {/* Main Navigation (Desktop) */}
-          <div className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" className="text-sm font-medium">
-              Home
-            </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              Pre-match
-            </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              Live
-            </Button>
-          </div>
-        </div>
-
-        {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-3 md:gap-5">
-          {/* Balance & Quick Deposit */}
-          <div className="hidden sm:flex items-center rounded-md border bg-muted/50 p-1">
-            <div className="flex items-center px-3 py-1">
-              <span className="text-xs text-muted-foreground mr-2">
-                Balance:
-              </span>
-              <span className="text-sm font-bold">{balance}</span>
-            </div>
-            <Button
-              size="sm"
-              className="h-7 px-3 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <PlusCircle className="h-3.5 w-3.5" />
-              Deposit
-            </Button>
-          </div>
-
-          {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full h-9 w-9"
-            onClick={() => setIsDarkMode(!isDarkMode)}
-          >
-            {isDarkMode ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </Button>
-
-          {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full h-9 w-9"
-          >
-            <Bell className="h-4 w-4" />
-            <Badge className="absolute top-1 right-1.5 h-2 w-2 rounded-full p-0 bg-red-500 border border-background" />
-          </Button>
-
-          {/* Account Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="gap-2 rounded-full pl-3 pr-2 h-9 border-muted-foreground/20"
-              >
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium hidden md:inline-block">
-                  Account
+    <header className={styles.navbar}>
+      <div className={styles.tickerBar}>
+        <span className={styles.liveLabel}>LIVE</span>
+        <div className={styles.tickerViewport}>
+          <div className={styles.tickerTrack}>
+            {tickerLoop.map((item, index) => (
+              <div key={`${item.teams}-${index}`} className={styles.tickerItem}>
+                <span>{item.match}</span>
+                <span className={styles.tickerFixture}>{item.teams}</span>
+                <span
+                  className={
+                    item.direction === "up"
+                      ? styles.tickerOddsUp
+                      : styles.tickerOddsDown
+                  }
+                >
+                  {item.direction === "up" ? "▲" : "▼"} {item.odds}
                 </span>
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              {/* Mobile Balance View (Shows only on small screens) */}
-              <div className="sm:hidden p-3 border-b mb-1">
-                <p className="text-xs text-muted-foreground mb-1">
-                  Current Balance
-                </p>
-                <p className="text-lg font-bold text-emerald-600">{balance}</p>
-                <Button className="w-full mt-2 h-8 gap-1 bg-emerald-600 hover:bg-emerald-700">
-                  <PlusCircle className="h-3.5 w-3.5" /> Deposit
-                </Button>
+                <span className={styles.tickerDivider} aria-hidden="true" />
               </div>
-
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer">
-                  <LayoutDashboard className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Dashboard</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
-                Finance
-              </DropdownMenuLabel>
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer">
-                  <ArrowDownToLine className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Deposit</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <ArrowUpFromLine className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Withdrawal</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Wallet className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>My Wallet</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
-                Activity
-              </DropdownMenuLabel>
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <History className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>My Bets</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <BarChart3 className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>My Results</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/30">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            ))}
+          </div>
         </div>
       </div>
-    </nav>
+
+      <nav className={styles.mainNav} aria-label="Main navigation">
+        <div className={styles.logoWrap}>
+          <span className={styles.logoIcon} aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2L15.1 8.9L22 12L15.1 15.1L12 22L8.9 15.1L2 12L8.9 8.9L12 2Z"
+                fill="var(--color-text-dark)"
+              />
+            </svg>
+          </span>
+          <span className={styles.logoText}>
+            <span className={styles.logoWhite}>BETT</span>
+            <span className={styles.logoGold}>CENIC</span>
+          </span>
+        </div>
+
+        <div className={styles.searchWrap}>
+          <label className={styles.searchField} aria-label="Search matches">
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search matches, odds, teams..."
+            />
+            <Search size={16} color="var(--color-accent)" aria-hidden="true" />
+          </label>
+        </div>
+
+        <div className={styles.linksScroller}>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const badgeToneClass =
+              item.badge?.tone === "red"
+                ? styles.badgeRed
+                : item.badge?.tone === "gold"
+                  ? styles.badgeGold
+                  : styles.badgeGreen;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`${styles.navItem} ${item.id === "home" ? styles.navItemActive : ""}`}
+                aria-label={item.label}
+              >
+                {item.isLive ? (
+                  <span className={styles.liveDot} aria-hidden="true" />
+                ) : null}
+                {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                <span className={styles.navLabel}>{item.label}</span>
+                {item.badge ? (
+                  <span className={`${styles.badge} ${badgeToneClass}`}>
+                    {item.badge.text}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={styles.actions}>
+          <div className={styles.balance}>
+            <span className={styles.balanceLabel}>BALANCE</span>
+            <span className={styles.balanceValue}>KES 0.00</span>
+          </div>
+
+          <div className={styles.notifyWrap}>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label="Open notifications"
+            >
+              <Bell size={16} aria-hidden="true" />
+            </button>
+            <span className={styles.notifyDot} aria-hidden="true" />
+          </div>
+
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label="Open account menu"
+          >
+            <User size={16} aria-hidden="true" />
+          </button>
+
+          <button type="button" className={styles.depositButton}>
+            <Plus size={16} aria-hidden="true" />
+            <span className={styles.depositText}>Deposit</span>
+          </button>
+        </div>
+      </nav>
+
+      <div className={styles.leaguesStrip}>
+        {leagueItems.map((league, index) => (
+          <div key={league} className={styles.leagueEntry}>
+            <button
+              type="button"
+              className={`${styles.leagueItem} ${index === 0 ? styles.leagueActive : ""}`}
+            >
+              {league}
+            </button>
+            {index < leagueItems.length - 1 ? (
+              <span className={styles.leagueDivider} aria-hidden="true" />
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </header>
   );
 }

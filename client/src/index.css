@@ -1,10 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme inline {
+  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "IBM Plex Sans", sans-serif;
+  --font-admin: "DM Sans", "Segoe UI", sans-serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -23,43 +29,185 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-card: var(--admin-card);
+  --color-admin-surface: var(--admin-surface);
+  --color-admin-hover: var(--admin-hover);
+  --color-admin-accent: var(--admin-accent);
+  --color-admin-accent-dim: var(--admin-accent-dim);
+  --color-admin-blue: var(--admin-blue);
+  --color-admin-blue-dim: var(--admin-blue-dim);
+  --color-admin-gold: var(--admin-gold);
+  --color-admin-gold-dim: var(--admin-gold-dim);
+  --color-admin-red: var(--admin-red);
+  --color-admin-red-dim: var(--admin-red-dim);
+  --color-admin-purple: var(--admin-purple);
+  --color-admin-purple-dim: var(--admin-purple-dim);
+  --color-admin-live: var(--admin-live);
+  --color-admin-live-dim: var(--admin-live-dim);
+  --color-admin-text-primary: var(--admin-text-primary);
+  --color-admin-text-secondary: var(--admin-text-secondary);
+  --color-admin-text-muted: var(--admin-text-muted);
+  --color-admin-border: var(--admin-border);
+  --color-admin-border-strong: var(--admin-border-strong);
+
+  --animate-lift-in: lift-in 420ms ease-out both;
+  --animate-admin-pulse: admin-pulse 1.5s infinite;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Backgrounds */
+  --color-bg-deepest: #0d2137;
+  --color-bg-primary: #1a3a6b;
+  --color-bg-secondary: #1e4080;
+  --color-bg-surface: #2a5298;
+  --color-bg-elevated: #1c3d7a;
+  --color-bg-hover: rgba(255, 255, 255, 0.06);
+
+  /* Accent (CTA + active states ONLY) */
+  --color-accent: #f5c518;
+  --color-accent-dark: #e6b800;
+  --color-accent-glow: rgba(245, 197, 24, 0.25);
+  --color-accent-soft: rgba(245, 197, 24, 0.12);
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a8c4e0;
+  --color-text-muted: #6b8cae;
+  --color-text-accent: #f5c518;
+  --color-text-dark: #0d2137;
+
+  /* Borders */
+  --color-border-primary: rgba(255, 255, 255, 0.08);
+  --color-border-accent: rgba(245, 197, 24, 0.2);
+  --color-border-focus: rgba(245, 197, 24, 0.55);
+
+  /* Status */
+  --color-live: #ff3b30;
+  --color-live-bg: rgba(255, 59, 48, 0.15);
+  --color-win: #00c97a;
+  --color-loss: #ff3b30;
+  --color-pending: #f5c518;
+  --color-new: #00c97a;
+
+  /* Layout */
+  --sidebar-width: 260px;
+  --navbar-height: 118px;
+
+  /* Typography */
+  --font-main: "Barlow", sans-serif;
+  --font-cond: "Barlow Condensed", sans-serif;
+
+  --background: var(--color-bg-primary);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-bg-surface);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-deepest);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-bg-secondary);
+  --primary-foreground: var(--color-text-primary);
+  --secondary: var(--color-bg-surface);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-bg-elevated);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-text-dark);
+  --destructive: var(--color-loss);
+  --border: var(--color-border-primary);
+  --input: var(--color-border-primary);
+  --ring: var(--color-border-focus);
   --radius: 0.625rem;
+
+  --admin-bg: var(--color-bg-primary);
+  --admin-card: var(--color-bg-surface);
+  --admin-surface: var(--color-bg-elevated);
+  --admin-hover: var(--color-bg-hover);
+  --admin-accent: var(--color-accent);
+  --admin-accent-dim: var(--color-accent-soft);
+  --admin-blue: var(--color-text-secondary);
+  --admin-blue-dim: var(--color-bg-hover);
+  --admin-gold: var(--color-accent);
+  --admin-gold-dim: var(--color-accent-soft);
+  --admin-red: var(--color-loss);
+  --admin-red-dim: var(--color-live-bg);
+  --admin-purple: var(--color-text-muted);
+  --admin-purple-dim: var(--color-bg-hover);
+  --admin-live: var(--color-win);
+  --admin-live-dim: rgba(0, 201, 122, 0.16);
+  --admin-text-primary: var(--color-text-primary);
+  --admin-text-secondary: var(--color-text-secondary);
+  --admin-text-muted: var(--color-text-muted);
+  --admin-border: var(--color-border-primary);
+  --admin-border-strong: var(--color-border-accent);
+
+  --nav-bg: var(--color-bg-secondary);
+  --nav-surface: var(--color-bg-deepest);
+  --nav-surface2: var(--color-bg-surface);
+  --nav-accent: var(--color-accent);
+  --nav-accent2: var(--color-accent-dark);
+  --nav-border: var(--color-border-accent);
+  --nav-text: var(--color-text-primary);
+  --nav-muted: var(--color-text-muted);
+  --nav-green: var(--color-win);
+  --nav-red: var(--color-live);
 }
 
-* {
-  border-color: var(--border);
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground font-sans;
+    overflow-x: hidden;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
+@utility app-scrollbar {
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border-primary);
+    border-radius: 999px;
+  }
+}
+
+@keyframes lift-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
