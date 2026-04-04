@@ -264,7 +264,7 @@ async function createWithdrawalNotifications(args: {
 
 // Withdrawal configuration (KES)
 const WITHDRAWAL_CONFIG = {
-  MIN_AMOUNT: 100,
+  MIN_AMOUNT: 1,
   MAX_AMOUNT_PER_REQUEST: 10000,
   FEE_PERCENTAGE: 5, // 5%
 };

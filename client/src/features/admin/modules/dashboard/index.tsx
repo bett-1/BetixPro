@@ -2,11 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, Eye, Filter, Flag, TriangleAlert } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { api } from "@/api/axiosConfig";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { dashboardMetrics, recentBets } from "../../data/mock-data";
 import {
   AdminButton,
