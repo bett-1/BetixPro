@@ -2,24 +2,28 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Download,
-  Eye,
   Filter,
-  Flag,
   Loader,
+  MoreHorizontal,
   TriangleAlert,
 } from "lucide-react";
 import { api } from "@/api/axiosConfig";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AdminButton,
   AdminCard,
   AdminCardHeader,
+  DepositWithdrawalChart,
   AdminSectionHeader,
   InlinePill,
   StatusBadge,
-  SummaryCard,
   TableShell,
-  adminCompactActionsClassName,
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
@@ -29,11 +33,13 @@ type DashboardMetric = {
   label: string;
   value: string;
   tone: "accent" | "blue" | "gold" | "red";
+  helper?: string;
 };
 
 type DashboardTransaction = {
   id: string;
   reference: string;
+  mpesaCode?: string | null;
   userEmail: string;
   userPhone: string;
   type: "deposit" | "withdrawal";
@@ -48,6 +54,17 @@ type DashboardTransaction = {
 type DashboardSummaryResponse = {
   generatedAt: string;
   metrics: DashboardMetric[];
+  charts: {
+    depositWithdrawalTrend: Array<{
+      period: string;
+      deposits: number;
+      withdrawals: number;
+    }>;
+    totals: {
+      deposits7d: number;
+      withdrawals7d: number;
+    };
+  };
   recentTransactions: DashboardTransaction[];
 };
 
@@ -69,6 +86,7 @@ export default function Dashboard() {
   });
 
   const metrics = data?.metrics ?? [];
+  const chartData = data?.charts.depositWithdrawalTrend ?? [];
   const recentTransactions = data?.recentTransactions ?? [];
   const pendingWithdrawals = metrics.find(
     (metric) => metric.label === "Pending Withdrawals",
@@ -127,13 +145,61 @@ export default function Dashboard() {
               </AdminCard>
             ))
           : metrics.map((metric) => (
-              <SummaryCard
-                key={metric.label}
-                label={metric.label}
-                tone={metric.tone}
-                value={metric.value}
-              />
+              <AdminCard key={metric.label}>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  {metric.label}
+                </p>
+                <p className="mt-2 text-2xl font-bold text-admin-text-primary">
+                  {metric.value}
+                </p>
+                <p className="mt-2 text-xs text-admin-text-secondary">
+                  {metric.helper ?? "Live operational metric"}
+                </p>
+              </AdminCard>
             ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <AdminCard>
+          <AdminCardHeader
+            title="Deposit vs Withdrawal Trend"
+            subtitle="Completed transactions over last 7 days"
+          />
+          <DepositWithdrawalChart data={chartData} />
+        </AdminCard>
+
+        <AdminCard>
+          <AdminCardHeader title="7 Day Totals" subtitle="Liquidity monitor" />
+          <div className="space-y-3 pt-2">
+            <div className="rounded-xl border border-admin-border bg-admin-surface p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                Deposits (7d)
+              </p>
+              <p className="mt-1 text-xl font-bold text-admin-accent">
+                {formatCurrency(data?.charts.totals.deposits7d ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-admin-border bg-admin-surface p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                Withdrawals (7d)
+              </p>
+              <p className="mt-1 text-xl font-bold text-admin-gold">
+                {formatCurrency(data?.charts.totals.withdrawals7d ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-admin-border bg-admin-surface p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                Net (7d)
+              </p>
+              <p className="mt-1 text-xl font-bold text-admin-text-primary">
+                {formatCurrency(
+                  (data?.charts.totals.deposits7d ?? 0) -
+                    (data?.charts.totals.withdrawals7d ?? 0),
+                )}
+              </p>
+            </div>
+          </div>
+        </AdminCard>
       </div>
 
       <AdminCard>
@@ -165,7 +231,7 @@ export default function Dashboard() {
                   "Amount",
                   "Status",
                   "Time",
-                  "Action",
+                  "Actions",
                 ].map((heading) => (
                   <th className={adminTableHeadCellClassName} key={heading}>
                     {heading}
@@ -196,7 +262,7 @@ export default function Dashboard() {
                     <td
                       className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
                     >
-                      {transaction.reference}
+                      {transaction.mpesaCode ?? transaction.reference}
                     </td>
                     <td
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
@@ -241,14 +307,22 @@ export default function Dashboard() {
                       })}
                     </td>
                     <td className={adminTableCellClassName}>
-                      <div className={adminCompactActionsClassName}>
-                        <AdminButton size="sm" variant="ghost">
-                          <Eye size={11} />
-                        </AdminButton>
-                        <AdminButton size="sm" variant="ghost">
-                          <Flag size={11} />
-                        </AdminButton>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <AdminButton size="sm" variant="ghost" aria-label="Row actions">
+                            <MoreHorizontal size={14} />
+                          </AdminButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem>View details</DropdownMenuItem>
+                          <DropdownMenuItem>Open user</DropdownMenuItem>
+                          <DropdownMenuItem>
+                            {transaction.type === "withdrawal"
+                              ? "Review payout"
+                              : "Review deposit"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))
