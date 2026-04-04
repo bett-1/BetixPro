@@ -370,7 +370,7 @@ export default function Users() {
                             >
                               Edit
                             </DropdownMenuItem>
-                            {user.status === "active" && !user.bannedAt ? (
+                            {user.status === "active" ? (
                               <>
                                 <DropdownMenuItem
                                   onClick={() => handleOpenSuspend(user.id)}
@@ -391,14 +391,12 @@ export default function Users() {
                                 >
                                   Unsuspend
                                 </DropdownMenuItem>
-                                {!user.bannedAt && (
-                                  <DropdownMenuItem
-                                    onClick={() => handleOpenBan(user.id)}
-                                    className="text-admin-red"
-                                  >
-                                    Ban
-                                  </DropdownMenuItem>
-                                )}
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenBan(user.id)}
+                                  className="text-admin-red"
+                                >
+                                  Ban
+                                </DropdownMenuItem>
                               </>
                             ) : user.status === "banned" ? (
                               <DropdownMenuItem
@@ -517,8 +515,7 @@ export default function Users() {
                   >
                     Edit User
                   </Button>
-                  {selectedUser.status === "active" &&
-                  !selectedUser.bannedAt ? (
+                  {selectedUser.status === "active" ? (
                     <>
                       <Button
                         variant="outline"
@@ -543,14 +540,12 @@ export default function Users() {
                       >
                         Unsuspend
                       </Button>
-                      {!selectedUser.bannedAt && (
-                        <Button
-                          className="flex-1 bg-admin-red hover:bg-red-600 text-white"
-                          onClick={() => handleOpenBan(selectedUser.id)}
-                        >
-                          Ban
-                        </Button>
-                      )}
+                      <Button
+                        className="flex-1 bg-admin-red hover:bg-red-600 text-white"
+                        onClick={() => handleOpenBan(selectedUser.id)}
+                      >
+                        Ban
+                      </Button>
                     </>
                   ) : selectedUser.status === "banned" ? (
                     <Button

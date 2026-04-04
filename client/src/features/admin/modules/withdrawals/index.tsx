@@ -82,7 +82,6 @@ export default function WithdrawalsAdmin() {
   const {
     data: withdrawalsData,
     isLoading,
-    refetch,
   } = useQuery({
     queryKey: ["admin-withdrawals", statusFilter],
     queryFn: async () => {
