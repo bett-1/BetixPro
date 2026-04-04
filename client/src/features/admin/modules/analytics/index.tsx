@@ -195,7 +195,8 @@ export default function Analytics() {
           treat desktop as a secondary channel.
         </p>
         <p className="mt-2 text-xs text-admin-text-muted">
-          Mobile share {mobileShare} percent, desktop share {desktopShare} percent.
+          Mobile share {mobileShare} percent, desktop share {desktopShare}{" "}
+          percent.
         </p>
       </AdminCard>
     </div>
