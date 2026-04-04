@@ -195,7 +195,9 @@ export default function PaymentsHistoryPage() {
               </TableHead>
               <TableHead className="text-admin-text-muted">Type</TableHead>
               <TableHead className="text-admin-text-muted">Channel</TableHead>
-              <TableHead className="text-admin-text-muted">M-Pesa Code</TableHead>
+              <TableHead className="text-admin-text-muted">
+                M-Pesa Code
+              </TableHead>
               <TableHead className="text-admin-text-muted">Amount</TableHead>
               <TableHead className="text-admin-text-muted">Status</TableHead>
               <TableHead className="text-admin-text-muted">Date</TableHead>
