@@ -441,23 +441,39 @@ export default function Users() {
               {/* Info Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <p className="text-xs text-admin-text-muted font-semibold">Email</p>
-                  <p className="text-sm text-admin-text-primary truncate">{selectedUser.email}</p>
+                  <p className="text-xs text-admin-text-muted font-semibold">
+                    Email
+                  </p>
+                  <p className="text-sm text-admin-text-primary truncate">
+                    {selectedUser.email}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-admin-text-muted font-semibold">Phone</p>
-                  <p className="text-sm text-admin-text-primary">{selectedUser.phone}</p>
+                  <p className="text-xs text-admin-text-muted font-semibold">
+                    Phone
+                  </p>
+                  <p className="text-sm text-admin-text-primary">
+                    {selectedUser.phone}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-admin-text-muted font-semibold">Full Name</p>
-                  <p className="text-sm text-admin-text-primary">{selectedUser.name || "—"}</p>
+                  <p className="text-xs text-admin-text-muted font-semibold">
+                    Full Name
+                  </p>
+                  <p className="text-sm text-admin-text-primary">
+                    {selectedUser.name || "—"}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-admin-text-muted font-semibold">Status</p>
+                  <p className="text-xs text-admin-text-muted font-semibold">
+                    Status
+                  </p>
                   <StatusBadge status={selectedUser.status} />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-admin-text-muted font-semibold">Verified</p>
+                  <p className="text-xs text-admin-text-muted font-semibold">
+                    Verified
+                  </p>
                   <p className="text-sm font-medium">
                     {selectedUser.isVerified ? (
                       <span className="text-admin-accent">✓ Yes</span>
@@ -467,24 +483,34 @@ export default function Users() {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-admin-text-muted font-semibold">Created</p>
+                  <p className="text-xs text-admin-text-muted font-semibold">
+                    Created
+                  </p>
                   <p className="text-sm text-admin-text-primary text-xs">
-                    {new Date(selectedUser.createdAt).toLocaleDateString("en-KE")}
+                    {new Date(selectedUser.createdAt).toLocaleDateString(
+                      "en-KE",
+                    )}
                   </p>
                 </div>
               </div>
 
               {/* Financial Section */}
               <div className="border-t border-admin-border pt-3">
-                <p className="text-xs font-semibold text-admin-text-muted mb-2">FINANCIAL</p>
+                <p className="text-xs font-semibold text-admin-text-muted mb-2">
+                  FINANCIAL
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <p className="text-xs text-admin-text-muted">Balance</p>
-                    <p className="text-sm font-bold text-admin-accent">KES {selectedUser.balance.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-admin-accent">
+                      KES {selectedUser.balance.toLocaleString()}
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-admin-text-muted">Total Bets</p>
-                    <p className="text-sm font-bold text-admin-blue">{selectedUser.totalBets}</p>
+                    <p className="text-sm font-bold text-admin-blue">
+                      {selectedUser.totalBets}
+                    </p>
                   </div>
                 </div>
               </div>

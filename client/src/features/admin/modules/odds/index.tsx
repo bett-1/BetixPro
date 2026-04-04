@@ -1,7 +1,4 @@
-﻿import {
-  AdminCard,
-  AdminSectionHeader,
-} from "../../components/ui";
+﻿import { AdminCard, AdminSectionHeader } from "../../components/ui";
 
 export default function Odds() {
   return (
@@ -15,7 +12,8 @@ export default function Odds() {
         <div className="space-y-4">
           <p className="text-4xl font-bold text-admin-accent">Coming Soon!!!</p>
           <p className="text-admin-text-muted">
-            Odds management features are being developed to help you control markets and pricing.
+            Odds management features are being developed to help you control
+            markets and pricing.
           </p>
         </div>
       </AdminCard>

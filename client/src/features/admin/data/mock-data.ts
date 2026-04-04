@@ -7,7 +7,7 @@ import {
   Target,
   TrendingUp,
   Users,
-  Zap
+  Zap,
 } from "lucide-react";
 
 export type AdminTone =
