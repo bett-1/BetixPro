@@ -23,8 +23,6 @@ import {
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -516,11 +514,10 @@ export function FinancialTrendChart({ data }: { data: any[] }) {
 export function DepositWithdrawalChart({ data }: { data: any[] }) {
   return (
     <ResponsiveContainer width="100%" height={250}>
-      <BarChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+      <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="rgba(255,255,255,0.06)"
-          fill="rgba(0,0,0,0.2)"
         />
         <XAxis
           dataKey="period"
@@ -539,19 +536,25 @@ export function DepositWithdrawalChart({ data }: { data: any[] }) {
           cursor={{ fill: "rgba(255,255,255,0.05)" }}
         />
         <Legend />
-        <Bar
+        <Line
+          type="monotone"
           dataKey="deposits"
-          fill="#00e5a0"
+          stroke="#00e5a0"
+          strokeWidth={3}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
           name="Deposits"
-          radius={[4, 4, 0, 0]}
         />
-        <Bar
+        <Line
+          type="monotone"
           dataKey="withdrawals"
-          fill="#ff9800"
+          stroke="#ff9800"
+          strokeWidth={3}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
           name="Withdrawals"
-          radius={[4, 4, 0, 0]}
         />
-      </BarChart>
+      </LineChart>
     </ResponsiveContainer>
   );
 }

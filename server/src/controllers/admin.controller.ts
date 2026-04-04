@@ -458,7 +458,10 @@ export async function updateUser(req: Request, res: Response) {
   const updated = await prisma.user.update({
     where: { id: userId },
     data: {
-      fullName: parsedBody.data.fullName === undefined ? undefined : parsedBody.data.fullName,
+      fullName:
+        parsedBody.data.fullName === undefined
+          ? undefined
+          : parsedBody.data.fullName,
       email: parsedBody.data.email,
       phone: parsedBody.data.phone,
       isVerified: parsedBody.data.isVerified,

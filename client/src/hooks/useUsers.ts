@@ -76,7 +76,12 @@ export function useUsers(options: UseUsersOptions = {}) {
   };
 
   useEffect(() => {
-    void fetchUsers(resolvedSearch, resolvedStatus, resolvedPage, resolvedLimit);
+    void fetchUsers(
+      resolvedSearch,
+      resolvedStatus,
+      resolvedPage,
+      resolvedLimit,
+    );
   }, [resolvedSearch, resolvedStatus, resolvedPage, resolvedLimit]);
 
   return {

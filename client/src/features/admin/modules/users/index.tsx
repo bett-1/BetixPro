@@ -69,7 +69,9 @@ export default function Users() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "active" | "suspended" | "banned">("");
+  const [statusFilter, setStatusFilter] = useState<
+    "" | "active" | "suspended" | "banned"
+  >("");
   const [page, setPage] = useState(1);
   const [actionDialog, setActionDialog] = useState<ActionDialogState>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -102,7 +104,8 @@ export default function Users() {
       email: editingUser.email,
       phone: editingUser.phone,
       isVerified: editingUser.isVerified,
-      accountStatus: editingUser.status === "suspended" ? "SUSPENDED" : "ACTIVE",
+      accountStatus:
+        editingUser.status === "suspended" ? "SUSPENDED" : "ACTIVE",
     });
   }, [editingUser]);
 
@@ -330,13 +333,17 @@ export default function Users() {
                     >
                       KES {user.balance.toLocaleString()}
                     </td>
-                    <td className={adminTableCellClassName}>{user.totalBets}</td>
+                    <td className={adminTableCellClassName}>
+                      {user.totalBets}
+                    </td>
                     <td className={adminTableCellClassName}>{user.phone}</td>
                     <td className={adminTableCellClassName}>
                       {user.isVerified ? (
                         <span className="text-xs text-admin-accent">Yes</span>
                       ) : (
-                        <span className="text-xs text-admin-text-muted">No</span>
+                        <span className="text-xs text-admin-text-muted">
+                          No
+                        </span>
                       )}
                     </td>
                     <td className={adminTableCellClassName}>
@@ -371,20 +378,53 @@ export default function Users() {
                             {selectedUser ? (
                               <ScrollArea className="h-100 w-full pr-4">
                                 <div className="space-y-4">
-                                  <DetailRow label="USER ID" value={selectedUser.id} tone="blue" />
-                                  <DetailRow label="NAME" value={selectedUser.name} />
-                                  <DetailRow label="EMAIL" value={selectedUser.email} />
-                                  <DetailRow label="PHONE" value={selectedUser.phone} />
-                                  <DetailRow label="BALANCE" value={`KES ${selectedUser.balance.toLocaleString()}`} tone="accent" />
-                                  <DetailRow label="TOTAL BETS" value={selectedUser.totalBets.toString()} />
-                                  <DetailRow label="VERIFIED" value={selectedUser.isVerified ? "Yes" : "No"} />
+                                  <DetailRow
+                                    label="USER ID"
+                                    value={selectedUser.id}
+                                    tone="blue"
+                                  />
+                                  <DetailRow
+                                    label="NAME"
+                                    value={selectedUser.name}
+                                  />
+                                  <DetailRow
+                                    label="EMAIL"
+                                    value={selectedUser.email}
+                                  />
+                                  <DetailRow
+                                    label="PHONE"
+                                    value={selectedUser.phone}
+                                  />
+                                  <DetailRow
+                                    label="BALANCE"
+                                    value={`KES ${selectedUser.balance.toLocaleString()}`}
+                                    tone="accent"
+                                  />
+                                  <DetailRow
+                                    label="TOTAL BETS"
+                                    value={selectedUser.totalBets.toString()}
+                                  />
+                                  <DetailRow
+                                    label="VERIFIED"
+                                    value={
+                                      selectedUser.isVerified ? "Yes" : "No"
+                                    }
+                                  />
                                   <div>
-                                    <p className="text-xs text-admin-text-muted">STATUS</p>
-                                    <StatusBadge status={toBadgeStatus(selectedUser.status)} />
+                                    <p className="text-xs text-admin-text-muted">
+                                      STATUS
+                                    </p>
+                                    <StatusBadge
+                                      status={toBadgeStatus(
+                                        selectedUser.status,
+                                      )}
+                                    />
                                   </div>
                                   <DetailRow
                                     label="JOINED"
-                                    value={new Date(selectedUser.createdAt).toLocaleDateString()}
+                                    value={new Date(
+                                      selectedUser.createdAt,
+                                    ).toLocaleDateString()}
                                   />
                                 </div>
                               </ScrollArea>
@@ -461,7 +501,9 @@ export default function Users() {
                                   onChange={(event) =>
                                     setEditForm((current) => ({
                                       ...current,
-                                      accountStatus: event.target.value as "ACTIVE" | "SUSPENDED",
+                                      accountStatus: event.target.value as
+                                        | "ACTIVE"
+                                        | "SUSPENDED",
                                     }))
                                   }
                                 >
@@ -597,7 +639,9 @@ export default function Users() {
               variant="ghost"
               size="sm"
               disabled={page >= totalPages}
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              onClick={() =>
+                setPage((current) => Math.min(totalPages, current + 1))
+              }
             >
               Next
             </AdminButton>
@@ -639,9 +683,10 @@ export default function Users() {
               Cancel
             </Button>
             <Button
-              className={`flex-1 text-white ${actionDialog?.type === "ban" || actionDialog?.type === "suspend"
-                ? "bg-admin-red hover:bg-red-600"
-                : "bg-admin-accent text-black hover:bg-[#00d492]"
+              className={`flex-1 text-white ${
+                actionDialog?.type === "ban" || actionDialog?.type === "suspend"
+                  ? "bg-admin-red hover:bg-red-600"
+                  : "bg-admin-accent text-black hover:bg-[#00d492]"
               }`}
               onClick={() => void runAction()}
               disabled={actionLoading}
@@ -678,7 +723,9 @@ function DetailRow({
   return (
     <div>
       <p className="text-xs text-admin-text-muted">{label}</p>
-      <p className={`text-sm font-semibold ${tone === "accent" ? "text-admin-accent" : tone === "blue" ? "text-admin-blue" : "text-admin-text-primary"}`}>
+      <p
+        className={`text-sm font-semibold ${tone === "accent" ? "text-admin-accent" : tone === "blue" ? "text-admin-blue" : "text-admin-text-primary"}`}
+      >
         {value}
       </p>
     </div>
