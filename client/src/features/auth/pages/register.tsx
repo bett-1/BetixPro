@@ -179,7 +179,7 @@ export default function Register() {
               clearFieldError("phone");
             }}
             placeholder="07XXXXXXXX or 01XXXXXXXX or +2547XXXXXXXX"
-            className="h-9 rounded-lg border border-admin-border bg-(--color-bg-elevated) px-2.5 text-xs text-admin-text-primary outline-none"
+            className="h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 text-xs text-admin-text-primary outline-none"
             required
           />
           <p className="text-xs text-admin-text-muted">Kenyan format only.</p>
@@ -210,7 +210,7 @@ export default function Register() {
               setPassword(event.target.value);
               clearFieldError("password");
             }}
-            className="h-9 rounded-lg border border-admin-border bg-(--color-bg-elevated) px-2.5 text-xs text-admin-text-primary outline-none"
+            className="h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 text-xs text-admin-text-primary outline-none"
             required
           />
           <PasswordStrengthIndicator password={password} />
@@ -236,7 +236,7 @@ export default function Register() {
               setConfirmPassword(event.target.value);
               clearFieldError("confirmPassword");
             }}
-            className="h-9 rounded-lg border border-admin-border bg-(--color-bg-elevated) px-2.5 text-xs text-admin-text-primary outline-none"
+            className="h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 text-xs text-admin-text-primary outline-none"
             required
           />
           {!confirmValid && confirmPassword.length > 0 ? (
