@@ -1,57 +1,27 @@
-import { useState } from "react";
-import { Edit, Lock, Plus, RefreshCw, Unlock } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { oddsRows } from "../../data/mock-data";
-import {
-  AdminButton,
   AdminCard,
   AdminSectionHeader,
-  InlinePill,
-  StatusBadge,
-  TableShell,
-  adminCompactActionsClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
 } from "../../components/ui";
 
 export default function Odds() {
-  const [selectedOdds, setSelectedOdds] = useState<(typeof oddsRows)[0] | null>(
-    null,
-  );
-  const [suspendReason, setSuspendReason] = useState("");
-  const [editMargin, setEditMargin] = useState("");
-
   return (
     <div className="space-y-6">
       <AdminSectionHeader
         title="Odds Control"
         subtitle="Manage markets, odds, and margins"
-        actions={
-          <>
-            <AdminButton variant="ghost">
-              <RefreshCw size={13} />
-              Sync Feed
-            </AdminButton>
-            <AdminButton>
-              <Plus size={13} />
-              New Market
-            </AdminButton>
-          </>
-        }
       />
 
-      <AdminCard>
+      <AdminCard className="flex items-center justify-center rounded-2xl border-2 border-dashed border-admin-border/50 bg-gradient-to-br from-admin-surface/40 to-admin-surface/20 px-6 py-20 text-center">
+        <div className="space-y-4">
+          <p className="text-4xl font-bold text-admin-accent">Coming Soon!!!</p>
+          <p className="text-admin-text-muted">
+            Odds management features are being developed to help you control markets and pricing.
+          </p>
+        </div>
+      </AdminCard>
+    </div>
+  );
+}
         <TableShell>
           <table className={adminTableClassName}>
             <thead>
