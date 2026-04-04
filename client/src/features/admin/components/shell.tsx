@@ -200,7 +200,9 @@ export default function AdminShell() {
                               {notification.message}
                             </p>
                             <p className="mt-1 text-[11px] text-admin-text-muted">
-                              {new Date(notification.createdAt).toLocaleString()}
+                              {new Date(
+                                notification.createdAt,
+                              ).toLocaleString()}
                             </p>
                           </button>
                         ))

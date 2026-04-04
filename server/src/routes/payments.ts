@@ -62,7 +62,8 @@ async function createDepositNotifications(args: {
   const codeSuffix = normalizedMpesaCode
     ? ` M-Pesa code: ${normalizedMpesaCode}.`
     : "";
-  const userIdentifier = userProfile?.phone ?? userProfile?.email ?? args.userId;
+  const userIdentifier =
+    userProfile?.phone ?? userProfile?.email ?? args.userId;
   const isSuccess = args.status === "COMPLETED";
 
   const userTitle = isSuccess ? "Deposit Successful" : "Deposit Failed";

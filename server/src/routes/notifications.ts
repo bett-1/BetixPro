@@ -41,53 +41,57 @@ function toClientNotification(notification: {
   };
 }
 
-notificationRouter.get("/notifications", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
+notificationRouter.get(
+  "/notifications",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const parsedQuery = listNotificationsQuerySchema.safeParse(req.query);
+      if (!parsedQuery.success) {
+        return res.status(400).json({ message: "Invalid notification query." });
+      }
+
+      const audience: "ADMIN" | "USER" =
+        req.user.role === "ADMIN" ? "ADMIN" : "USER";
+
+      const where: {
+        userId: string;
+        audience: "ADMIN" | "USER";
+        isRead?: boolean;
+      } = {
+        userId: req.user.id,
+        audience,
+        ...(parsedQuery.data.unreadOnly ? { isRead: false } : {}),
+      };
+
+      const [notifications, unreadCount] = await Promise.all([
+        prisma.notification.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          take: parsedQuery.data.take,
+        }),
+        prisma.notification.count({
+          where: {
+            userId: req.user.id,
+            audience,
+            isRead: false,
+          },
+        }),
+      ]);
+
+      return res.status(200).json({
+        notifications: notifications.map(toClientNotification),
+        unreadCount,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const parsedQuery = listNotificationsQuerySchema.safeParse(req.query);
-    if (!parsedQuery.success) {
-      return res.status(400).json({ message: "Invalid notification query." });
-    }
-
-    const audience: "ADMIN" | "USER" =
-      req.user.role === "ADMIN" ? "ADMIN" : "USER";
-
-    const where: {
-      userId: string;
-      audience: "ADMIN" | "USER";
-      isRead?: boolean;
-    } = {
-      userId: req.user.id,
-      audience,
-      ...(parsedQuery.data.unreadOnly ? { isRead: false } : {}),
-    };
-
-    const [notifications, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: parsedQuery.data.take,
-      }),
-      prisma.notification.count({
-        where: {
-          userId: req.user.id,
-          audience,
-          isRead: false,
-        },
-      }),
-    ]);
-
-    return res.status(200).json({
-      notifications: notifications.map(toClientNotification),
-      unreadCount,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+  },
+);
 
 notificationRouter.patch(
   "/notifications/read-all",
