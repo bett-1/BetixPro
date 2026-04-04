@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import AuthCard from "@/components/auth/AuthCard";
 import PasswordStrengthIndicator from "@/components/PasswordStrengthIndicator";
 import { useAuth } from "@/context/AuthContext";
@@ -63,6 +64,10 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hellen's password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const emailValid = isValidEmail(email);
   const phoneValid = KENYAN_PHONE_REGEX.test(phone.trim());
@@ -202,17 +207,27 @@ export default function Register() {
           >
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              clearFieldError("password");
-            }}
-            className="h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 text-xs text-admin-text-primary outline-none"
-            required
-          />
+          <div className="relative w-full">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                clearFieldError("password");
+              }}
+              className="w-full h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 pr-10 text-xs text-admin-text-primary outline-none"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
           <PasswordStrengthIndicator password={password} />
           {errors.password?.map((message) => (
             <p key={message} className="text-xs text-red-400">
@@ -228,17 +243,27 @@ export default function Register() {
           >
             Confirm password
           </label>
-          <input
-            id="confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => {
-              setConfirmPassword(event.target.value);
-              clearFieldError("confirmPassword");
-            }}
-            className="h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 text-xs text-admin-text-primary outline-none"
-            required
-          />
+          <div className="relative w-full">
+            <input
+              id="confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                clearFieldError("confirmPassword");
+              }}
+              className="w-full h-9 rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 pr-10 text-xs text-admin-text-primary outline-none"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
           {!confirmValid && confirmPassword.length > 0 ? (
             <p className="text-xs text-amber-400">Passwords do not match.</p>
           ) : null}
