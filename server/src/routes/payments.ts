@@ -422,7 +422,7 @@ const handleMpesaCallback = (req: Request, res: Response) => {
   const parsedBody = mpesaCallbackSchema.safeParse(req.body);
 
   if (!parsedBody.success) {
-    console.error("❌ VALIDATION FAILED. Zod errors:", parsedBody.error.errors);
+    console.error("❌ VALIDATION FAILED. Zod errors:", parsedBody.error.issues);
     console.error(
       "Raw body that failed validation:",
       JSON.stringify(req.body, null, 2),
