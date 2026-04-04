@@ -117,7 +117,9 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   useEffect(() => {
     const historyNotifications = (walletData?.transactions ?? [])
       .filter((transaction) => {
-        return transaction.type === "deposit" && transaction.status === "completed";
+        return (
+          transaction.type === "deposit" && transaction.status === "completed"
+        );
       })
       .slice(0, 6)
       .map((transaction, index) => ({
@@ -142,15 +144,17 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         return;
       }
 
-      setNotifications((current) => [
-        {
-          id: `live-${payload.transactionId}-${Date.now()}`,
-          message: buildDepositNotification(payload),
-          timestamp: new Date().toISOString(),
-          read: false,
-        },
-        ...current,
-      ].slice(0, 12));
+      setNotifications((current) =>
+        [
+          {
+            id: `live-${payload.transactionId}-${Date.now()}`,
+            message: buildDepositNotification(payload),
+            timestamp: new Date().toISOString(),
+            read: false,
+          },
+          ...current,
+        ].slice(0, 12),
+      );
     };
 
     window.addEventListener(walletUpdateBrowserEvent, handleWalletUpdate);
@@ -160,7 +164,9 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     };
   }, []);
 
-  const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const unreadCount = notifications.filter(
+    (notification) => !notification.read,
+  ).length;
 
   return (
     <header className="bc-navbar" role="banner">
