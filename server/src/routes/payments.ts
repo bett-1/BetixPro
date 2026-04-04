@@ -59,6 +59,16 @@ type MpesaStkPushResponse = {
   errorMessage?: string;
 };
 
+type MpesaStkQueryResponse = {
+  ResponseCode?: string;
+  ResponseDescription?: string;
+  MerchantRequestID?: string;
+  CheckoutRequestID?: string;
+  ResultCode?: string;
+  ResultDesc?: string;
+  errorMessage?: string;
+};
+
 const mpesaCallbackSchema = z.object({
   Body: z.object({
     stkCallback: z.object({
@@ -247,6 +257,32 @@ function getTimestamp() {
   return `${year}${month}${day}${hour}${minute}${second}`;
 }
 
+async function getMpesaAccessToken(config: {
+  baseUrl: string;
+  consumerKey: string;
+  consumerSecret: string;
+}) {
+  const authHeader = Buffer.from(
+    `${config.consumerKey}:${config.consumerSecret}`,
+  ).toString("base64");
+
+  const tokenResponse = await fetch(
+    `${config.baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${authHeader}`,
+      },
+    },
+  );
+
+  if (!tokenResponse.ok) {
+    throw new Error("Could not authenticate with M-Pesa API.");
+  }
+
+  return (await tokenResponse.json()) as MpesaAuthTokenResponse;
+}
+
 paymentRouter.post("/payments/mpesa/callback", (req, res) => {
   const parsedBody = mpesaCallbackSchema.safeParse(req.body);
 
@@ -422,27 +458,7 @@ paymentRouter.post(
         });
       }
 
-      const authHeader = Buffer.from(
-        `${config.consumerKey}:${config.consumerSecret}`,
-      ).toString("base64");
-
-      const tokenResponse = await fetch(
-        `${config.baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${authHeader}`,
-          },
-        },
-      );
-
-      if (!tokenResponse.ok) {
-        return res.status(502).json({
-          message: "Could not authenticate with M-Pesa API.",
-        });
-      }
-
-      const tokenData = (await tokenResponse.json()) as MpesaAuthTokenResponse;
+      const tokenData = await getMpesaAccessToken(config);
 
       const timestamp = getTimestamp();
       const password = Buffer.from(
@@ -534,6 +550,201 @@ paymentRouter.post(
         wallet: {
           balance: wallet.balance,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+paymentRouter.get(
+  "/payments/mpesa/status/:transactionId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const transaction = await prisma.walletTransaction.findFirst({
+        where: {
+          id: req.params.transactionId,
+          userId: req.user.id,
+          type: "DEPOSIT",
+        },
+      });
+
+      if (!transaction) {
+        return res.status(404).json({ message: "Transaction not found." });
+      }
+
+      if (transaction.status !== "PENDING") {
+        return res.status(200).json({
+          transactionId: transaction.id,
+          status: transaction.status,
+          message:
+            transaction.status === "COMPLETED"
+              ? "Deposit confirmed."
+              : transaction.providerResponseDescription ?? "Payment not completed.",
+        });
+      }
+
+      const config = getMpesaConfig();
+      if (!config.isConfigured) {
+        return res.status(500).json({
+          message: `M-Pesa is not configured. Missing: ${config.missingVars.join(", ")}.`,
+        });
+      }
+
+      if (!transaction.checkoutRequestId) {
+        return res.status(200).json({
+          transactionId: transaction.id,
+          status: transaction.status,
+          message: "Awaiting provider reference.",
+        });
+      }
+
+      const tokenData = await getMpesaAccessToken(config);
+      const timestamp = getTimestamp();
+      const password = Buffer.from(
+        `${config.shortcode}${config.passkey}${timestamp}`,
+      ).toString("base64");
+
+      const queryPayload = {
+        BusinessShortCode: config.shortcode,
+        Password: password,
+        Timestamp: timestamp,
+        CheckoutRequestID: transaction.checkoutRequestId,
+      };
+
+      const queryResponse = await fetch(
+        `${config.baseUrl}/mpesa/stkpushquery/v1/query`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(queryPayload),
+        },
+      );
+
+      const queryData = (await queryResponse.json()) as MpesaStkQueryResponse;
+
+      if (!queryResponse.ok || queryData.ResponseCode !== "0") {
+        return res.status(200).json({
+          transactionId: transaction.id,
+          status: "PENDING",
+          message: queryData.errorMessage ?? "Still waiting for M-Pesa confirmation.",
+        });
+      }
+
+      const resultCode = String(queryData.ResultCode ?? "");
+      const resultDesc = queryData.ResultDesc ?? "Awaiting customer action.";
+
+      if (resultCode === "0") {
+        const updatedWallet = await prisma.$transaction(async (tx) => {
+          const latestTransaction = await tx.walletTransaction.findUnique({
+            where: { id: transaction.id },
+            select: { status: true, amount: true, walletId: true, userId: true },
+          });
+
+          if (!latestTransaction || latestTransaction.status !== "PENDING") {
+            return null;
+          }
+
+          await tx.walletTransaction.update({
+            where: { id: transaction.id },
+            data: {
+              status: "COMPLETED",
+              providerResponseCode: resultCode,
+              providerResponseDescription: resultDesc,
+              providerCallback: queryData as never,
+              processedAt: new Date(),
+            },
+          });
+
+          const wallet = latestTransaction.walletId
+            ? await tx.wallet.findUnique({
+                where: { id: latestTransaction.walletId },
+                select: { id: true },
+              })
+            : null;
+
+          const ensuredWallet =
+            wallet ??
+            (await tx.wallet.create({
+              data: {
+                userId: latestTransaction.userId,
+              },
+              select: { id: true },
+            }));
+
+          return tx.wallet.update({
+            where: { id: ensuredWallet.id },
+            data: {
+              balance: {
+                increment: latestTransaction.amount,
+              },
+            },
+            select: { balance: true },
+          });
+        });
+
+        const latestSummary = await getWalletSummary(req.user.id);
+        emitWalletEvent({
+          userId: req.user.id,
+          transactionId: transaction.id,
+          checkoutRequestId: transaction.checkoutRequestId,
+          merchantRequestId: transaction.merchantRequestId,
+          status: "COMPLETED",
+          message: "Deposit confirmed and wallet updated.",
+          balance: updatedWallet?.balance ?? latestSummary.balance,
+          amount: transaction.amount,
+        });
+
+        return res.status(200).json({
+          transactionId: transaction.id,
+          status: "COMPLETED",
+          message: "Deposit confirmed.",
+        });
+      }
+
+      if (["1", "1032", "1037", "2001"].includes(resultCode)) {
+        await prisma.walletTransaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: "FAILED",
+            providerResponseCode: resultCode,
+            providerResponseDescription: resultDesc,
+            providerCallback: queryData as never,
+            processedAt: new Date(),
+          },
+        });
+
+        const latestSummary = await getWalletSummary(req.user.id);
+        emitWalletEvent({
+          userId: req.user.id,
+          transactionId: transaction.id,
+          checkoutRequestId: transaction.checkoutRequestId,
+          merchantRequestId: transaction.merchantRequestId,
+          status: "FAILED",
+          message: resultDesc,
+          balance: latestSummary.balance,
+          amount: transaction.amount,
+        });
+
+        return res.status(200).json({
+          transactionId: transaction.id,
+          status: "FAILED",
+          message: resultDesc,
+        });
+      }
+
+      return res.status(200).json({
+        transactionId: transaction.id,
+        status: "PENDING",
+        message: resultDesc,
       });
     } catch (error) {
       next(error);

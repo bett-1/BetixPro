@@ -23,14 +23,6 @@ function getFrontendOrigin() {
   return process.env.FRONTEND_URL ?? "http://localhost:5173";
 }
 
-function extractBearerToken(rawHeader: string | undefined) {
-  if (!rawHeader?.startsWith("Bearer ")) {
-    return null;
-  }
-
-  return rawHeader.slice(7);
-}
-
 export function createHttpServerWithSockets(app: Express) {
   const httpServer = createServer(app);
 
@@ -39,23 +31,12 @@ export function createHttpServerWithSockets(app: Express) {
       origin: getFrontendOrigin(),
       credentials: true,
     },
-    transports: ["websocket", "polling"],
+    transports: ["websocket"],
   });
 
   io.use((socket, next) => {
     const authToken = socket.handshake.auth?.token;
-    const queryToken =
-      typeof socket.handshake.query?.token === "string"
-        ? socket.handshake.query.token
-        : null;
-    const headerToken = extractBearerToken(
-      socket.handshake.headers.authorization,
-    );
-
-    const token =
-      (typeof authToken === "string" ? authToken : null) ??
-      queryToken ??
-      headerToken;
+    const token = typeof authToken === "string" ? authToken : null;
 
     if (!token) {
       next(new Error("Unauthorized"));

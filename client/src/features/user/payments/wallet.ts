@@ -48,6 +48,12 @@ export type StkPushResponse = {
   };
 };
 
+export type MpesaTransactionStatusResponse = {
+  transactionId: string;
+  status: "PENDING" | "COMPLETED" | "FAILED" | "REVERSED";
+  message: string;
+};
+
 export type WalletStreamEvent = {
   transactionId: string;
   checkoutRequestId?: string | null;
@@ -101,7 +107,7 @@ export function useWalletRealtime() {
 
     socketRef.current?.disconnect();
     const socket = io(resolveSocketBaseUrl(), {
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
       withCredentials: true,
       auth: {
         token: accessToken,
@@ -115,10 +121,6 @@ export function useWalletRealtime() {
     socketRef.current = socket;
 
     const handleWalletUpdate = (payload: WalletStreamEvent) => {
-      if (!payload.transactionId) {
-        return;
-      }
-
       queryClient.setQueryData<WalletSummaryResponse>(
         walletSummaryQueryKey,
         (current) => {
