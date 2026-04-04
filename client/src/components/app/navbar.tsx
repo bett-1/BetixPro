@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
+  AlignLeft,
   Bell,
   ChevronDown,
   PlusCircle,
@@ -24,7 +25,11 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-export default function Navbar() {
+type NavbarProps = {
+  onSidebarToggle?: () => void;
+};
+
+export default function Navbar({ onSidebarToggle }: NavbarProps) {
   const [notifications] = useState(3);
   const pathname = useLocation({
     select: (location) => location.pathname,
@@ -33,22 +38,34 @@ export default function Navbar() {
   const balance = "KES 0.00";
 
   return (
-    <nav className="sticky top-0 z-20 border-b border-admin-border bg-[rgba(10,14,26,0.88)] backdrop-blur-[18px]">
+    <nav className="sticky top-0 z-20 border-b border-admin-border bg-[rgba(15,76,117,0.88)] backdrop-blur-[18px]">
       <div className="mx-auto flex min-h-[76px] w-[min(1120px,calc(100%-2rem))] flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
-          <Link to="/user" className="flex items-center gap-2.5 no-underline">
-            <span className="grid h-[34px] w-[34px] place-items-center rounded-[9px] bg-[linear-gradient(135deg,var(--admin-accent),#00b37a)]">
-              <Zap size={16} color="#000" />
-            </span>
-            <span className="grid gap-0.5">
-              <span className="text-sm font-bold tracking-[0.03em] text-admin-text-primary">
-                BettCenic
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onSidebarToggle}
+              className="h-9 w-9 rounded-lg border border-admin-border bg-white/2 text-admin-text-secondary hover:bg-admin-hover hover:text-admin-text-primary"
+            >
+              <AlignLeft className="h-4 w-4" />
+            </Button>
+
+            <Link to="/user" className="flex items-center gap-2.5 no-underline">
+              <span className="grid h-[34px] w-[34px] place-items-center rounded-[9px] bg-[linear-gradient(135deg,var(--admin-accent),#3282b8)]">
+                <Zap size={16} color="#1b1b1b" />
               </span>
-              <span className="text-[10px] uppercase tracking-[0.1em] text-admin-text-muted">
-                User Panel
+              <span className="grid gap-0.5">
+                <span className="text-sm font-bold tracking-[0.03em] text-admin-text-primary">
+                  BettCenic
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.1em] text-admin-text-muted">
+                  User Panel
+                </span>
               </span>
-            </span>
-          </Link>
+            </Link>
+          </div>
 
           <div className="flex items-center gap-2">
             <Link
@@ -66,7 +83,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="hidden min-w-0 flex-1 items-center gap-2 rounded-xl border border-admin-border bg-[rgba(22,29,53,0.75)] px-3 py-2.5 lg:inline-flex lg:min-w-[250px]">
+          <div className="hidden min-w-0 flex-1 items-center gap-2 rounded-xl border border-admin-border bg-[rgba(15,76,117,0.75)] px-3 py-2.5 lg:inline-flex lg:min-w-[250px]">
             <Search size={14} className="text-admin-text-muted" />
             <span className="truncate text-xs text-admin-text-muted">
               Search matches, odds, teams...
@@ -84,7 +101,7 @@ export default function Navbar() {
               </p>
             </div>
             <Button
-              className="h-8 rounded-lg bg-admin-accent px-3 text-black hover:bg-[#00d492]"
+              className="h-8 rounded-lg bg-admin-accent px-3 text-black hover:bg-[#e29a1e]"
               asChild
             >
               <Link to="/user/payments/deposit">
@@ -119,11 +136,11 @@ export default function Navbar() {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
-              className="w-56 border-admin-border bg-[rgba(10,14,26,0.98)] text-admin-text-primary p-1"
+              className="w-56 border-admin-border bg-[rgba(15,76,117,0.98)] text-admin-text-primary p-1"
               align="end"
               forceMount
             >
-              <div className="mb-2 rounded-lg border border-admin-border bg-[rgba(22,29,53,0.4)] p-2 sm:hidden">
+              <div className="mb-2 rounded-lg border border-admin-border bg-[rgba(15,76,117,0.4)] p-2 sm:hidden">
                 <p className="mb-0.5 text-[10px] uppercase tracking-wider text-admin-text-muted">
                   Current Balance
                 </p>
@@ -131,7 +148,7 @@ export default function Navbar() {
                   {balance}
                 </p>
                 <Button
-                  className="mt-2 h-7 w-full gap-1 bg-admin-accent text-xs font-semibold text-black hover:bg-[#00d492]"
+                  className="mt-2 h-7 w-full gap-1 bg-admin-accent text-xs font-semibold text-black hover:bg-[#e29a1e]"
                   asChild
                 >
                   <Link to="/user/payments/deposit">
@@ -207,3 +224,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+
