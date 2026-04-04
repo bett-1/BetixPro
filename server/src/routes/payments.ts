@@ -174,15 +174,17 @@ async function createWithdrawalNotifications(args: {
   let userMessage = "";
   let adminTitle = "";
   let adminMessage = "";
-  let notificationType: "WITHDRAWAL_SUCCESS" | "WITHDRAWAL_FAILED" =
-    "WITHDRAWAL_SUCCESS";
+  let notificationType:
+    | "WITHDRAWAL_SUCCESS"
+    | "WITHDRAWAL_FAILED"
+    | "SYSTEM" = "SYSTEM";
 
   if (args.status === "PENDING") {
     userTitle = "Withdrawal Request Submitted";
     userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} (KES ${args.fee.toLocaleString()} fee) is pending admin approval. You'll receive KES ${netAmount.toLocaleString()}.`;
     adminTitle = "New Withdrawal Request";
     adminMessage = `${userIdentifier} requested a withdrawal of KES ${args.amount.toLocaleString()} to ${args.phone} (Fee: KES ${args.fee.toLocaleString()}).`;
-    notificationType = "WITHDRAWAL_SUCCESS";
+    notificationType = "SYSTEM";
   } else if (args.status === "COMPLETED") {
     userTitle = "Withdrawal Successful";
     userMessage = `Your withdrawal of KES ${args.amount.toLocaleString()} has been processed to ${args.phone}. Fee charged: KES ${args.fee.toLocaleString()}. New balance: KES ${args.balance.toLocaleString()}.`;
