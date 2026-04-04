@@ -26,7 +26,12 @@ function findPnPmPrismaDir() {
 
   // Check each candidate for the .prisma directory
   for (const candidate of matches) {
-    const target = path.join(pnpmDir, candidate.name, "node_modules", ".prisma");
+    const target = path.join(
+      pnpmDir,
+      candidate.name,
+      "node_modules",
+      ".prisma",
+    );
     if (fs.existsSync(target)) {
       return target;
     }
