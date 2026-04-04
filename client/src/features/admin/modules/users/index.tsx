@@ -426,141 +426,188 @@ export default function Users() {
         }}
       >
         <DialogContent className="border-admin-border bg-admin-card max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
+          <DialogHeader className="border-b border-admin-border pb-4">
+            <DialogTitle className="text-xl">User Details</DialogTitle>
             <DialogDescription>
-              View and manage user information
+              Manage user account and permissions
             </DialogDescription>
           </DialogHeader>
 
           {userLoading ? (
-            <div className="text-center py-8 text-admin-text-muted">
-              Loading...
+            <div className="text-center py-12 text-admin-text-muted">
+              Loading user information...
             </div>
           ) : selectedUser ? (
-            <ScrollArea className="h-[500px] w-full pr-4">
+            <ScrollArea className="h-[520px] w-full pr-4">
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Email
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-primary">
-                      {selectedUser.email}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Phone
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-primary">
-                      {selectedUser.phone}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Name
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-primary">
-                      {selectedUser.name || "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Status
-                    </p>
-                    <p className="mt-1">
-                      <StatusBadge status={selectedUser.status} />
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Balance
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-admin-accent">
-                      KES {selectedUser.balance.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Verified
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-primary">
-                      {selectedUser.isVerified ? "Yes" : "No"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Total Bets
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-primary">
-                      {selectedUser.totalBets}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-admin-text-muted font-semibold uppercase">
-                      Joined
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-primary">
-                      {new Date(selectedUser.createdAt).toLocaleDateString()}
-                    </p>
+                {/* Contact Information Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-muted">
+                    Contact Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 rounded-lg bg-admin-surface/30 p-4">
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Email Address
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-admin-text-primary break-all">
+                        {selectedUser.email}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Phone Number
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-admin-text-primary">
+                        {selectedUser.phone}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-admin-border">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => handleOpenEdit(selectedUser)}
-                  >
-                    Edit User
-                  </Button>
-                  {selectedUser.status === "active" ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleOpenSuspend(selectedUser.id)}
-                      >
-                        Suspend
-                      </Button>
-                      <Button
-                        className="flex-1 bg-admin-red hover:bg-red-600 text-white"
-                        onClick={() => handleOpenBan(selectedUser.id)}
-                      >
-                        Ban
-                      </Button>
-                    </>
-                  ) : selectedUser.status === "suspended" ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleOpenUnsuspend(selectedUser.id)}
-                      >
-                        Unsuspend
-                      </Button>
-                      <Button
-                        className="flex-1 bg-admin-red hover:bg-red-600 text-white"
-                        onClick={() => handleOpenBan(selectedUser.id)}
-                      >
-                        Ban
-                      </Button>
-                    </>
-                  ) : selectedUser.status === "banned" ? (
+                {/* Account Status Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-muted">
+                    Account Status
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4 rounded-lg bg-admin-surface/30 p-4">
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Status
+                      </p>
+                      <div className="mt-2">
+                        <StatusBadge status={selectedUser.status} />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Verified
+                      </p>
+                      <p className="mt-2 text-sm font-medium">
+                        {selectedUser.isVerified ? (
+                          <span className="inline-flex items-center rounded-full bg-admin-accent/10 px-2.5 py-0.5 text-xs font-semibold text-admin-accent">
+                            ✓ Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-admin-text-muted/10 px-2.5 py-0.5 text-xs font-semibold text-admin-text-muted">
+                            Not Verified
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Full Name
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-admin-text-primary">
+                        {selectedUser.name || "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-muted">
+                    Financial Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 rounded-lg bg-admin-surface/30 p-4">
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Account Balance
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-admin-accent">
+                        KES {selectedUser.balance.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Total Bets
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-admin-blue">
+                        {selectedUser.totalBets}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Activity Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-muted">
+                    Account Activity
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 rounded-lg bg-admin-surface/30 p-4">
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-semibold">
+                        Account Created
+                      </p>
+                      <p className="mt-2 text-sm text-admin-text-primary">
+                        {new Date(selectedUser.createdAt).toLocaleString(
+                          "en-KE"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3 border-t border-admin-border pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                    Actions
+                  </p>
+                  <div className="grid grid-cols-1 gap-2">
                     <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleOpenUnban(selectedUser.id)}
+                      onClick={() => handleOpenEdit(selectedUser)}
+                      className="w-full bg-admin-accent hover:bg-admin-accent/90 text-white font-semibold"
                     >
-                      Unban
+                      Edit User Information
                     </Button>
-                  ) : null}
+                    {selectedUser.status === "active" ? (
+                      <>
+                        <Button
+                          onClick={() => handleOpenSuspend(selectedUser.id)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Suspend Account
+                        </Button>
+                        <Button
+                          onClick={() => handleOpenBan(selectedUser.id)}
+                          className="w-full bg-admin-red hover:bg-red-600 text-white font-semibold"
+                        >
+                          Ban User
+                        </Button>
+                      </>
+                    ) : selectedUser.status === "suspended" ? (
+                      <>
+                        <Button
+                          onClick={() => handleOpenUnsuspend(selectedUser.id)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Unsuspend Account
+                        </Button>
+                        <Button
+                          onClick={() => handleOpenBan(selectedUser.id)}
+                          className="w-full bg-admin-red hover:bg-red-600 text-white font-semibold"
+                        >
+                          Ban User
+                        </Button>
+                      </>
+                    ) : selectedUser.status === "banned" ? (
+                      <Button
+                        onClick={() => handleOpenUnban(selectedUser.id)}
+                        className="w-full bg-admin-accent hover:bg-admin-accent/90 text-white font-semibold"
+                      >
+                        Unban User
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </ScrollArea>
           ) : (
-            <div className="text-center py-8 text-admin-text-muted">
+            <div className="text-center py-12 text-admin-text-muted">
               No user data available
             </div>
           )}
