@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { z } from "zod";
 import { prisma } from "../lib/prisma";
 
 const RECENT_ACTIVITY_LIMIT = 8;
@@ -24,6 +25,14 @@ function startOfDay(date: Date) {
   next.setHours(0, 0, 0, 0);
   return next;
 }
+
+const updateUserSchema = z.object({
+  fullName: z.string().trim().min(2).max(120).optional().nullable(),
+  email: z.string().trim().email().optional(),
+  phone: z.string().trim().min(9).max(20).optional(),
+  isVerified: z.boolean().optional(),
+  accountStatus: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+});
 
 export async function getAdminDashboardSummary(req: Request, res: Response) {
   if (!req.user?.id) {
@@ -418,6 +427,78 @@ export async function getAllUsers(req: Request, res: Response) {
     page: Number(page),
     limit: Number(limit),
     pages: Math.ceil(total / Number(limit)),
+  });
+}
+
+export async function updateUser(req: Request, res: Response) {
+  if (!req.user?.id) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ message: "Admin access required." });
+  }
+
+  const { userId } = req.params;
+  const parsedBody = updateUserSchema.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    return res.status(400).json({ message: "Invalid user payload." });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true },
+  });
+
+  if (!user || user.role !== "USER") {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      fullName: parsedBody.data.fullName === undefined ? undefined : parsedBody.data.fullName,
+      email: parsedBody.data.email,
+      phone: parsedBody.data.phone,
+      isVerified: parsedBody.data.isVerified,
+      accountStatus: parsedBody.data.accountStatus,
+    },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+      isVerified: true,
+      accountStatus: true,
+      bannedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      wallet: {
+        select: { balance: true },
+      },
+      transactions: {
+        select: { id: true },
+      },
+    },
+  });
+
+  return res.status(200).json({
+    id: updated.id,
+    name: updated.fullName || "Unknown",
+    email: updated.email,
+    phone: updated.phone,
+    balance: updated.wallet?.balance ?? 0,
+    isVerified: updated.isVerified,
+    status:
+      updated.bannedAt !== null
+        ? "banned"
+        : updated.accountStatus === "SUSPENDED"
+          ? "suspended"
+          : "active",
+    createdAt: updated.createdAt.toISOString(),
+    updatedAt: updated.updatedAt.toISOString(),
+    totalBets: updated.transactions.length,
   });
 }
 

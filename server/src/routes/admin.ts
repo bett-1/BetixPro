@@ -4,6 +4,7 @@ import {
   getAdminDashboardSummary,
   getAllUsers,
   getUserDetails,
+  updateUser,
   banUser,
   unbanUser,
   suspendUser,
@@ -28,6 +29,7 @@ adminRouter.get(
   requireAdmin,
   getUserDetails,
 );
+adminRouter.put("/admin/users/:userId", authenticate, requireAdmin, updateUser);
 adminRouter.post(
   "/admin/users/:userId/ban",
   authenticate,

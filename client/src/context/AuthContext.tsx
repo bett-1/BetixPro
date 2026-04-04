@@ -30,6 +30,8 @@ type MeResponse = {
   user: AuthUser;
 };
 
+const persistedSessionKey = "betwise-auth-session";
+
 type RegisterPayload = {
   email: string;
   phone: string;
@@ -62,6 +64,9 @@ function clearAuthState(
   setUser(null);
   setToken(null);
   setAccessToken(null);
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(persistedSessionKey);
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -73,6 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
     setAccessTokenState(data.accessToken);
     setAccessToken(data.accessToken);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(persistedSessionKey, "true");
+    }
   }, []);
 
   const refreshSession = useCallback(async () => {
@@ -139,6 +147,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshSession]);
 
   useEffect(() => {
+    const hasPersistedSession =
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(persistedSessionKey) === "true";
+
+    if (!hasPersistedSession) {
+      setIsLoading(false);
+      return;
+    }
+
     void (async () => {
       await refreshSession();
       setIsLoading(false);

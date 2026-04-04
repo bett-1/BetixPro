@@ -42,17 +42,23 @@ export function useUsers(options: UseUsersOptions = {}) {
   const [page, setPage] = useState(options.page || 1);
   const [limit, setLimit] = useState(options.limit || 50);
 
+  const resolvedSearch = options.search ?? "";
+  const resolvedStatus = options.status ?? "";
+  const resolvedPage = options.page ?? page;
+  const resolvedLimit = options.limit ?? limit;
+
   const fetchUsers = async (
     searchTerm?: string,
     statusFilter?: string,
     pageNum?: number,
+    limitNum?: number,
   ) => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
-      params.append("page", String(pageNum || page));
-      params.append("limit", String(limit));
+      params.append("page", String(pageNum || resolvedPage));
+      params.append("limit", String(limitNum || resolvedLimit));
       if (searchTerm) params.append("search", searchTerm);
       if (statusFilter) params.append("status", statusFilter);
 
@@ -70,8 +76,8 @@ export function useUsers(options: UseUsersOptions = {}) {
   };
 
   useEffect(() => {
-    fetchUsers(options.search, options.status);
-  }, [options.search, options.status, options.page, options.limit]);
+    void fetchUsers(resolvedSearch, resolvedStatus, resolvedPage, resolvedLimit);
+  }, [resolvedSearch, resolvedStatus, resolvedPage, resolvedLimit]);
 
   return {
     users,
@@ -81,6 +87,8 @@ export function useUsers(options: UseUsersOptions = {}) {
     loading,
     error,
     fetchUsers,
+    refetch: () =>
+      fetchUsers(resolvedSearch, resolvedStatus, resolvedPage, resolvedLimit),
     setPage,
     setLimit,
   };
@@ -149,5 +157,23 @@ export async function unsuspendUserAction(userId: string) {
     return response.data;
   } catch (err) {
     throw err instanceof Error ? err : new Error("Failed to unsuspend user");
+  }
+}
+
+export async function updateUserAction(
+  userId: string,
+  payload: {
+    fullName?: string | null;
+    email?: string;
+    phone?: string;
+    isVerified?: boolean;
+    accountStatus?: "ACTIVE" | "SUSPENDED";
+  },
+) {
+  try {
+    const response = await api.put(`/admin/users/${userId}`, payload);
+    return response.data;
+  } catch (err) {
+    throw err instanceof Error ? err : new Error("Failed to update user");
   }
 }

@@ -91,13 +91,17 @@ export const notificationUpdateBrowserEvent = "notification:update-event";
 export const walletSummaryQueryKey = ["wallet-summary"] as const;
 
 function resolveSocketBaseUrl() {
-  const rawBaseUrl = api.defaults.baseURL;
+  const explicitSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
+  if (explicitSocketUrl) {
+    return explicitSocketUrl;
+  }
 
-  if (typeof rawBaseUrl === "string" && rawBaseUrl.startsWith("http")) {
+  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (rawBaseUrl && rawBaseUrl.startsWith("http")) {
     return new URL(rawBaseUrl).origin;
   }
 
-  return window.location.origin;
+  return "http://localhost:5000";
 }
 
 export function useWalletSummary() {
