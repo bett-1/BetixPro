@@ -182,3 +182,20 @@ export async function updateUserAction(
     throw err instanceof Error ? err : new Error("Failed to update user");
   }
 }
+
+export async function createUserAction(payload: {
+  fullName?: string | null;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  isVerified?: boolean;
+  accountStatus?: "ACTIVE" | "SUSPENDED";
+}) {
+  try {
+    const response = await api.post(`/admin/users`, payload);
+    return response.data;
+  } catch (err) {
+    throw err instanceof Error ? err : new Error("Failed to create user");
+  }
+}

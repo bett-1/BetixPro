@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../middleware/authenticate";
 import {
   getAdminDashboardSummary,
+  createUser,
   getAllUsers,
   getUserDetails,
   updateUser,
@@ -23,6 +24,7 @@ adminRouter.get(
 
 // User Management
 adminRouter.get("/admin/users", authenticate, requireAdmin, getAllUsers);
+adminRouter.post("/admin/users", authenticate, requireAdmin, createUser);
 adminRouter.get(
   "/admin/users/:userId",
   authenticate,
