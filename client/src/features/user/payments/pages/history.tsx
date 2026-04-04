@@ -61,19 +61,19 @@ export default function PaymentsHistoryPage() {
     .reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <section className="grid gap-4">
-      <article className="rounded-2xl border border-admin-border bg-admin-card p-4 sm:p-5">
-        <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr] lg:grid-cols-[1.6fr_1fr_1fr]">
-          <div className="relative md:col-span-3 lg:col-span-1">
+    <section className="grid gap-2 sm:gap-4">
+      <article className="rounded-2xl border border-admin-border bg-admin-card p-2 sm:p-3">
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="relative lg:col-span-1">
             <Search
               size={14}
               className="pointer-events-none absolute left-3 top-3.5 text-admin-text-muted"
             />
             <Input
-              placeholder="Search by ID, reference, or channel"
+              placeholder="Search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="h-10 rounded-xl border border-admin-border bg-admin-surface pl-9 text-admin-text-primary placeholder:text-admin-text-muted focus:border-admin-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)] focus:outline-none transition"
+              className="h-9 rounded-lg text-sm border border-admin-border bg-admin-surface pl-9 text-admin-text-primary placeholder:text-admin-text-muted focus:border-admin-accent focus:shadow-[0_0_0_2px_var(--color-accent-soft)] focus:outline-none transition"
             />
           </div>
 
@@ -83,10 +83,10 @@ export default function PaymentsHistoryPage() {
               setTypeFilter(value as "all" | TransactionType)
             }
           >
-            <SelectTrigger className="h-10 w-full rounded-xl border border-admin-border bg-admin-surface text-admin-text-primary font-medium hover:border-admin-accent focus:border-admin-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)] focus:outline-none transition">
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm border border-admin-border bg-admin-surface text-admin-text-primary font-medium hover:border-admin-accent focus:border-admin-accent focus:shadow-[0_0_0_2px_var(--color-accent-soft)] focus:outline-none transition">
               <SelectValue
-                placeholder="All types"
-                className="text-admin-text-primary"
+                placeholder="Type"
+                className="text-admin-text-primary text-sm"
               />
             </SelectTrigger>
             <SelectContent className="border-admin-border bg-admin-card text-admin-text-primary">
@@ -126,10 +126,10 @@ export default function PaymentsHistoryPage() {
               setStatusFilter(value as "all" | TransactionStatus)
             }
           >
-            <SelectTrigger className="h-10 w-full rounded-xl border border-admin-border bg-admin-surface text-admin-text-primary font-medium hover:border-admin-accent focus:border-admin-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)] focus:outline-none transition">
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm border border-admin-border bg-admin-surface text-admin-text-primary font-medium hover:border-admin-accent focus:border-admin-accent focus:shadow-[0_0_0_2px_var(--color-accent-soft)] focus:outline-none transition">
               <SelectValue
-                placeholder="All statuses"
-                className="text-admin-text-primary"
+                placeholder="Status"
+                className="text-admin-text-primary text-sm"
               />
             </SelectTrigger>
             <SelectContent className="border-admin-border bg-admin-card text-admin-text-primary">
@@ -159,50 +159,63 @@ export default function PaymentsHistoryPage() {
         </div>
       </article>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted font-semibold">
-            Total Records
+      <div className="grid gap-2 sm:grid-cols-3">
+        <article className="rounded-xl border border-admin-border bg-admin-surface p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.08em] text-admin-text-muted font-semibold">
+            Records
           </p>
-          <p className="mt-2 text-2xl font-bold text-admin-text-primary">
+          <p className="mt-1 text-lg sm:text-2xl font-bold text-admin-text-primary">
             {filtered.length}
           </p>
         </article>
-        <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted font-semibold">
-            Total In
+        <article className="rounded-xl border border-admin-border bg-admin-surface p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.08em] text-admin-text-muted font-semibold">
+            In
           </p>
-          <p className="mt-2 text-2xl font-bold text-green-400">
+          <p className="mt-1 text-lg sm:text-2xl font-bold text-green-400">
             {formatMoney(totalIn)}
           </p>
         </article>
-        <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted font-semibold">
-            Total Out
+        <article className="rounded-xl border border-admin-border bg-admin-surface p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.08em] text-admin-text-muted font-semibold">
+            Out
           </p>
-          <p className="mt-2 text-2xl font-bold text-yellow-400">
+          <p className="mt-1 text-lg sm:text-2xl font-bold text-yellow-400">
             {formatMoney(totalOut)}
           </p>
         </article>
       </div>
 
-      <article className="rounded-2xl border border-admin-border bg-admin-card p-4 overflow-x-auto">
+      <article className="rounded-2xl border border-admin-border bg-admin-card p-2 sm:p-4 overflow-x-auto">
         <div className="min-w-full">
           <Table>
             <TableHeader>
               <TableRow className="border-admin-border hover:bg-transparent">
-                <TableHead className="text-admin-text-muted text-center w-12">No.</TableHead>
+                <TableHead className="text-admin-text-muted text-center w-12">
+                  No.
+                </TableHead>
                 <TableHead className="text-admin-text-muted">Type</TableHead>
-                <TableHead className="text-admin-text-muted">M-Pesa Code</TableHead>
-                <TableHead className="text-admin-text-muted text-right">Amount</TableHead>
-                <TableHead className="text-admin-text-muted text-center">Status</TableHead>
-                <TableHead className="text-admin-text-muted text-right">Date</TableHead>
+                <TableHead className="text-admin-text-muted">
+                  M-Pesa Code
+                </TableHead>
+                <TableHead className="text-admin-text-muted text-right">
+                  Amount
+                </TableHead>
+                <TableHead className="text-admin-text-muted text-center">
+                  Status
+                </TableHead>
+                <TableHead className="text-admin-text-muted text-right">
+                  Date
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-admin-text-muted py-8">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-admin-text-muted py-8"
+                  >
                     No transactions found
                   </TableCell>
                 </TableRow>
@@ -222,7 +235,9 @@ export default function PaymentsHistoryPage() {
                     </TableCell>
                     <TableCell className="text-admin-text-secondary font-mono font-bold text-admin-accent">
                       {item.mpesaCode ? (
-                        <span className="bg-admin-surface px-2 py-1 rounded text-sm">{item.mpesaCode}</span>
+                        <span className="bg-admin-surface px-2 py-1 rounded text-sm">
+                          {item.mpesaCode}
+                        </span>
                       ) : (
                         <span className="text-admin-text-muted">-</span>
                       )}
