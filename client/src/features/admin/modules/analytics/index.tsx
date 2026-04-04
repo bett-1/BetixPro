@@ -118,11 +118,13 @@ export default function Analytics() {
             <table className={adminTableClassName}>
               <thead>
                 <tr>
-                  {["Device", "Users", "Share", "Avg Session"].map((heading) => (
-                    <th className={adminTableHeadCellClassName} key={heading}>
-                      {heading}
-                    </th>
-                  ))}
+                  {["Device", "Users", "Share", "Avg Session"].map(
+                    (heading) => (
+                      <th className={adminTableHeadCellClassName} key={heading}>
+                        {heading}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -154,11 +156,13 @@ export default function Analytics() {
             <table className={adminTableClassName}>
               <thead>
                 <tr>
-                  {["Carrier", "Users", "Avg Bet", "Avg Payout"].map((heading) => (
-                    <th className={adminTableHeadCellClassName} key={heading}>
-                      {heading}
-                    </th>
-                  ))}
+                  {["Carrier", "Users", "Avg Bet", "Avg Payout"].map(
+                    (heading) => (
+                      <th className={adminTableHeadCellClassName} key={heading}>
+                        {heading}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
