@@ -93,7 +93,13 @@ export default function PaymentsDepositPage() {
         `Payment successful. New balance is ${formatMoney(currentBalance)}.`,
       );
     }
-  }, [currentBalance, isSubmitting, submissionBalance, submissionStartedAt, queryClient]);
+  }, [
+    currentBalance,
+    isSubmitting,
+    submissionBalance,
+    submissionStartedAt,
+    queryClient,
+  ]);
 
   useEffect(() => {
     if (!submittedTransactionId || depositConfirmed || paymentFailed) return;
@@ -113,7 +119,8 @@ export default function PaymentsDepositPage() {
         if (!active) return;
 
         if (data.status === "COMPLETED") {
-          const optimisticBalance = (submissionBalance ?? currentBalance) + (submissionAmount ?? 0);
+          const optimisticBalance =
+            (submissionBalance ?? currentBalance) + (submissionAmount ?? 0);
           queryClient.setQueryData<WalletSummaryResponse>(
             walletSummaryQueryKey,
             (prev) => {
