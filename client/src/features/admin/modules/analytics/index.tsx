@@ -23,8 +23,9 @@ export default function Analytics() {
           subtitle="Simple Kenya-first view of revenue, audience, and branch activity"
   const mobileShare = ((mobileUsers / totalUsers) * 100).toFixed(1);
   const desktopShare = ((desktopUsers / totalUsers) * 100).toFixed(1);
-
-  return (
+      const mobileShare = ((mobileUsers / totalUsers) * 100).toFixed(1);
+      const desktopShare = ((desktopUsers / totalUsers) * 100).toFixed(1);
+      const timeRanges = ["24h", "7d", "30d", "90d"] as const;
     <div className="space-y-6">
       <AdminSectionHeader
             actions={
