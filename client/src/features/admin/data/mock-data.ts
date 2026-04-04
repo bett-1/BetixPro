@@ -27,6 +27,7 @@ export type AdminBadgeStatus =
   | "completed"
   | "active"
   | "suspended"
+  | "banned"
   | "live"
   | "upcoming"
   | "verified"
