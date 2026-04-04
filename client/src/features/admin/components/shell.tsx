@@ -3,14 +3,69 @@ import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { Bell, Menu, Search, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminNavigation } from "../config/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function AdminShell() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState(7);
+  const [notifications] = useState(7);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const pathname = useLocation({
     select: (location) => location.pathname,
   });
+
+  const mockNotifications = [
+    {
+      id: 1,
+      title: "New Bet Placed",
+      message: "User placed a bet of KES 1,000",
+      time: "5 min ago",
+    },
+    {
+      id: 2,
+      title: "Event Started",
+      message: "Match between Team A and Team B started",
+      time: "15 min ago",
+    },
+    {
+      id: 3,
+      title: "Withdrawal Request",
+      message: "User requested withdrawal of KES 5,000",
+      time: "1 hour ago",
+    },
+    {
+      id: 4,
+      title: "Risk Alert",
+      message: "One event has high exposure",
+      time: "2 hours ago",
+    },
+    {
+      id: 5,
+      title: "New User",
+      message: "New user registered successfully",
+      time: "3 hours ago",
+    },
+    {
+      id: 6,
+      title: "Transaction",
+      message: "Deposit of KES 2,000 confirmed",
+      time: "4 hours ago",
+    },
+    {
+      id: 7,
+      title: "System Update",
+      message: "Odds updated for all events",
+      time: "5 hours ago",
+    },
+  ];
 
   return (
     <div className="min-h-dvh bg-admin-bg font-admin text-admin-text-primary lg:flex">
@@ -143,13 +198,52 @@ export default function AdminShell() {
               onClick={() => setNotifications(0)}
               type="button"
             >
-              <Bell size={18} />
-              {notifications > 0 ? (
-                <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-admin-red text-[8px] font-bold text-white">
-                  {notifications}
-                </span>
-              ) : null}
-            </button>
+              <DialogTrigger asChild>
+                <button
+                  aria-label="View notifications"
+                  className="relative text-admin-text-secondary transition hover:text-admin-text-primary"
+                  type="button"
+                >
+                  <Bell size={18} />
+                  {notifications > 0 ? (
+                    <span className="absolute -right-2 -top-2 grid h-4 w-4 place-items-center rounded-full bg-admin-red text-[8px] font-bold text-white">
+                      {notifications}
+                    </span>
+                  ) : null}
+                </button>
+              </DialogTrigger>
+              <DialogContent className="border-admin-border bg-admin-card text-admin-text-primary">
+                <DialogHeader>
+                  <DialogTitle className="text-admin-text-primary">
+                    Notifications
+                  </DialogTitle>
+                  <DialogDescription className="text-admin-text-muted">
+                    You have {notifications} new notification
+                    {notifications !== 1 ? "s" : ""}
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[300px] w-full pr-4">
+                  <div className="flex flex-col gap-3">
+                    {mockNotifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className="rounded-lg border border-admin-border bg-admin-card-hover p-3 transition hover:bg-white/5"
+                      >
+                        <p className="text-sm font-semibold text-admin-text-primary">
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-admin-text-muted">
+                          {notification.message}
+                        </p>
+                        <p className="text-[10px] text-admin-text-muted mt-1">
+                          {notification.time}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
 
             <div className="grid h-8 w-8 place-items-center rounded-full bg-[linear-gradient(135deg,var(--admin-purple),var(--admin-blue))] text-[11px] font-bold text-white">
               SA
