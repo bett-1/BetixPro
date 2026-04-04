@@ -24,6 +24,8 @@ export default function Analytics() {
   const desktopUsers =
     deviceAnalytics.find((item) => item.device === "Desktop")?.users ?? 0;
   const timeRanges = ["24h", "7d", "30d", "90d"] as const;
+  const mobileShare = ((mobileUsers / totalUsers) * 100).toFixed(1);
+  const desktopShare = ((desktopUsers / totalUsers) * 100).toFixed(1);
 
   return (
     <div className="space-y-6">
@@ -191,6 +193,9 @@ export default function Analytics() {
         <p className="text-sm text-admin-text-secondary">
           Keep campaigns centered on Kenya, prioritize mobile money rails, and
           treat desktop as a secondary channel.
+        </p>
+        <p className="mt-2 text-xs text-admin-text-muted">
+          Mobile share {mobileShare} percent, desktop share {desktopShare} percent.
         </p>
       </AdminCard>
     </div>
