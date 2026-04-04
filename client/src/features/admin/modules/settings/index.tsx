@@ -1,4 +1,16 @@
+import { useState } from "react";
 import { Edit } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { settingsGroups } from "../../data/mock-data";
 import {
   AdminButton,
@@ -8,6 +20,10 @@ import {
 } from "../../components/ui";
 
 export default function Settings() {
+  const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
+  const [settingValue, setSettingValue] = useState("");
+  const [settingEnabled, setSettingEnabled] = useState(false);
+
   return (
     <div className="space-y-6">
       <AdminSectionHeader
