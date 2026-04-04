@@ -1,24 +1,31 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "../data";
-
-type StkPushResponse = {
-  message: string;
-  merchantRequestId?: string;
-  checkoutRequestId?: string;
-  customerMessage?: string;
-};
+import { useWalletSummary, type StkPushResponse } from "../wallet";
 
 const quickAmounts = [200, 500, 1000, 2500, 5000, 10000];
+const paymentStages = [
+  "STK sent",
+  "Awaiting phone approval",
+  "Wallet updated",
+] as const;
 
 export default function PaymentsDepositPage() {
   const [phone, setPhone] = useState("254712345678");
   const [amount, setAmount] = useState("100");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [response, setResponse] = useState<StkPushResponse | null>(null);
+  const [submissionStartedAt, setSubmissionStartedAt] = useState<string | null>(
+    null,
+  );
+  const [submissionBalance, setSubmissionBalance] = useState<number | null>(
+    null,
+  );
+  const [depositConfirmed, setDepositConfirmed] = useState(false);
+  const { data: walletData, isLoading: isWalletLoading } = useWalletSummary();
 
   const isFormValid = useMemo(() => {
     const amountValue = Number(amount);
@@ -26,6 +33,22 @@ export default function PaymentsDepositPage() {
       phone.trim().length >= 10 && amountValue >= 1 && amountValue <= 250000
     );
   }, [amount, phone]);
+
+  const currentBalance = walletData?.wallet.balance ?? 0;
+
+  useEffect(() => {
+    if (
+      submissionStartedAt &&
+      submissionBalance !== null &&
+      currentBalance > submissionBalance &&
+      !isSubmitting
+    ) {
+      setDepositConfirmed(true);
+      setSubmissionStartedAt(null);
+      setSubmissionBalance(null);
+      toast.success("Deposit confirmed. Wallet balance updated in real time.");
+    }
+  }, [currentBalance, isSubmitting, submissionBalance, submissionStartedAt]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,6 +60,9 @@ export default function PaymentsDepositPage() {
 
     setIsSubmitting(true);
     setResponse(null);
+    setDepositConfirmed(false);
+    setSubmissionStartedAt(new Date().toISOString());
+    setSubmissionBalance(currentBalance);
 
     try {
       const { data } = await api.post<StkPushResponse>(
@@ -50,6 +76,8 @@ export default function PaymentsDepositPage() {
       setResponse(data);
       toast.success(data.customerMessage ?? "STK push sent. Check your phone.");
     } catch (error: unknown) {
+      setSubmissionStartedAt(null);
+      setSubmissionBalance(null);
       const messageFromApi = (
         error as { response?: { data?: { message?: string } } }
       )?.response?.data?.message;
@@ -73,7 +101,7 @@ export default function PaymentsDepositPage() {
               Instant top-up through M-Pesa STK Push.
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border-accent)] bg-admin-accent-dim px-3 py-1.5">
+          <div className="inline-flex items-center gap-2 rounded-full border border-admin-accent/30 bg-admin-accent-dim px-3 py-1.5">
             <img
               src="/images/mpesa/logo.png"
               alt="M-Pesa"
@@ -83,6 +111,39 @@ export default function PaymentsDepositPage() {
               M-PESA
             </span>
           </div>
+        </div>
+
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
+              Available balance
+            </p>
+            <p className="mt-2 text-2xl font-bold text-admin-accent">
+              {isWalletLoading ? "Loading..." : formatMoney(currentBalance)}
+            </p>
+          </article>
+          <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
+              Deposit status
+            </p>
+            <p className="mt-2 text-sm font-semibold text-admin-text-primary">
+              {depositConfirmed
+                ? "Confirmed"
+                : isSubmitting
+                  ? "Processing"
+                  : response
+                    ? "Waiting for approval"
+                    : "Idle"}
+            </p>
+          </article>
+          <article className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
+              Requested amount
+            </p>
+            <p className="mt-2 text-2xl font-bold text-admin-gold">
+              {formatMoney(Number(amount) || 0)}
+            </p>
+          </article>
         </div>
 
         <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -95,7 +156,7 @@ export default function PaymentsDepositPage() {
             </label>
             <input
               id="phone"
-              className="h-11 w-full rounded-xl border border-admin-border bg-[var(--color-bg-elevated)] px-3 text-sm text-admin-text-primary outline-none transition placeholder:text-admin-text-muted focus:border-[var(--color-border-focus)] focus:shadow-[0_0_0_3px_var(--color-accent-soft)]"
+              className="h-11 w-full rounded-xl border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary outline-none transition placeholder:text-admin-text-muted focus:border-admin-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)]"
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
               placeholder="2547XXXXXXXX"
@@ -116,7 +177,7 @@ export default function PaymentsDepositPage() {
               </span>
             </div>
 
-            <div className="flex w-full items-center overflow-hidden rounded-xl border border-admin-border bg-[var(--color-bg-elevated)] transition focus-within:border-[var(--color-border-focus)] focus-within:shadow-[0_0_0_3px_var(--color-accent-soft)]">
+            <div className="flex w-full items-center overflow-hidden rounded-xl border border-admin-border bg-admin-surface transition focus-within:border-admin-accent focus-within:shadow-[0_0_0_3px_var(--color-accent-soft)]">
               <span className="flex h-11 items-center border-r border-admin-border px-3 text-[11px] font-bold text-admin-text-muted">
                 KES
               </span>
@@ -137,7 +198,7 @@ export default function PaymentsDepositPage() {
                 <button
                   key={option}
                   type="button"
-                  className="rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2.5 py-1 text-xs font-medium text-admin-text-secondary transition hover:border-[var(--color-border-accent)] hover:text-admin-text-primary"
+                  className="rounded-lg border border-admin-border bg-admin-surface px-2.5 py-1 text-xs font-medium text-admin-text-secondary transition hover:border-admin-accent hover:text-admin-text-primary"
                   onClick={() => setAmount(String(option))}
                 >
                   {formatMoney(option)}
@@ -149,43 +210,64 @@ export default function PaymentsDepositPage() {
           <Button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className="h-11 rounded-xl bg-admin-accent text-sm font-bold text-[var(--color-text-dark)] hover:bg-[var(--color-accent-dark)]"
+            className="h-11 rounded-xl bg-admin-accent text-sm font-bold text-black hover:opacity-90"
           >
-            {isSubmitting ? "Initiating payment..." : "Deposit now"}
+            {isSubmitting ? "Sending STK prompt..." : "Deposit now"}
           </Button>
         </form>
 
         {response ? (
-          <div className="mt-4 rounded-2xl border border-[var(--color-border-accent)] bg-[var(--color-accent-soft)] p-4">
-            <p className="text-sm font-semibold text-admin-text-primary">
-              {response.message}
-            </p>
+          <div className="mt-4 rounded-2xl border border-admin-accent/30 bg-admin-accent-dim p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-admin-text-primary">
+                {response.message}
+              </p>
+              <span className="rounded-full border border-admin-accent/30 bg-admin-surface px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-admin-accent">
+                {depositConfirmed ? "Complete" : "Live"}
+              </span>
+            </div>
             {response.customerMessage ? (
               <p className="mt-1 text-sm text-admin-text-secondary">
                 {response.customerMessage}
               </p>
             ) : null}
             {response.checkoutRequestId ? (
-              <p className="mt-2 break-all rounded-lg border border-admin-border bg-[var(--color-bg-elevated)] px-2 py-1.5 text-xs text-admin-text-primary">
+              <p className="mt-2 break-all rounded-lg border border-admin-border bg-admin-surface px-2 py-1.5 text-xs text-admin-text-primary">
                 Request ID: {response.checkoutRequestId}
               </p>
             ) : null}
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {paymentStages.map((stage, index) => (
+                <div
+                  key={stage}
+                  className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                    index === 2 && depositConfirmed
+                      ? "border-admin-accent/30 bg-admin-surface text-admin-accent"
+                      : index === 1 && isSubmitting
+                        ? "border-admin-accent/30 bg-admin-surface text-admin-text-primary"
+                        : "border-admin-border bg-admin-card text-admin-text-secondary"
+                  }`}
+                >
+                  {stage}
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
       </article>
 
-      <article className="rounded-2xl border border-admin-border bg-[var(--color-bg-elevated)] p-5">
+      <article className="rounded-2xl border border-admin-border bg-admin-surface p-5">
         <h3 className="text-sm font-semibold text-admin-text-primary">
           Deposit Guidelines
         </h3>
         <div className="mt-3 grid gap-2 text-sm text-admin-text-secondary">
-          <p className="rounded-lg border border-admin-border bg-[var(--color-bg-surface)] px-3 py-2">
+          <p className="rounded-lg border border-admin-border bg-admin-card px-3 py-2">
             Use your registered phone number for faster KYC checks.
           </p>
-          <p className="rounded-lg border border-admin-border bg-[var(--color-bg-surface)] px-3 py-2">
+          <p className="rounded-lg border border-admin-border bg-admin-card px-3 py-2">
             Deposits are reflected immediately after STK confirmation.
           </p>
-          <p className="rounded-lg border border-admin-border bg-[var(--color-bg-surface)] px-3 py-2">
+          <p className="rounded-lg border border-admin-border bg-admin-card px-3 py-2">
             High value deposits may trigger extra account verification.
           </p>
         </div>

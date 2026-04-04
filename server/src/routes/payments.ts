@@ -1,6 +1,34 @@
 import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
+import { prisma } from "../lib/prisma";
+
+type WalletTransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "REVERSED";
+type WalletTransactionType =
+  | "DEPOSIT"
+  | "WITHDRAWAL"
+  | "BET_STAKE"
+  | "BET_WIN"
+  | "REFUND"
+  | "BONUS";
+
+type PaymentEvent = {
+  transactionId: string;
+  checkoutRequestId?: string | null;
+  merchantRequestId?: string | null;
+  status: WalletTransactionStatus;
+  message: string;
+  balance: number;
+  amount: number;
+};
+
+const walletEventListeners = new Set<(event: PaymentEvent) => void>();
+
+function emitWalletEvent(event: PaymentEvent) {
+  for (const listener of walletEventListeners) {
+    listener(event);
+  }
+}
 
 const paymentRouter = Router();
 
@@ -47,6 +75,87 @@ const mpesaCallbackSchema = z.object({
     }),
   }),
 });
+
+function toTransactionType(value: WalletTransactionType) {
+  switch (value) {
+    case "DEPOSIT":
+      return "deposit";
+    case "WITHDRAWAL":
+      return "withdrawal";
+    case "BET_STAKE":
+      return "bet-stake";
+    case "BET_WIN":
+      return "bet-win";
+    case "REFUND":
+      return "refund";
+    case "BONUS":
+      return "bonus";
+  }
+}
+
+function toTransactionStatus(value: WalletTransactionStatus) {
+  switch (value) {
+    case "PENDING":
+      return "pending";
+    case "COMPLETED":
+      return "completed";
+    case "FAILED":
+      return "failed";
+    case "REVERSED":
+      return "reversed";
+  }
+}
+
+async function getOrCreateWallet(userId: string) {
+  const existingWallet = await prisma.wallet.findUnique({ where: { userId } });
+  if (existingWallet) return existingWallet;
+
+  return prisma.wallet.create({
+    data: {
+      userId,
+    },
+  });
+}
+
+async function getWalletSummary(userId: string) {
+  const wallet = await getOrCreateWallet(userId);
+  const aggregate = await prisma.walletTransaction.aggregate({
+    where: {
+      userId,
+      status: "COMPLETED",
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  return {
+    balance: wallet.balance,
+    totalCompletedDeposits: aggregate._sum.amount ?? 0,
+  };
+}
+
+function toClientTransaction(transaction: {
+  id: string;
+  type: WalletTransactionType;
+  status: WalletTransactionStatus;
+  amount: number;
+  currency: string;
+  channel: string;
+  reference: string;
+  createdAt: Date;
+}) {
+  return {
+    id: transaction.id,
+    type: toTransactionType(transaction.type),
+    status: toTransactionStatus(transaction.status),
+    amount: transaction.amount,
+    currency: transaction.currency,
+    channel: transaction.channel,
+    reference: transaction.reference,
+    createdAt: transaction.createdAt.toISOString(),
+  };
+}
 
 function normalizePhoneNumber(phone: string) {
   const digitsOnly = phone.replace(/\D/g, "");
@@ -149,7 +258,171 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
     callbackMetadata: callback.CallbackMetadata?.Item ?? [],
   });
 
+  void (async () => {
+    const checkoutRequestId = callback.CheckoutRequestID;
+    if (!checkoutRequestId) {
+      return;
+    }
+
+    const matchedTransaction = await prisma.walletTransaction.findFirst({
+      where: {
+        checkoutRequestId,
+        type: "DEPOSIT",
+      },
+      include: {
+        wallet: true,
+      },
+    });
+
+    if (!matchedTransaction || matchedTransaction.status !== "PENDING") {
+      return;
+    }
+
+    const callbackItems = callback.CallbackMetadata?.Item ?? [];
+    const receiptNumber = callbackItems.find((item) => item.Name === "MpesaReceiptNumber")?.Value;
+
+    if (callback.ResultCode === 0) {
+      const wallet = matchedTransaction.wallet ?? (await getOrCreateWallet(matchedTransaction.userId));
+      const updatedWallet = await prisma.$transaction(async (tx) => {
+        await tx.walletTransaction.update({
+          where: { id: matchedTransaction.id },
+          data: {
+            status: "COMPLETED",
+            providerReceiptNumber:
+              typeof receiptNumber === "string"
+                ? receiptNumber
+                : typeof receiptNumber === "number"
+                  ? String(receiptNumber)
+                  : null,
+            providerResponseCode: String(callback.ResultCode),
+            providerResponseDescription: callback.ResultDesc,
+            providerCallback: callback as never,
+            processedAt: new Date(),
+          },
+        });
+
+        return tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            balance: {
+              increment: matchedTransaction.amount,
+            },
+          },
+        });
+      });
+
+      emitWalletEvent({
+        transactionId: matchedTransaction.id,
+        checkoutRequestId,
+        merchantRequestId: callback.MerchantRequestID,
+        status: "COMPLETED",
+        message: "Deposit confirmed and wallet updated.",
+        balance: updatedWallet.balance,
+        amount: matchedTransaction.amount,
+      });
+      return;
+    }
+
+    await prisma.walletTransaction.update({
+      where: { id: matchedTransaction.id },
+      data: {
+        status: "FAILED",
+        providerResponseCode: String(callback.ResultCode),
+        providerResponseDescription: callback.ResultDesc,
+        providerCallback: callback as never,
+        processedAt: new Date(),
+      },
+    });
+
+    emitWalletEvent({
+      transactionId: matchedTransaction.id,
+      checkoutRequestId,
+      merchantRequestId: callback.MerchantRequestID,
+      status: "FAILED",
+      message: callback.ResultDesc,
+      balance: (await getWalletSummary(matchedTransaction.userId)).balance,
+      amount: matchedTransaction.amount,
+    });
+  })().catch((error) => {
+    console.error("Failed to process M-Pesa callback.", error);
+  });
+
   return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+});
+
+paymentRouter.get("/payments/wallet/summary", authenticate, async (req, res, next) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const wallet = await getOrCreateWallet(req.user.id);
+    const [transactions, totalDeposits] = await Promise.all([
+      prisma.walletTransaction.findMany({
+        where: { userId: req.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+      }),
+      prisma.walletTransaction.aggregate({
+        where: { userId: req.user.id, type: "DEPOSIT", status: "COMPLETED" },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    return res.status(200).json({
+      wallet: {
+        balance: wallet.balance,
+        totalDepositsThisMonth: totalDeposits._sum.amount ?? 0,
+      },
+      transactions: transactions.map(toClientTransaction),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+paymentRouter.get("/payments/wallet/stream", authenticate, async (req, res) => {
+  if (!req.user?.id) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const summary = await getWalletSummary(req.user.id);
+
+  res.status(200).setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  const send = (event: PaymentEvent) => {
+    res.write(`event: wallet-update\n`);
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  };
+
+  const heartbeat = setInterval(() => {
+    res.write(`event: ping\n`);
+    res.write(`data: ${JSON.stringify({ time: Date.now() })}\n\n`);
+  }, 25000);
+
+  const listener = (event: PaymentEvent) => {
+    send(event);
+  };
+
+  walletEventListeners.add(listener);
+  send({
+    transactionId: "",
+    checkoutRequestId: null,
+    merchantRequestId: null,
+    status: "PENDING",
+    message: "Connected to live wallet updates.",
+    balance: summary.balance,
+    amount: 0,
+  });
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    walletEventListeners.delete(listener);
+    res.end();
+  });
 });
 
 paymentRouter.post(
@@ -239,11 +512,51 @@ paymentRouter.post(
         });
       }
 
+      const authenticatedUser = req.user;
+      if (!authenticatedUser?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = authenticatedUser.id;
+
+      const wallet = await getOrCreateWallet(userId);
+      const transaction = await prisma.walletTransaction.create({
+        data: {
+          userId,
+          walletId: wallet.id,
+          type: "DEPOSIT",
+          status: "PENDING",
+          amount: parsedBody.data.amount,
+          currency: "KES",
+          channel: "M-Pesa STK",
+          reference: stkData.CheckoutRequestID ?? stkData.MerchantRequestID ?? `DEP-${Date.now()}`,
+          checkoutRequestId: stkData.CheckoutRequestID ?? null,
+          merchantRequestId: stkData.MerchantRequestID ?? null,
+          phone: normalizedPhone,
+          accountReference: parsedBody.data.accountReference ?? "BET-DEPOSIT",
+          description: parsedBody.data.description ?? "Bet wallet deposit",
+        },
+      });
+
+      emitWalletEvent({
+        transactionId: transaction.id,
+        checkoutRequestId: transaction.checkoutRequestId,
+        merchantRequestId: transaction.merchantRequestId,
+        status: "PENDING",
+        message: stkData.CustomerMessage ?? "Approve the STK prompt on your phone.",
+        balance: wallet.balance,
+        amount: transaction.amount,
+      });
+
       return res.status(200).json({
         message: "STK push initiated successfully.",
+        transactionId: transaction.id,
         merchantRequestId: stkData.MerchantRequestID,
         checkoutRequestId: stkData.CheckoutRequestID,
         customerMessage: stkData.CustomerMessage,
+        wallet: {
+          balance: wallet.balance,
+        },
       });
     } catch (error) {
       next(error);
