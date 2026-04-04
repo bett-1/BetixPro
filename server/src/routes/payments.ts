@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { prisma } from "../lib/prisma";
@@ -177,13 +177,33 @@ type MpesaStkQueryResponse = {
   errorMessage?: string;
 };
 
+type MpesaCallbackItem = {
+  Name: string;
+  Value?: string | number;
+};
+
+const getValue = (items: MpesaCallbackItem[], name: string) =>
+  items.find((item) => item.Name === name)?.Value;
+
+function normalizeCallbackValue(value: unknown) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return null;
+}
+
 const mpesaCallbackSchema = z.object({
   Body: z.object({
     stkCallback: z.object({
       MerchantRequestID: z.string().optional(),
       CheckoutRequestID: z.string().optional(),
-      ResultCode: z.number(),
-      ResultDesc: z.string(),
+      ResultCode: z.union([z.number(), z.string()]).optional(),
+      ResultDesc: z.string().optional(),
       CallbackMetadata: z
         .object({
           Item: z
@@ -393,7 +413,10 @@ async function getMpesaAccessToken(config: {
   return (await tokenResponse.json()) as MpesaAuthTokenResponse;
 }
 
-paymentRouter.post("/payments/mpesa/callback", (req, res) => {
+const handleMpesaCallback = (req:Request, res:Response) => {
+  console.log(JSON.stringify(req.body ?? null, null, 2));
+  console.log("M-Pesa callback raw payload received.");
+
   const parsedBody = mpesaCallbackSchema.safeParse(req.body);
 
   if (!parsedBody.success) {
@@ -402,17 +425,38 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
   }
 
   const callback = parsedBody.data.Body.stkCallback;
+  const resultCode = Number(callback.ResultCode ?? NaN);
+  const resultDesc = callback.ResultDesc ?? "Missing ResultDesc";
+  const checkoutRequestId = callback.CheckoutRequestID;
+  const callbackItems = callback.CallbackMetadata?.Item ?? [];
+  const mpesaReceiptNumber = normalizeCallbackValue(
+    getValue(callbackItems as MpesaCallbackItem[], "MpesaReceiptNumber"),
+  );
+  const amount = normalizeCallbackValue(
+    getValue(callbackItems as MpesaCallbackItem[], "Amount"),
+  );
+  const phoneNumber = normalizeCallbackValue(
+    getValue(callbackItems as MpesaCallbackItem[], "PhoneNumber"),
+  );
+  const transactionDate = normalizeCallbackValue(
+    getValue(callbackItems as MpesaCallbackItem[], "TransactionDate"),
+  );
+
   console.log("M-Pesa callback received", {
-    merchantRequestId: callback.MerchantRequestID,
-    checkoutRequestId: callback.CheckoutRequestID,
-    resultCode: callback.ResultCode,
-    resultDesc: callback.ResultDesc,
-    callbackMetadata: callback.CallbackMetadata?.Item ?? [],
+    ResultCode: callback.ResultCode,
+    ResultDesc: resultDesc,
+    CheckoutRequestID: checkoutRequestId,
+  });
+  console.log("M-Pesa callback extracted metadata", {
+    MpesaReceiptNumber: mpesaReceiptNumber,
+    Amount: amount,
+    PhoneNumber: phoneNumber,
+    TransactionDate: transactionDate,
   });
 
   void (async () => {
-    const checkoutRequestId = callback.CheckoutRequestID;
     if (!checkoutRequestId) {
+      console.warn("M-Pesa callback missing CheckoutRequestID.");
       return;
     }
 
@@ -427,35 +471,56 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
     });
 
     if (!matchedTransaction) {
+      console.warn("No wallet transaction matched the M-Pesa callback.", {
+        checkoutRequestId,
+        resultCode,
+        resultDesc,
+      });
       return;
     }
 
-    const callbackItems = callback.CallbackMetadata?.Item ?? [];
-    const receiptNumber = callbackItems.find(
-      (item) => item.Name === "MpesaReceiptNumber",
-    )?.Value;
+    console.log("Matched wallet transaction before M-Pesa callback update", {
+      transactionId: matchedTransaction.id,
+      status: matchedTransaction.status,
+      providerReceiptNumber: matchedTransaction.providerReceiptNumber,
+      checkoutRequestId,
+    });
 
-    if (callback.ResultCode === 0) {
-      const normalizedReceiptNumber =
-        typeof receiptNumber === "string"
-          ? receiptNumber
-          : typeof receiptNumber === "number"
-            ? String(receiptNumber)
-            : null;
+    if (resultCode === 0) {
+      if (!mpesaReceiptNumber) {
+        console.warn(
+          "Successful M-Pesa callback did not include MpesaReceiptNumber.",
+          JSON.stringify(req.body ?? null, null, 2),
+        );
+      }
 
       if (
         matchedTransaction.status === "COMPLETED" &&
         !matchedTransaction.providerReceiptNumber &&
-        normalizedReceiptNumber
+        mpesaReceiptNumber
       ) {
-        await prisma.walletTransaction.update({
+        const backfilledTransaction = await prisma.walletTransaction.update({
           where: { id: matchedTransaction.id },
           data: {
-            providerReceiptNumber: normalizedReceiptNumber,
-            providerResponseCode: String(callback.ResultCode),
-            providerResponseDescription: callback.ResultDesc,
+            providerReceiptNumber: mpesaReceiptNumber,
+            providerResponseCode: String(resultCode),
+            providerResponseDescription: resultDesc,
             providerCallback: callback as never,
           },
+          select: {
+            id: true,
+            status: true,
+            providerReceiptNumber: true,
+            providerResponseCode: true,
+            providerResponseDescription: true,
+          },
+        });
+
+        console.log("Backfilled M-Pesa receipt on completed transaction", {
+          transactionId: backfilledTransaction.id,
+          status: backfilledTransaction.status,
+          providerReceiptNumber: backfilledTransaction.providerReceiptNumber,
+          providerResponseCode: backfilledTransaction.providerResponseCode,
         });
 
         emitWalletEvent({
@@ -463,7 +528,7 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
           transactionId: matchedTransaction.id,
           checkoutRequestId,
           merchantRequestId: callback.MerchantRequestID,
-          mpesaCode: normalizedReceiptNumber,
+          mpesaCode: mpesaReceiptNumber,
           status: "COMPLETED",
           message: "Deposit confirmed and wallet updated.",
           balance: (await getWalletSummary(matchedTransaction.userId)).balance,
@@ -479,16 +544,31 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
         matchedTransaction.wallet ??
         (await getOrCreateWallet(matchedTransaction.userId));
       const updatedWallet = await prisma.$transaction(async (tx) => {
-        await tx.walletTransaction.update({
+        const updatedTransaction = await tx.walletTransaction.update({
           where: { id: matchedTransaction.id },
           data: {
             status: "COMPLETED",
-            providerReceiptNumber: normalizedReceiptNumber,
-            providerResponseCode: String(callback.ResultCode),
-            providerResponseDescription: callback.ResultDesc,
+            providerReceiptNumber: mpesaReceiptNumber,
+            providerResponseCode: String(resultCode),
+            providerResponseDescription: resultDesc,
             providerCallback: callback as never,
             processedAt: new Date(),
           },
+          select: {
+            id: true,
+            status: true,
+            providerReceiptNumber: true,
+            providerResponseCode: true,
+            providerResponseDescription: true,
+          },
+        });
+
+        console.log("M-Pesa transaction updated from callback", {
+          transactionId: updatedTransaction.id,
+          status: updatedTransaction.status,
+          providerReceiptNumber: updatedTransaction.providerReceiptNumber,
+          providerResponseCode: updatedTransaction.providerResponseCode,
+          providerResponseDescription: updatedTransaction.providerResponseDescription,
         });
 
         return tx.wallet.update({
@@ -506,7 +586,7 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
         transactionId: matchedTransaction.id,
         checkoutRequestId,
         merchantRequestId: callback.MerchantRequestID,
-        mpesaCode: normalizedReceiptNumber,
+        mpesaCode: mpesaReceiptNumber,
         status: "COMPLETED",
         message: "Deposit confirmed and wallet updated.",
         balance: updatedWallet.balance,
@@ -518,22 +598,36 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
         transactionId: matchedTransaction.id,
         amount: matchedTransaction.amount,
         balance: updatedWallet.balance,
-        mpesaCode: normalizedReceiptNumber,
+        mpesaCode: mpesaReceiptNumber,
         status: "COMPLETED",
       });
       return;
     }
 
-    await prisma.walletTransaction.update({
+    console.warn("M-Pesa callback reported a failed transaction.", {
+      checkoutRequestId,
+      resultCode,
+      resultDesc,
+    });
+
+    const failedTransaction = await prisma.walletTransaction.update({
       where: { id: matchedTransaction.id },
       data: {
         status: "FAILED",
-        providerResponseCode: String(callback.ResultCode),
-        providerResponseDescription: callback.ResultDesc,
+        providerResponseCode: String(resultCode),
+        providerResponseDescription: resultDesc,
         providerCallback: callback as never,
         processedAt: new Date(),
       },
+      select: {
+        id: true,
+        status: true,
+        providerResponseCode: true,
+        providerResponseDescription: true,
+      },
     });
+
+    console.log("M-Pesa transaction updated as failed", failedTransaction);
 
     const latestSummary = await getWalletSummary(matchedTransaction.userId);
 
@@ -544,7 +638,7 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
       merchantRequestId: callback.MerchantRequestID,
       mpesaCode: null,
       status: "FAILED",
-      message: callback.ResultDesc,
+      message: resultDesc,
       balance: latestSummary.balance,
       amount: matchedTransaction.amount,
     });
@@ -555,14 +649,17 @@ paymentRouter.post("/payments/mpesa/callback", (req, res) => {
       amount: matchedTransaction.amount,
       balance: latestSummary.balance,
       status: "FAILED",
-      failureReason: callback.ResultDesc,
+      failureReason: resultDesc,
     });
   })().catch((error) => {
     console.error("Failed to process M-Pesa callback.", error);
   });
 
   return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
-});
+};
+
+paymentRouter.post("/mpesa/callback", handleMpesaCallback);
+paymentRouter.post("/payments/mpesa/callback", handleMpesaCallback);
 
 paymentRouter.get(
   "/payments/wallet/summary",
@@ -630,6 +727,24 @@ paymentRouter.post(
       const password = Buffer.from(
         `${config.shortcode}${config.passkey}${timestamp}`,
       ).toString("base64");
+
+      console.log("M-Pesa STK callback URL:", config.callbackUrl);
+
+      try {
+        const callbackUrl = new URL(config.callbackUrl);
+        if (callbackUrl.protocol !== "https:") {
+          console.warn("M-Pesa callback URL is not HTTPS.", config.callbackUrl);
+        }
+
+        if (["localhost", "127.0.0.1"].includes(callbackUrl.hostname)) {
+          console.warn(
+            "M-Pesa callback URL is not publicly reachable.",
+            config.callbackUrl,
+          );
+        }
+      } catch {
+        console.warn("M-Pesa callback URL is invalid.", config.callbackUrl);
+      }
 
       const stkPayload = {
         BusinessShortCode: config.shortcode,
@@ -873,13 +988,22 @@ paymentRouter.get(
           });
         });
 
+        const refreshedTransaction = await prisma.walletTransaction.findUnique({
+          where: { id: transaction.id },
+          select: {
+            providerReceiptNumber: true,
+          },
+        });
+
+        const mpesaCode = refreshedTransaction?.providerReceiptNumber ?? null;
+
         const latestSummary = await getWalletSummary(req.user.id);
         emitWalletEvent({
           userId: req.user.id,
           transactionId: transaction.id,
           checkoutRequestId: transaction.checkoutRequestId,
           merchantRequestId: transaction.merchantRequestId,
-          mpesaCode: transaction.providerReceiptNumber,
+          mpesaCode,
           status: "COMPLETED",
           message: "Deposit confirmed and wallet updated.",
           balance: updatedWallet?.balance ?? latestSummary.balance,
@@ -891,14 +1015,14 @@ paymentRouter.get(
           transactionId: transaction.id,
           amount: transaction.amount,
           balance: updatedWallet?.balance ?? latestSummary.balance,
-          mpesaCode: transaction.providerReceiptNumber,
+          mpesaCode,
           status: "COMPLETED",
         });
 
         return res.status(200).json({
           transactionId: transaction.id,
           status: "COMPLETED",
-          mpesaCode: transaction.providerReceiptNumber,
+          mpesaCode,
           message: "Deposit confirmed.",
         });
       }
