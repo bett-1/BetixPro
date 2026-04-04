@@ -20,6 +20,15 @@ import {
   type AdminBadgeStatus,
   type AdminTone,
 } from "../data/mock-data";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const toneToColor = (tone: AdminTone) => `var(--admin-${tone})`;
 
@@ -317,24 +326,48 @@ export function TableShell({ children }: { children: ReactNode }) {
 
 export function MiniChart() {
   return (
-    <div className="mt-3 flex h-12 items-end gap-1">
-      {revenueTrend.map((bar) => (
-        <div
-          className="flex flex-1 flex-col items-center gap-0.5"
-          key={bar.day}
-        >
-          <div
-            className="w-full rounded-[3px] bg-admin-accent-dim"
-            style={{ height: `${bar.bets * 0.44}px` }}
-          />
-          <div
-            className="w-full rounded-[3px] bg-admin-accent opacity-85"
-            style={{ height: `${bar.revenue * 0.44}px` }}
-          />
-          <span className="text-[9px] text-admin-text-muted">{bar.day}</span>
-        </div>
-      ))}
-    </div>
+    <ResponsiveContainer width="100%" height={250}>
+      <LineChart
+        data={revenueTrend}
+        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+        <XAxis
+          dataKey="day"
+          stroke="rgba(255,255,255,0.5)"
+          style={{ fontSize: "12px" }}
+        />
+        <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: "12px" }} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "rgba(10,14,26,0.95)",
+            border: "1px solid rgba(0,229,160,0.2)",
+            borderRadius: "8px",
+          }}
+          labelStyle={{ color: "#00e5a0" }}
+          itemStyle={{ color: "#00e5a0" }}
+        />
+        <Line
+          type="monotone"
+          dataKey="profit"
+          stroke="#00e5a0"
+          strokeWidth={3}
+          dot={{ fill: "#00e5a0", r: 5 }}
+          activeDot={{ r: 6 }}
+          name="Profit"
+        />
+        <Line
+          type="monotone"
+          dataKey="loss"
+          stroke="#ff9800"
+          strokeWidth={3}
+          strokeDasharray="8 4"
+          dot={{ fill: "#ff9800", r: 5 }}
+          activeDot={{ r: 6 }}
+          name="Loss"
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }
 
