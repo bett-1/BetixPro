@@ -87,6 +87,7 @@ const statusConfig: Record<
   completed: { tone: "accent", icon: CheckCircle },
   active: { tone: "accent", icon: CheckCircle },
   suspended: { tone: "red", icon: Lock },
+  banned: { tone: "red", icon: Flag },
   live: { tone: "live", icon: Flame },
   upcoming: { tone: "blue", icon: Clock },
   verified: { tone: "accent", icon: UserCheck },

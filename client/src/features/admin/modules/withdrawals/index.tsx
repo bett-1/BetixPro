@@ -39,6 +39,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+// --- Types ---
+type WithdrawalStatus = "pending" | "completed" | "failed";
+
 type Withdrawal = {
   id: string;
   userId: string;
@@ -48,7 +51,7 @@ type Withdrawal = {
   fee: number;
   totalDebit: number;
   phone: string;
-  status: "pending" | "completed" | "failed";
+  status: WithdrawalStatus;
   createdAt: string;
   processedAt: string | null;
 };
@@ -57,7 +60,10 @@ type WithdrawalsResponse = {
   withdrawals: Withdrawal[];
 };
 
+type FilterStatus = "PENDING" | "COMPLETED" | "FAILED";
+
 export default function WithdrawalsAdmin() {
+  // --- State ---
   const [selectedWithdrawal, setSelectedWithdrawal] =
     useState<Withdrawal | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -65,14 +71,14 @@ export default function WithdrawalsAdmin() {
     string | null
   >(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "PENDING" | "COMPLETED" | "FAILED"
-  >("PENDING");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("PENDING");
+
   const queryClient = useQueryClient();
   const locationHash = useLocation({
     select: (location) => location.hash,
   });
 
+  // --- Queries & Mutations ---
   const {
     data: withdrawalsData,
     isLoading,
@@ -100,14 +106,13 @@ export default function WithdrawalsAdmin() {
     },
     onSuccess: () => {
       toast.success("Withdrawal approved successfully");
-      setSelectedWithdrawal(null);
+      handleCloseDetails();
       queryClient.invalidateQueries({ queryKey: ["admin-withdrawals"] });
-      refetch();
     },
     onError: (error: any) => {
-      const errorMessage =
-        error.response?.data?.message || "Failed to approve withdrawal";
-      toast.error(errorMessage);
+      toast.error(
+        error.response?.data?.message || "Failed to approve withdrawal",
+      );
     },
   });
 
@@ -115,39 +120,48 @@ export default function WithdrawalsAdmin() {
     mutationFn: async (data: { withdrawalId: string; reason: string }) => {
       const response = await api.patch(
         `/admin/withdrawals/${data.withdrawalId}/reject`,
-        { reason: data.reason },
+        {
+          reason: data.reason,
+        },
       );
       return response.data;
     },
     onSuccess: () => {
       toast.success("Withdrawal rejected successfully");
-      setSelectedWithdrawal(null);
-      setRejectReason("");
+      handleCloseDetails();
       queryClient.invalidateQueries({ queryKey: ["admin-withdrawals"] });
-      refetch();
     },
     onError: (error: any) => {
-      const errorMessage =
-        error.response?.data?.message || "Failed to reject withdrawal";
-      toast.error(errorMessage);
+      toast.error(
+        error.response?.data?.message || "Failed to reject withdrawal",
+      );
     },
   });
 
+  // --- Derived Data & Helpers ---
   const withdrawals = withdrawalsData?.withdrawals ?? [];
 
+  // Optimized stats calculation (Single pass instead of 4 filter/reduce loops)
   const stats = useMemo(() => {
-    const pendingCount = withdrawals.filter(
-      (w) => w.status === "pending",
-    ).length;
-    const pendingAmount = withdrawals
-      .filter((w) => w.status === "pending")
-      .reduce((sum, w) => sum + w.amount, 0);
-    const pendingFees = withdrawals
-      .filter((w) => w.status === "pending")
-      .reduce((sum, w) => sum + w.fee, 0);
-    const completedCount = withdrawals.filter(
-      (w) => w.status === "completed",
-    ).length;
+    const { pendingCount, pendingAmount, pendingFees, completedCount } =
+      withdrawals.reduce(
+        (acc, w) => {
+          if (w.status === "pending") {
+            acc.pendingCount++;
+            acc.pendingAmount += w.amount;
+            acc.pendingFees += w.fee;
+          } else if (w.status === "completed") {
+            acc.completedCount++;
+          }
+          return acc;
+        },
+        {
+          pendingCount: 0,
+          pendingAmount: 0,
+          pendingFees: 0,
+          completedCount: 0,
+        },
+      );
 
     return [
       {
@@ -174,10 +188,10 @@ export default function WithdrawalsAdmin() {
   }, [withdrawals]);
 
   const formatCurrency = (value: number) => `KES ${value.toLocaleString()}`;
+
   const formatDateTime = (dateStr: string) => {
     if (!dateStr) return "-";
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-KE", {
+    return new Date(dateStr).toLocaleString("en-KE", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -186,23 +200,71 @@ export default function WithdrawalsAdmin() {
     });
   };
 
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+    setSelectedWithdrawal(null);
+    setRejectReason("");
+  };
+
+  const openDetails = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setDetailsOpen(true);
+  };
+
+  // Implemented Export functionality
+  const handleExportCSV = () => {
+    if (!withdrawals.length) return toast.error("No data available to export");
+
+    const headers = [
+      "User Email",
+      "User ID",
+      "Phone",
+      "Amount",
+      "Fee",
+      "Total Debit",
+      "Status",
+      "Date",
+    ];
+    const csvRows = withdrawals.map((w) => [
+      w.userEmail,
+      w.userId,
+      w.phone,
+      w.amount,
+      w.fee,
+      w.totalDebit,
+      w.status,
+      new Date(w.createdAt).toISOString(),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...csvRows.map((row) => row.join(",")),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = `withdrawals_${statusFilter.toLowerCase()}_${new Date().getTime()}.csv`;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- Effects ---
   useEffect(() => {
-    if (!locationHash || withdrawals.length === 0) {
-      return;
-    }
+    if (!locationHash || withdrawals.length === 0) return;
 
     const hashValue = locationHash.replace(/^#/, "");
     const targetWithdrawal =
       hashValue === "latest"
         ? withdrawals[0]
-        : withdrawals.find((withdrawal) => withdrawal.id === hashValue);
+        : withdrawals.find((w) => w.id === hashValue);
 
-    if (!targetWithdrawal) {
-      return;
-    }
+    if (!targetWithdrawal) return;
 
     setHighlightedWithdrawalId(targetWithdrawal.id);
-
     const targetElement = document.querySelector(
       `[data-withdrawal-id="${targetWithdrawal.id}"]`,
     );
@@ -220,6 +282,7 @@ export default function WithdrawalsAdmin() {
     return () => window.clearTimeout(timeoutId);
   }, [locationHash, withdrawals]);
 
+  // --- Render ---
   return (
     <div className="space-y-6">
       <AdminSectionHeader
@@ -229,15 +292,15 @@ export default function WithdrawalsAdmin() {
           <div className="flex items-center gap-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
               className="rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-sm text-admin-text-primary outline-none transition hover:border-admin-accent"
             >
               <option value="PENDING">Pending</option>
               <option value="COMPLETED">Completed</option>
               <option value="FAILED">Failed</option>
             </select>
-            <AdminButton variant="ghost">
-              <Download size={13} />
+            <AdminButton variant="ghost" onClick={handleExportCSV}>
+              <Download size={13} className="mr-2" />
               Export CSV
             </AdminButton>
           </div>
@@ -259,11 +322,11 @@ export default function WithdrawalsAdmin() {
         <TableShell>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader className="animate-spin" size={24} />
+              <Loader className="animate-spin text-admin-accent" size={24} />
             </div>
           ) : withdrawals.length === 0 ? (
             <div className="flex items-center justify-center py-8 text-admin-text-muted">
-              No {statusFilter.toLowerCase()} withdrawals
+              No {statusFilter.toLowerCase()} withdrawals found.
             </div>
           ) : (
             <table className={adminTableClassName}>
@@ -288,13 +351,14 @@ export default function WithdrawalsAdmin() {
               <tbody>
                 {withdrawals.map((withdrawal) => (
                   <tr
-                    className={`even:bg-(--color-bg-elevated) transition-colors ${
+                    key={withdrawal.id}
+                    data-withdrawal-id={withdrawal.id}
+                    onClick={() => openDetails(withdrawal)}
+                    className={`even:bg-(--color-bg-elevated) cursor-pointer transition-colors hover:bg-admin-surface/60 ${
                       highlightedWithdrawalId === withdrawal.id
                         ? "bg-admin-accent-dim"
                         : ""
                     }`}
-                    data-withdrawal-id={withdrawal.id}
-                    key={withdrawal.id}
                   >
                     <td
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
@@ -328,7 +392,10 @@ export default function WithdrawalsAdmin() {
                     >
                       {formatDateTime(withdrawal.createdAt)}
                     </td>
-                    <td className={adminTableCellClassName}>
+                    <td
+                      className={adminTableCellClassName}
+                      onClick={(e) => e.stopPropagation()} // Prevents row click when interacting with menu
+                    >
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <AdminButton
@@ -341,35 +408,34 @@ export default function WithdrawalsAdmin() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
                           <DropdownMenuItem
-                            onSelect={() => {
-                              setSelectedWithdrawal(withdrawal);
-                              setDetailsOpen(true);
-                            }}
+                            onSelect={() => openDetails(withdrawal)}
                           >
                             View details
                           </DropdownMenuItem>
-                          {withdrawal.status === "pending" ? (
+                          {withdrawal.status === "pending" && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
+                                className="text-green-500 focus:text-green-600 focus:bg-green-500/10"
+                                onSelect={(e) => {
+                                  e.preventDefault();
                                   approveMutation.mutate(withdrawal.id);
                                 }}
                               >
                                 Approve
                               </DropdownMenuItem>
                               <DropdownMenuItem
+                                className="text-red-500 focus:text-red-600 focus:bg-red-500/10"
                                 onSelect={() => {
                                   setSelectedWithdrawal(withdrawal);
                                   setRejectReason("");
                                   setDetailsOpen(true);
                                 }}
                               >
-                                Reject
+                                Reject...
                               </DropdownMenuItem>
                             </>
-                          ) : null}
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -382,13 +448,7 @@ export default function WithdrawalsAdmin() {
 
         <Dialog
           open={detailsOpen && selectedWithdrawal !== null}
-          onOpenChange={(open) => {
-            setDetailsOpen(open);
-            if (!open) {
-              setSelectedWithdrawal(null);
-              setRejectReason("");
-            }
-          }}
+          onOpenChange={(open) => !open && handleCloseDetails()}
         >
           <DialogContent className="max-w-md overflow-hidden border-admin-border bg-admin-card p-0 shadow-xl sm:rounded-2xl">
             <DialogHeader className="border-b border-admin-border bg-admin-surface/50 px-6 py-5">
@@ -507,6 +567,7 @@ export default function WithdrawalsAdmin() {
                         onChange={(e) => setRejectReason(e.target.value)}
                         placeholder="Enter reason if rejecting..."
                         className="mt-1.5 h-10 border-admin-border bg-admin-card text-sm focus-visible:ring-admin-accent"
+                        onKeyDown={(e) => e.stopPropagation()} // Prevents modal from closing if pressing keys
                       />
                     </div>
 

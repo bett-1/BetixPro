@@ -41,7 +41,9 @@ import {
 
 export default function Users() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"active" | "suspended" | "banned" | "">("");
+  const [status, setStatus] = useState<"active" | "suspended" | "banned" | "">(
+    "",
+  );
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function Users() {
   const [actionReason, setActionReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { users, total, loading, error, refetch } = useUsers({
+  const { users, loading, error, refetch } = useUsers({
     page,
     search,
     status,
@@ -228,7 +230,11 @@ export default function Users() {
         subtitle="Manage user accounts and permissions"
         actions={
           <>
-            <AdminButton variant="ghost" size="sm" onClick={() => void refetch()}>
+            <AdminButton
+              variant="ghost"
+              size="sm"
+              onClick={() => void refetch()}
+            >
               <RefreshCw size={13} />
               Refresh
             </AdminButton>
@@ -292,13 +298,20 @@ export default function Users() {
             <table className={adminTableClassName}>
               <thead>
                 <tr>
-                  {["No.", "Email", "Phone", "Status", "Balance", "Verified", "Created", "Actions"].map(
-                    (heading) => (
-                      <th className={adminTableHeadCellClassName} key={heading}>
-                        {heading}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "No.",
+                    "Email",
+                    "Phone",
+                    "Status",
+                    "Balance",
+                    "Verified",
+                    "Created",
+                    "Actions",
+                  ].map((heading) => (
+                    <th className={adminTableHeadCellClassName} key={heading}>
+                      {heading}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -338,7 +351,9 @@ export default function Users() {
                         </span>
                       )}
                     </td>
-                    <td className={`${adminTableCellClassName} text-xs text-admin-text-muted`}>
+                    <td
+                      className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
+                    >
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className={adminTableCellClassName}>
@@ -350,12 +365,16 @@ export default function Users() {
                             </AdminButton>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => handleOpenEdit(user)}>
+                            <DropdownMenuItem
+                              onClick={() => handleOpenEdit(user)}
+                            >
                               Edit
                             </DropdownMenuItem>
                             {user.status === "active" && !user.bannedAt ? (
                               <>
-                                <DropdownMenuItem onClick={() => handleOpenSuspend(user.id)}>
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenSuspend(user.id)}
+                                >
                                   Suspend
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
@@ -367,7 +386,9 @@ export default function Users() {
                               </>
                             ) : user.status === "suspended" ? (
                               <>
-                                <DropdownMenuItem onClick={() => handleOpenUnsuspend(user.id)}>
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenUnsuspend(user.id)}
+                                >
                                   Unsuspend
                                 </DropdownMenuItem>
                                 {!user.bannedAt && (
@@ -380,7 +401,9 @@ export default function Users() {
                                 )}
                               </>
                             ) : user.status === "banned" ? (
-                              <DropdownMenuItem onClick={() => handleOpenUnban(user.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenUnban(user.id)}
+                              >
                                 Unban
                               </DropdownMenuItem>
                             ) : null}
@@ -407,11 +430,15 @@ export default function Users() {
         <DialogContent className="border-admin-border bg-admin-card max-w-2xl">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>View and manage user information</DialogDescription>
+            <DialogDescription>
+              View and manage user information
+            </DialogDescription>
           </DialogHeader>
 
           {userLoading ? (
-            <div className="text-center py-8 text-admin-text-muted">Loading...</div>
+            <div className="text-center py-8 text-admin-text-muted">
+              Loading...
+            </div>
           ) : selectedUser ? (
             <ScrollArea className="h-[500px] w-full pr-4">
               <div className="space-y-6">
@@ -490,7 +517,8 @@ export default function Users() {
                   >
                     Edit User
                   </Button>
-                  {selectedUser.status === "active" && !selectedUser.bannedAt ? (
+                  {selectedUser.status === "active" &&
+                  !selectedUser.bannedAt ? (
                     <>
                       <Button
                         variant="outline"
@@ -578,7 +606,9 @@ export default function Users() {
               </label>
               <Input
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="user@example.com"
                 disabled
                 className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary opacity-50"
@@ -590,7 +620,9 @@ export default function Users() {
               </label>
               <Input
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 placeholder="+254712345678"
                 disabled
                 className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary opacity-50"
@@ -605,7 +637,10 @@ export default function Users() {
                   setFormData({ ...formData, isVerified: e.target.checked })
                 }
               />
-              <label htmlFor="verified" className="text-sm text-admin-text-primary">
+              <label
+                htmlFor="verified"
+                className="text-sm text-admin-text-primary"
+              >
                 Verified
               </label>
             </div>
@@ -809,7 +844,9 @@ export default function Users() {
         <DialogContent className="border-admin-border bg-admin-card max-w-md">
           <DialogHeader>
             <DialogTitle>Create New User</DialogTitle>
-            <DialogDescription>Add a new user to the platform</DialogDescription>
+            <DialogDescription>
+              Add a new user to the platform
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -819,7 +856,10 @@ export default function Users() {
               <Input
                 value={createFormData.fullName}
                 onChange={(e) =>
-                  setCreateFormData({ ...createFormData, fullName: e.target.value })
+                  setCreateFormData({
+                    ...createFormData,
+                    fullName: e.target.value,
+                  })
                 }
                 placeholder="John Doe"
                 className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary"
@@ -832,7 +872,10 @@ export default function Users() {
               <Input
                 value={createFormData.email}
                 onChange={(e) =>
-                  setCreateFormData({ ...createFormData, email: e.target.value })
+                  setCreateFormData({
+                    ...createFormData,
+                    email: e.target.value,
+                  })
                 }
                 placeholder="user@example.com"
                 type="email"
@@ -846,7 +889,10 @@ export default function Users() {
               <Input
                 value={createFormData.phone}
                 onChange={(e) =>
-                  setCreateFormData({ ...createFormData, phone: e.target.value })
+                  setCreateFormData({
+                    ...createFormData,
+                    phone: e.target.value,
+                  })
                 }
                 placeholder="+254712345678 or 0712345678"
                 className="mt-1 border-admin-border bg-admin-surface text-admin-text-primary"
@@ -859,7 +905,10 @@ export default function Users() {
               <Input
                 value={createFormData.password}
                 onChange={(e) =>
-                  setCreateFormData({ ...createFormData, password: e.target.value })
+                  setCreateFormData({
+                    ...createFormData,
+                    password: e.target.value,
+                  })
                 }
                 type="password"
                 placeholder="Minimum 8 characters"
@@ -895,7 +944,10 @@ export default function Users() {
                   })
                 }
               />
-              <label htmlFor="createVerified" className="text-sm text-admin-text-primary">
+              <label
+                htmlFor="createVerified"
+                className="text-sm text-admin-text-primary"
+              >
                 Mark as verified
               </label>
             </div>
