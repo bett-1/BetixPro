@@ -7,7 +7,7 @@ import {
   Target,
   TrendingUp,
   Users,
-  Zap
+  Zap,
 } from "lucide-react";
 
 export type AdminTone =
@@ -27,6 +27,7 @@ export type AdminBadgeStatus =
   | "completed"
   | "active"
   | "suspended"
+  | "banned"
   | "live"
   | "upcoming"
   | "verified"

@@ -1,34 +1,96 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, Eye, Filter, Flag, TriangleAlert } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  Download,
+  Filter,
+  Loader,
+  MoreHorizontal,
+  TriangleAlert,
+} from "lucide-react";
+import { useState } from "react";
 import { api } from "@/api/axiosConfig";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { dashboardMetrics, recentBets } from "../../data/mock-data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AdminButton,
   AdminCard,
   AdminCardHeader,
+  DepositWithdrawalChart,
   AdminSectionHeader,
-  DonutChart,
-  MetricCard,
-  MiniChart,
+  InlinePill,
   StatusBadge,
   TableShell,
-  adminCompactActionsClassName,
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
 } from "../../components/ui";
 
+type DashboardMetric = {
+  label: string;
+  value: string;
+  tone: "accent" | "blue" | "gold" | "red";
+  helper?: string;
+};
+
+type DashboardTransaction = {
+  id: string;
+  reference: string;
+  mpesaCode?: string | null;
+  userEmail: string;
+  userPhone: string;
+  type: "deposit" | "withdrawal";
+  amount: number;
+  fee: number;
+  totalDebit: number;
+  status: "pending" | "completed" | "failed";
+  createdAt: string;
+  channel: string;
+};
+
+type DashboardSummaryResponse = {
+  generatedAt: string;
+  metrics: DashboardMetric[];
+  charts: {
+    depositWithdrawalTrend: Array<{
+      period: string;
+      deposits: number;
+      withdrawals: number;
+    }>;
+    totals: {
+      deposits7d: number;
+      withdrawals7d: number;
+    };
+  };
+  recentTransactions: DashboardTransaction[];
+};
+
+function formatCurrency(value: number) {
+  return `KES ${value.toLocaleString()}`;
+}
+
 export default function Dashboard() {
-  const { data: pendingWithdrawalData } = useQuery({
-    queryKey: ["admin-withdrawals", "PENDING"],
+  const navigate = useNavigate();
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<DashboardTransaction | null>(null);
+  const [viewDetailsDialogOpen, setViewDetailsDialogOpen] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-dashboard-summary"],
     queryFn: async () => {
-      const response = await api.get<{ withdrawals: Array<{ id: string }> }>(
-        "/admin/withdrawals",
-        {
-          params: { status: "PENDING" },
-        },
+      const response = await api.get<DashboardSummaryResponse>(
+        "/admin/dashboard/summary",
       );
 
       return response.data;
@@ -36,16 +98,62 @@ export default function Dashboard() {
     refetchInterval: 10_000,
   });
 
-  const pendingWithdrawals = pendingWithdrawalData?.withdrawals ?? [];
+  const metrics = data?.metrics ?? [];
+  const chartData = data?.charts.depositWithdrawalTrend ?? [];
+  const recentTransactions = data?.recentTransactions ?? [];
+  const pendingWithdrawals = metrics.find(
+    (metric) => metric.label === "Pending Withdrawals",
+  )?.value;
+  const pendingCount = pendingWithdrawals
+    ? Number(pendingWithdrawals.replace(/\D/g, ""))
+    : 0;
+
+  const handleViewDetails = (transaction: DashboardTransaction) => {
+    setSelectedTransaction(transaction);
+    setViewDetailsDialogOpen(true);
+  };
+
+  const handleOpenUser = (transaction: DashboardTransaction) => {
+    // Navigate to the users module and filter by the user's email
+    navigate({
+      to: "/admin/users",
+      search: { filter: transaction.userEmail },
+    });
+  };
+
+  const handleReviewTransaction = (transaction: DashboardTransaction) => {
+    if (transaction.type === "withdrawal") {
+      // Navigate to withdrawals with filter for this transaction
+      navigate({
+        to: "/admin/withdrawals",
+        search: { transactionId: transaction.id, status: transaction.status },
+      });
+    } else {
+      // For deposits, show the details dialog
+      handleViewDetails(transaction);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <AdminSectionHeader
         title="Overview"
-        subtitle="Friday, April 3, 2026 - Live Platform Snapshot"
+        subtitle={
+          data
+            ? `Live platform snapshot refreshed at ${new Date(
+                data.generatedAt,
+              ).toLocaleString("en-KE", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}`
+            : "Live platform snapshot from the server"
+        }
       />
 
-      {pendingWithdrawals.length > 0 ? (
+      {pendingCount > 0 ? (
         <Alert className="border-amber-400/30 bg-amber-400/10">
           <TriangleAlert className="h-4 w-4 text-amber-300" />
           <AlertTitle className="text-amber-200">
@@ -53,8 +161,8 @@ export default function Dashboard() {
           </AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3 text-amber-100/90">
             <span>
-              You have {pendingWithdrawals.length} withdrawal request
-              {pendingWithdrawals.length === 1 ? "" : "s"} waiting for review.
+              You have {pendingCount} withdrawal request
+              {pendingCount === 1 ? "" : "s"} waiting for review.
             </span>
             <Link
               to="/admin/withdrawals"
@@ -66,49 +174,68 @@ export default function Dashboard() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        {dashboardMetrics.map((metric) => (
-          <MetricCard key={metric.label} {...metric} />
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {isLoading && metrics.length === 0
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <AdminCard key={index} className="animate-pulse">
+                <div className="h-6 w-24 rounded bg-admin-surface" />
+                <div className="mt-3 h-8 w-32 rounded bg-admin-surface" />
+                <div className="mt-2 h-3 w-20 rounded bg-admin-surface" />
+              </AdminCard>
+            ))
+          : metrics.slice(0, 6).map((metric) => (
+              <AdminCard key={metric.label}>
+                <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  {metric.label}
+                </p>
+                <p className="mt-2 text-xl font-bold text-admin-text-primary">
+                  {metric.value}
+                </p>
+                {metric.helper && (
+                  <p className="mt-1 text-[10px] text-admin-text-secondary">
+                    {metric.helper}
+                  </p>
+                )}
+              </AdminCard>
+            ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
         <AdminCard>
           <AdminCardHeader
-            title="Profit & Loss"
-            subtitle="Last 7 days"
-            actions={
-              <div className="flex flex-wrap gap-3 text-xs text-admin-text-secondary">
-                <span className="inline-flex items-center gap-2">
-                  <span
-                    className="inline-block h-2 w-2 rounded-[2px]"
-                    style={{ backgroundColor: "#00e5a0" }}
-                  />
-                  Profit
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span
-                    className="inline-block h-2 w-2 rounded-[2px]"
-                    style={{ backgroundColor: "#ff9800" }}
-                  />
-                  Loss
-                </span>
-              </div>
-            }
+            title="Deposit vs Withdrawal Trend"
+            subtitle="Completed transactions over last 7 days"
           />
-          <MiniChart />
+          <DepositWithdrawalChart data={chartData} />
         </AdminCard>
 
         <AdminCard>
-          <AdminCardHeader title="Sport Distribution" subtitle="By bet count" />
-          <DonutChart />
+          <AdminCardHeader title="7 Day Totals" subtitle="Liquidity" />
+          <div className="space-y-2.5 pt-2">
+            <div className="rounded-lg border border-admin-border bg-admin-surface/60 p-2.5">
+              <p className="text-[9px] uppercase tracking-[0.08em] text-admin-text-muted">
+                Deposits
+              </p>
+              <p className="mt-1 text-lg font-bold text-admin-accent">
+                {formatCurrency(data?.charts.totals.deposits7d ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-admin-border bg-admin-surface/60 p-2.5">
+              <p className="text-[9px] uppercase tracking-[0.08em] text-admin-text-muted">
+                Withdrawals
+              </p>
+              <p className="mt-1 text-lg font-bold text-admin-gold">
+                {formatCurrency(data?.charts.totals.withdrawals7d ?? 0)}
+              </p>
+            </div>
+          </div>
         </AdminCard>
       </div>
 
       <AdminCard>
         <AdminCardHeader
-          title="Recent Bets"
-          subtitle="Live feed - auto-updating"
+          title="Recent Activity"
+          subtitle="Live wallet and withdrawal flow"
           actions={
             <>
               <AdminButton variant="ghost">
@@ -128,16 +255,13 @@ export default function Dashboard() {
             <thead>
               <tr>
                 {[
-                  "Bet ID",
+                  "Reference",
                   "User",
-                  "Sport",
-                  "Event",
-                  "Market",
-                  "Odds",
-                  "Stake",
+                  "Type",
+                  "Amount",
                   "Status",
                   "Time",
-                  "Action",
+                  "Actions",
                 ].map((heading) => (
                   <th className={adminTableHeadCellClassName} key={heading}>
                     {heading}
@@ -146,60 +270,249 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentBets.map((bet) => (
-                <tr className="even:bg-admin-surface/45" key={bet.id}>
-                  <td
-                    className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
-                  >
-                    {bet.id}
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                  >
-                    {bet.user}
-                  </td>
-                  <td className={adminTableCellClassName}>{bet.sport}</td>
-                  <td
-                    className={adminTableCellClassName}
-                    style={{ maxWidth: 160 }}
-                  >
-                    {bet.event}
-                  </td>
-                  <td className={adminTableCellClassName}>{bet.market}</td>
-                  <td
-                    className={`${adminTableCellClassName} font-semibold text-admin-gold`}
-                  >
-                    {bet.odds}
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                  >
-                    {bet.stake}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    <StatusBadge status={bet.status} />
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
-                  >
-                    {bet.time}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    <div className={adminCompactActionsClassName}>
-                      <AdminButton size="sm" variant="ghost">
-                        <Eye size={11} />
-                      </AdminButton>
-                      <AdminButton size="sm" variant="ghost">
-                        <Flag size={11} />
-                      </AdminButton>
+              {isLoading ? (
+                <tr>
+                  <td className={adminTableCellClassName} colSpan={7}>
+                    <div className="flex items-center justify-center py-8">
+                      <Loader className="animate-spin" size={24} />
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : recentTransactions.length === 0 ? (
+                <tr>
+                  <td className={adminTableCellClassName} colSpan={7}>
+                    <div className="flex items-center justify-center py-8 text-admin-text-muted">
+                      No recent activity yet.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                recentTransactions.map((transaction) => (
+                  <tr className="even:bg-admin-surface/45" key={transaction.id}>
+                    <td
+                      className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
+                    >
+                      {transaction.mpesaCode ?? transaction.reference}
+                    </td>
+                    <td
+                      className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
+                    >
+                      <div>
+                        <p className="text-xs">{transaction.userEmail}</p>
+                        <p className="text-[10px] text-admin-text-muted">
+                          {transaction.userPhone}
+                        </p>
+                      </div>
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <InlinePill
+                        label={transaction.type}
+                        tone={
+                          transaction.type === "deposit" ? "accent" : "gold"
+                        }
+                      />
+                    </td>
+                    <td
+                      className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
+                    >
+                      {formatCurrency(transaction.amount)}
+                      {transaction.type === "withdrawal" ? (
+                        <span className="ml-2 text-[10px] text-admin-text-muted">
+                          Fee {formatCurrency(transaction.fee)}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <StatusBadge status={transaction.status} />
+                    </td>
+                    <td
+                      className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
+                    >
+                      {new Date(transaction.createdAt).toLocaleString("en-KE", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <AdminButton
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Row actions"
+                          >
+                            <MoreHorizontal size={14} />
+                          </AdminButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onClick={() => handleViewDetails(transaction)}
+                          >
+                            View full details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenUser(transaction)}
+                          >
+                            Open user profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleReviewTransaction(transaction)}
+                          >
+                            {transaction.type === "withdrawal"
+                              ? "Review & manage payout"
+                              : "Review & manage deposit"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </TableShell>
       </AdminCard>
+
+      {selectedTransaction && (
+        <Dialog
+          open={viewDetailsDialogOpen}
+          onOpenChange={setViewDetailsDialogOpen}
+        >
+          <DialogContent className="max-w-md bg-admin-bg">
+            <DialogHeader>
+              <DialogTitle className="text-admin-text-primary">
+                Transaction Details
+              </DialogTitle>
+              <DialogDescription className="text-admin-text-muted">
+                {selectedTransaction.type === "deposit"
+                  ? "Wallet deposit transaction"
+                  : "Wallet withdrawal transaction"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  Reference ID
+                </p>
+                <p className="mt-1 font-mono text-sm text-admin-text-primary">
+                  {selectedTransaction.mpesaCode ??
+                    selectedTransaction.reference}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                    Type
+                  </p>
+                  <p className="mt-1 capitalize text-admin-text-primary">
+                    {selectedTransaction.type}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                    Status
+                  </p>
+                  <div className="mt-1">
+                    <StatusBadge status={selectedTransaction.status} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  Amount
+                </p>
+                <p className="mt-1 text-lg font-bold text-admin-text-primary">
+                  {formatCurrency(selectedTransaction.amount)}
+                </p>
+              </div>
+
+              {selectedTransaction.type === "withdrawal" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                      Fee
+                    </p>
+                    <p className="mt-1 text-admin-text-secondary">
+                      {formatCurrency(selectedTransaction.fee)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                      Net Amount
+                    </p>
+                    <p className="mt-1 font-semibold text-admin-gold">
+                      {formatCurrency(
+                        selectedTransaction.amount - selectedTransaction.fee,
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  User
+                </p>
+                <div className="mt-1">
+                  <p className="text-sm text-admin-text-primary">
+                    {selectedTransaction.userEmail}
+                  </p>
+                  <p className="text-[11px] text-admin-text-muted">
+                    {selectedTransaction.userPhone}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  Timestamp
+                </p>
+                <p className="mt-1 text-sm text-admin-text-secondary">
+                  {new Date(selectedTransaction.createdAt).toLocaleString(
+                    "en-KE",
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    },
+                  )}
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <AdminButton
+                  tone="blue"
+                  size="sm"
+                  onClick={() => handleOpenUser(selectedTransaction)}
+                >
+                  View User
+                </AdminButton>
+                {selectedTransaction.type === "withdrawal" && (
+                  <AdminButton
+                    tone="gold"
+                    size="sm"
+                    onClick={() => {
+                      handleReviewTransaction(selectedTransaction);
+                      setViewDetailsDialogOpen(false);
+                    }}
+                  >
+                    Manage Payout
+                  </AdminButton>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

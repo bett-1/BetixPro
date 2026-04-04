@@ -1,43 +1,11 @@
-import { Router } from "express";
-import { authenticate } from "../middleware/authenticate";
 import { prisma } from "../lib/prisma";
-import { emitNotificationUpdate, emitWalletUpdate } from "../lib/socket";
+import { emitNotificationUpdate } from "../lib/socket";
 
-type WalletTransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "REVERSED";
-type WalletTransactionType =
-  | "DEPOSIT"
-  | "WITHDRAWAL"
-  | "BET_STAKE"
-  | "BET_WIN"
-  | "REFUND"
-  | "BONUS";
-
-type PaymentEvent = {
-  userId: string;
-  transactionId: string;
-  checkoutRequestId?: string | null;
-  merchantRequestId?: string | null;
-  mpesaCode?: string | null;
-  status: WalletTransactionStatus;
-  message: string;
-  balance: number;
-  amount: number;
-};
-
-function emitWalletEvent(event: PaymentEvent) {
-  emitWalletUpdate(event.userId, {
-    transactionId: event.transactionId,
-    checkoutRequestId: event.checkoutRequestId,
-    merchantRequestId: event.merchantRequestId,
-    mpesaCode: event.mpesaCode,
-    status: event.status,
-    message: event.message,
-    balance: event.balance,
-    amount: event.amount,
-  });
-}
-
-async function createDepositNotifications(args: {
+/**
+ * Creates deposit notifications for both user and admin.
+ * Handles success and failure scenarios with appropriate messaging.
+ */
+export async function createDepositNotifications(args: {
   userId: string;
   transactionId: string;
   amount: number;
@@ -143,7 +111,11 @@ async function createDepositNotifications(args: {
   }
 }
 
-async function createWithdrawalNotifications(args: {
+/**
+ * Creates withdrawal notifications for user and admin.
+ * Handles pending, completed, failed, and rejected statuses.
+ */
+export async function createWithdrawalNotifications(args: {
   userId: string;
   transactionId: string;
   amount: number;
@@ -172,7 +144,8 @@ async function createWithdrawalNotifications(args: {
   let userMessage = "";
   let adminTitle = "";
   let adminMessage = "";
-  let notificationType: "SYSTEM" = "SYSTEM";
+  let notificationType: "WITHDRAWAL_SUCCESS" | "WITHDRAWAL_FAILED" | "SYSTEM" =
+    "SYSTEM";
 
   if (args.status === "PENDING") {
     userTitle = "Withdrawal Request Submitted";
@@ -185,19 +158,19 @@ async function createWithdrawalNotifications(args: {
     userMessage = `Your withdrawal of KES ${args.amount.toLocaleString()} has been processed to ${args.phone}. Fee charged: KES ${args.fee.toLocaleString()}. New balance: KES ${args.balance.toLocaleString()}.`;
     adminTitle = "Withdrawal Completed";
     adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} to ${userIdentifier} (${args.phone}) completed successfully.`;
-    notificationType = "SYSTEM";
+    notificationType = "WITHDRAWAL_SUCCESS";
   } else if (args.status === "FAILED") {
     userTitle = "Withdrawal Failed";
     userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} failed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""} Your balance remains unchanged at KES ${args.balance.toLocaleString()}.`;
     adminTitle = "Withdrawal Failed";
     adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} for ${userIdentifier} to ${args.phone} failed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""}`;
-    notificationType = "SYSTEM";
+    notificationType = "WITHDRAWAL_FAILED";
   } else if (args.status === "REJECTED") {
     userTitle = "Withdrawal Request Rejected";
     userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} has been rejected.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""} Your balance remains KES ${args.balance.toLocaleString()}.`;
     adminTitle = "Withdrawal Rejected";
     adminMessage = `Withdrawal request of KES ${args.amount.toLocaleString()} for ${userIdentifier} to ${args.phone} was rejected.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""}`;
-    notificationType = "SYSTEM";
+    notificationType = "WITHDRAWAL_FAILED";
   }
 
   const createdAtIso = new Date().toISOString();
@@ -259,45 +232,155 @@ async function createWithdrawalNotifications(args: {
   }
 }
 
-// Withdrawal configuration (KES)
-const WITHDRAWAL_CONFIG = {
-  MIN_AMOUNT: 1,
-  MAX_AMOUNT_PER_REQUEST: 10000,
-  FEE_PERCENTAGE: 5, // 5%
-};
+function toClientNotification(notification: {
+  id: string;
+  audience: "USER" | "ADMIN";
+  type:
+    | "DEPOSIT_SUCCESS"
+    | "DEPOSIT_FAILED"
+    | "WITHDRAWAL_SUCCESS"
+    | "WITHDRAWAL_FAILED"
+    | "SYSTEM";
+  title: string;
+  message: string;
+  transactionId: string | null;
+  amount: number | null;
+  balance: number | null;
+  mpesaCode: string | null;
+  isRead: boolean;
+  createdAt: Date;
+}) {
+  return {
+    id: notification.id,
+    audience: notification.audience,
+    type: notification.type,
+    title: notification.title,
+    message: notification.message,
+    transactionId: notification.transactionId,
+    amount: notification.amount,
+    balance: notification.balance,
+    mpesaCode: notification.mpesaCode,
+    isRead: notification.isRead,
+    createdAt: notification.createdAt.toISOString(),
+  };
+}
 
-const paymentRouter = Router();
+export async function listNotifications(
+  req: import("express").Request,
+  res: import("express").Response,
+  next: (error?: unknown) => void,
+) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-// M-Pesa callback endpoints
-paymentRouter.post("/mpesa/callback", handleMpesaCallback);
-paymentRouter.post("/payments/mpesa/callback", handleMpesaCallback);
+    const take = Math.min(Number(req.query.take ?? 20), 50) || 20;
+    const unreadOnly =
+      req.query.unreadOnly === "true" || req.query.unreadOnly === "1";
 
-// Wallet endpoints
-paymentRouter.get("/payments/wallet/summary", authenticate, getWalletSummary);
+    const audience: "ADMIN" | "USER" = req.user.role === "ADMIN" ? "ADMIN" : "USER";
 
-// Deposit endpoints
-paymentRouter.post("/payments/mpesa/stk-push", authenticate, initiateStk);
-paymentRouter.get(
-  "/payments/mpesa/status/:transactionId",
-  authenticate,
-  checkDepositStatus,
-);
+    const where: {
+      userId: string;
+      audience: "ADMIN" | "USER";
+      isRead?: boolean;
+    } = {
+      userId: req.user.id,
+      audience,
+      ...(unreadOnly ? { isRead: false } : {}),
+    };
 
-// Withdrawal endpoints
-paymentRouter.post("/payments/withdrawals", authenticate, createWithdrawalRequest);
-paymentRouter.get("/payments/withdrawals", authenticate, listWithdrawals);
+    const [notifications, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take,
+      }),
+      prisma.notification.count({
+        where: {
+          userId: req.user.id,
+          audience,
+          isRead: false,
+        },
+      }),
+    ]);
 
-// Admin withdrawal endpoints
-paymentRouter.get("/admin/withdrawals", authenticate, listAdminWithdrawals);
-paymentRouter.patch(
-  "/admin/withdrawals/:transactionId/approve",
-  authenticate,
-  approveWithdrawal,
-);
-paymentRouter.patch(
-  "/admin/withdrawals/:transactionId/reject",
-  authenticate,
-  rejectWithdrawal,
-);
+    return res.status(200).json({
+      notifications: notifications.map(toClientNotification),
+      unreadCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
-export { paymentRouter };
+export async function markAllNotificationsRead(
+  req: import("express").Request,
+  res: import("express").Response,
+  next: (error?: unknown) => void,
+) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const audience: "ADMIN" | "USER" = req.user.role === "ADMIN" ? "ADMIN" : "USER";
+
+    await prisma.notification.updateMany({
+      where: {
+        userId: req.user.id,
+        audience,
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    return res.status(200).json({ message: "Notifications marked as read." });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function markNotificationRead(
+  req: import("express").Request,
+  res: import("express").Response,
+  next: (error?: unknown) => void,
+) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const notificationId = Array.isArray(req.params.notificationId)
+      ? req.params.notificationId[0]
+      : req.params.notificationId;
+
+    if (!notificationId) {
+      return res.status(400).json({ message: "Invalid notification id." });
+    }
+
+    const audience: "ADMIN" | "USER" = req.user.role === "ADMIN" ? "ADMIN" : "USER";
+
+    const result = await prisma.notification.updateMany({
+      where: {
+        id: notificationId,
+        userId: req.user.id,
+        audience,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    if (result.count === 0) {
+      return res.status(404).json({ message: "Notification not found." });
+    }
+
+    return res.status(200).json({ message: "Notification marked as read." });
+  } catch (error) {
+    next(error);
+  }
+}
