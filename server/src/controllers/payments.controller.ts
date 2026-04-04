@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { emitNotificationUpdate, emitWalletUpdate } from "../lib/socket";
+import { createWithdrawalNotifications } from "./notifications.controller";
 
 const WITHDRAWAL_CONFIG = {
   MIN_AMOUNT: 1,
@@ -67,117 +68,6 @@ async function getWalletSummary(userId: string) {
   return {
     balance: wallet.balance,
   };
-}
-
-async function createWithdrawalNotifications(args: {
-  userId: string;
-  transactionId: string;
-  amount: number;
-  fee: number;
-  balance: number;
-  phone: string;
-  status: "PENDING" | "COMPLETED" | "FAILED" | "REJECTED";
-  failureReason?: string;
-}) {
-  const [userProfile, adminUsers] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: args.userId },
-      select: { phone: true, email: true },
-    }),
-    prisma.user.findMany({
-      where: { role: "ADMIN" },
-      select: { id: true },
-    }),
-  ]);
-
-  const userIdentifier =
-    userProfile?.phone ?? userProfile?.email ?? args.userId;
-  const netAmount = args.amount - args.fee;
-
-  let userTitle = "";
-  let userMessage = "";
-  let adminTitle = "";
-  let adminMessage = "";
-  let notificationType: "WITHDRAWAL_SUCCESS" | "WITHDRAWAL_FAILED" | "SYSTEM" =
-    "SYSTEM";
-
-  if (args.status === "PENDING") {
-    userTitle = "Withdrawal Request Submitted";
-    userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} (KES ${args.fee.toLocaleString()} fee) is pending admin approval. You'll receive KES ${netAmount.toLocaleString()}.`;
-    adminTitle = "New Withdrawal Request";
-    adminMessage = `${userIdentifier} requested a withdrawal of KES ${args.amount.toLocaleString()} to ${args.phone} (Fee: KES ${args.fee.toLocaleString()}).`;
-    notificationType = "SYSTEM";
-  } else if (args.status === "COMPLETED") {
-    userTitle = "Withdrawal Successful";
-    userMessage = `Your withdrawal of KES ${args.amount.toLocaleString()} has been processed to ${args.phone}. Fee charged: KES ${args.fee.toLocaleString()}. New balance: KES ${args.balance.toLocaleString()}.`;
-    adminTitle = "Withdrawal Completed";
-    adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} to ${userIdentifier} (${args.phone}) completed successfully.`;
-    notificationType = "WITHDRAWAL_SUCCESS";
-  } else if (args.status === "FAILED") {
-    userTitle = "Withdrawal Failed";
-    userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} failed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""} Your balance remains unchanged at KES ${args.balance.toLocaleString()}.`;
-    adminTitle = "Withdrawal Failed";
-    adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} for ${userIdentifier} to ${args.phone} failed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""}`;
-    notificationType = "WITHDRAWAL_FAILED";
-  } else if (args.status === "REJECTED") {
-    userTitle = "Withdrawal Request Rejected";
-    userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} has been rejected.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""} Your balance remains KES ${args.balance.toLocaleString()}.`;
-    adminTitle = "Withdrawal Rejected";
-    adminMessage = `Withdrawal request of KES ${args.amount.toLocaleString()} for ${userIdentifier} to ${args.phone} was rejected.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""}`;
-    notificationType = "WITHDRAWAL_FAILED";
-  }
-
-  const createPayload = [
-    {
-      userId: args.userId,
-      audience: "USER" as const,
-      type: notificationType,
-      title: userTitle,
-      message: userMessage,
-      transactionId: args.transactionId,
-      amount: args.amount,
-      balance: args.balance,
-    },
-    ...adminUsers.map((admin) => ({
-      userId: admin.id,
-      audience: "ADMIN" as const,
-      type: notificationType,
-      title: adminTitle,
-      message: adminMessage,
-      transactionId: args.transactionId,
-      amount: args.amount,
-      balance: args.balance,
-    })),
-  ];
-
-  await prisma.notification.createMany({
-    data: createPayload,
-    skipDuplicates: true,
-  });
-
-  emitNotificationUpdate(args.userId, {
-    audience: "USER",
-    type: notificationType,
-    title: userTitle,
-    message: userMessage,
-    transactionId: args.transactionId,
-    amount: args.amount,
-    balance: args.balance,
-    createdAt: new Date().toISOString(),
-  });
-
-  for (const admin of adminUsers) {
-    emitNotificationUpdate(admin.id, {
-      audience: "ADMIN",
-      type: notificationType,
-      title: adminTitle,
-      message: adminMessage,
-      transactionId: args.transactionId,
-      amount: args.amount,
-      balance: args.balance,
-      createdAt: new Date().toISOString(),
-    });
-  }
 }
 
 function toTransactionStatus(value: WalletTransactionStatus) {

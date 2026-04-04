@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Download,
   Filter,
@@ -7,6 +7,7 @@ import {
   MoreHorizontal,
   TriangleAlert,
 } from "lucide-react";
+import { useState } from "react";
 import { api } from "@/api/axiosConfig";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -15,6 +16,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AdminButton,
   AdminCard,
@@ -73,6 +81,11 @@ function formatCurrency(value: number) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<DashboardTransaction | null>(null);
+  const [viewDetailsDialogOpen, setViewDetailsDialogOpen] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin-dashboard-summary"],
     queryFn: async () => {
@@ -94,6 +107,32 @@ export default function Dashboard() {
   const pendingCount = pendingWithdrawals
     ? Number(pendingWithdrawals.replace(/\D/g, ""))
     : 0;
+
+  const handleViewDetails = (transaction: DashboardTransaction) => {
+    setSelectedTransaction(transaction);
+    setViewDetailsDialogOpen(true);
+  };
+
+  const handleOpenUser = (transaction: DashboardTransaction) => {
+    // Navigate to the users module and filter by the user's email
+    navigate({
+      to: "/admin/users",
+      search: { filter: transaction.userEmail },
+    });
+  };
+
+  const handleReviewTransaction = (transaction: DashboardTransaction) => {
+    if (transaction.type === "withdrawal") {
+      // Navigate to withdrawals with filter for this transaction
+      navigate({
+        to: "/admin/withdrawals",
+        search: { transactionId: transaction.id, status: transaction.status },
+      });
+    } else {
+      // For deposits, show the details dialog
+      handleViewDetails(transaction);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -317,13 +356,23 @@ export default function Dashboard() {
                             <MoreHorizontal size={14} />
                           </AdminButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem>View details</DropdownMenuItem>
-                          <DropdownMenuItem>Open user</DropdownMenuItem>
-                          <DropdownMenuItem>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onClick={() => handleViewDetails(transaction)}
+                          >
+                            View full details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenUser(transaction)}
+                          >
+                            Open user profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleReviewTransaction(transaction)}
+                          >
                             {transaction.type === "withdrawal"
-                              ? "Review payout"
-                              : "Review deposit"}
+                              ? "Review & manage payout"
+                              : "Review & manage deposit"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -335,6 +384,144 @@ export default function Dashboard() {
           </table>
         </TableShell>
       </AdminCard>
+
+      {selectedTransaction && (
+        <Dialog
+          open={viewDetailsDialogOpen}
+          onOpenChange={setViewDetailsDialogOpen}
+        >
+          <DialogContent className="max-w-md bg-admin-bg">
+            <DialogHeader>
+              <DialogTitle className="text-admin-text-primary">
+                Transaction Details
+              </DialogTitle>
+              <DialogDescription className="text-admin-text-muted">
+                {selectedTransaction.type === "deposit"
+                  ? "Wallet deposit transaction"
+                  : "Wallet withdrawal transaction"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  Reference ID
+                </p>
+                <p className="mt-1 font-mono text-sm text-admin-text-primary">
+                  {selectedTransaction.mpesaCode ??
+                    selectedTransaction.reference}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                    Type
+                  </p>
+                  <p className="mt-1 capitalize text-admin-text-primary">
+                    {selectedTransaction.type}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                    Status
+                  </p>
+                  <div className="mt-1">
+                    <StatusBadge status={selectedTransaction.status} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  Amount
+                </p>
+                <p className="mt-1 text-lg font-bold text-admin-text-primary">
+                  {formatCurrency(selectedTransaction.amount)}
+                </p>
+              </div>
+
+              {selectedTransaction.type === "withdrawal" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                      Fee
+                    </p>
+                    <p className="mt-1 text-admin-text-secondary">
+                      {formatCurrency(selectedTransaction.fee)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                      Net Amount
+                    </p>
+                    <p className="mt-1 font-semibold text-admin-gold">
+                      {formatCurrency(
+                        selectedTransaction.amount - selectedTransaction.fee,
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  User
+                </p>
+                <div className="mt-1">
+                  <p className="text-sm text-admin-text-primary">
+                    {selectedTransaction.userEmail}
+                  </p>
+                  <p className="text-[11px] text-admin-text-muted">
+                    {selectedTransaction.userPhone}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-admin-text-muted">
+                  Timestamp
+                </p>
+                <p className="mt-1 text-sm text-admin-text-secondary">
+                  {new Date(selectedTransaction.createdAt).toLocaleString(
+                    "en-KE",
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    },
+                  )}
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <AdminButton
+                  tone="blue"
+                  size="sm"
+                  onClick={() => handleOpenUser(selectedTransaction)}
+                >
+                  View User
+                </AdminButton>
+                {selectedTransaction.type === "withdrawal" && (
+                  <AdminButton
+                    tone="gold"
+                    size="sm"
+                    onClick={() => {
+                      handleReviewTransaction(selectedTransaction);
+                      setViewDetailsDialogOpen(false);
+                    }}
+                  >
+                    Manage Payout
+                  </AdminButton>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
