@@ -185,6 +185,15 @@ export interface GeoAnalytics {
   tone: AdminTone;
 }
 
+export interface LocalLocationAnalytics {
+  location: string;
+  area: string;
+  users: number;
+  bets: number;
+  share: number;
+  tone: AdminTone;
+}
+
 export interface DeviceAnalytics {
   device: string;
   users: number;
@@ -1054,5 +1063,56 @@ export const branchAnalytics: BranchAnalytics[] = [
     bets: 28920,
     status: "watch",
     tone: "purple",
+  },
+];
+
+export const localLocationAnalytics: LocalLocationAnalytics[] = [
+  {
+    location: "Nairobi CBD",
+    area: "Nairobi County",
+    users: 18420,
+    bets: 76210,
+    share: 31.4,
+    tone: "accent",
+  },
+  {
+    location: "Westlands",
+    area: "Nairobi County",
+    users: 12680,
+    bets: 51440,
+    share: 21.6,
+    tone: "blue",
+  },
+  {
+    location: "Mombasa Town",
+    area: "Coast Region",
+    users: 9840,
+    bets: 38680,
+    share: 16.8,
+    tone: "gold",
+  },
+  {
+    location: "Kisumu Central",
+    area: "Nyanza Region",
+    users: 7420,
+    bets: 28920,
+    share: 12.6,
+    tone: "purple",
+  },
+  {
+    location: "Nakuru Town",
+    area: "Rift Valley",
+    users: 5460,
+    bets: 21400,
+    share: 9.3,
+    tone: "blue",
+  },
+  {
+    location: "Eldoret CBD",
+    area: "Rift Valley",
+    users: 3920,
+    bets: 15880,
+    share: 6.7,
+    tone: "gold",
   },
 ];
