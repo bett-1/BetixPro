@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, Menu, Plus, Wallet } from "lucide-react";
+import { Bell, CircleCheck, CircleX, Menu, Plus, Wallet } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchBar from "@/components/search/SearchBar";
 import { useAuth } from "@/context/AuthContext";
@@ -72,6 +72,31 @@ const leagues = [
   "Cricket",
   "Rugby",
 ];
+
+function formatNotificationTime(isoDate: string) {
+  const eventTime = new Date(isoDate).getTime();
+  if (Number.isNaN(eventTime)) {
+    return "Just now";
+  }
+
+  const minutesAgo = Math.max(0, Math.floor((Date.now() - eventTime) / 60000));
+
+  if (minutesAgo < 1) {
+    return "Just now";
+  }
+
+  if (minutesAgo < 60) {
+    return `${minutesAgo}m ago`;
+  }
+
+  const hoursAgo = Math.floor(minutesAgo / 60);
+  if (hoursAgo < 24) {
+    return `${hoursAgo}h ago`;
+  }
+
+  const daysAgo = Math.floor(hoursAgo / 24);
+  return `${daysAgo}d ago`;
+}
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const location = useLocation();
@@ -212,6 +237,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             ) : null}
             {notificationsOpen ? (
               <div className="bc-notify-dropdown" role="menu">
+                <div className="bc-notify-head">
+                  <p className="bc-notify-title">Notifications</p>
+                  <span className="bc-notify-count">
+                    {unreadCount > 0 ? `${unreadCount} new` : "All caught up"}
+                  </span>
+                </div>
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
                     <button
@@ -220,18 +251,33 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                       className="bc-notify-item"
                       onClick={() => setNotificationsOpen(false)}
                     >
-                      <strong>{notification.title}:</strong>{" "}
-                      {notification.message}
+                      <span
+                        className={`bc-notify-icon ${notification.type === "DEPOSIT_SUCCESS" ? "is-success" : notification.type === "DEPOSIT_FAILED" ? "is-failed" : ""}`}
+                        aria-hidden="true"
+                      >
+                        {notification.type === "DEPOSIT_SUCCESS" ? (
+                          <CircleCheck size={14} />
+                        ) : notification.type === "DEPOSIT_FAILED" ? (
+                          <CircleX size={14} />
+                        ) : (
+                          <Bell size={14} />
+                        )}
+                      </span>
+                      <span className="bc-notify-body">
+                        <span className="bc-notify-item-title">
+                          {notification.title}
+                        </span>
+                        <span className="bc-notify-item-copy">
+                          {notification.message}
+                        </span>
+                        <span className="bc-notify-item-time">
+                          {formatNotificationTime(notification.createdAt)}
+                        </span>
+                      </span>
                     </button>
                   ))
                 ) : (
-                  <button
-                    type="button"
-                    className="bc-notify-item"
-                    onClick={() => setNotificationsOpen(false)}
-                  >
-                    No new notifications.
-                  </button>
+                  <div className="bc-notify-empty">No new notifications.</div>
                 )}
               </div>
             ) : null}
