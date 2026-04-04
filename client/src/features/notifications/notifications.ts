@@ -10,7 +10,12 @@ import {
 export type AppNotification = {
   id: string;
   audience: "USER" | "ADMIN";
-  type: "DEPOSIT_SUCCESS" | "DEPOSIT_FAILED" | "SYSTEM";
+  type:
+    | "DEPOSIT_SUCCESS"
+    | "DEPOSIT_FAILED"
+    | "WITHDRAWAL_SUCCESS"
+    | "WITHDRAWAL_FAILED"
+    | "SYSTEM";
   title: string;
   message: string;
   transactionId?: string | null;

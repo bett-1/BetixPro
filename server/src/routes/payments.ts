@@ -1,4 +1,5 @@
 import { Request, Response, Router } from "express";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { prisma } from "../lib/prisma";
@@ -173,7 +174,8 @@ async function createWithdrawalNotifications(args: {
   let userMessage = "";
   let adminTitle = "";
   let adminMessage = "";
-  let notificationType: "WITHDRAWAL_SUCCESS" | "WITHDRAWAL_FAILED" = "WITHDRAWAL_SUCCESS";
+  let notificationType: "WITHDRAWAL_SUCCESS" | "WITHDRAWAL_FAILED" =
+    "WITHDRAWAL_SUCCESS";
 
   if (args.status === "PENDING") {
     userTitle = "Withdrawal Request Submitted";
@@ -554,7 +556,7 @@ const handleMpesaCallback = (req: Request, res: Response) => {
   const parsedBody = mpesaCallbackSchema.safeParse(req.body);
 
   if (!parsedBody.success) {
-    console.error("❌ VALIDATION FAILED. Zod errors:", parsedBody.error.errors);
+    console.error("❌ VALIDATION FAILED. Zod errors:", parsedBody.error.issues);
     console.error(
       "Raw body that failed validation:",
       JSON.stringify(req.body, null, 2),
@@ -1307,8 +1309,8 @@ paymentRouter.post(
       const parsedBody = withdrawalRequestSchema.safeParse(req.body);
 
       if (!parsedBody.success) {
-        const errorMessage = parsedBody.error.errors
-          .map((e) => `${e.path.join(".")}: ${e.message}`)
+        const errorMessage = parsedBody.error.issues
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
           .join("; ");
         return res.status(400).json({ message: errorMessage });
       }
@@ -1343,39 +1345,64 @@ paymentRouter.post(
         });
       }
 
-      // Create transaction record
-      const transaction = await prisma.walletTransaction.create({
-        data: {
-          userId,
-          walletId: wallet.id,
-          type: "WITHDRAWAL",
-          status: "PENDING",
-          amount: requestedAmount,
-          currency: "KES",
-          channel: "M-Pesa",
-          reference: `WD-${Date.now()}`,
-          phone: parsedBody.data.phone,
-          accountReference: "BET-WITHDRAWAL",
-          description: `Withdrawal to M-Pesa (${parsedBody.data.phone})`,
-          providerCallback: {
-            fee: feeAmount,
-            totalDebit,
-            requestedAt: new Date().toISOString(),
-          } as never,
-        },
-      });
-
-      // Reserve funds (debit from wallet)
-      await prisma.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          balance: {
-            decrement: totalDebit,
+      const withdrawalResult = await prisma.$transaction(async (tx) => {
+        const debitResult = await tx.wallet.updateMany({
+          where: {
+            id: wallet.id,
+            balance: {
+              gte: totalDebit,
+            },
           },
-        },
+          data: {
+            balance: {
+              decrement: totalDebit,
+            },
+          },
+        });
+
+        if (debitResult.count === 0) {
+          return null;
+        }
+
+        const createdTransaction = await tx.walletTransaction.create({
+          data: {
+            userId,
+            walletId: wallet.id,
+            type: "WITHDRAWAL",
+            status: "PENDING",
+            amount: requestedAmount,
+            currency: "KES",
+            channel: "M-Pesa",
+            reference: `WD-${randomUUID()}`,
+            phone: parsedBody.data.phone,
+            accountReference: "BET-WITHDRAWAL",
+            description: `Withdrawal to M-Pesa (${parsedBody.data.phone})`,
+            providerCallback: {
+              fee: feeAmount,
+              totalDebit,
+              requestedAt: new Date().toISOString(),
+            } as never,
+          },
+        });
+
+        const refreshedWallet = await tx.wallet.findUnique({
+          where: { id: wallet.id },
+          select: { balance: true },
+        });
+
+        return {
+          transaction: createdTransaction,
+          updatedBalance: refreshedWallet?.balance ?? wallet.balance,
+        };
       });
 
-      const updatedWallet = await getOrCreateWallet(userId);
+      if (!withdrawalResult) {
+        return res.status(400).json({
+          message: `Insufficient balance. You need KES ${totalDebit.toLocaleString()} (amount + fees).`,
+        });
+      }
+
+      const { transaction, updatedBalance } = withdrawalResult;
 
       // Emit event
       emitWalletEvent({
@@ -1383,26 +1410,33 @@ paymentRouter.post(
         transactionId: transaction.id,
         status: "PENDING",
         message: "Withdrawal request submitted for admin approval.",
-        balance: updatedWallet.balance,
+        balance: updatedBalance,
         amount: requestedAmount,
       });
 
-      // Create notifications
-      await createWithdrawalNotifications({
-        userId,
-        transactionId: transaction.id,
-        amount: requestedAmount,
-        fee: feeAmount,
-        balance: updatedWallet.balance,
-        phone: parsedBody.data.phone,
-        status: "PENDING",
-      });
+      // Notification delivery issues should not fail a successful withdrawal request.
+      try {
+        await createWithdrawalNotifications({
+          userId,
+          transactionId: transaction.id,
+          amount: requestedAmount,
+          fee: feeAmount,
+          balance: updatedBalance,
+          phone: parsedBody.data.phone,
+          status: "PENDING",
+        });
+      } catch (notificationError) {
+        console.error(
+          "Failed to create withdrawal notifications:",
+          notificationError,
+        );
+      }
 
       return res.status(200).json({
         message: "Withdrawal request submitted successfully.",
         transactionId: transaction.id,
         wallet: {
-          balance: updatedWallet.balance,
+          balance: updatedBalance,
         },
         details: {
           amount: requestedAmount,
@@ -1523,7 +1557,13 @@ paymentRouter.patch(
         return res.status(403).json({ message: "Admin access required." });
       }
 
-      const { transactionId } = req.params;
+      const transactionId = Array.isArray(req.params.transactionId)
+        ? req.params.transactionId[0]
+        : req.params.transactionId;
+
+      if (!transactionId) {
+        return res.status(400).json({ message: "Invalid transaction id." });
+      }
 
       const transaction = await prisma.walletTransaction.findUnique({
         where: { id: transactionId },
@@ -1609,8 +1649,14 @@ paymentRouter.patch(
         return res.status(403).json({ message: "Admin access required." });
       }
 
-      const { transactionId } = req.params;
+      const transactionId = Array.isArray(req.params.transactionId)
+        ? req.params.transactionId[0]
+        : req.params.transactionId;
       const { reason } = req.body;
+
+      if (!transactionId) {
+        return res.status(400).json({ message: "Invalid transaction id." });
+      }
 
       const transaction = await prisma.walletTransaction.findUnique({
         where: { id: transactionId },
