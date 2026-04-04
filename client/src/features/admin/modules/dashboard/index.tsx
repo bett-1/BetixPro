@@ -309,7 +309,11 @@ export default function Dashboard() {
                     <td className={adminTableCellClassName}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <AdminButton size="sm" variant="ghost" aria-label="Row actions">
+                          <AdminButton
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Row actions"
+                          >
                             <MoreHorizontal size={14} />
                           </AdminButton>
                         </DropdownMenuTrigger>

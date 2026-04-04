@@ -242,9 +242,7 @@ export async function getAdminDashboardSummary(req: Request, res: Response) {
   const sevenDayWithdrawalTotal = sevenDayWithdrawals._sum.amount ?? 0;
 
   const averageDeposit = Math.round(averageDepositToday._avg.amount ?? 0);
-  const averageWithdrawal = Math.round(
-    averageWithdrawalToday._avg.amount ?? 0,
-  );
+  const averageWithdrawal = Math.round(averageWithdrawalToday._avg.amount ?? 0);
 
   return res.status(200).json({
     generatedAt: new Date().toISOString(),
