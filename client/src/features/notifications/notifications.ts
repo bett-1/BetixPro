@@ -48,20 +48,20 @@ export function useAppNotifications(take = 20) {
       queryClient.setQueryData<AppNotificationsResponse>(
         [...appNotificationsQueryKey, take],
         (current) => {
-          if (!current) {
-            return current;
-          }
-
           const syntheticId =
             payload.notificationId ??
             `${payload.audience}-${payload.transactionId ?? "sys"}-${payload.createdAt}`;
 
-          const alreadyExists = current.notifications.some(
+          const existingNotifications = current?.notifications ?? [];
+          const alreadyExists = existingNotifications.some(
             (item) => item.id === syntheticId,
           );
 
           if (alreadyExists) {
-            return current;
+            return current ?? {
+              unreadCount: 0,
+              notifications: [],
+            };
           }
 
           const nextNotification: AppNotification = {
@@ -79,8 +79,8 @@ export function useAppNotifications(take = 20) {
           };
 
           return {
-            unreadCount: current.unreadCount + 1,
-            notifications: [nextNotification, ...current.notifications].slice(
+            unreadCount: (current?.unreadCount ?? 0) + 1,
+            notifications: [nextNotification, ...existingNotifications].slice(
               0,
               take,
             ),
