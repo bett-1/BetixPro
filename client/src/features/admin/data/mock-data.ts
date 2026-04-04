@@ -3,12 +3,11 @@ import {
   AlertTriangle,
   DollarSign,
   Flag,
-  Smartphone,
   Shield,
   Target,
   TrendingUp,
   Users,
-  Zap,
+  Zap
 } from "lucide-react";
 
 export type AdminTone =
