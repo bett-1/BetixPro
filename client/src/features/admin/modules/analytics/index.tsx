@@ -12,14 +12,10 @@ import {
   AdminCardHeader,
   AdminSectionHeader,
   MetricCard,
-  SummaryCard,
-  adminFilterRowClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
   adminTableCellClassName,
   TableShell,
-  GeoLocationCard,
-  DeviceCard,
 } from "../../components/ui";
 import {
   financialKPIs,
@@ -35,183 +31,171 @@ export default function Analytics() {
     .reduce((sum, item) => sum + item.users, 0);
   const desktopUsers =
     deviceAnalytics.find((item) => item.device === "Desktop")?.users ?? 0;
+  const timeRanges = ["24h", "7d", "30d", "90d"] as const;
 
   return (
     <div className="space-y-6">
       <AdminSectionHeader
         title="Geo & Device Analytics"
-        subtitle="Users by location, device mix, and carrier intelligence for market targeting"
+        subtitle="Kenya-first view of revenue, audience mix, and carrier behavior"
       />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="Tracked Locations"
-          value={`${geoAnalytics.length}`}
-          change="+2 new regions"
-          up={true}
-          icon={Globe}
-          tone="blue"
-        />
-        <MetricCard
-          label="Mobile Share"
-          value={`${((mobileUsers / totalUsers) * 100).toFixed(1)}%`}
-          change="+4.6%"
-          up={true}
-          icon={Smartphone}
-          tone="accent"
-        />
-        <MetricCard
-          label="Desktop Share"
-          value={`${((desktopUsers / totalUsers) * 100).toFixed(1)}%`}
-          change="-1.2%"
-          up={false}
-          icon={BarChart3}
-          tone="gold"
-        />
-        <MetricCard
-          label="Carrier Coverage"
-          value={`${carrierAnalytics.length}`}
-          change="+1 operator"
-          up={true}
-          icon={Signal}
-          tone="purple"
-        />
-      </div>
 
       <AdminCard>
         <AdminCardHeader
           title="Revenue & Financial KPIs"
-          subtitle="Immediate business health snapshot"
+          subtitle="Real-time snapshot"
           actions={
-            <div className={adminFilterRowClassName}>
-              {financialKPIs.slice(0, 3).map((kpi) => (
-                <SummaryCard
-                  key={kpi.label}
-                  label={kpi.label}
-                  value={kpi.value}
-                  tone={kpi.tone}
-                />
+            <div className="flex flex-wrap gap-2">
+              {timeRanges.map((range) => (
+                <span
+                  className={
+                    range === "7d"
+                      ? "rounded-full bg-admin-accent px-3 py-1 text-xs font-semibold text-black"
+                      : "rounded-full bg-admin-surface px-3 py-1 text-xs font-semibold text-admin-text-secondary"
+                  }
+                  key={range}
+                >
+                  {range}
+                </span>
               ))}
             </div>
           }
         />
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          {financialKPIs.slice(3).map((kpi) => (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {financialKPIs.map((kpi) => (
             <MetricCard key={kpi.label} {...kpi} />
           ))}
         </div>
       </AdminCard>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <AdminCard>
+      <div className="grid gap-4 xl:grid-cols-3">
+        <AdminCard className="xl:col-span-1">
           <AdminCardHeader
             title="Users by Location"
-            subtitle="Primary regions and market concentration"
+            subtitle="Top Kenyan and regional markets"
           />
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {geoAnalytics.map((location) => (
-              <GeoLocationCard
-                key={`${location.country}-${location.region}`}
-                {...location}
-              />
-            ))}
-          </div>
+          <TableShell>
+            <table className={adminTableClassName}>
+              <thead>
+                <tr>
+                  {["Market", "Users", "Share"].map((heading) => (
+                    <th className={adminTableHeadCellClassName} key={heading}>
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {geoAnalytics.map((location) => (
+                  <tr key={`${location.country}-${location.region}`}>
+                    <td className={adminTableCellClassName}>
+                      <span className="font-semibold text-admin-text-primary">
+                        {location.country}
+                      </span>
+                      <div className="text-xs text-admin-text-muted">
+                        {location.region}
+                      </div>
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {location.users.toLocaleString()}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {location.percentage.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableShell>
         </AdminCard>
 
-        <AdminCard>
+        <AdminCard className="xl:col-span-1">
           <AdminCardHeader
             title="Device Split"
-            subtitle="Mobile vs desktop engagement profile"
+            subtitle="Mobile dominates, desktop is secondary"
           />
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {deviceAnalytics.map((device) => (
-              <DeviceCard key={device.device} {...device} />
-            ))}
-          </div>
+          <TableShell>
+            <table className={adminTableClassName}>
+              <thead>
+                <tr>
+                  {["Device", "Users", "Share", "Avg Session"].map((heading) => (
+                    <th className={adminTableHeadCellClassName} key={heading}>
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {deviceAnalytics.map((device) => (
+                  <tr key={device.device}>
+                    <td className={adminTableCellClassName}>{device.device}</td>
+                    <td className={adminTableCellClassName}>
+                      {device.users.toLocaleString()}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {device.percentage.toFixed(1)}%
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {device.avgSessionDuration}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableShell>
+        </AdminCard>
+
+        <AdminCard className="xl:col-span-1">
+          <AdminCardHeader
+            title="Carrier Insights"
+            subtitle="M-Pesa region targeting"
+          />
+          <TableShell>
+            <table className={adminTableClassName}>
+              <thead>
+                <tr>
+                  {["Carrier", "Users", "Avg Bet", "Avg Payout"].map((heading) => (
+                    <th className={adminTableHeadCellClassName} key={heading}>
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {carrierAnalytics.map((carrier) => (
+                  <tr key={carrier.carrier}>
+                    <td className={adminTableCellClassName}>
+                      <span className="inline-flex items-center gap-2 font-semibold text-admin-text-primary">
+                        <Wifi size={13} />
+                        {carrier.carrier}
+                      </span>
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {carrier.users.toLocaleString()}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {carrier.avgBetSize}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      {carrier.avgPayout}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableShell>
         </AdminCard>
       </div>
 
       <AdminCard>
         <AdminCardHeader
-          title="Network / Carrier Insights"
-          subtitle="Important for M-Pesa regions and payment optimization"
-          actions={
-            <div className="flex items-center gap-2 text-xs text-admin-text-muted">
-              <Wifi size={13} />
-              Mobile-money ready networks
-            </div>
-          }
+          title="Local Focus"
+          subtitle="Mobile-first, region-aware, and payment-led"
         />
-        <TableShell>
-          <table className={adminTableClassName}>
-            <thead>
-              <tr>
-                {[
-                  "Carrier",
-                  "Users",
-                  "Share",
-                  "Avg Bet Size",
-                  "Avg Payout",
-                  "Focus",
-                ].map((heading) => (
-                  <th className={adminTableHeadCellClassName} key={heading}>
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {carrierAnalytics.map((carrier) => (
-                <tr key={carrier.carrier}>
-                  <td className={adminTableCellClassName}>
-                    <span className="inline-flex items-center gap-2 font-semibold text-admin-text-primary">
-                      <MapPin size={13} />
-                      {carrier.carrier}
-                    </span>
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    {carrier.users.toLocaleString()}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    {carrier.percentage.toFixed(1)}%
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    {carrier.avgBetSize}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    {carrier.avgPayout}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    <span className="inline-flex items-center gap-2 rounded-lg bg-admin-surface px-2 py-1 text-xs font-medium text-admin-text-secondary">
-                      <Users size={12} />
-                      Conversion hot spot
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </TableShell>
-      </AdminCard>
-
-      <AdminCard>
-        <AdminCardHeader
-          title="Optimization Notes"
-          subtitle="Targeting cues for campaigns and product tuning"
-        />
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <SummaryCard label="Best Mobile Region" value="Kenya" tone="accent" />
-          <SummaryCard
-            label="Highest Carrier Value"
-            value="Safaricom"
-            tone="blue"
-          />
-          <SummaryCard
-            label="Desktop Upsell"
-            value="Premium markets"
-            tone="gold"
-          />
-        </div>
+        <p className="text-sm text-admin-text-secondary">
+          Keep campaigns centered on Kenya, prioritize mobile money rails, and
+          treat desktop as a secondary channel.
+        </p>
       </AdminCard>
     </div>
   );
