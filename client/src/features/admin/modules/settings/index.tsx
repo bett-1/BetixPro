@@ -117,7 +117,11 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "System",
     icon: <Building2 size={16} />,
     fields: [
-      { path: "generalSystemConfig.platformName", label: "Platform name", type: "text" },
+      {
+        path: "generalSystemConfig.platformName",
+        label: "Platform name",
+        type: "text",
+      },
       {
         path: "generalSystemConfig.environment",
         label: "Environment",
@@ -127,10 +131,22 @@ const sectionDefinitions: SectionDefinition[] = [
           { label: "Live", value: "live" },
         ],
       },
-      { path: "generalSystemConfig.defaultCurrency", label: "Default currency", type: "text" },
+      {
+        path: "generalSystemConfig.defaultCurrency",
+        label: "Default currency",
+        type: "text",
+      },
       { path: "generalSystemConfig.timezone", label: "Timezone", type: "text" },
-      { path: "generalSystemConfig.maintenanceMode", label: "Maintenance mode", type: "switch" },
-      { path: "generalSystemConfig.registrationEnabled", label: "Registration enabled", type: "switch" },
+      {
+        path: "generalSystemConfig.maintenanceMode",
+        label: "Maintenance mode",
+        type: "switch",
+      },
+      {
+        path: "generalSystemConfig.registrationEnabled",
+        label: "Registration enabled",
+        type: "switch",
+      },
     ],
   },
   {
@@ -140,13 +156,41 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "System",
     icon: <UserCog size={16} />,
     fields: [
-      { path: "userDefaultsAndRestrictions.defaultWalletBalance", label: "Default wallet balance", type: "number" },
-      { path: "userDefaultsAndRestrictions.minDeposit", label: "Min deposit", type: "number" },
-      { path: "userDefaultsAndRestrictions.maxDeposit", label: "Max deposit", type: "number" },
-      { path: "userDefaultsAndRestrictions.minWithdrawal", label: "Min withdrawal", type: "number" },
-      { path: "userDefaultsAndRestrictions.maxWithdrawal", label: "Max withdrawal", type: "number" },
-      { path: "userDefaultsAndRestrictions.dailyTransactionLimit", label: "Daily transaction limit", type: "number" },
-      { path: "userDefaultsAndRestrictions.maxActiveBetsPerUser", label: "Max active bets per user", type: "number" },
+      {
+        path: "userDefaultsAndRestrictions.defaultWalletBalance",
+        label: "Default wallet balance",
+        type: "number",
+      },
+      {
+        path: "userDefaultsAndRestrictions.minDeposit",
+        label: "Min deposit",
+        type: "number",
+      },
+      {
+        path: "userDefaultsAndRestrictions.maxDeposit",
+        label: "Max deposit",
+        type: "number",
+      },
+      {
+        path: "userDefaultsAndRestrictions.minWithdrawal",
+        label: "Min withdrawal",
+        type: "number",
+      },
+      {
+        path: "userDefaultsAndRestrictions.maxWithdrawal",
+        label: "Max withdrawal",
+        type: "number",
+      },
+      {
+        path: "userDefaultsAndRestrictions.dailyTransactionLimit",
+        label: "Daily transaction limit",
+        type: "number",
+      },
+      {
+        path: "userDefaultsAndRestrictions.maxActiveBetsPerUser",
+        label: "Max active bets per user",
+        type: "number",
+      },
       {
         path: "userDefaultsAndRestrictions.autoVerificationRule",
         label: "Account auto-verification",
@@ -166,12 +210,36 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Risk & Compliance",
     icon: <Shield size={16} />,
     fields: [
-      { path: "kycAndComplianceConfig.kycRequired", label: "KYC required", type: "switch" },
-      { path: "kycAndComplianceConfig.requiredFields.id", label: "Require ID", type: "switch" },
-      { path: "kycAndComplianceConfig.requiredFields.phone", label: "Require phone", type: "switch" },
-      { path: "kycAndComplianceConfig.requiredFields.email", label: "Require email", type: "switch" },
-      { path: "kycAndComplianceConfig.withdrawalRequiresKyc", label: "Withdrawal requires KYC", type: "switch" },
-      { path: "kycAndComplianceConfig.minimumAge", label: "Age restriction", type: "number" },
+      {
+        path: "kycAndComplianceConfig.kycRequired",
+        label: "KYC required",
+        type: "switch",
+      },
+      {
+        path: "kycAndComplianceConfig.requiredFields.id",
+        label: "Require ID",
+        type: "switch",
+      },
+      {
+        path: "kycAndComplianceConfig.requiredFields.phone",
+        label: "Require phone",
+        type: "switch",
+      },
+      {
+        path: "kycAndComplianceConfig.requiredFields.email",
+        label: "Require email",
+        type: "switch",
+      },
+      {
+        path: "kycAndComplianceConfig.withdrawalRequiresKyc",
+        label: "Withdrawal requires KYC",
+        type: "switch",
+      },
+      {
+        path: "kycAndComplianceConfig.minimumAge",
+        label: "Age restriction",
+        type: "number",
+      },
       {
         path: "kycAndComplianceConfig.allowedCountries",
         label: "Allowed countries",
@@ -187,18 +255,66 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Operations",
     icon: <CreditCard size={16} />,
     fields: [
-      { path: "paymentsConfig.methods.mpesa", label: "Enable M-Pesa", type: "switch" },
-      { path: "paymentsConfig.methods.bankTransfer", label: "Enable bank transfer", type: "switch" },
-      { path: "paymentsConfig.methods.airtelMoney", label: "Enable Airtel Money", type: "switch" },
-      { path: "paymentsConfig.methods.card", label: "Enable card", type: "switch" },
-      { path: "paymentsConfig.mpesa.shortcode", label: "M-Pesa shortcode", type: "text" },
-      { path: "paymentsConfig.mpesa.consumerKey", label: "M-Pesa consumer key", type: "text" },
-      { path: "paymentsConfig.mpesa.consumerSecret", label: "M-Pesa consumer secret", type: "text" },
-      { path: "paymentsConfig.mpesa.passkey", label: "M-Pesa passkey", type: "text" },
-      { path: "paymentsConfig.mpesa.callbackUrl", label: "M-Pesa callback URL", type: "text" },
-      { path: "paymentsConfig.mpesa.transactionFeePercent", label: "Transaction fees (%)", type: "number" },
-      { path: "paymentsConfig.mpesa.autoWithdrawEnabled", label: "Auto-withdraw", type: "switch" },
-      { path: "paymentsConfig.mpesa.withdrawalApprovalThreshold", label: "Withdrawal approval threshold", type: "number" },
+      {
+        path: "paymentsConfig.methods.mpesa",
+        label: "Enable M-Pesa",
+        type: "switch",
+      },
+      {
+        path: "paymentsConfig.methods.bankTransfer",
+        label: "Enable bank transfer",
+        type: "switch",
+      },
+      {
+        path: "paymentsConfig.methods.airtelMoney",
+        label: "Enable Airtel Money",
+        type: "switch",
+      },
+      {
+        path: "paymentsConfig.methods.card",
+        label: "Enable card",
+        type: "switch",
+      },
+      {
+        path: "paymentsConfig.mpesa.shortcode",
+        label: "M-Pesa shortcode",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.consumerKey",
+        label: "M-Pesa consumer key",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.consumerSecret",
+        label: "M-Pesa consumer secret",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.passkey",
+        label: "M-Pesa passkey",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.callbackUrl",
+        label: "M-Pesa callback URL",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.transactionFeePercent",
+        label: "Transaction fees (%)",
+        type: "number",
+      },
+      {
+        path: "paymentsConfig.mpesa.autoWithdrawEnabled",
+        label: "Auto-withdraw",
+        type: "switch",
+      },
+      {
+        path: "paymentsConfig.mpesa.withdrawalApprovalThreshold",
+        label: "Withdrawal approval threshold",
+        type: "number",
+      },
     ],
   },
   {
@@ -208,28 +324,81 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Operations",
     icon: <Wrench size={16} />,
     fields: [
-      { path: "bettingEngineConfig.minBetAmount", label: "Minimum bet amount", type: "number" },
-      { path: "bettingEngineConfig.maxBetAmount", label: "Maximum bet amount", type: "number" },
-      { path: "bettingEngineConfig.maxWinPerBet", label: "Max win per bet", type: "number" },
-      { path: "bettingEngineConfig.oddsMarginPercent", label: "Odds margin (%)", type: "number" },
-      { path: "bettingEngineConfig.betDelayMs", label: "Bet delay (ms)", type: "number" },
-      { path: "bettingEngineConfig.cashoutEnabled", label: "Cashout enabled", type: "switch" },
-      { path: "bettingEngineConfig.cashoutMarginPercent", label: "Cashout margin (%)", type: "number" },
-      { path: "bettingEngineConfig.allowLiveBetting", label: "Allow live betting", type: "switch" },
+      {
+        path: "bettingEngineConfig.minBetAmount",
+        label: "Minimum bet amount",
+        type: "number",
+      },
+      {
+        path: "bettingEngineConfig.maxBetAmount",
+        label: "Maximum bet amount",
+        type: "number",
+      },
+      {
+        path: "bettingEngineConfig.maxWinPerBet",
+        label: "Max win per bet",
+        type: "number",
+      },
+      {
+        path: "bettingEngineConfig.oddsMarginPercent",
+        label: "Odds margin (%)",
+        type: "number",
+      },
+      {
+        path: "bettingEngineConfig.betDelayMs",
+        label: "Bet delay (ms)",
+        type: "number",
+      },
+      {
+        path: "bettingEngineConfig.cashoutEnabled",
+        label: "Cashout enabled",
+        type: "switch",
+      },
+      {
+        path: "bettingEngineConfig.cashoutMarginPercent",
+        label: "Cashout margin (%)",
+        type: "number",
+      },
+      {
+        path: "bettingEngineConfig.allowLiveBetting",
+        label: "Allow live betting",
+        type: "switch",
+      },
     ],
   },
   {
     id: "risk",
     title: "Risk Management Config",
-    subtitle: "Exposure controls, payout risk, and suspicious activity handling",
+    subtitle:
+      "Exposure controls, payout risk, and suspicious activity handling",
     group: "Risk & Compliance",
     icon: <Shield size={16} />,
     fields: [
-      { path: "riskManagementConfig.maxExposurePerEvent", label: "Max exposure per event", type: "number" },
-      { path: "riskManagementConfig.maxExposurePerMarket", label: "Max exposure per market", type: "number" },
-      { path: "riskManagementConfig.maxPayoutPerDay", label: "Max payout per day", type: "number" },
-      { path: "riskManagementConfig.highRiskBetThreshold", label: "High-risk bet threshold", type: "number" },
-      { path: "riskManagementConfig.autoBlockSuspiciousUsers", label: "Auto-block suspicious users", type: "switch" },
+      {
+        path: "riskManagementConfig.maxExposurePerEvent",
+        label: "Max exposure per event",
+        type: "number",
+      },
+      {
+        path: "riskManagementConfig.maxExposurePerMarket",
+        label: "Max exposure per market",
+        type: "number",
+      },
+      {
+        path: "riskManagementConfig.maxPayoutPerDay",
+        label: "Max payout per day",
+        type: "number",
+      },
+      {
+        path: "riskManagementConfig.highRiskBetThreshold",
+        label: "High-risk bet threshold",
+        type: "number",
+      },
+      {
+        path: "riskManagementConfig.autoBlockSuspiciousUsers",
+        label: "Auto-block suspicious users",
+        type: "switch",
+      },
     ],
   },
   {
@@ -239,7 +408,11 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Commercial",
     icon: <TicketPercent size={16} />,
     fields: [
-      { path: "bonusesAndPromotionsConfig.welcomeBonusEnabled", label: "Welcome bonus enabled", type: "switch" },
+      {
+        path: "bonusesAndPromotionsConfig.welcomeBonusEnabled",
+        label: "Welcome bonus enabled",
+        type: "switch",
+      },
       {
         path: "bonusesAndPromotionsConfig.bonusMode",
         label: "Bonus mode",
@@ -249,12 +422,36 @@ const sectionDefinitions: SectionDefinition[] = [
           { label: "Percentage", value: "percentage" },
         ],
       },
-      { path: "bonusesAndPromotionsConfig.bonusAmount", label: "Bonus amount", type: "number" },
-      { path: "bonusesAndPromotionsConfig.bonusPercent", label: "Bonus percentage", type: "number" },
-      { path: "bonusesAndPromotionsConfig.wageringRequirementMultiplier", label: "Wagering requirement (x)", type: "number" },
-      { path: "bonusesAndPromotionsConfig.bonusExpiryHours", label: "Bonus expiry (hours)", type: "number" },
-      { path: "bonusesAndPromotionsConfig.maxBonusPerUser", label: "Max bonus per user", type: "number" },
-      { path: "bonusesAndPromotionsConfig.cashbackRule", label: "Cashback rules", type: "textarea" },
+      {
+        path: "bonusesAndPromotionsConfig.bonusAmount",
+        label: "Bonus amount",
+        type: "number",
+      },
+      {
+        path: "bonusesAndPromotionsConfig.bonusPercent",
+        label: "Bonus percentage",
+        type: "number",
+      },
+      {
+        path: "bonusesAndPromotionsConfig.wageringRequirementMultiplier",
+        label: "Wagering requirement (x)",
+        type: "number",
+      },
+      {
+        path: "bonusesAndPromotionsConfig.bonusExpiryHours",
+        label: "Bonus expiry (hours)",
+        type: "number",
+      },
+      {
+        path: "bonusesAndPromotionsConfig.maxBonusPerUser",
+        label: "Max bonus per user",
+        type: "number",
+      },
+      {
+        path: "bonusesAndPromotionsConfig.cashbackRule",
+        label: "Cashback rules",
+        type: "textarea",
+      },
     ],
   },
   {
@@ -264,13 +461,41 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Operations",
     icon: <Bell size={16} />,
     fields: [
-      { path: "notificationsConfig.smsEnabled", label: "SMS enabled", type: "switch" },
-      { path: "notificationsConfig.emailEnabled", label: "Email enabled", type: "switch" },
-      { path: "notificationsConfig.events.depositSuccess", label: "Deposit success", type: "switch" },
-      { path: "notificationsConfig.events.withdrawalSuccess", label: "Withdrawal success", type: "switch" },
-      { path: "notificationsConfig.events.betPlaced", label: "Bet placed", type: "switch" },
-      { path: "notificationsConfig.events.betResult", label: "Bet won/lost", type: "switch" },
-      { path: "notificationsConfig.events.adminAlerts", label: "Admin alerts", type: "switch" },
+      {
+        path: "notificationsConfig.smsEnabled",
+        label: "SMS enabled",
+        type: "switch",
+      },
+      {
+        path: "notificationsConfig.emailEnabled",
+        label: "Email enabled",
+        type: "switch",
+      },
+      {
+        path: "notificationsConfig.events.depositSuccess",
+        label: "Deposit success",
+        type: "switch",
+      },
+      {
+        path: "notificationsConfig.events.withdrawalSuccess",
+        label: "Withdrawal success",
+        type: "switch",
+      },
+      {
+        path: "notificationsConfig.events.betPlaced",
+        label: "Bet placed",
+        type: "switch",
+      },
+      {
+        path: "notificationsConfig.events.betResult",
+        label: "Bet won/lost",
+        type: "switch",
+      },
+      {
+        path: "notificationsConfig.events.adminAlerts",
+        label: "Admin alerts",
+        type: "switch",
+      },
     ],
   },
   {
@@ -280,13 +505,41 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Operations",
     icon: <Globe2 size={16} />,
     fields: [
-      { path: "apiAndIntegrationsConfig.sportsApiKey", label: "Sports API key", type: "text" },
-      { path: "apiAndIntegrationsConfig.oddsProviderName", label: "Odds provider", type: "text" },
-      { path: "apiAndIntegrationsConfig.primaryWebhookUrl", label: "Primary webhook URL", type: "text" },
-      { path: "apiAndIntegrationsConfig.fallbackWebhookUrl", label: "Fallback webhook URL", type: "text" },
-      { path: "apiAndIntegrationsConfig.retryAttempts", label: "Retry attempts", type: "number" },
-      { path: "apiAndIntegrationsConfig.retryBackoffMs", label: "Retry backoff (ms)", type: "number" },
-      { path: "apiAndIntegrationsConfig.requestsPerMinute", label: "Rate limit (requests/min)", type: "number" },
+      {
+        path: "apiAndIntegrationsConfig.sportsApiKey",
+        label: "Sports API key",
+        type: "text",
+      },
+      {
+        path: "apiAndIntegrationsConfig.oddsProviderName",
+        label: "Odds provider",
+        type: "text",
+      },
+      {
+        path: "apiAndIntegrationsConfig.primaryWebhookUrl",
+        label: "Primary webhook URL",
+        type: "text",
+      },
+      {
+        path: "apiAndIntegrationsConfig.fallbackWebhookUrl",
+        label: "Fallback webhook URL",
+        type: "text",
+      },
+      {
+        path: "apiAndIntegrationsConfig.retryAttempts",
+        label: "Retry attempts",
+        type: "number",
+      },
+      {
+        path: "apiAndIntegrationsConfig.retryBackoffMs",
+        label: "Retry backoff (ms)",
+        type: "number",
+      },
+      {
+        path: "apiAndIntegrationsConfig.requestsPerMinute",
+        label: "Rate limit (requests/min)",
+        type: "number",
+      },
     ],
   },
   {
@@ -296,13 +549,41 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Risk & Compliance",
     icon: <Lock size={16} />,
     fields: [
-      { path: "securityConfig.adminTwoFactorRequired", label: "Admin 2FA required", type: "switch" },
-      { path: "securityConfig.passwordMinLength", label: "Password minimum length", type: "number" },
-      { path: "securityConfig.requireUppercase", label: "Require uppercase", type: "switch" },
-      { path: "securityConfig.requireNumber", label: "Require number", type: "switch" },
-      { path: "securityConfig.requireSpecialChar", label: "Require special character", type: "switch" },
-      { path: "securityConfig.sessionTimeoutMinutes", label: "Session timeout (minutes)", type: "number" },
-      { path: "securityConfig.maxLoginAttempts", label: "Login attempt limits", type: "number" },
+      {
+        path: "securityConfig.adminTwoFactorRequired",
+        label: "Admin 2FA required",
+        type: "switch",
+      },
+      {
+        path: "securityConfig.passwordMinLength",
+        label: "Password minimum length",
+        type: "number",
+      },
+      {
+        path: "securityConfig.requireUppercase",
+        label: "Require uppercase",
+        type: "switch",
+      },
+      {
+        path: "securityConfig.requireNumber",
+        label: "Require number",
+        type: "switch",
+      },
+      {
+        path: "securityConfig.requireSpecialChar",
+        label: "Require special character",
+        type: "switch",
+      },
+      {
+        path: "securityConfig.sessionTimeoutMinutes",
+        label: "Session timeout (minutes)",
+        type: "number",
+      },
+      {
+        path: "securityConfig.maxLoginAttempts",
+        label: "Login attempt limits",
+        type: "number",
+      },
       {
         path: "securityConfig.ipWhitelist",
         label: "IP whitelist",
@@ -324,9 +605,21 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Commercial",
     icon: <Percent size={16} />,
     fields: [
-      { path: "taxAndFinancialRules.winningsTaxPercent", label: "Tax on winnings (%)", type: "number" },
-      { path: "taxAndFinancialRules.depositTaxPercent", label: "Tax on deposits (%)", type: "number" },
-      { path: "taxAndFinancialRules.commissionPercent", label: "Commission settings (%)", type: "number" },
+      {
+        path: "taxAndFinancialRules.winningsTaxPercent",
+        label: "Tax on winnings (%)",
+        type: "number",
+      },
+      {
+        path: "taxAndFinancialRules.depositTaxPercent",
+        label: "Tax on deposits (%)",
+        type: "number",
+      },
+      {
+        path: "taxAndFinancialRules.commissionPercent",
+        label: "Commission settings (%)",
+        type: "number",
+      },
       {
         path: "taxAndFinancialRules.roundingRule",
         label: "Rounding rule",
@@ -348,10 +641,26 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "Commercial",
     icon: <Briefcase size={16} />,
     fields: [
-      { path: "affiliateAndAgentConfig.commissionPercent", label: "Commission percentage", type: "number" },
-      { path: "affiliateAndAgentConfig.multiLevelReferralsEnabled", label: "Multi-level referrals", type: "switch" },
-      { path: "affiliateAndAgentConfig.minimumPayoutThreshold", label: "Minimum payout threshold", type: "number" },
-      { path: "affiliateAndAgentConfig.withdrawalRule", label: "Affiliate withdrawal rules", type: "textarea" },
+      {
+        path: "affiliateAndAgentConfig.commissionPercent",
+        label: "Commission percentage",
+        type: "number",
+      },
+      {
+        path: "affiliateAndAgentConfig.multiLevelReferralsEnabled",
+        label: "Multi-level referrals",
+        type: "switch",
+      },
+      {
+        path: "affiliateAndAgentConfig.minimumPayoutThreshold",
+        label: "Minimum payout threshold",
+        type: "number",
+      },
+      {
+        path: "affiliateAndAgentConfig.withdrawalRule",
+        label: "Affiliate withdrawal rules",
+        type: "textarea",
+      },
     ],
   },
   {
@@ -361,10 +670,26 @@ const sectionDefinitions: SectionDefinition[] = [
     group: "System",
     icon: <FileText size={16} />,
     fields: [
-      { path: "contentAndLegal.termsAndConditions", label: "Terms & Conditions", type: "textarea" },
-      { path: "contentAndLegal.privacyPolicy", label: "Privacy Policy", type: "textarea" },
-      { path: "contentAndLegal.responsibleGamblingMessage", label: "Responsible gambling message", type: "textarea" },
-      { path: "contentAndLegal.supportContactInfo", label: "Support contact info", type: "text" },
+      {
+        path: "contentAndLegal.termsAndConditions",
+        label: "Terms & Conditions",
+        type: "textarea",
+      },
+      {
+        path: "contentAndLegal.privacyPolicy",
+        label: "Privacy Policy",
+        type: "textarea",
+      },
+      {
+        path: "contentAndLegal.responsibleGamblingMessage",
+        label: "Responsible gambling message",
+        type: "textarea",
+      },
+      {
+        path: "contentAndLegal.supportContactInfo",
+        label: "Support contact info",
+        type: "text",
+      },
     ],
   },
 ];
@@ -376,7 +701,9 @@ export default function Settings() {
   const [draft, setDraft] = useState<AdminSettingsConfig | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [modalDraft, setModalDraft] = useState<AdminSettingsConfig | null>(null);
+  const [modalDraft, setModalDraft] = useState<AdminSettingsConfig | null>(
+    null,
+  );
 
   useEffect(() => {
     if (data?.config) {
@@ -385,7 +712,9 @@ export default function Settings() {
   }, [data?.config]);
 
   const selectedSection = useMemo(
-    () => sectionDefinitions.find((section) => section.id === activeSectionId) ?? null,
+    () =>
+      sectionDefinitions.find((section) => section.id === activeSectionId) ??
+      null,
     [activeSectionId],
   );
 
@@ -411,11 +740,15 @@ export default function Settings() {
   const grouped = useMemo(() => {
     return {
       System: filteredSections.filter((section) => section.group === "System"),
-      Operations: filteredSections.filter((section) => section.group === "Operations"),
+      Operations: filteredSections.filter(
+        (section) => section.group === "Operations",
+      ),
       "Risk & Compliance": filteredSections.filter(
         (section) => section.group === "Risk & Compliance",
       ),
-      Commercial: filteredSections.filter((section) => section.group === "Commercial"),
+      Commercial: filteredSections.filter(
+        (section) => section.group === "Commercial",
+      ),
     };
   }, [filteredSections]);
 
@@ -433,7 +766,10 @@ export default function Settings() {
     setModalDraft(null);
   };
 
-  const updateModalField = (field: FieldDefinition, rawValue: string | boolean) => {
+  const updateModalField = (
+    field: FieldDefinition,
+    rawValue: string | boolean,
+  ) => {
     setModalDraft((current) => {
       if (!current) {
         return current;
@@ -443,7 +779,10 @@ export default function Settings() {
       let nextValue: unknown = rawValue;
 
       if (field.type === "number") {
-        nextValue = toNumber(String(rawValue), typeof currentValue === "number" ? currentValue : 0);
+        nextValue = toNumber(
+          String(rawValue),
+          typeof currentValue === "number" ? currentValue : 0,
+        );
       }
 
       if (field.type === "list") {
@@ -470,8 +809,8 @@ export default function Settings() {
         mutationError !== null &&
         "response" in mutationError &&
         typeof (mutationError as { response?: unknown }).response === "object"
-          ? ((mutationError as { response?: { data?: { message?: string } } }).response
-              ?.data?.message ?? "Failed to update settings.")
+          ? ((mutationError as { response?: { data?: { message?: string } } })
+              .response?.data?.message ?? "Failed to update settings.")
           : "Failed to update settings.";
       toast.error(message);
     }
@@ -491,7 +830,9 @@ export default function Settings() {
   if (isError) {
     return (
       <AdminCard>
-        <p className="text-sm font-semibold text-admin-red">Failed to load settings.</p>
+        <p className="text-sm font-semibold text-admin-red">
+          Failed to load settings.
+        </p>
         <p className="mt-1 text-sm text-admin-text-muted">
           {error instanceof Error ? error.message : "Unknown error"}
         </p>
@@ -528,12 +869,17 @@ export default function Settings() {
 
       {(
         Object.entries(grouped) as Array<
-          ["System" | "Operations" | "Risk & Compliance" | "Commercial", SectionDefinition[]]
+          [
+            "System" | "Operations" | "Risk & Compliance" | "Commercial",
+            SectionDefinition[],
+          ]
         >
       ).map(([groupName, sections]) =>
         sections.length === 0 ? null : (
           <section key={groupName} className="space-y-3">
-            <h2 className="text-lg font-semibold text-admin-text-primary">{groupName}</h2>
+            <h2 className="text-lg font-semibold text-admin-text-primary">
+              {groupName}
+            </h2>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {sections.map((section) => (
                 <AdminCard
@@ -542,8 +888,12 @@ export default function Settings() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-admin-text-primary">{section.title}</p>
-                      <p className="text-xs leading-5 text-admin-text-muted">{section.subtitle}</p>
+                      <p className="text-sm font-semibold text-admin-text-primary">
+                        {section.title}
+                      </p>
+                      <p className="text-xs leading-5 text-admin-text-muted">
+                        {section.subtitle}
+                      </p>
                     </div>
                     <div className="grid h-8 w-8 place-items-center rounded-lg bg-admin-surface text-admin-accent">
                       {section.icon}
@@ -568,12 +918,17 @@ export default function Settings() {
         ),
       )}
 
-      <Dialog open={Boolean(selectedSection)} onOpenChange={(open) => (!open ? closeModal() : null)}>
+      <Dialog
+        open={Boolean(selectedSection)}
+        onOpenChange={(open) => (!open ? closeModal() : null)}
+      >
         <DialogContent className="max-h-[88vh] overflow-hidden border-admin-border bg-admin-card sm:max-w-3xl">
           {selectedSection && modalDraft ? (
             <>
               <DialogHeader>
-                <DialogTitle className="text-admin-text-primary">{selectedSection.title}</DialogTitle>
+                <DialogTitle className="text-admin-text-primary">
+                  {selectedSection.title}
+                </DialogTitle>
                 <DialogDescription className="text-admin-text-muted">
                   {selectedSection.subtitle}
                 </DialogDescription>
@@ -598,7 +953,9 @@ export default function Settings() {
                         <input
                           className={inputClassName}
                           value={String(value ?? "")}
-                          onChange={(event) => updateModalField(field, event.target.value)}
+                          onChange={(event) =>
+                            updateModalField(field, event.target.value)
+                          }
                         />
                       )}
 
@@ -607,7 +964,9 @@ export default function Settings() {
                           className={inputClassName}
                           type="number"
                           value={String(value ?? 0)}
-                          onChange={(event) => updateModalField(field, event.target.value)}
+                          onChange={(event) =>
+                            updateModalField(field, event.target.value)
+                          }
                         />
                       )}
 
@@ -616,7 +975,9 @@ export default function Settings() {
                           className={textareaClassName}
                           rows={4}
                           value={String(value ?? "")}
-                          onChange={(event) => updateModalField(field, event.target.value)}
+                          onChange={(event) =>
+                            updateModalField(field, event.target.value)
+                          }
                         />
                       )}
 
@@ -624,7 +985,9 @@ export default function Settings() {
                         <select
                           className={inputClassName}
                           value={String(value ?? "")}
-                          onChange={(event) => updateModalField(field, event.target.value)}
+                          onChange={(event) =>
+                            updateModalField(field, event.target.value)
+                          }
                         >
                           {(field.options ?? []).map((option) => (
                             <option key={option.value} value={option.value}>
@@ -641,7 +1004,9 @@ export default function Settings() {
                           </span>
                           <Switch
                             checked={Boolean(value)}
-                            onCheckedChange={(checked) => updateModalField(field, checked)}
+                            onCheckedChange={(checked) =>
+                              updateModalField(field, checked)
+                            }
                           />
                         </div>
                       )}
@@ -651,12 +1016,16 @@ export default function Settings() {
                           className={textareaClassName}
                           rows={3}
                           value={Array.isArray(value) ? value.join("\n") : ""}
-                          onChange={(event) => updateModalField(field, event.target.value)}
+                          onChange={(event) =>
+                            updateModalField(field, event.target.value)
+                          }
                         />
                       )}
 
                       {field.hint ? (
-                        <p className="text-[11px] text-admin-text-muted">{field.hint}</p>
+                        <p className="text-[11px] text-admin-text-muted">
+                          {field.hint}
+                        </p>
                       ) : null}
                     </label>
                   );
@@ -664,10 +1033,17 @@ export default function Settings() {
               </div>
 
               <DialogFooter className="pt-2">
-                <Button variant="outline" onClick={closeModal} disabled={updateSettings.isPending}>
+                <Button
+                  variant="outline"
+                  onClick={closeModal}
+                  disabled={updateSettings.isPending}
+                >
                   Cancel
                 </Button>
-                <Button onClick={() => void saveSection()} disabled={updateSettings.isPending}>
+                <Button
+                  onClick={() => void saveSection()}
+                  disabled={updateSettings.isPending}
+                >
                   {updateSettings.isPending ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />

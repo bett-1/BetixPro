@@ -142,15 +142,19 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     timezone: config.generalSystemConfig.timezone,
     maintenanceMode: config.generalSystemConfig.maintenanceMode,
     registrationEnabled: config.generalSystemConfig.registrationEnabled,
-    defaultWalletBalance: config.userDefaultsAndRestrictions.defaultWalletBalance,
+    defaultWalletBalance:
+      config.userDefaultsAndRestrictions.defaultWalletBalance,
     minDeposit: config.userDefaultsAndRestrictions.minDeposit,
     maxDeposit: config.userDefaultsAndRestrictions.maxDeposit,
     minWithdrawal: config.userDefaultsAndRestrictions.minWithdrawal,
     maxWithdrawal: config.userDefaultsAndRestrictions.maxWithdrawal,
-    dailyTransactionLimit: config.userDefaultsAndRestrictions.dailyTransactionLimit,
-    maxActiveBetsPerUser: config.userDefaultsAndRestrictions.maxActiveBetsPerUser,
+    dailyTransactionLimit:
+      config.userDefaultsAndRestrictions.dailyTransactionLimit,
+    maxActiveBetsPerUser:
+      config.userDefaultsAndRestrictions.maxActiveBetsPerUser,
     defaultUserRole: config.userDefaultsAndRestrictions.defaultUserRole,
-    autoVerificationRule: config.userDefaultsAndRestrictions.autoVerificationRule,
+    autoVerificationRule:
+      config.userDefaultsAndRestrictions.autoVerificationRule,
     kycRequired: config.kycAndComplianceConfig.kycRequired,
     kycRequireId: config.kycAndComplianceConfig.requiredFields.id,
     kycRequirePhone: config.kycAndComplianceConfig.requiredFields.phone,
@@ -167,7 +171,8 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     mpesaConsumerSecret: config.paymentsConfig.mpesa.consumerSecret,
     mpesaPasskey: config.paymentsConfig.mpesa.passkey,
     mpesaCallbackUrl: config.paymentsConfig.mpesa.callbackUrl,
-    mpesaTransactionFeePercent: config.paymentsConfig.mpesa.transactionFeePercent,
+    mpesaTransactionFeePercent:
+      config.paymentsConfig.mpesa.transactionFeePercent,
     mpesaAutoWithdrawEnabled: config.paymentsConfig.mpesa.autoWithdrawEnabled,
     mpesaWithdrawalApprovalThreshold:
       config.paymentsConfig.mpesa.withdrawalApprovalThreshold,
@@ -183,7 +188,8 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     maxExposurePerMarket: config.riskManagementConfig.maxExposurePerMarket,
     maxPayoutPerDay: config.riskManagementConfig.maxPayoutPerDay,
     highRiskBetThreshold: config.riskManagementConfig.highRiskBetThreshold,
-    autoBlockSuspiciousUsers: config.riskManagementConfig.autoBlockSuspiciousUsers,
+    autoBlockSuspiciousUsers:
+      config.riskManagementConfig.autoBlockSuspiciousUsers,
     welcomeBonusEnabled: config.bonusesAndPromotionsConfig.welcomeBonusEnabled,
     bonusMode: config.bonusesAndPromotionsConfig.bonusMode,
     bonusAmount: config.bonusesAndPromotionsConfig.bonusAmount,
@@ -196,7 +202,8 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     smsEnabled: config.notificationsConfig.smsEnabled,
     emailEnabled: config.notificationsConfig.emailEnabled,
     notifyDepositSuccess: config.notificationsConfig.events.depositSuccess,
-    notifyWithdrawalSuccess: config.notificationsConfig.events.withdrawalSuccess,
+    notifyWithdrawalSuccess:
+      config.notificationsConfig.events.withdrawalSuccess,
     notifyBetPlaced: config.notificationsConfig.events.betPlaced,
     notifyBetResult: config.notificationsConfig.events.betResult,
     notifyAdminAlerts: config.notificationsConfig.events.adminAlerts,
@@ -220,7 +227,8 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     depositTaxPercent: config.taxAndFinancialRules.depositTaxPercent,
     commissionPercent: config.taxAndFinancialRules.commissionPercent,
     roundingRule: config.taxAndFinancialRules.roundingRule,
-    affiliateCommissionPercent: config.affiliateAndAgentConfig.commissionPercent,
+    affiliateCommissionPercent:
+      config.affiliateAndAgentConfig.commissionPercent,
     multiLevelReferralsEnabled:
       config.affiliateAndAgentConfig.multiLevelReferralsEnabled,
     affiliateMinimumPayoutThreshold:
@@ -228,7 +236,8 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     affiliateWithdrawalRule: config.affiliateAndAgentConfig.withdrawalRule,
     termsAndConditions: config.contentAndLegal.termsAndConditions,
     privacyPolicy: config.contentAndLegal.privacyPolicy,
-    responsibleGamblingMessage: config.contentAndLegal.responsibleGamblingMessage,
+    responsibleGamblingMessage:
+      config.contentAndLegal.responsibleGamblingMessage,
     supportContactInfo: config.contentAndLegal.supportContactInfo,
     updatedBy,
   };
