@@ -164,7 +164,7 @@ export default function Analytics() {
                   border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "10px",
                 }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(value ?? 0)}
               />
               <Area
                 type="monotone"
@@ -285,7 +285,7 @@ export default function Analytics() {
                   border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "10px",
                 }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(value ?? 0)}
               />
               <Bar
                 dataKey="stake"
@@ -318,7 +318,7 @@ export default function Analytics() {
                 cy="50%"
                 outerRadius={94}
                 label={({ name, percent }) =>
-                  `${name}: ${(percent * 100).toFixed(1)}%`
+                  `${name}: ${((percent ?? 0) * 100).toFixed(1)}%`
                 }
                 labelLine={false}
               >
@@ -368,10 +368,10 @@ export default function Analytics() {
                   border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "10px",
                 }}
-                formatter={(value: number, name: string) =>
+                formatter={(value: any, name: any) =>
                   name === "share"
-                    ? `${value.toFixed(1)}%`
-                    : formatCurrency(value)
+                    ? `${(value ?? 0).toFixed(1)}%`
+                    : formatCurrency(value ?? 0)
                 }
               />
               <Bar
@@ -410,7 +410,7 @@ export default function Analytics() {
                   border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "10px",
                 }}
-                formatter={(value: number) => formatPercent(value)}
+                formatter={(value: any) => formatPercent(value ?? 0)}
               />
               <Line
                 type="monotone"
