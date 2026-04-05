@@ -58,7 +58,10 @@ function normalizeKenyanPhone(rawPhone: string) {
     return `+${digits}`;
   }
 
-  if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length === 9) {
+  if (
+    (digits.startsWith("7") || digits.startsWith("1")) &&
+    digits.length === 9
+  ) {
     return `+254${digits}`;
   }
 
@@ -416,7 +419,9 @@ export async function getBettingAnalytics(req: Request, res: Response) {
     return res.status(403).json({ message: "Admin access required." });
   }
 
-  const parsedRange = bettingAnalyticsRangeSchema.safeParse(req.query.range ?? "7d");
+  const parsedRange = bettingAnalyticsRangeSchema.safeParse(
+    req.query.range ?? "7d",
+  );
   const range = parsedRange.success ? parsedRange.data : "7d";
   const { start, end, granularity } = getAnalyticsWindow(range);
 
@@ -445,16 +450,25 @@ export async function getBettingAnalytics(req: Request, res: Response) {
     .filter((transaction) => transaction.type === "REFUND")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
 
-  const betCount = transactions.filter((transaction) => transaction.type === "BET_STAKE")
-    .length;
-  const activeBettorIds = new Set(transactions.map((transaction) => transaction.userId));
+  const betCount = transactions.filter(
+    (transaction) => transaction.type === "BET_STAKE",
+  ).length;
+  const activeBettorIds = new Set(
+    transactions.map((transaction) => transaction.userId),
+  );
   const ggr = totalStake - totalPayout - totalRefunds;
   const avgStake = betCount > 0 ? totalStake / betCount : 0;
   const payoutRatio = totalStake > 0 ? (totalPayout / totalStake) * 100 : 0;
 
   const bins = new Map<
     string,
-    { period: string; stake: number; payout: number; refunds: number; ggr: number }
+    {
+      period: string;
+      stake: number;
+      payout: number;
+      refunds: number;
+      ggr: number;
+    }
   >();
 
   const stepDate = new Date(start);
@@ -472,7 +486,8 @@ export async function getBettingAnalytics(req: Request, res: Response) {
       });
     }
   } else {
-    const totalDays = Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+    const totalDays =
+      Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
     for (let offset = 0; offset < totalDays; offset += 1) {
       const current = new Date(start);
       current.setDate(start.getDate() + offset);
@@ -1072,7 +1087,10 @@ export async function getAdminPayments(req: Request, res: Response) {
     type: { in: ["DEPOSIT", "WITHDRAWAL"] },
   };
 
-  if (status && ["PENDING", "COMPLETED", "FAILED", "REVERSED"].includes(status)) {
+  if (
+    status &&
+    ["PENDING", "COMPLETED", "FAILED", "REVERSED"].includes(status)
+  ) {
     whereFilters.status = status;
   }
 

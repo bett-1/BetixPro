@@ -60,7 +60,12 @@ adminRouter.post(
 );
 
 // Payments Management
-adminRouter.get("/admin/payments", authenticate, requireAdmin, getAdminPayments);
+adminRouter.get(
+  "/admin/payments",
+  authenticate,
+  requireAdmin,
+  getAdminPayments,
+);
 adminRouter.get(
   "/admin/payments/stats",
   authenticate,
