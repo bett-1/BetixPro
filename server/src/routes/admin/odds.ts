@@ -15,6 +15,21 @@ type OddsStatsResponse = {
   bookmakers: number;
 };
 
+type AvailableOddsEventsResponse = {
+  events: Array<{
+    eventId: string;
+    homeTeam: string;
+    awayTeam: string;
+    leagueName: string | null;
+    commenceTime: Date;
+    status: "UPCOMING" | "LIVE" | "FINISHED" | "CANCELLED";
+    visibleOddsCount: number;
+    bookmakersCount: number;
+    bookmakerNames: string[];
+  }>;
+  total: number;
+};
+
 const ODDS_STATS_CACHE_TTL_MS = 30_000;
 let oddsStatsCache: { data: OddsStatsResponse; expiresAt: number } | null =
   null;
@@ -122,48 +137,49 @@ oddsAdminRouter.post("/admin/odds/bulk-auto-select", async (req, res, next) => {
 
     let processed = 0;
 
-    for (const eventId of targetEventIds) {
-      const odds = await prisma.displayedOdds.findMany({
-        where: { eventId },
-        select: {
-          bookmakerId: true,
-          marketType: true,
-          side: true,
-          displayOdds: true,
-        },
-      });
+    // One transaction across the full batch ensures all-or-nothing behavior.
+    await prisma.$transaction(async (tx) => {
+      for (const eventId of targetEventIds) {
+        const odds = await tx.displayedOdds.findMany({
+          where: { eventId },
+          select: {
+            bookmakerId: true,
+            marketType: true,
+            side: true,
+            displayOdds: true,
+          },
+        });
 
-      if (!odds.length) {
-        processed += 1;
-        continue;
-      }
+        if (!odds.length) {
+          processed += 1;
+          continue;
+        }
 
-      const grouped = odds.reduce<Record<string, Array<(typeof odds)[number]>>>(
-        (accumulator, odd) => {
+        const grouped = odds.reduce<
+          Record<string, Array<(typeof odds)[number]>>
+        >((accumulator, odd) => {
           const key = `${odd.marketType}::${odd.side}`;
           accumulator[key] = accumulator[key] ?? [];
           accumulator[key].push(odd);
           return accumulator;
-        },
-        {},
-      );
+        }, {});
 
-      const operations = Object.entries(grouped).flatMap(([key, group]) => {
-        const [marketType, side] = key.split("::");
-        const winner = group.reduce((best, candidate) =>
-          candidate.displayOdds > best.displayOdds ? candidate : best,
-        );
+        for (const [key, group] of Object.entries(grouped)) {
+          const [marketType, side] = key.split("::");
+          const winner = group.reduce((best, candidate) =>
+            candidate.displayOdds > best.displayOdds ? candidate : best,
+          );
 
-        return [
-          prisma.displayedOdds.updateMany({
+          await tx.displayedOdds.updateMany({
             where: {
               eventId,
               marketType,
               side,
             },
             data: { isVisible: false },
-          }),
-          prisma.displayedOdds.updateMany({
+          });
+
+          await tx.displayedOdds.updateMany({
             where: {
               eventId,
               marketType,
@@ -171,16 +187,12 @@ oddsAdminRouter.post("/admin/odds/bulk-auto-select", async (req, res, next) => {
               bookmakerId: winner.bookmakerId,
             },
             data: { isVisible: true },
-          }),
-        ];
-      });
+          });
+        }
 
-      if (operations.length) {
-        await prisma.$transaction(operations);
+        processed += 1;
       }
-
-      processed += 1;
-    }
+    });
 
     invalidateOddsStatsCache();
     console.log(`[AdminOdds] Auto-selected best odds for ${processed} events`);
@@ -218,6 +230,80 @@ oddsAdminRouter.post("/admin/odds/sync", async (_req, res, next) => {
       .catch((error: unknown) => {
         console.error("[AdminOdds] Manual sync failed", error);
       });
+  } catch (error) {
+    next(error);
+  }
+});
+
+oddsAdminRouter.get("/admin/odds/available-events", async (_req, res, next) => {
+  try {
+    const [events, distinctBookmakersByEvent] = await Promise.all([
+      prisma.sportEvent.findMany({
+        where: {
+          isActive: true,
+          displayedOdds: {
+            some: { isVisible: true },
+          },
+        },
+        select: {
+          eventId: true,
+          homeTeam: true,
+          awayTeam: true,
+          leagueName: true,
+          commenceTime: true,
+          status: true,
+          _count: {
+            select: {
+              displayedOdds: { where: { isVisible: true } },
+            },
+          },
+        },
+        orderBy: [{ status: "asc" }, { commenceTime: "asc" }],
+      }),
+      prisma.displayedOdds.findMany({
+        where: { isVisible: true },
+        select: {
+          eventId: true,
+          bookmakerId: true,
+          bookmakerName: true,
+        },
+        distinct: ["eventId", "bookmakerId"],
+      }),
+    ]);
+
+    const bookmakersCountByEventId = distinctBookmakersByEvent.reduce<
+      Record<string, number>
+    >((accumulator, item) => {
+      accumulator[item.eventId] = (accumulator[item.eventId] ?? 0) + 1;
+      return accumulator;
+    }, {});
+
+    const bookmakerNamesByEventId = distinctBookmakersByEvent.reduce<
+      Record<string, string[]>
+    >((accumulator, item) => {
+      accumulator[item.eventId] = accumulator[item.eventId] ?? [];
+      accumulator[item.eventId].push(item.bookmakerName);
+      return accumulator;
+    }, {});
+
+    const payload: AvailableOddsEventsResponse = {
+      events: events.map((event) => ({
+        eventId: event.eventId,
+        homeTeam: event.homeTeam,
+        awayTeam: event.awayTeam,
+        leagueName: event.leagueName,
+        commenceTime: event.commenceTime,
+        status: event.status,
+        visibleOddsCount: event._count.displayedOdds,
+        bookmakersCount: bookmakersCountByEventId[event.eventId] ?? 0,
+        bookmakerNames: (bookmakerNamesByEventId[event.eventId] ?? []).sort(
+          (left, right) => left.localeCompare(right),
+        ),
+      })),
+      total: events.length,
+    };
+
+    return res.status(200).json(payload);
   } catch (error) {
     next(error);
   }
