@@ -81,6 +81,25 @@ interface OddsStats {
   bookmakers: number;
 }
 
+interface AvailableOddsEvent {
+  eventId: string;
+  homeTeam: string;
+  awayTeam: string;
+  leagueName: string | null;
+  commenceTime: string;
+  status: "UPCOMING" | "LIVE" | "FINISHED" | "CANCELLED";
+  visibleOddsCount: number;
+  bookmakersCount: number;
+  bookmakerNames: string[];
+}
+
+interface AvailableOddsEventsResponse {
+  events: AvailableOddsEvent[];
+  total: number;
+}
+
+type OddsEventFilterKey = "configured" | "with_odds" | "no_odds" | "bookmakers";
+
 type OddsTableRow = {
   bookmakerId: string;
   bookmakerName: string;
@@ -103,6 +122,19 @@ type OddsTableRow = {
 };
 
 type MovementDirection = "up" | "down";
+
+function toBadgeStatus(status: ConfiguredEvent["status"]) {
+  switch (status) {
+    case "LIVE":
+      return "live" as const;
+    case "UPCOMING":
+      return "upcoming" as const;
+    case "FINISHED":
+      return "completed" as const;
+    case "CANCELLED":
+      return "failed" as const;
+  }
+}
 
 function findOutcome(outcomes: OddsTableRow["outcomes"], sideNames: string[]) {
   return outcomes.find((outcome) => sideNames.includes(outcome.side));
@@ -150,7 +182,19 @@ function marginTone(margin: number) {
 export default function Odds() {
   const [events, setEvents] = useState<ConfiguredEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState("");
+  const [activeFilter, setActiveFilter] =
+    useState<OddsEventFilterKey>("configured");
+  const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
   const [eventSearch, setEventSearch] = useState("");
+  const [oddsEventSearch, setOddsEventSearch] = useState("");
+  const [availableOddsEvents, setAvailableOddsEvents] = useState<
+    AvailableOddsEvent[]
+  >([]);
+  const [availableOddsLoading, setAvailableOddsLoading] = useState(false);
+  const [bulkBookmarking, setBulkBookmarking] = useState(false);
+  const [bookmarkingEventIds, setBookmarkingEventIds] = useState<
+    Record<string, boolean>
+  >({});
   const [oddsRows, setOddsRows] = useState<OddsTableRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [eventsLoading, setEventsLoading] = useState(true);
@@ -175,7 +219,19 @@ export default function Odds() {
     [events, selectedEventId],
   );
 
-  const filteredEvents = useMemo(() => {
+  const availableOddsEventsById = useMemo(
+    () =>
+      availableOddsEvents.reduce<Record<string, AvailableOddsEvent>>(
+        (accumulator, event) => {
+          accumulator[event.eventId] = event;
+          return accumulator;
+        },
+        {},
+      ),
+    [availableOddsEvents],
+  );
+
+  const searchedEvents = useMemo(() => {
     const q = eventSearch.trim().toLowerCase();
     if (!q) {
       return events;
@@ -189,6 +245,65 @@ export default function Odds() {
       );
     });
   }, [events, eventSearch]);
+
+  const filteredEvents = useMemo(() => {
+    if (activeFilter === "configured") {
+      return searchedEvents;
+    }
+
+    if (activeFilter === "with_odds") {
+      return searchedEvents.filter((event) => event._count.displayedOdds > 0);
+    }
+
+    if (activeFilter === "no_odds") {
+      return searchedEvents.filter((event) => event._count.displayedOdds === 0);
+    }
+
+    return searchedEvents.filter(
+      (event) =>
+        (availableOddsEventsById[event.eventId]?.bookmakersCount ?? 0) > 0,
+    );
+  }, [activeFilter, availableOddsEventsById, searchedEvents]);
+
+  const filteredOddsEvents = useMemo(() => {
+    const q = oddsEventSearch.trim().toLowerCase();
+    if (!q) {
+      return availableOddsEvents;
+    }
+
+    return availableOddsEvents.filter((event) => {
+      return (
+        event.homeTeam.toLowerCase().includes(q) ||
+        event.awayTeam.toLowerCase().includes(q) ||
+        (event.leagueName ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [availableOddsEvents, oddsEventSearch]);
+
+  const allFilteredSelected =
+    filteredEvents.length > 0 &&
+    filteredEvents.every((event) => selectedEventIds.includes(event.eventId));
+
+  const filteredEventsByBookmaker = useMemo(() => {
+    return filteredEvents.reduce<Record<string, ConfiguredEvent[]>>(
+      (accumulator, event) => {
+        const bookmakerNames =
+          availableOddsEventsById[event.eventId]?.bookmakerNames ?? [];
+
+        if (!bookmakerNames.length) {
+          return accumulator;
+        }
+
+        bookmakerNames.forEach((bookmakerName) => {
+          accumulator[bookmakerName] = accumulator[bookmakerName] ?? [];
+          accumulator[bookmakerName].push(event);
+        });
+
+        return accumulator;
+      },
+      {},
+    );
+  }, [availableOddsEventsById, filteredEvents]);
 
   const groupedFilteredEvents = useMemo(() => {
     return filteredEvents.reduce<Record<string, ConfiguredEvent[]>>(
@@ -271,6 +386,31 @@ export default function Odds() {
       toast.error(message);
     } finally {
       setEventsLoading(false);
+    }
+  }
+
+  async function loadAvailableOddsEvents(options?: { background?: boolean }) {
+    if (!options?.background) {
+      setAvailableOddsLoading(true);
+    }
+
+    try {
+      const response = await api.get<AvailableOddsEventsResponse>(
+        "/admin/odds/available-events",
+      );
+      setAvailableOddsEvents(response.data.events);
+    } catch (requestError) {
+      console.error(requestError);
+      const message = getErrorMessage(
+        requestError,
+        "Unable to load events with odds.",
+      );
+      setError(message);
+      toast.error(message);
+    } finally {
+      if (!options?.background) {
+        setAvailableOddsLoading(false);
+      }
     }
   }
 
@@ -386,16 +526,24 @@ export default function Odds() {
   }
 
   useEffect(() => {
-    void Promise.all([loadConfiguredEvents(), loadStats()]);
+    void Promise.all([
+      loadConfiguredEvents(),
+      loadStats(),
+      loadAvailableOddsEvents(),
+    ]);
   }, []);
 
   useEffect(() => {
-    const statsInterval = window.setInterval(() => {
-      void loadStats();
-    }, 60000);
+    const refreshInterval = window.setInterval(() => {
+      void Promise.all([
+        loadStats(),
+        loadConfiguredEvents(),
+        loadAvailableOddsEvents({ background: true }),
+      ]);
+    }, 12000);
 
     return () => {
-      window.clearInterval(statsInterval);
+      window.clearInterval(refreshInterval);
     };
   }, []);
 
@@ -411,18 +559,26 @@ export default function Odds() {
   }, [selectedEventId, selectedEvent]);
 
   useEffect(() => {
-    if (!selectedEventId || selectedEvent?.status !== "LIVE") {
+    if (!selectedEventId) {
       return;
     }
 
     const interval = window.setInterval(() => {
       void loadOdds(selectedEventId, { trackMovement: true });
-    }, 30000);
+    }, 12000);
 
     return () => {
       window.clearInterval(interval);
     };
-  }, [selectedEventId, selectedEvent?.status]);
+  }, [selectedEventId]);
+
+  useEffect(() => {
+    setSelectedEventIds((current) =>
+      current.filter((eventId) =>
+        filteredEvents.some((event) => event.eventId === eventId),
+      ),
+    );
+  }, [filteredEvents]);
 
   async function handleSyncFeed() {
     setSyncing(true);
@@ -486,6 +642,115 @@ export default function Odds() {
       toast.error(message);
     } finally {
       setAutoSelecting(false);
+    }
+  }
+
+  function toggleEventSelection(eventId: string, checked: boolean) {
+    setSelectedEventIds((current) => {
+      if (checked) {
+        return current.includes(eventId) ? current : [...current, eventId];
+      }
+
+      return current.filter((id) => id !== eventId);
+    });
+  }
+
+  function toggleSelectAllFiltered(checked: boolean) {
+    if (!checked) {
+      const filteredIds = new Set(filteredEvents.map((event) => event.eventId));
+      setSelectedEventIds((current) =>
+        current.filter((eventId) => !filteredIds.has(eventId)),
+      );
+      return;
+    }
+
+    const nextIds = Array.from(
+      new Set([
+        ...selectedEventIds,
+        ...filteredEvents.map((event) => event.eventId),
+      ]),
+    );
+    setSelectedEventIds(nextIds);
+  }
+
+  async function handleBookmarkSingle(eventId: string) {
+    setBookmarkingEventIds((current) => ({ ...current, [eventId]: true }));
+
+    try {
+      await api.post<{ processed: number; message: string }>(
+        "/admin/odds/bulk-auto-select",
+        { eventIds: [eventId] },
+      );
+
+      if (selectedEventId === eventId) {
+        await loadOdds(eventId, { trackMovement: true });
+      }
+
+      await Promise.all([
+        loadStats(),
+        loadConfiguredEvents(),
+        loadAvailableOddsEvents({ background: true }),
+      ]);
+      toast.success("✓ Best odds bookmarked for selected event");
+    } catch (requestError) {
+      console.error(requestError);
+      const message = getErrorMessage(
+        requestError,
+        "Unable to bookmark best odds for this event.",
+      );
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBookmarkingEventIds((current) => {
+        const next = { ...current };
+        delete next[eventId];
+        return next;
+      });
+    }
+  }
+
+  async function handleBookmarkSelected() {
+    const eligibleIds = selectedEventIds.filter((eventId) => {
+      const matched = events.find((event) => event.eventId === eventId);
+      return Boolean(matched && matched._count.displayedOdds > 0);
+    });
+
+    if (!eligibleIds.length) {
+      toast.error("Select events with odds before bookmarking.");
+      return;
+    }
+
+    setBulkBookmarking(true);
+    setError("");
+
+    try {
+      const response = await api.post<{ processed: number; message: string }>(
+        "/admin/odds/bulk-auto-select",
+        { eventIds: eligibleIds },
+      );
+
+      await Promise.all([
+        loadStats(),
+        loadConfiguredEvents(),
+        loadAvailableOddsEvents({ background: true }),
+        selectedEventId
+          ? loadOdds(selectedEventId, { trackMovement: true })
+          : Promise.resolve(),
+      ]);
+
+      toast.success(
+        `✓ Best odds bookmarked for ${response.data.processed} events`,
+      );
+    } catch (requestError) {
+      console.error(requestError);
+      const message = getErrorMessage(
+        requestError,
+        "Bulk bookmark failed. No changes were saved.",
+      );
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBulkBookmarking(false);
     }
   }
 
@@ -641,77 +906,320 @@ export default function Odds() {
             subtitle: "Active events",
             value: stats?.totalConfigured ?? 0,
             tone: "text-admin-blue",
+            key: "configured" as OddsEventFilterKey,
           },
           {
             label: "With Odds",
             subtitle: "Ready for users",
             value: stats?.withOdds ?? 0,
             tone: "text-admin-accent",
+            key: "with_odds" as OddsEventFilterKey,
           },
           {
             label: "No Odds",
             subtitle: "Needs attention",
             value: stats?.noOdds ?? 0,
             tone: "text-admin-red",
+            key: "no_odds" as OddsEventFilterKey,
           },
           {
             label: "Bookmakers",
             subtitle: "Visible sources",
             value: stats?.bookmakers ?? 0,
             tone: "text-admin-gold",
+            key: "bookmakers" as OddsEventFilterKey,
           },
         ].map((metric) => (
-          <AdminCard className="p-4" key={metric.label}>
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
-              {metric.label}
-            </p>
-            <p className={`mt-2 text-2xl font-bold ${metric.tone}`}>
-              {statsLoading ? "..." : metric.value}
-            </p>
-            <p className="mt-1 text-xs text-admin-text-muted">
-              {metric.subtitle}
-            </p>
-          </AdminCard>
+          <button
+            className="text-left"
+            key={metric.label}
+            onClick={() => setActiveFilter(metric.key)}
+            type="button"
+          >
+            <AdminCard
+              className={`p-4 transition ${
+                activeFilter === metric.key
+                  ? "border-admin-accent ring-1 ring-admin-accent"
+                  : ""
+              }`}
+              interactive
+            >
+              <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+                {metric.label}
+              </p>
+              <p className={`mt-2 text-2xl font-bold ${metric.tone}`}>
+                {statsLoading ? "..." : metric.value}
+              </p>
+              <p className="mt-1 text-xs text-admin-text-muted">
+                {metric.subtitle}
+              </p>
+            </AdminCard>
+          </button>
         ))}
       </div>
 
-      <div className="max-w-xl space-y-2">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-muted"
-            size={14}
-          />
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+            Select Odds
+          </p>
           <Input
-            placeholder="Search configured games..."
-            value={eventSearch}
-            onChange={(event) => setEventSearch(event.target.value)}
-            className="pl-9 border-admin-border bg-admin-surface text-admin-text-primary"
+            placeholder="Search events with available odds..."
+            value={oddsEventSearch}
+            onChange={(event) => setOddsEventSearch(event.target.value)}
+            className="border-admin-border bg-admin-surface text-admin-text-primary"
           />
+          <select
+            value={
+              availableOddsEventsById[selectedEventId] ? selectedEventId : ""
+            }
+            onChange={(event) => setSelectedEventId(event.target.value)}
+            className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
+          >
+            <option value="">
+              {availableOddsLoading
+                ? "Loading odds events..."
+                : "Choose an event with odds"}
+            </option>
+            {filteredOddsEvents.map((event) => (
+              <option key={event.eventId} value={event.eventId}>
+                {`${event.homeTeam} vs ${event.awayTeam} (${event.visibleOddsCount} odds)`}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <select
-          value={selectedEventId}
-          onChange={(event) => setSelectedEventId(event.target.value)}
-          className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
-        >
-          <option value="">
-            {eventsLoading
-              ? "Loading configured games..."
-              : "Select a configured game"}
-          </option>
-          {Object.entries(groupedFilteredEvents)
-            .sort(([left], [right]) => left.localeCompare(right))
-            .map(([league, leagueEvents]) => (
-              <optgroup key={league} label={league}>
-                {leagueEvents.map((event) => (
-                  <option key={event.eventId} value={event.eventId}>
-                    {`${getSportEmoji(event.sportKey)} ${event.homeTeam} vs ${event.awayTeam} - ${event.leagueName ?? "League"} - ${new Date(event.commenceTime).toLocaleDateString()} (${event._count.displayedOdds} odds)`}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-        </select>
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+            Configured Games
+          </p>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-muted"
+              size={14}
+            />
+            <Input
+              placeholder="Search configured games..."
+              value={eventSearch}
+              onChange={(event) => setEventSearch(event.target.value)}
+              className="pl-9 border-admin-border bg-admin-surface text-admin-text-primary"
+            />
+          </div>
+
+          <select
+            value={selectedEventId}
+            onChange={(event) => setSelectedEventId(event.target.value)}
+            className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
+          >
+            <option value="">
+              {eventsLoading
+                ? "Loading configured games..."
+                : "Select a configured game"}
+            </option>
+            {Object.entries(groupedFilteredEvents)
+              .sort(([left], [right]) => left.localeCompare(right))
+              .map(([league, leagueEvents]) => (
+                <optgroup key={league} label={league}>
+                  {leagueEvents.map((event) => (
+                    <option key={event.eventId} value={event.eventId}>
+                      {`${getSportEmoji(event.sportKey)} ${event.homeTeam} vs ${event.awayTeam} - ${event.leagueName ?? "League"} - ${new Date(event.commenceTime).toLocaleDateString()} (${event._count.displayedOdds} odds)`}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+          </select>
+        </div>
       </div>
+
+      {filteredEvents.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex items-center gap-2 text-xs text-admin-text-muted">
+              <input
+                checked={allFilteredSelected}
+                className="h-4 w-4 rounded border-admin-border bg-admin-surface"
+                onChange={(event) =>
+                  toggleSelectAllFiltered(event.target.checked)
+                }
+                type="checkbox"
+              />
+              Select all in current filter
+            </label>
+            <AdminButton
+              size="sm"
+              onClick={() => void handleBookmarkSelected()}
+              disabled={bulkBookmarking || selectedEventIds.length === 0}
+            >
+              {bulkBookmarking ? (
+                <>
+                  <Loader2 className="animate-spin" size={13} />
+                  Bookmarking...
+                </>
+              ) : (
+                "Bookmark Best for Selected"
+              )}
+            </AdminButton>
+          </div>
+
+          {activeFilter === "bookmakers" ? (
+            <AdminCard className="space-y-4">
+              {Object.entries(filteredEventsByBookmaker)
+                .sort(([left], [right]) => left.localeCompare(right))
+                .map(([bookmakerName, bookmakerEvents]) => (
+                  <div key={bookmakerName} className="space-y-2">
+                    <p className="text-sm font-semibold text-admin-gold">
+                      {bookmakerName}
+                    </p>
+                    {bookmakerEvents.map((event) => (
+                      <div
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-admin-border bg-admin-surface p-3"
+                        key={`${bookmakerName}-${event.eventId}`}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <input
+                            checked={selectedEventIds.includes(event.eventId)}
+                            className="h-4 w-4 rounded border-admin-border bg-admin-surface"
+                            onChange={(checkboxEvent) =>
+                              toggleEventSelection(
+                                event.eventId,
+                                checkboxEvent.target.checked,
+                              )
+                            }
+                            type="checkbox"
+                          />
+                          <StatusBadge status={toBadgeStatus(event.status)} />
+                          <p className="truncate text-sm font-semibold text-admin-text-primary">
+                            {event.homeTeam} vs {event.awayTeam}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-lg bg-admin-accent-dim px-2 py-1 text-[11px] font-semibold text-admin-accent">
+                            ✓ {event._count.displayedOdds} odds
+                          </span>
+                          <AdminButton
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedEventId(event.eventId)}
+                          >
+                            View Odds
+                          </AdminButton>
+                          <AdminButton
+                            size="sm"
+                            onClick={() =>
+                              void handleBookmarkSingle(event.eventId)
+                            }
+                            disabled={Boolean(
+                              bookmarkingEventIds[event.eventId],
+                            )}
+                          >
+                            {bookmarkingEventIds[event.eventId] ? (
+                              <Loader2 className="animate-spin" size={13} />
+                            ) : (
+                              "Bookmark Best"
+                            )}
+                          </AdminButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+            </AdminCard>
+          ) : (
+            <div className="space-y-3">
+              {filteredEvents.map((event) => {
+                const hasOdds = event._count.displayedOdds > 0;
+                const availableOdds = availableOddsEventsById[event.eventId];
+
+                return (
+                  <AdminCard
+                    className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+                    key={event.eventId}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <input
+                        checked={selectedEventIds.includes(event.eventId)}
+                        className="h-4 w-4 rounded border-admin-border bg-admin-surface"
+                        onChange={(checkboxEvent) =>
+                          toggleEventSelection(
+                            event.eventId,
+                            checkboxEvent.target.checked,
+                          )
+                        }
+                        type="checkbox"
+                      />
+                      <div>
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <StatusBadge status={toBadgeStatus(event.status)} />
+                          {hasOdds ? (
+                            <span className="rounded-lg bg-admin-accent-dim px-2 py-1 text-[11px] font-semibold text-admin-accent">
+                              ✓ With Odds
+                            </span>
+                          ) : (
+                            <span className="rounded-lg bg-admin-red-dim px-2 py-1 text-[11px] font-semibold text-admin-red">
+                              ✗ No Odds
+                            </span>
+                          )}
+                          <span className="text-[11px] text-admin-text-muted">
+                            {event.leagueName ?? "Unknown league"}
+                          </span>
+                        </div>
+                        <p className="text-base font-semibold text-admin-text-primary">
+                          {event.homeTeam}{" "}
+                          <span className="text-admin-text-muted">vs</span>{" "}
+                          {event.awayTeam}
+                        </p>
+                        <p className="mt-1 text-xs text-admin-text-muted">
+                          {new Date(event.commenceTime).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-lg bg-admin-blue-dim px-2 py-1 text-[11px] font-semibold text-admin-blue">
+                        {event._count.displayedOdds} odds
+                      </span>
+                      <span className="rounded-lg bg-admin-gold-dim px-2 py-1 text-[11px] font-semibold text-admin-gold">
+                        {availableOdds?.bookmakersCount ?? 0} bookmakers
+                      </span>
+                      <AdminButton
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedEventId(event.eventId)}
+                      >
+                        View Odds
+                      </AdminButton>
+                      {hasOdds ? (
+                        <AdminButton
+                          size="sm"
+                          onClick={() =>
+                            void handleBookmarkSingle(event.eventId)
+                          }
+                          disabled={Boolean(bookmarkingEventIds[event.eventId])}
+                        >
+                          {bookmarkingEventIds[event.eventId] ? (
+                            <Loader2 className="animate-spin" size={13} />
+                          ) : (
+                            "Bookmark Best"
+                          )}
+                        </AdminButton>
+                      ) : (
+                        <span className="rounded-lg border border-admin-red bg-admin-red-dim px-2 py-1 text-[11px] font-semibold text-admin-red">
+                          No Odds
+                        </span>
+                      )}
+                    </div>
+                  </AdminCard>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <AdminCard>
+          <p className="text-sm text-admin-text-muted">
+            No configured events match the current filter.
+          </p>
+        </AdminCard>
+      )}
 
       {error ? (
         <AdminCard>
