@@ -282,7 +282,6 @@ export default function Analytics() {
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="rgba(255,255,255,0.05)"
-                verticalPoints={["syncWithTicks"]}
               />
               <XAxis
                 dataKey="sport"
@@ -341,19 +340,23 @@ export default function Analytics() {
                   `${name}: ${((percent ?? 0) * 100).toFixed(1)}%`
                 }
                 labelLine={false}
+                isAnimationActive={true}
               >
                 {(data?.breakdowns.outcomes ?? []).map((_, index) => (
                   <Cell
                     key={index}
                     fill={chartPalette[index % chartPalette.length]}
+                    stroke="rgba(255,255,255,0.15)"
+                    strokeWidth={2}
                   />
                 ))}
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(20,24,40,0.98)",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  backgroundColor: "rgba(15,20,35,0.95)",
+                  border: "1px solid rgba(0,229,160,0.25)",
                   borderRadius: "10px",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 }}
               />
             </PieChart>
@@ -381,7 +384,6 @@ export default function Analytics() {
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="rgba(255,255,255,0.05)"
-                verticalPoints={["syncWithTicks"]}
               />
               <XAxis
                 dataKey="band"
@@ -428,7 +430,6 @@ export default function Analytics() {
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="rgba(255,255,255,0.05)"
-                verticalPoints={["syncWithTicks"]}
               />
               <XAxis
                 dataKey="band"
