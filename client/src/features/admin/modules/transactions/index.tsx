@@ -123,7 +123,9 @@ export default function Transactions() {
     ]);
 
     let csv = headers.join(",") + "\n";
-    csv += rows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+    csv += rows
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -141,7 +143,9 @@ export default function Transactions() {
     return type === "deposit" ? "accent" : "red";
   };
 
-  const getStatusForBadge = (status: "pending" | "completed" | "failed" | "reversed"): "pending" | "completed" | "failed" => {
+  const getStatusForBadge = (
+    status: "pending" | "completed" | "failed" | "reversed",
+  ): "pending" | "completed" | "failed" => {
     if (status === "reversed") return "failed";
     return status;
   };
@@ -290,12 +294,16 @@ export default function Transactions() {
                       )}
                     </td>
                     <td className={adminTableCellClassName}>
-                      <StatusBadge status={getStatusForBadge(transaction.status)} />
+                      <StatusBadge
+                        status={getStatusForBadge(transaction.status)}
+                      />
                     </td>
                     <td className={`${adminTableCellClassName} text-xs`}>
                       {new Date(transaction.createdAt).toLocaleString()}
                     </td>
-                    <td className={`${adminTableCellClassName} ${adminCompactActionsClassName}`}>
+                    <td
+                      className={`${adminTableCellClassName} ${adminCompactActionsClassName}`}
+                    >
                       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
                         <DialogTrigger asChild>
                           <button
@@ -381,7 +389,8 @@ export default function Transactions() {
                                       Total Debit
                                     </label>
                                     <p className="text-sm font-semibold">
-                                      KES {selectedTxn.totalDebit.toLocaleString()}
+                                      KES{" "}
+                                      {selectedTxn.totalDebit.toLocaleString()}
                                     </p>
                                   </div>
                                 )}
