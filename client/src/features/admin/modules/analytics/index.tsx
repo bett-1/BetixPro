@@ -136,7 +136,9 @@ export default function Analytics() {
                 </label>
                 <select
                   value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value as AnalyticsGroupBy)}
+                  onChange={(e) =>
+                    setGroupBy(e.target.value as AnalyticsGroupBy)
+                  }
                   className="w-full rounded border border-admin-border bg-admin-surface px-2 py-1 text-xs font-medium text-admin-text-primary transition-colors hover:border-admin-gold focus:border-admin-gold focus:outline-none focus:ring-2 focus:ring-admin-gold/20 sm:w-auto"
                 >
                   {groupByOptions.map((option) => (
