@@ -220,17 +220,14 @@ export async function updateContactStatus(req: Request, res: Response) {
     }
 
     const contactIdParam = req.params.contactId;
-    const contactId =
-      typeof contactIdParam === "string"
-        ? contactIdParam
-        : Array.isArray(contactIdParam)
-          ? contactIdParam[0]
-          : undefined;
+    const contactId = Array.isArray(contactIdParam)
+      ? contactIdParam[0]
+      : contactIdParam;
+    const { status } = req.body;
 
     if (!contactId) {
-      return res.status(400).json({ message: "Invalid contact id" });
+      return res.status(400).json({ message: "Invalid contact ID" });
     }
-    const { status } = req.body;
 
     if (!["SUBMITTED", "READ", "RESOLVED"].includes(status)) {
       return res.status(400).json({
@@ -270,15 +267,12 @@ export async function getContactDetail(req: Request, res: Response) {
     }
 
     const contactIdParam = req.params.contactId;
-    const contactId =
-      typeof contactIdParam === "string"
-        ? contactIdParam
-        : Array.isArray(contactIdParam)
-          ? contactIdParam[0]
-          : undefined;
+    const contactId = Array.isArray(contactIdParam)
+      ? contactIdParam[0]
+      : contactIdParam;
 
     if (!contactId) {
-      return res.status(400).json({ message: "Invalid contact id" });
+      return res.status(400).json({ message: "Invalid contact ID" });
     }
 
     const contact = await prisma.contact.findUnique({

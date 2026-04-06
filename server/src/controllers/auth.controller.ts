@@ -40,22 +40,30 @@ const resetPasswordSchema = z.object({
   confirmPassword: z.string(),
 });
 
-function validatePassword(password: string): string[] {
+function validatePassword(password: string) {
   const errors: string[] = [];
 
   if (password.length < 8) {
     errors.push("Password must be at least 8 characters long.");
   }
+
+  if (password.length > 128) {
+    errors.push("Password must be at most 128 characters long.");
+  }
+
   if (!/[A-Z]/.test(password)) {
     errors.push("Password must include at least one uppercase letter.");
   }
+
   if (!/[a-z]/.test(password)) {
     errors.push("Password must include at least one lowercase letter.");
   }
-  if (!/[0-9]/.test(password)) {
+
+  if (!/\d/.test(password)) {
     errors.push("Password must include at least one number.");
   }
-  if (!/[^A-Za-z0-9]/.test(password)) {
+
+  if (!/[!@#$%^&*(),.?":{}|<>\[\]\\\/`~;'+\-=_]/.test(password)) {
     errors.push("Password must include at least one special character.");
   }
 
