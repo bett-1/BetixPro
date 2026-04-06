@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,7 +33,7 @@ export default function PaymentsHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | TransactionStatus>(
     "all",
   );
-  const { data } = useWalletSummary();
+  const { data, refetch, isFetching } = useWalletSummary();
   const transactions = data?.transactions ?? [];
 
   const filtered = useMemo(() => {
@@ -214,9 +215,29 @@ export default function PaymentsHistoryPage() {
                 <TableRow>
                   <TableCell
                     colSpan={6}
-                    className="text-center text-admin-text-muted py-8"
+                    className="py-8"
                   >
-                    No transactions found
+                    <div className="mx-auto max-w-xl rounded-2xl border border-admin-border bg-[linear-gradient(165deg,#0d2147,#091a36)] p-5 text-center">
+                      <p className="text-xl font-semibold text-white">
+                        No matches available right now
+                      </p>
+                      <p className="mt-1 text-sm text-blue-200/85">
+                        Check back soon or refresh
+                      </p>
+                      <Button
+                        type="button"
+                        className="mt-4 h-9 rounded-lg bg-admin-accent px-4 text-xs font-semibold text-black hover:opacity-90"
+                        disabled={isFetching}
+                        onClick={() => {
+                          void refetch();
+                        }}
+                      >
+                        <RefreshCw
+                          className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
+                        />
+                        Refresh
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -233,7 +254,7 @@ export default function PaymentsHistoryPage() {
                         {titleCase(item.type)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-admin-text-secondary font-mono font-bold text-admin-accent">
+                    <TableCell className="font-mono font-bold text-admin-accent">
                       {item.mpesaCode ? (
                         <span className="bg-admin-surface px-2 py-1 rounded text-sm">
                           {item.mpesaCode}

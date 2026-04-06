@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { CheckCircle2, CircleAlert, LoaderCircle, Check } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleAlert,
+  LoaderCircle,
+  Check,
+  PencilLine,
+  Smartphone,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/axios";
@@ -21,6 +28,7 @@ import {
   type StkPushResponse,
   type WalletSummaryResponse,
 } from "../wallet";
+import { useAuth } from "@/context/AuthContext";
 
 // Reduced to exactly 4 options
 const quickAmounts = [500, 1000, 2500, 5000];
@@ -31,8 +39,10 @@ const paymentStages = [
 ] as const;
 
 export default function PaymentsDepositPage() {
+  const { user } = useAuth();
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("100");
+  const [isPhoneEditing, setIsPhoneEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [response, setResponse] = useState<StkPushResponse | null>(null);
   const [submissionStartedAt, setSubmissionStartedAt] = useState<string | null>(
@@ -54,12 +64,20 @@ export default function PaymentsDepositPage() {
   const { data: walletData } = useWalletSummary();
   const currentBalance = walletData?.wallet.balance ?? 0;
 
+  useEffect(() => {
+    if (user?.phone && !phone && !isPhoneEditing) {
+      setPhone(user.phone);
+      setIsPhoneEditing(false);
+    }
+  }, [isPhoneEditing, phone, user?.phone]);
+
+  const sanitizedPhone = phone.replace(/\s+/g, "").replace(/^\+/, "");
+  const isPhoneValid = /^(?:254|0)7\d{8}$/.test(sanitizedPhone);
+
   const isFormValid = useMemo(() => {
     const amountValue = Number(amount);
-    return (
-      phone.trim().length >= 10 && amountValue >= 1 && amountValue <= 250000
-    );
-  }, [amount, phone]);
+    return isPhoneValid && amountValue >= 1 && amountValue <= 250000;
+  }, [amount, isPhoneValid]);
 
   useEffect(() => {
     if (
@@ -196,10 +214,14 @@ export default function PaymentsDepositPage() {
     setSubmissionAmount(Number(amount));
     setSubmittedTransactionId(null);
 
+    const normalizedPhone = sanitizedPhone.startsWith("0")
+      ? `254${sanitizedPhone.slice(1)}`
+      : sanitizedPhone;
+
     try {
       const { data } = await api.post<StkPushResponse>(
         "/payments/mpesa/stk-push",
-        { phone, amount: Number(amount) },
+        { phone: normalizedPhone, amount: Number(amount) },
       );
 
       setResponse(data);
@@ -229,21 +251,20 @@ export default function PaymentsDepositPage() {
 
   return (
     // Restricted max-width to make it a neat, compact widget instead of a massive spanning grid
-    <section className="mx-auto max-w-md">
-      <article className="rounded-2xl border border-admin-border bg-admin-card p-5 shadow-sm">
-        <div className="mb-6 flex items-center justify-between border-b border-admin-border pb-4">
+    <section className="mx-auto max-w-lg">
+      <article className="rounded-3xl border border-admin-border bg-[linear-gradient(160deg,var(--color-bg-surface),var(--color-bg-elevated))] p-5 shadow-sm sm:p-6">
+        <div className="mb-6 flex items-center justify-between border-b border-admin-border pb-5">
           <div>
-            <h2 className="text-lg font-bold text-admin-text-primary">
+            <h2 className="text-xl font-bold text-admin-text-primary">
               Deposit Funds
             </h2>
-            <p className="mt-1 text-xs text-admin-text-muted">
+            <p className="mt-1 text-sm text-admin-text-muted">
               Instant M-Pesa Top-up
             </p>
           </div>
-          {/* Online high-res M-Pesa SVG Logo */}
-          <div className="flex h-10 w-16 items-center justify-center rounded-lg bg-[#4CAF50]/10 px-2">
+          <div className="flex h-11 w-20 items-center justify-center rounded-xl border border-admin-border bg-[#4CAF50]/10 px-2">
             <img
-              src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
+              src="/images/mpesa/logo.png"
               alt="M-Pesa"
               className="h-full w-full object-contain drop-shadow-sm"
             />
@@ -251,21 +272,47 @@ export default function PaymentsDepositPage() {
         </div>
 
         <form className="grid gap-5" onSubmit={handleSubmit}>
-          <div className="grid gap-2">
-            <label
-              htmlFor="phone"
-              className="text-sm font-semibold text-admin-text-primary"
-            >
-              Phone Number
-            </label>
-            <input
-              id="phone"
-              className="h-11 w-full rounded-xl border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary outline-none transition focus:border-admin-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)]"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="2547XXXXXXXX"
-              autoComplete="tel"
-            />
+          <div className="rounded-2xl border border-admin-border bg-admin-surface/80 p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Smartphone size={15} className="text-admin-text-muted" />
+                <label
+                  htmlFor="phone"
+                  className="text-sm font-semibold text-admin-text-primary"
+                >
+                  M-Pesa Phone
+                </label>
+              </div>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-admin-border px-2.5 text-xs font-medium text-admin-text-secondary transition hover:border-admin-accent hover:text-admin-text-primary"
+                onClick={() => setIsPhoneEditing((current) => !current)}
+              >
+                <PencilLine size={13} />
+                {isPhoneEditing ? "Done" : "Edit"}
+              </button>
+            </div>
+
+            {isPhoneEditing || !phone ? (
+              <input
+                id="phone"
+                className="h-11 w-full rounded-xl border border-admin-border bg-admin-card px-3 text-sm text-admin-text-primary outline-none transition placeholder:text-admin-text-muted focus:border-admin-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)]"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="2547XXXXXXXX"
+                autoComplete="tel"
+              />
+            ) : (
+              <div className="rounded-xl border border-admin-border bg-admin-card px-3 py-3 text-sm font-medium text-admin-text-primary">
+                {phone}
+              </div>
+            )}
+
+            {phone && !isPhoneValid && (
+              <p className="mt-2 text-xs text-red-400">
+                Use format: 2547XXXXXXXX or 07XXXXXXXX.
+              </p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -294,7 +341,7 @@ export default function PaymentsDepositPage() {
               />
             </div>
 
-            <div className="mt-1 grid grid-cols-4 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {quickAmounts.map((option) => (
                 <button
                   key={option}
@@ -329,7 +376,7 @@ export default function PaymentsDepositPage() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[400px] overflow-hidden border-admin-border bg-admin-card p-0 shadow-2xl"
+          className="max-w-sm overflow-hidden border-admin-border bg-admin-card p-0 shadow-2xl"
         >
           <div className="p-6">
             <DialogHeader className="items-center text-center">
@@ -384,7 +431,7 @@ export default function PaymentsDepositPage() {
                         }`}
                       >
                         {isCompleted ? (
-                          <Check className="h-3 w-3 stroke-[3]" />
+                          <Check className="h-3 w-3 stroke-3" />
                         ) : (
                           <span className="text-[10px] font-bold">
                             {index + 1}
