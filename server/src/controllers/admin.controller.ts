@@ -385,13 +385,7 @@ const createUserSchema = z.object({
   accountStatus: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
 });
 
-const bettingAnalyticsTimeframeSchema = z.enum([
-  "4w",
-  "12w",
-  "6m",
-  "12m",
-  "3y",
-]);
+const bettingAnalyticsTimeframeSchema = z.enum(["1w", "1m", "6m", "1y", "all"]);
 const bettingAnalyticsGroupBySchema = z.enum(["week", "month", "year"]);
 
 type BettingAnalyticsTimeframe = z.infer<
@@ -423,35 +417,39 @@ function normalizeKenyanPhone(rawPhone: string) {
 function resolveBettingAnalyticsWindow(timeframe: BettingAnalyticsTimeframe) {
   const end = new Date();
   const start = new Date(end);
-  let defaultGroupBy: BettingAnalyticsGroupBy = "week";
+  let defaultGroupBy: BettingAnalyticsGroupBy = "month";
 
-  if (timeframe === "4w") {
-    start.setDate(start.getDate() - 27);
+  if (timeframe === "1w") {
+    const dayOfWeek = start.getDay();
+    const diff = start.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    start.setDate(diff);
     start.setHours(0, 0, 0, 0);
+    defaultGroupBy = "week";
     return { start, end, defaultGroupBy };
   }
 
-  if (timeframe === "12w") {
-    start.setDate(start.getDate() - 83);
+  if (timeframe === "1m") {
+    start.setDate(1);
     start.setHours(0, 0, 0, 0);
+    defaultGroupBy = "month";
     return { start, end, defaultGroupBy };
   }
 
   if (timeframe === "6m") {
-    defaultGroupBy = "month";
     start.setMonth(start.getMonth() - 5, 1);
     start.setHours(0, 0, 0, 0);
-    return { start, end, defaultGroupBy };
-  }
-
-  if (timeframe === "12m") {
     defaultGroupBy = "month";
-    start.setMonth(start.getMonth() - 11, 1);
-    start.setHours(0, 0, 0, 0);
     return { start, end, defaultGroupBy };
   }
 
-  defaultGroupBy = "year";
+  if (timeframe === "1y") {
+    start.setMonth(0, 1);
+    start.setHours(0, 0, 0, 0);
+    defaultGroupBy = "month";
+    return { start, end, defaultGroupBy };
+  }
+
+  defaultGroupBy = "month";
   start.setFullYear(start.getFullYear() - 2, 0, 1);
   start.setHours(0, 0, 0, 0);
   return { start, end, defaultGroupBy };
@@ -859,9 +857,9 @@ export async function getBettingAnalytics(req: Request, res: Response) {
   }
 
   const parsedTimeframe = bettingAnalyticsTimeframeSchema.safeParse(
-    req.query.timeframe ?? "12w",
+    req.query.timeframe ?? "1m",
   );
-  const timeframe = parsedTimeframe.success ? parsedTimeframe.data : "12w";
+  const timeframe = parsedTimeframe.success ? parsedTimeframe.data : "1m";
   const window = resolveBettingAnalyticsWindow(timeframe);
   const parsedGroupBy = bettingAnalyticsGroupBySchema.safeParse(
     req.query.groupBy,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -31,17 +31,11 @@ import {
 } from "../../hooks/useAdminAnalytics";
 
 const timeframeOptions: Array<{ label: string; value: AnalyticsTimeframe }> = [
-  { label: "4 Weeks", value: "4w" },
-  { label: "12 Weeks", value: "12w" },
+  { label: "This Week", value: "1w" },
+  { label: "This Month", value: "1m" },
   { label: "6 Months", value: "6m" },
-  { label: "12 Months", value: "12m" },
-  { label: "3 Years", value: "3y" },
-];
-
-const groupByOptions: Array<{ label: string; value: AnalyticsGroupBy }> = [
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "Year", value: "year" },
+  { label: "This Year", value: "1y" },
+  { label: "All Time", value: "all" },
 ];
 
 const chartPalette = ["#00e5a0", "#4aa3ff", "#ffbe55", "#ff6464", "#9f7aea"];
@@ -71,9 +65,26 @@ function priorityClass(priority: "high" | "medium" | "low") {
   return "bg-admin-blue/20 text-admin-blue border-admin-blue/30";
 }
 
+function preferredGroupByForTimeframe(
+  timeframe: AnalyticsTimeframe,
+): AnalyticsGroupBy {
+  if (timeframe === "1w") return "week";
+  if (timeframe === "1m") return "month";
+  if (timeframe === "6m" || timeframe === "1y" || timeframe === "all") {
+    return "month";
+  }
+  return "month";
+}
+
 export default function Analytics() {
-  const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>("12w");
-  const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>("week");
+  const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>("1m");
+  const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>(
+    preferredGroupByForTimeframe("1m"),
+  );
+
+  useEffect(() => {
+    setGroupBy(preferredGroupByForTimeframe(timeframe));
+  }, [timeframe]);
 
   const { data, isLoading, isError, error } = useAdminAnalytics({
     timeframe,
@@ -124,24 +135,6 @@ export default function Analytics() {
                   className="w-full rounded border border-admin-border bg-admin-surface px-2 py-1 text-xs font-medium text-admin-text-primary transition-colors hover:border-admin-accent focus:border-admin-accent focus:outline-none focus:ring-2 focus:ring-admin-accent/20 sm:w-auto"
                 >
                   {timeframeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 sm:flex-none sm:w-auto">
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-secondary">
-                  Group
-                </label>
-                <select
-                  value={groupBy}
-                  onChange={(e) =>
-                    setGroupBy(e.target.value as AnalyticsGroupBy)
-                  }
-                  className="w-full rounded border border-admin-border bg-admin-surface px-2 py-1 text-xs font-medium text-admin-text-primary transition-colors hover:border-admin-gold focus:border-admin-gold focus:outline-none focus:ring-2 focus:ring-admin-gold/20 sm:w-auto"
-                >
-                  {groupByOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -274,61 +267,6 @@ export default function Analytics() {
           </AdminCard>
         ))}
       </div>
-
-      {(data?.walletSummary?.totalDeposits ?? 0) > 0 ||
-      (data?.walletSummary?.totalWithdrawals ?? 0) > 0 ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <AdminCard>
-            <AdminCardHeader
-              title="Payment Activity"
-              subtitle="Deposits and withdrawals summary"
-            />
-            <div className="space-y-3 text-sm">
-              <div className="rounded-lg border border-admin-border bg-admin-surface/40 p-3">
-                <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
-                  Total Deposits
-                </p>
-                <p className="mt-1 text-lg font-bold text-admin-accent">
-                  {formatCurrency(data?.walletSummary.totalDeposits ?? 0)}
-                </p>
-                <p className="mt-1 text-[10px] text-admin-text-muted">
-                  {data?.walletSummary.depositCount ?? 0} transaction
-                  {(data?.walletSummary.depositCount ?? 0) !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <div className="rounded-lg border border-admin-border bg-admin-surface/40 p-3">
-                <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
-                  Total Withdrawals
-                </p>
-                <p className="mt-1 text-lg font-bold text-admin-gold">
-                  {formatCurrency(data?.walletSummary.totalWithdrawals ?? 0)}
-                </p>
-                <p className="mt-1 text-[10px] text-admin-text-muted">
-                  {data?.walletSummary.withdrawalCount ?? 0} transaction
-                  {(data?.walletSummary.withdrawalCount ?? 0) !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <div className="rounded-lg border border-admin-border bg-admin-surface/40 p-3">
-                <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">
-                  Net Flow
-                </p>
-                <p
-                  className={`mt-1 text-lg font-bold ${
-                    (data?.walletSummary.netFlow ?? 0) >= 0
-                      ? "text-admin-accent"
-                      : "text-admin-red"
-                  }`}
-                >
-                  {formatCurrency(data?.walletSummary.netFlow ?? 0)}
-                </p>
-                <p className="mt-1 text-[10px] text-admin-text-muted">
-                  {(data?.walletSummary.netFlow ?? 0) >= 0 ? "Inflow" : "Outflow"}
-                </p>
-              </div>
-            </div>
-          </AdminCard>
-        </div>
-      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-2">
         <AdminCard>

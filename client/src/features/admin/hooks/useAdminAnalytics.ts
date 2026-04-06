@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/axiosConfig";
 
-export type AnalyticsTimeframe = "4w" | "12w" | "6m" | "12m" | "3y";
+export type AnalyticsTimeframe = "1w" | "1m" | "6m" | "1y" | "all";
 export type AnalyticsGroupBy = "week" | "month" | "year";
 
 export interface AnalyticsResponse {
