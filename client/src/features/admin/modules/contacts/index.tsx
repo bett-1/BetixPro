@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/axiosConfig";
 import { useAdminContacts, type Contact } from "../../hooks/useAdminContacts";
+import { type AdminBadgeStatus } from "../../data/mock-data";
 import {
   AdminButton,
   AdminCard,
@@ -94,7 +95,7 @@ export default function Contacts() {
         { label: "Total", value: "0", tone: "blue" as const },
         { label: "Unread", value: "0", tone: "gold" as const },
         { label: "Read", value: "0", tone: "accent" as const },
-        { label: "Resolved", value: "0", tone: "emerald" as const },
+        { label: "Resolved", value: "0", tone: "purple" as const },
       ];
     }
 
@@ -110,7 +111,7 @@ export default function Contacts() {
       },
       { label: "Unread", value: String(submitted), tone: "gold" as const },
       { label: "Read", value: String(read), tone: "accent" as const },
-      { label: "Resolved", value: String(resolved), tone: "emerald" as const },
+      { label: "Resolved", value: String(resolved), tone: "purple" as const },
     ];
   }, [contacts, pagination.total]);
 
@@ -161,12 +162,16 @@ export default function Contacts() {
   const handleRowClick = (contact: Contact) => {
     setSelectedContact(contact);
     setDetailsOpen(true);
+    // Auto-mark as READ when contact is opened
+    if (contact.status === "SUBMITTED") {
+      handleStatusUpdate(contact.id, "READ");
+    }
   };
 
   const handleStatusUpdate = (contactId: string, newStatus: string) => {
     updateStatusMutation.mutate({ contactId, newStatus });
     if (selectedContact?.id === contactId) {
-      setSelectedContact({ ...selectedContact, status: newStatus });
+      setSelectedContact({ ...selectedContact, status: newStatus as "SUBMITTED" | "READ" | "RESOLVED" });
     }
   };
 
@@ -191,7 +196,6 @@ export default function Contacts() {
             label={stat.label}
             tone={stat.tone}
             value={stat.value}
-            className="py-3 px-4" // Assuming your component accepts className for inner padding
           />
         ))}
       </div>
@@ -290,12 +294,12 @@ export default function Contacts() {
                         </p>
                       </td>
                       <td className={adminTableCellClassName}>
-                        <p className="text-sm text-admin-text-primary truncate max-w-[200px] xl:max-w-xs">
+                        <p className="text-sm text-admin-text-primary truncate max-w-50 xl:max-w-xs">
                           {contact.subject}
                         </p>
                       </td>
                       <td className={adminTableCellClassName}>
-                        <StatusBadge status={contact.status.toLowerCase()} />
+                        <StatusBadge status={contact.status.toLowerCase() as AdminBadgeStatus} />
                       </td>
                       <td className={adminTableCellClassName}>
                         <p className="text-sm text-admin-text-muted whitespace-nowrap">
@@ -445,7 +449,7 @@ export default function Contacts() {
                     </p>
                     <div className="mt-1">
                       <StatusBadge
-                        status={selectedContact.status.toLowerCase()}
+                        status={selectedContact.status.toLowerCase() as AdminBadgeStatus}
                       />
                     </div>
                   </div>

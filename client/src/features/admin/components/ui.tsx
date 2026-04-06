@@ -98,7 +98,7 @@ const statusConfig: Record<
   // Contact message statuses
   submitted: { tone: "gold", icon: Clock },
   read: { tone: "accent", icon: CheckCircle },
-  resolved: { tone: "accent", icon: CheckCircle },
+  resolved: { tone: "purple", icon: CheckCircle },
 };
 
 interface AdminButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
