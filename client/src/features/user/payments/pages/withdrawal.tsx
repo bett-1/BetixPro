@@ -45,6 +45,7 @@ function isPhoneValid(phone: string) {
 export default function PaymentsWithdrawalPage() {
   const { user } = useAuth();
   const [amount, setAmount] = useState("500");
+  const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: walletData, refetch: refetchWallet } = useWalletSummary();
   const queryClient = useQueryClient();
@@ -90,13 +91,11 @@ export default function PaymentsWithdrawalPage() {
   const balance = walletData?.wallet?.balance ?? 0;
   const totalNeeded = numAmount + feeAmount;
 
-  const isPhoneValid = /^(?:\+?254|0)7\d{8}$/.test(phone.replace(/\s+/g, ""));
-
   useEffect(() => {
-    if (user?.phone && !phone) {
-      setPhone(user.phone);
+    if (accountPhone && !phone) {
+      setPhone(accountPhone);
     }
-  }, [phone, user?.phone]);
+  }, [accountPhone, phone]);
 
   const canWithdraw = useMemo(() => {
     return (
@@ -219,7 +218,7 @@ export default function PaymentsWithdrawalPage() {
               placeholder="2547XXXXXXXX"
             />
 
-            {phone && !isPhoneValid && (
+            {phone && !isPhoneValid(normalizePhone(phone)) && (
               <p className="mt-2 text-xs text-red-400">
                 Invalid phone. Use format: 2547XXXXXXXX.
               </p>
