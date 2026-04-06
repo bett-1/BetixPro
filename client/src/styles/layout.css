@@ -444,7 +444,7 @@
 
 .bc-balance-value {
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   background: linear-gradient(135deg, var(--nav-accent), var(--nav-accent2));
   -webkit-background-clip: text;
