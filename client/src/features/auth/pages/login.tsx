@@ -105,7 +105,7 @@ export default function Login() {
     <AuthLayout>
       <AuthModal
         title="Welcome back"
-        subtitle="Sign in to your BetWise account"
+        subtitle="Sign in to your BetixPro account"
         backTo="/"
         backLabel="Home"
         footer={

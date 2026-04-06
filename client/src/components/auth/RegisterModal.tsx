@@ -113,7 +113,7 @@ export default function RegisterModal() {
         confirmPassword,
       });
 
-      toast.success("Account created successfully. Welcome to BetWise.");
+      toast.success("Account created successfully. Welcome to BetixPro.");
       closeAuthModal();
       setEmail("");
       setPhone("");
@@ -174,7 +174,7 @@ export default function RegisterModal() {
                   </h2>
                 </div>
                 <p className="text-sm text-[#a8c4e0]">
-                  Join BetWise and start betting smart
+                  Join BetixPro and start betting smart
                 </p>
               </div>
 

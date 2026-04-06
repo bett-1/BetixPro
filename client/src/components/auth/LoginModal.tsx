@@ -129,7 +129,7 @@ export default function LoginModal() {
               <div>
                 <h1 className="text-2xl font-bold text-white">Welcome back</h1>
                 <p className="text-xs text-[#a8c4e0] mt-0.5">
-                  Access your BetWise account
+                  Access your BetixPro account
                 </p>
               </div>
             </div>

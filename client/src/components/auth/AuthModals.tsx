@@ -22,6 +22,6 @@ export default function AuthModals() {
       <LoginModal />
       <RegisterModal />
     </>,
-    document.body
+    document.body,
   );
 }

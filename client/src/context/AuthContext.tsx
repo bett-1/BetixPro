@@ -30,9 +30,9 @@ type MeResponse = {
   user: AuthUser;
 };
 
-const persistedSessionKey = "betwise-auth-session";
-const persistedTokenKey = "betwise-auth-token";
-const persistedUserKey = "betwise-auth-user";
+const persistedSessionKey = "betixpro-auth-session";
+const persistedTokenKey = "betixpro-auth-token";
+const persistedUserKey = "betixpro-auth-user";
 
 type RegisterPayload = {
   email: string;

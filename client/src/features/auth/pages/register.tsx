@@ -116,7 +116,7 @@ export default function Register() {
         confirmPassword,
       });
 
-      toast.success("Account created successfully. Welcome to BetWise.");
+      toast.success("Account created successfully. Welcome to BetixPro.");
       void navigate({ to: "/user" });
     } catch (error: unknown) {
       const parsedErrors = extractRegisterErrors(error);
@@ -133,7 +133,7 @@ export default function Register() {
     <AuthLayout>
       <AuthModal
         title="Create your account"
-        subtitle="Join BetWise and start betting smart"
+        subtitle="Join BetixPro and start betting smart"
         backTo="/login"
         backLabel="Back to login"
         footer={
