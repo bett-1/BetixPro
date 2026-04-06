@@ -30,7 +30,7 @@ export type AdminDashboardSummary = {
     amount: number;
     fee: number;
     totalDebit: number;
-    status: "pending" | "completed" | "failed";
+    status: "pending" | "completed" | "failed" | "reversed";
     createdAt: string;
     channel: string;
   }>;

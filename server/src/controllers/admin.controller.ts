@@ -17,7 +17,11 @@ function formatMoney(value: number) {
 }
 
 function toAdminStatus(status: string) {
-  return status.toLowerCase() as "pending" | "completed" | "failed";
+  return status.toLowerCase() as
+    | "pending"
+    | "completed"
+    | "failed"
+    | "reversed";
 }
 
 function formatDateKey(date: Date) {
