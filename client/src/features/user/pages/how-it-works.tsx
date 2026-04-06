@@ -30,31 +30,36 @@ export default function HowItWorks() {
       number: 1,
       icon: Smartphone,
       title: "Sign Up",
-      description: "Create your account with email and password.",
+      description:
+        "Create your account with your email and password, then complete your profile setup to get started.",
     },
     {
       number: 2,
       icon: Users,
       title: "Add Funds",
-      description: "Deposit using M-Pesa for instant wallet credit.",
+      description:
+        "Deposit funds using M-Pesa for instant wallet credit. Start with any amount that suits your budget.",
     },
     {
       number: 3,
       icon: TrendingUp,
       title: "Browse Events",
-      description: "Explore sports events and compare odds.",
+      description:
+        "Explore upcoming sports events across multiple leagues and carefully compare competitive odds.",
     },
     {
       number: 4,
       icon: Zap,
       title: "Place Bet",
-      description: "Select odds, enter stake, and confirm bet.",
+      description:
+        "Select your bets, set your stake amount, review the details, and place your bet confidently.",
     },
     {
       number: 5,
       icon: Lock,
       title: "Track & Win",
-      description: "Monitor bets in real-time and collect winnings.",
+      description:
+        "Monitor your active bets in real-time and automatically receive your winnings to your wallet.",
     },
   ];
 
@@ -62,40 +67,41 @@ export default function HowItWorks() {
     {
       icon: Zap,
       title: "Fast & Easy",
-      description: "Quick and intuitive betting experience.",
+      description: "Quick and intuitive betting interface designed for simplicity.",
     },
     {
       icon: Lock,
       title: "Secure",
-      description: "SSL encryption and secure transactions.",
+      description: "Industry-standard SSL encryption protecting your data.",
     },
     {
       icon: TrendingUp,
       title: "Best Odds",
-      description: "Competitive odds on all events.",
+      description: "Competitive odds on all events with transparent pricing.",
     },
     {
       icon: Users,
       title: "Live Betting",
-      description: "Bet on live events in real-time.",
+      description: "Bet on live events in real-time as they unfold.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b1120] to-[#0f172a] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold mb-2">How BetWise Works</h1>
-          <p className="text-sm text-[#90a2bb] max-w-2xl mx-auto">
-            Get started with sports betting in just a few simple steps.
+        <div className="mb-16 text-center">
+          <h1 className="text-4xl font-bold mb-4">How BetWise Works</h1>
+          <p className="text-base text-[#90a2bb] max-w-2xl mx-auto leading-relaxed">
+            Get started with sports betting in just a few simple steps. Follow
+            our guide to learn how to make the most of your BetWise experience.
           </p>
         </div>
 
         {/* Steps Section */}
-        <div className="mb-12">
-          <h2 className="mb-6 text-xl font-bold text-center">5 Easy Steps</h2>
-          <div className="space-y-2">
+        <div className="mb-20">
+          <h2 className="mb-10 text-3xl font-bold text-center">5 Easy Steps</h2>
+          <div className="space-y-4">
             {steps.map((step) => {
               const Icon = step.icon;
               const isExpanded = expandedStep === step.number;
@@ -103,30 +109,30 @@ export default function HowItWorks() {
               return (
                 <Card
                   key={step.number}
-                  className="overflow-hidden border-[#31455f] bg-[#0f172a]"
+                  className="overflow-hidden border border-[#31455f] bg-[#0f172a] rounded-2xl"
                 >
                   <button
                     onClick={() =>
                       setExpandedStep(isExpanded ? null : step.number)
                     }
-                    className="w-full px-4 py-3 text-left hover:bg-[#1a2a3a] transition-colors"
+                    className="w-full px-6 py-6 text-left"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded bg-[#f5c518]">
-                          <Icon className="h-5 w-5 text-[#0b1120]" />
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#f5c518] flex-shrink-0">
+                          <Icon className="h-7 w-7 text-[#0b1120]" />
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-[#f5c518]">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#f5c518] uppercase tracking-wide">
                             Step {step.number}
                           </p>
-                          <p className="text-sm font-bold text-white">
+                          <p className="text-lg font-bold text-white truncate">
                             {step.title}
                           </p>
                         </div>
                       </div>
                       <ChevronDown
-                        className={`h-4 w-4 text-[#f5c518] transition-transform ${
+                        className={`h-6 w-6 text-[#f5c518] transition-all duration-300 flex-shrink-0 hover:scale-110 cursor-pointer ${
                           isExpanded ? "rotate-180" : ""
                         }`}
                       />
@@ -134,8 +140,8 @@ export default function HowItWorks() {
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-[#31455f] bg-[#0c1018] px-4 py-3">
-                      <p className="text-xs text-[#90a2bb]">
+                    <div className="border-t border-[#31455f] bg-[#0c1018] px-6 py-5 animate-in fade-in duration-200">
+                      <p className="text-base text-[#90a2bb] leading-relaxed">
                         {step.description}
                       </p>
                     </div>
@@ -147,25 +153,25 @@ export default function HowItWorks() {
         </div>
 
         {/* Features Section */}
-        <div className="mb-12">
-          <h2 className="mb-6 text-xl font-bold text-center">
+        <div className="mb-20">
+          <h2 className="mb-10 text-3xl font-bold text-center">
             Why Choose BetWise?
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <Card
                   key={index}
-                  className="border-[#31455f] bg-[#0f172a] p-4 hover:border-[#f5c518] transition"
+                  className="border border-[#31455f] bg-[#0f172a] p-8 rounded-2xl hover:border-[#f5c518]/60 transition-colors duration-300"
                 >
-                  <div className="mb-3 h-10 w-10 rounded bg-[#f5c518] flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-[#0b1120]" />
+                  <div className="mb-4 h-14 w-14 rounded-xl bg-[#f5c518] flex items-center justify-center">
+                    <Icon className="h-7 w-7 text-[#0b1120]" />
                   </div>
-                  <h3 className="mb-1 font-bold text-sm text-white">
+                  <h3 className="mb-2 text-lg font-bold text-white">
                     {feature.title}
                   </h3>
-                  <p className="text-xs text-[#90a2bb]">
+                  <p className="text-sm text-[#90a2bb] leading-relaxed">
                     {feature.description}
                   </p>
                 </Card>
@@ -175,12 +181,13 @@ export default function HowItWorks() {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center rounded-lg border border-[#31455f] bg-[#0f172a] p-6">
-          <h2 className="text-xl font-bold mb-2">Ready to Get Started?</h2>
-          <p className="text-sm text-[#90a2bb] mb-4">
-            Join thousands of sports enthusiasts. Sign up and start betting today.
+        <div className="text-center rounded-2xl border border-[#31455f] bg-[#0f172a] p-10">
+          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+          <p className="text-base text-[#90a2bb] mb-8 max-w-2xl mx-auto leading-relaxed">
+            Join thousands of sports enthusiasts. Sign up and start betting
+            today with secure M-Pesa deposits and a world-class betting experience.
           </p>
-          <button className="inline-block rounded bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-6 py-2 text-sm font-bold text-[#0b1120] hover:shadow-lg transition">
+          <button className="inline-block rounded-xl bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-10 py-3 font-bold text-[#0b1120] hover:shadow-xl hover:scale-105 transition-all duration-200">
             Start Betting Now
           </button>
         </div>
