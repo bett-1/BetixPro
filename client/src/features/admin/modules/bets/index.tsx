@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, RefreshCw, XCircle } from "lucide-react";
+import { Download, Eye, RefreshCw, MoreHorizontal } from "lucide-react";
 import { api } from "@/api/axiosConfig";
 import {
   AdminButton,
@@ -8,7 +8,6 @@ import {
   StatusBadge,
   SummaryCard,
   TableShell,
-  adminCompactActionsClassName,
   adminFilterRowClassName,
   adminTableCellClassName,
   adminTableClassName,
@@ -22,6 +21,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
