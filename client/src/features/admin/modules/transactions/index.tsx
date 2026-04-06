@@ -1,6 +1,11 @@
-import { useState } from "react";
-import { CheckCircle, Download, Eye, XCircle } from "lucide-react";
-import { transactionStats, transactions } from "../../data/mock-data";
+import { useState, useMemo } from "react";
+import { Download, Eye, Loader } from "lucide-react";
+import { toast } from "sonner";
+import {
+  useAdminPayments,
+  useAdminPaymentStats,
+  type Payment,
+} from "../../hooks/useAdminPayments";
 import {
   AdminButton,
   AdminCard,
@@ -23,29 +28,144 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Transactions() {
-  const [selectedTxn, setSelectedTxn] = useState<
-    (typeof transactions)[0] | null
-  >(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const [selectedTxn, setSelectedTxn] = useState<Payment | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<
+    "" | "pending" | "completed" | "failed" | "reversed"
+  >("");
+  const [typeFilter, setTypeFilter] = useState<"" | "deposit" | "withdrawal">(
+    "",
+  );
+
+  const itemsPerPage = 20;
+
+  // Fetch payments and stats
+  const { data: paymentsData, isLoading: isPaymentsLoading } = useAdminPayments(
+    itemsPerPage,
+    (currentPage - 1) * itemsPerPage,
+    statusFilter,
+    typeFilter,
+  );
+
+  const { data: statsData, isLoading: isStatsLoading } = useAdminPaymentStats();
+
+  // Calculate summary stats
+  const stats = useMemo(() => {
+    if (!statsData?.stats) {
+      return [
+        { label: "Total Deposits", value: "0", tone: "blue" as const },
+        { label: "Total Withdrawals", value: "0", tone: "red" as const },
+        { label: "Pending Deposits", value: "0", tone: "gold" as const },
+        { label: "Pending Withdrawals", value: "0", tone: "gold" as const },
+      ];
+    }
+
+    const { deposits, withdrawals } = statsData.stats;
+    return [
+      {
+        label: "Total Deposits",
+        value: `KES ${(deposits.totalValue / 1000).toFixed(1)}K`,
+        tone: "blue" as const,
+      },
+      {
+        label: "Total Withdrawals",
+        value: `KES ${(withdrawals.totalValue / 1000).toFixed(1)}K`,
+        tone: "red" as const,
+      },
+      {
+        label: "Pending Deposits",
+        value: `${deposits.pending}`,
+        tone: "gold" as const,
+      },
+      {
+        label: "Pending Withdrawals",
+        value: `${withdrawals.pending}`,
+        tone: "gold" as const,
+      },
+    ];
+  }, [statsData]);
+
+  const transactions = paymentsData?.transactions ?? [];
+  const pagination = paymentsData?.pagination ?? {
+    total: 0,
+    limit: itemsPerPage,
+    offset: 0,
+    pages: 1,
+  };
+
+  const handleDownloadCSV = () => {
+    if (!transactions.length) {
+      toast.error("No transactions to export");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "User Email",
+      "Type",
+      "Amount (KES)",
+      "Status",
+      "Date",
+      "Reference",
+    ];
+    const rows = transactions.map((t) => [
+      t.id,
+      t.userEmail,
+      t.type.toUpperCase(),
+      t.amount.toString(),
+      t.status.toUpperCase(),
+      new Date(t.createdAt).toLocaleString(),
+      t.reference,
+    ]);
+
+    let csv = headers.join(",") + "\n";
+    csv += rows
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `payments_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success("Transactions exported successfully");
+  };
+
+  const getToneForType = (type: "deposit" | "withdrawal") => {
+    return type === "deposit" ? "accent" : "red";
+  };
+
+  const getStatusForBadge = (
+    status: "pending" | "completed" | "failed" | "reversed",
+  ): "pending" | "completed" | "failed" => {
+    if (status === "reversed") return "failed";
+    return status;
+  };
+
   return (
     <div className="space-y-6">
       <AdminSectionHeader
-        title="Transactions"
-        subtitle="Deposits, withdrawals, and payment review"
+        title="Payments"
+        subtitle="Deposits, withdrawals, and payment transactions"
         actions={
-          <AdminButton variant="ghost">
+          <AdminButton variant="ghost" onClick={handleDownloadCSV}>
             <Download size={13} />
             Export CSV
           </AdminButton>
         }
       />
 
+      {/* Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {transactionStats.map((stat) => (
+        {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
             label={stat.label}
@@ -55,236 +175,327 @@ export default function Transactions() {
         ))}
       </div>
 
+      {/* Filters */}
       <AdminCard>
-        <TableShell>
-          <table className={adminTableClassName}>
-            <thead>
-              <tr>
-                {[
-                  "TXN ID",
-                  "User",
-                  "Type",
-                  "Method",
-                  "Amount",
-                  "Status",
-                  "Time",
-                  "Actions",
-                ].map((heading) => (
-                  <th className={adminTableHeadCellClassName} key={heading}>
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction) => (
-                <tr
-                  className="even:bg-[var(--color-bg-elevated)]"
-                  key={transaction.id}
-                >
-                  <td
-                    className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(
+                  e.target.value as
+                    | ""
+                    | "pending"
+                    | "completed"
+                    | "failed"
+                    | "reversed",
+                );
+                setCurrentPage(1);
+              }}
+              className="rounded-lg border border-admin-border bg-admin-bg px-3 py-2 text-sm text-admin-text-primary focus:outline-none focus:ring-2 focus:ring-admin-accent"
+            >
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+              <option value="reversed">Reversed</option>
+            </select>
+
+            <select
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value as "" | "deposit" | "withdrawal");
+                setCurrentPage(1);
+              }}
+              className="rounded-lg border border-admin-border bg-admin-bg px-3 py-2 text-sm text-admin-text-primary focus:outline-none focus:ring-2 focus:ring-admin-accent"
+            >
+              <option value="">All Types</option>
+              <option value="deposit">Deposits</option>
+              <option value="withdrawal">Withdrawals</option>
+            </select>
+          </div>
+
+          <div className="text-sm text-admin-text-muted">
+            Showing {transactions.length} of {pagination.total} transactions
+          </div>
+        </div>
+      </AdminCard>
+
+      {/* Transactions Table */}
+      <AdminCard>
+        {isPaymentsLoading || isStatsLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader className="h-6 w-6 animate-spin text-admin-accent" />
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="text-admin-text-muted">No transactions found</p>
+          </div>
+        ) : (
+          <TableShell>
+            <table className={adminTableClassName}>
+              <thead>
+                <tr>
+                  {[
+                    "TXN ID",
+                    "User",
+                    "Type",
+                    "Amount",
+                    "Status",
+                    "Date",
+                    "Actions",
+                  ].map((heading) => (
+                    <th className={adminTableHeadCellClassName} key={heading}>
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr
+                    className="even:bg-[var(--color-bg-elevated)]"
+                    key={transaction.id}
                   >
-                    {transaction.id}
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                  >
-                    {transaction.user}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    <InlinePill
-                      label={transaction.type}
-                      tone={transaction.type === "deposit" ? "accent" : "red"}
-                    />
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    {transaction.method}
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} font-semibold ${
-                      transaction.amount.startsWith("+")
-                        ? "text-admin-accent"
-                        : "text-admin-red"
-                    }`}
-                  >
-                    {transaction.amount}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    <StatusBadge status={transaction.status} />
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
-                  >
-                    {transaction.time}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    <div className={adminCompactActionsClassName}>
-                      <Dialog>
+                    <td
+                      className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
+                    >
+                      {transaction.id.slice(0, 8)}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-admin-text-primary">
+                          {transaction.userEmail}
+                        </span>
+                        <span className="text-xs text-admin-text-muted">
+                          {transaction.userPhone}
+                        </span>
+                      </div>
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <InlinePill
+                        label={
+                          transaction.type === "deposit"
+                            ? "Deposit"
+                            : "Withdrawal"
+                        }
+                        tone={getToneForType(transaction.type)}
+                      />
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <span className="font-semibold text-admin-text-primary">
+                        {transaction.type === "deposit" ? "+" : "-"}KES{" "}
+                        {transaction.amount.toLocaleString()}
+                      </span>
+                      {transaction.fee > 0 && (
+                        <span className="block text-xs text-admin-text-muted">
+                          Fee: KES {transaction.fee.toLocaleString()}
+                        </span>
+                      )}
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <StatusBadge
+                        status={getStatusForBadge(transaction.status)}
+                      />
+                    </td>
+                    <td className={`${adminTableCellClassName} text-xs`}>
+                      {new Date(transaction.createdAt).toLocaleString()}
+                    </td>
+                    <td
+                      className={`${adminTableCellClassName} ${adminCompactActionsClassName}`}
+                    >
+                      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
                         <DialogTrigger asChild>
-                          <AdminButton
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setSelectedTxn(transaction)}
+                          <button
+                            className="text-admin-accent hover:text-admin-accent-dark transition"
+                            onClick={() => {
+                              setSelectedTxn(transaction);
+                              setDetailsOpen(true);
+                            }}
                           >
-                            <Eye size={11} />
-                          </AdminButton>
+                            <Eye size={16} />
+                          </button>
                         </DialogTrigger>
-                        <DialogContent className="border-admin-border bg-admin-card">
-                          <DialogHeader>
-                            <DialogTitle>Transaction Details</DialogTitle>
-                            <DialogDescription>
-                              View full transaction information
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedTxn && (
-                            <ScrollArea className="h-[300px] w-full pr-4">
+                        {selectedTxn && selectedTxn.id === transaction.id && (
+                          <DialogContent className="max-w-lg border-admin-border bg-admin-card text-admin-text-primary">
+                            <DialogHeader>
+                              <DialogTitle>Transaction Details</DialogTitle>
+                              <DialogDescription className="text-admin-text-muted">
+                                Review complete transaction information
+                              </DialogDescription>
+                            </DialogHeader>
+                            <ScrollArea className="h-96 pr-4">
                               <div className="space-y-4">
                                 <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    TXN ID
-                                  </p>
-                                  <p className="text-sm font-semibold text-admin-blue">
+                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                    Transaction ID
+                                  </label>
+                                  <p className="font-mono text-sm font-semibold">
                                     {selectedTxn.id}
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    USER
+                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                    User
+                                  </label>
+                                  <p className="text-sm font-semibold">
+                                    {selectedTxn.userEmail}
                                   </p>
-                                  <p className="text-sm text-admin-text-primary">
-                                    {selectedTxn.user}
+                                  <p className="text-xs text-admin-text-muted">
+                                    {selectedTxn.userPhone}
+                                  </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      Type
+                                    </label>
+                                    <p className="text-sm font-semibold capitalize">
+                                      {selectedTxn.type}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      Status
+                                    </label>
+                                    <p className="text-sm font-semibold capitalize">
+                                      {selectedTxn.status}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      Amount
+                                    </label>
+                                    <p className="text-sm font-semibold">
+                                      KES {selectedTxn.amount.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  {selectedTxn.fee > 0 && (
+                                    <div>
+                                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                        Fee
+                                      </label>
+                                      <p className="text-sm font-semibold">
+                                        KES {selectedTxn.fee.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                {selectedTxn.totalDebit > 0 && (
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      Total Debit
+                                    </label>
+                                    <p className="text-sm font-semibold">
+                                      KES{" "}
+                                      {selectedTxn.totalDebit.toLocaleString()}
+                                    </p>
+                                  </div>
+                                )}
+                                <div>
+                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                    Reference
+                                  </label>
+                                  <p className="font-mono text-sm font-semibold">
+                                    {selectedTxn.reference}
+                                  </p>
+                                </div>
+                                {selectedTxn.mpesaCode && (
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      M-Pesa Code
+                                    </label>
+                                    <p className="font-mono text-sm font-semibold">
+                                      {selectedTxn.mpesaCode}
+                                    </p>
+                                  </div>
+                                )}
+                                {selectedTxn.phone && (
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      Phone
+                                    </label>
+                                    <p className="font-mono text-sm font-semibold">
+                                      {selectedTxn.phone}
+                                    </p>
+                                  </div>
+                                )}
+                                <div>
+                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                    Channel
+                                  </label>
+                                  <p className="text-sm font-semibold">
+                                    {selectedTxn.channel}
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    TYPE
-                                  </p>
-                                  <InlinePill
-                                    label={selectedTxn.type}
-                                    tone={
-                                      selectedTxn.type === "deposit"
-                                        ? "accent"
-                                        : "red"
-                                    }
-                                  />
-                                </div>
-                                <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    METHOD
-                                  </p>
-                                  <p className="text-sm text-admin-text-primary">
-                                    {selectedTxn.method}
+                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                    Created At
+                                  </label>
+                                  <p className="text-sm font-semibold">
+                                    {new Date(
+                                      selectedTxn.createdAt,
+                                    ).toLocaleString()}
                                   </p>
                                 </div>
-                                <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    AMOUNT
-                                  </p>
-                                  <p
-                                    className={`text-sm font-semibold ${
-                                      selectedTxn.amount.startsWith("+")
-                                        ? "text-admin-accent"
-                                        : "text-admin-red"
-                                    }`}
-                                  >
-                                    {selectedTxn.amount}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    STATUS
-                                  </p>
-                                  <StatusBadge status={selectedTxn.status} />
-                                </div>
-                                <div>
-                                  <p className="text-xs text-admin-text-muted">
-                                    TIME
-                                  </p>
-                                  <p className="text-sm text-admin-text-primary">
-                                    {selectedTxn.time}
-                                  </p>
-                                </div>
+                                {selectedTxn.processedAt && (
+                                  <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                      Processed At
+                                    </label>
+                                    <p className="text-sm font-semibold">
+                                      {new Date(
+                                        selectedTxn.processedAt,
+                                      ).toLocaleString()}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </ScrollArea>
-                          )}
-                        </DialogContent>
+                          </DialogContent>
+                        )}
                       </Dialog>
-                      {transaction.status === "pending" ? (
-                        <>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <AdminButton size="sm" variant="ghost">
-                                <CheckCircle size={11} />
-                              </AdminButton>
-                            </DialogTrigger>
-                            <DialogContent className="border-admin-border bg-admin-card">
-                              <DialogHeader>
-                                <DialogTitle>Approve Transaction</DialogTitle>
-                                <DialogDescription>
-                                  Confirm approval of this transaction
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="flex gap-2 pt-4">
-                                <Button variant="outline" className="flex-1">
-                                  Cancel
-                                </Button>
-                                <Button className="flex-1 bg-admin-accent text-black hover:bg-[#00d492]">
-                                  Approve
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <AdminButton size="sm" variant="ghost">
-                                <XCircle size={11} />
-                              </AdminButton>
-                            </DialogTrigger>
-                            <DialogContent className="border-admin-border bg-admin-card">
-                              <DialogHeader>
-                                <DialogTitle>Reject Transaction</DialogTitle>
-                                <DialogDescription>
-                                  This will refund the user and mark as rejected
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div>
-                                <label className="text-sm font-semibold text-admin-text-primary">
-                                  Reason
-                                </label>
-                                <Input
-                                  placeholder="E.g., Fraud detected, Invalid account"
-                                  value={rejectReason}
-                                  onChange={(e) =>
-                                    setRejectReason(e.target.value)
-                                  }
-                                  className="mt-2 border-admin-border bg-admin-surface text-admin-text-primary"
-                                />
-                              </div>
-                              <div className="flex gap-2 pt-4">
-                                <Button
-                                  variant="outline"
-                                  className="flex-1"
-                                  onClick={() => setRejectReason("")}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button className="flex-1 bg-admin-red hover:bg-red-600 text-white">
-                                  Reject
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </TableShell>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableShell>
+        )}
       </AdminCard>
+
+      {/* Pagination */}
+      {!isPaymentsLoading && pagination.pages > 1 && (
+        <AdminCard>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-admin-text-muted">
+              Page {currentPage} of {pagination.pages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={() =>
+                  setCurrentPage(Math.min(pagination.pages, currentPage + 1))
+                }
+                disabled={currentPage === pagination.pages}
+                variant="outline"
+                size="sm"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </AdminCard>
+      )}
     </div>
   );
 }
