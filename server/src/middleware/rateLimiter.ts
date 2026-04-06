@@ -1,4 +1,5 @@
 import rateLimit from "express-rate-limit";
+import type { Request } from "express";
 
 const standardRateLimitHandler = {
   message: "Too many requests. Please try again later.",
@@ -34,4 +35,26 @@ export const authGeneralRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   ...standardRateLimitHandler,
+});
+
+function userOrIpKeyGenerator(req: Request) {
+  return req.user?.id ?? req.ip ?? "anonymous";
+}
+
+export const withdrawalRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  keyGenerator: userOrIpKeyGenerator,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many withdrawal requests. Please wait a minute and try again.",
+});
+
+export const profileUpdateRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  keyGenerator: userOrIpKeyGenerator,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many profile updates. Please wait a minute and try again.",
 });

@@ -9,9 +9,9 @@ import { api } from "@/api/axiosConfig";
 
 const quickAmounts = [100, 500, 1000, 2500, 5000, 10000];
 
-const MAX_WITHDRAWAL = 10000;
+const MAX_WITHDRAWAL = 500000;
 const WITHDRAWAL_FEE_PERCENTAGE = 5;
-const MIN_WITHDRAWAL = 1;
+const MIN_WITHDRAWAL = 50;
 
 type WithdrawalResponse = {
   message: string;

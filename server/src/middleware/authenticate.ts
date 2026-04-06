@@ -44,3 +44,5 @@ export async function authenticate(
     return res.status(401).json({ message: "Unauthorized" });
   }
 }
+
+export const requireAuth = authenticate;

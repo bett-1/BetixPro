@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/authenticate";
+import { withdrawalRateLimiter } from "../middleware/rateLimiter";
 import {
   approveWithdrawal,
   checkDepositStatus,
@@ -33,6 +34,13 @@ paymentRouter.get(
 paymentRouter.post(
   "/payments/withdrawals",
   authenticate,
+  withdrawalRateLimiter,
+  createWithdrawalRequest,
+);
+paymentRouter.post(
+  "/withdrawal",
+  authenticate,
+  withdrawalRateLimiter,
   createWithdrawalRequest,
 );
 paymentRouter.get("/payments/withdrawals", authenticate, listWithdrawals);
