@@ -96,17 +96,24 @@ export default function LoginModal() {
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - Full page coverage */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+        className="fixed top-0 left-0 right-0 bottom-0 z-40 bg-black/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
         onClick={handleClose}
         role="presentation"
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          left: 0,
+          top: 0,
+        }}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none" style={{ width: '100vw', height: '100vh' }}>
         <div
-          className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/40 bg-gradient-to-br from-[#1e4080] via-[#2a5298] to-[#1e4080] p-8 shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-bottom-4 duration-300"
+          className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/50 bg-gradient-to-br from-[#0d2137] via-[#1a3a6b] to-[#0d2137] p-8 shadow-2xl shadow-black/80 animate-in fade-in slide-in-from-bottom-4 duration-300"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -117,7 +124,7 @@ export default function LoginModal() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Welcome back</h1>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[#a8c4e0] mt-0.5">
                   Access your BetWise account
                 </p>
               </div>
@@ -135,7 +142,7 @@ export default function LoginModal() {
             {/* Phone field */}
             <div className="space-y-2">
               <label
-                className="text-sm font-semibold text-slate-300"
+                className="text-sm font-semibold text-white"
                 htmlFor="login-phone"
               >
                 Phone number
@@ -165,7 +172,7 @@ export default function LoginModal() {
             {/* Password field */}
             <div className="space-y-2">
               <label
-                className="text-sm font-semibold text-slate-300"
+                className="text-sm font-semibold text-white"
                 htmlFor="login-password"
               >
                 Password
@@ -229,7 +236,7 @@ export default function LoginModal() {
 
           {/* Footer */}
           <div className="border-t border-[#3d6ba3]/30 pt-5 mt-6 text-center">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[#a8c4e0]">
               Don&apos;t have an account?{" "}
               <button
                 onClick={() => openAuthModal("register")}

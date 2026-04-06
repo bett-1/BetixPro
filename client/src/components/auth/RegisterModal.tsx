@@ -143,15 +143,22 @@ export default function RegisterModal() {
     <>
       {authModal === "register" && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Full page coverage */}
           <div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+            className="fixed top-0 left-0 right-0 bottom-0 z-40 bg-black/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
             onClick={handleClose}
+            style={{
+              position: 'fixed',
+              width: '100vw',
+              height: '100vh',
+              left: 0,
+              top: 0,
+            }}
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/40 bg-gradient-to-br from-[#1e4080] via-[#2a5298] to-[#1e4080] p-8 shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none" style={{ width: '100vw', height: '100vh' }}>
+            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/50 bg-gradient-to-br from-[#0d2137] via-[#1a3a6b] to-[#0d2137] p-8 shadow-2xl shadow-black/80 animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Header */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-2">
@@ -162,7 +169,7 @@ export default function RegisterModal() {
                     Create account
                   </h2>
                 </div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[#a8c4e0]">
                   Join BetWise and start betting smart
                 </p>
               </div>
@@ -178,7 +185,7 @@ export default function RegisterModal() {
                 {/* Email field */}
                 <div className="space-y-1.5">
                   <label
-                    className="block text-xs font-medium text-slate-300"
+                    className="block text-xs font-medium text-white"
                     htmlFor="register-email"
                   >
                     Email
@@ -240,7 +247,7 @@ export default function RegisterModal() {
                 {/* Password field */}
                 <div className="space-y-1.5">
                   <label
-                    className="block text-xs font-medium text-slate-300"
+                    className="block text-xs font-medium text-white"
                     htmlFor="register-password"
                   >
                     Password
@@ -275,7 +282,7 @@ export default function RegisterModal() {
                 {/* Confirm Password field */}
                 <div className="space-y-1.5">
                   <label
-                    className="block text-xs font-medium text-slate-300"
+                    className="block text-xs font-medium text-white"
                     htmlFor="register-confirm"
                   >
                     Confirm password
@@ -354,7 +361,7 @@ export default function RegisterModal() {
 
               {/* Footer */}
               <div className="border-t border-[#3d6ba3]/30 pt-4 mt-4 text-center">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[#a8c4e0]">
                   Have an account?{" "}
                   <button
                     onClick={() => openAuthModal("login")}
