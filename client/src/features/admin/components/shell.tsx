@@ -10,6 +10,7 @@ import {
   Moon,
   Monitor,
   User,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -20,6 +21,12 @@ import {
   useMarkAllNotificationsRead,
 } from "@/features/notifications/notifications";
 import { useWalletRealtime } from "@/features/user/payments/wallet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { adminNavigation } from "../config/navigation";
 
 export default function AdminShell() {
@@ -27,6 +34,7 @@ export default function AdminShell() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   useWalletRealtime();
   const { data: notificationData } = useAppNotifications(10);
@@ -273,54 +281,41 @@ export default function AdminShell() {
                       <User size={16} />
                       <span className="text-sm font-medium">Settings</span>
                     </button>
-                    <div className="border-b border-admin-border px-4 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted mb-2">
-                        Theme
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => setTheme("light")}
-                          type="button"
-                          className={cn(
-                            "flex flex-col items-center gap-1 rounded-lg py-2 px-2 text-xs font-medium transition",
-                            theme === "light"
-                              ? "bg-admin-accent text-admin-text-dark"
-                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]",
-                          )}
-                          title="Light theme"
-                        >
-                          <Sun size={14} />
-                          <span>Light</span>
-                        </button>
-                        <button
-                          onClick={() => setTheme("dark")}
-                          type="button"
-                          className={cn(
-                            "flex flex-col items-center gap-1 rounded-lg py-2 px-2 text-xs font-medium transition",
-                            theme === "dark"
-                              ? "bg-admin-accent text-admin-text-dark"
-                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]",
-                          )}
-                          title="Dark theme"
-                        >
-                          <Moon size={14} />
-                          <span>Dark</span>
-                        </button>
-                        <button
-                          onClick={() => setTheme("system")}
-                          type="button"
-                          className={cn(
-                            "flex flex-col items-center gap-1 rounded-lg py-2 px-2 text-xs font-medium transition",
-                            theme === "system"
-                              ? "bg-admin-accent text-admin-text-dark"
-                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]",
-                          )}
-                          title="System theme"
-                        >
-                          <Monitor size={14} />
-                          <span>Auto</span>
-                        </button>
-                      </div>
+                    <div className="relative border-b border-admin-border px-4 py-2">
+                      <DropdownMenu open={themeDropdownOpen} onOpenChange={setThemeDropdownOpen}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between gap-2 rounded-lg py-2 px-2 text-xs font-medium text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)]"
+                          >
+                            <div className="flex items-center gap-2">
+                              {theme === "dark" ? (
+                                <Moon size={14} />
+                              ) : theme === "light" ? (
+                                <Sun size={14} />
+                              ) : (
+                                <Monitor size={14} />
+                              )}
+                              <span>Theme</span>
+                            </div>
+                            <ChevronRight size={14} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" side="left" sideOffset={-8}>
+                          <DropdownMenuItem onClick={() => setTheme("light")}>
+                            <Sun size={14} className="mr-2" />
+                            <span>Light</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setTheme("dark")}>
+                            <Moon size={14} className="mr-2" />
+                            <span>Dark</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setTheme("system")}>
+                            <Monitor size={14} className="mr-2" />
+                            <span>System</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     <button
                       onClick={handleLogout}
