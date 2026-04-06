@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/api/axiosConfig";
 
@@ -52,7 +52,6 @@ const validateForm = (formData: ContactFormData): FormErrors => {
 };
 
 interface ContactFormProps {
-  userEmail?: string;
   userFullName?: string;
   userPhone?: string;
   isLoggedIn?: boolean;
@@ -60,7 +59,6 @@ interface ContactFormProps {
 }
 
 export default function ContactForm({
-  userEmail,
   userFullName,
   userPhone,
   isLoggedIn = false,
@@ -139,16 +137,6 @@ export default function ContactForm({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {isLoggedIn && userEmail && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0b1120] border border-[#294157]">
-            <Mail className="h-5 w-5 text-[#f5c518]" />
-            <div>
-              <p className="text-xs text-[#8a9bb0]">Email</p>
-              <p className="text-sm font-medium text-white">{userEmail}</p>
-            </div>
-          </div>
-        )}
-
         {/* Full Name Input */}
         <div>
           <label

@@ -97,7 +97,6 @@ export default function Contact() {
           {/* Contact Form - takes 2 columns on large screens */}
           <div className="lg:col-span-2">
             <ContactForm
-              userEmail={user?.email}
               userFullName={user?.fullName}
               userPhone={user?.phone}
               isLoggedIn={!!user}
