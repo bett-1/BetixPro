@@ -16,12 +16,7 @@ contactRouter.post("/contact", requireAuth, createContact);
 contactRouter.get("/contact/my-messages", requireAuth, getUserContacts);
 
 // Admin routes - require admin authentication
-contactRouter.get(
-  "/admin/contact",
-  authenticate,
-  requireAdmin,
-  getAllContacts,
-);
+contactRouter.get("/admin/contact", authenticate, requireAdmin, getAllContacts);
 contactRouter.get(
   "/admin/contact/:contactId",
   authenticate,
