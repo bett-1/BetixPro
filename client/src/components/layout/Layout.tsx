@@ -39,10 +39,9 @@ export default function Layout() {
           <Footer />
         </main>
       </div>
-      
+
       {/* Placed at the very bottom of the app */}
       <MobileBottomNav />
-      
     </div>
   );
 }
