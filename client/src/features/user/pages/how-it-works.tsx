@@ -133,7 +133,10 @@ export default function HowItWorks() {
             today with secure M-Pesa deposits and a world-class betting
             experience on BetRixPro.
           </p>
-          <button onClick={() => navigate({ to: "/user" })} className="inline-block rounded-xl bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-10 py-3 font-bold text-[#0b1120] hover:shadow-xl hover:scale-105 transition-all duration-200">
+          <button
+            onClick={() => navigate({ to: "/user" })}
+            className="inline-block rounded-xl bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-10 py-3 font-bold text-[#0b1120] hover:shadow-xl hover:scale-105 transition-all duration-200"
+          >
             Start Betting Now
           </button>
         </div>
