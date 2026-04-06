@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Mail, ArrowRight, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { api } from "@/lib/axios";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -19,16 +20,18 @@ export default function Footer() {
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await api.post("/newsletter/subscribe", { email });
       toast.success("Successfully subscribed to newsletter!");
       setIsSubscribed(true);
       setEmail("");
 
       // Reset subscription state after 5 seconds
       setTimeout(() => setIsSubscribed(false), 5000);
-    } catch (error) {
-      toast.error("Failed to subscribe. Please try again.");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to subscribe. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
