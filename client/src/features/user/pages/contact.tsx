@@ -41,9 +41,7 @@ export default function Contact() {
     loadMessages();
   };
 
-  const getStatusColor = (
-    status: "SUBMITTED" | "READ" | "RESOLVED",
-  ) => {
+  const getStatusColor = (status: "SUBMITTED" | "READ" | "RESOLVED") => {
     switch (status) {
       case "SUBMITTED":
         return "bg-blue-500/20 text-blue-300 border border-blue-500/30";
@@ -56,9 +54,7 @@ export default function Contact() {
     }
   };
 
-  const getStatusLabel = (
-    status: "SUBMITTED" | "READ" | "RESOLVED",
-  ) => {
+  const getStatusLabel = (status: "SUBMITTED" | "READ" | "RESOLVED") => {
     switch (status) {
       case "SUBMITTED":
         return "Submitted";
@@ -92,8 +88,8 @@ export default function Contact() {
           </div>
           <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
           <p className="text-base text-[#90a2bb] max-w-2xl mx-auto leading-relaxed">
-            Have questions or feedback? We're here to help. Send us a message and
-            our team will get back to you as soon as possible.
+            Have questions or feedback? We're here to help. Send us a message
+            and our team will get back to you as soon as possible.
           </p>
         </div>
 
