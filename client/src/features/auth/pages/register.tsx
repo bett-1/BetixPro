@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, ArrowRight, XCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus, XCircle } from "lucide-react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthModal from "@/components/auth/AuthModal";
 import { useAuth } from "@/context/AuthContext";
@@ -58,12 +58,14 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Validation Logic
   const emailValid = isValidEmail(email);
   const phoneValid = KENYAN_PHONE_REGEX.test(phone.trim());
+  const passwordValid = password.length >= 6;
   const confirmValid =
-    password.length > 0 && confirmPassword.length > 0 && confirmPassword === password;
+    confirmPassword.length > 0 && confirmPassword === password;
 
-  const formValid = emailValid && phoneValid && confirmValid;
+  const formValid = emailValid && phoneValid && passwordValid && confirmValid;
 
   const clearFieldError = useCallback((field: string) => {
     setErrors((previous) => ({
@@ -230,6 +232,12 @@ export default function Register() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {!passwordValid && password.length > 0 && (
+              <p className="text-xs text-amber-400 flex items-center gap-1">
+                <XCircle size={13} />
+                Password must be at least 6 characters
+              </p>
+            )}
             {errors.password?.map((message) => (
               <p key={message} className="text-xs text-red-400">
                 {message}
@@ -300,7 +308,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={!formValid || isSubmitting}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-sm font-semibold text-white transition-all duration-200 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-cyan-500 disabled:hover:to-blue-500 shadow-lg hover:shadow-xl"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-cyan-500 text-sm font-semibold text-white transition-all duration-200 hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
           >
             {isSubmitting ? (
               <>
@@ -309,8 +317,8 @@ export default function Register() {
               </>
             ) : (
               <>
-                Create account
-                <ArrowRight size={16} />
+                <UserPlus size={16} />
+                Create accounti
               </>
             )}
           </button>

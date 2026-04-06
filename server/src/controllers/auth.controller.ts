@@ -58,16 +58,6 @@ function normalizeKenyanPhone(rawPhone: string) {
   return null;
 }
 
-function validatePassword(password: string) {
-  const errors: string[] = [];
-
-  if (password.length < 6) {
-    errors.push("Password must be at least 6 characters long.");
-  }
-
-  return errors;
-}
-
 function sanitizeUser(user: {
   id: string;
   email: string;
@@ -131,11 +121,6 @@ export async function register(req: Request, res: Response) {
     fieldErrors.phone = [
       "Phone must match Kenyan format: 07XXXXXXXX, 01XXXXXXXX, or +2547XXXXXXXX.",
     ];
-  }
-
-  const passwordErrors = validatePassword(parsed.data.password);
-  if (passwordErrors.length > 0) {
-    fieldErrors.password = passwordErrors;
   }
 
   if (parsed.data.password !== parsed.data.confirmPassword) {
