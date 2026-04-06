@@ -111,7 +111,22 @@ export default function Analytics() {
         </AdminCard>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      {isLoading ? (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <AdminCard key={i} className="animate-pulse">
+              <div className="h-6 w-40 rounded bg-admin-surface mb-4" />
+              <div className="space-y-3">
+                <div className="h-40 rounded bg-admin-surface" />
+              </div>
+            </AdminCard>
+          ))}
+        </div>
+      ) : null}
+
+      {!isLoading && data && (
+        <>
+          <div className="grid gap-4 lg:grid-cols-3">
         <AdminCard className="lg:col-span-2">
           <div className="mb-4 flex flex-col gap-3 border-b border-admin-border pb-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -568,6 +583,8 @@ export default function Analytics() {
           </div>
         </AdminCard>
       </div>
+        </>
+      )}
 
       {isLoading && !data ? (
         <AdminCard>
