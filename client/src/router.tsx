@@ -22,6 +22,7 @@ import { resetPasswordRoute } from "./routes/reset-password";
 import { rootRoute } from "./routes/root";
 import { userIndexRoute } from "./routes/user";
 import { userComingSoonRoute } from "./routes/user/coming-soon";
+import { userContactRoute } from "./routes/user/contact";
 import { userForgotPasswordRoute } from "./routes/user/forgot-password";
 import { userPaymentsDepositRoute } from "./routes/user/payments-deposit";
 import { userPaymentsHistoryRoute } from "./routes/user/payments-history";
@@ -43,6 +44,7 @@ const routeTree = rootRoute.addChildren([
   userRoute.addChildren([
     userIndexRoute,
     userComingSoonRoute,
+    userContactRoute,
     userProfileRoute,
     userForgotPasswordRoute,
     userResetPasswordRoute,
