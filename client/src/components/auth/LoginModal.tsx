@@ -102,16 +102,19 @@ export default function LoginModal() {
         onClick={handleClose}
         role="presentation"
         style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
+          position: "fixed",
+          width: "100vw",
+          height: "100vh",
           left: 0,
           top: 0,
         }}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none" style={{ width: '100vw', height: '100vh' }}>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+        style={{ width: "100vw", height: "100vh" }}
+      >
         <div
           className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/50 bg-gradient-to-br from-[#0d2137] via-[#1a3a6b] to-[#0d2137] p-8 shadow-2xl shadow-black/80 animate-in fade-in slide-in-from-bottom-4 duration-300"
           onClick={(e) => e.stopPropagation()}
