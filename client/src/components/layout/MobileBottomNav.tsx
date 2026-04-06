@@ -17,8 +17,12 @@ export default function MobileBottomNav() {
     }
 
     const syncCount = () => {
-      const nextValue = Number(window.sessionStorage.getItem(betSlipCountStorageKey) ?? "0");
-      setSelectionCount(Number.isFinite(nextValue) ? Math.max(0, nextValue) : 0);
+      const nextValue = Number(
+        window.sessionStorage.getItem(betSlipCountStorageKey) ?? "0",
+      );
+      setSelectionCount(
+        Number.isFinite(nextValue) ? Math.max(0, nextValue) : 0,
+      );
     };
 
     const onCountChanged = (event: Event) => {
@@ -32,19 +36,26 @@ export default function MobileBottomNav() {
     };
 
     syncCount();
-    window.addEventListener(betSlipCountEventName, onCountChanged as EventListener);
+    window.addEventListener(
+      betSlipCountEventName,
+      onCountChanged as EventListener,
+    );
     window.addEventListener("storage", syncCount);
 
     return () => {
-      window.removeEventListener(betSlipCountEventName, onCountChanged as EventListener);
+      window.removeEventListener(
+        betSlipCountEventName,
+        onCountChanged as EventListener,
+      );
       window.removeEventListener("storage", syncCount);
     };
   }, []);
 
-  const isHomeActive = location.pathname === "/" || location.pathname.startsWith("/user");
+  const isHomeActive =
+    location.pathname === "/" || location.pathname === "/user";
   const isLiveActive = location.pathname.startsWith("/user/payments/deposit");
   const isMyBetsActive = location.pathname.startsWith("/user/bets");
-  const isProfileActive = location.pathname.includes("feature=profile");
+  const isProfileActive = location.pathname.startsWith("/user/profile");
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#23384f] bg-[#0b1120]/95 px-3 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 backdrop-blur md:hidden">
@@ -55,7 +66,7 @@ export default function MobileBottomNav() {
             isHomeActive ? "text-[#f5c518]" : "text-[#8a9bb0]"
           }`}
         >
-        <Home size={20} />
+          <Home size={20} />
           <span>Home</span>
         </Link>
 
@@ -65,7 +76,7 @@ export default function MobileBottomNav() {
             isLiveActive ? "text-[#f5c518]" : "text-[#8a9bb0]"
           }`}
         >
-        <PlayCircle size={20} />
+          <PlayCircle size={20} />
           <span>Live</span>
         </Link>
 
@@ -95,19 +106,19 @@ export default function MobileBottomNav() {
             isMyBetsActive ? "text-[#f5c518]" : "text-[#8a9bb0]"
           }`}
         >
-        <List size={20} />
+          <List size={20} />
           <span>My Bets</span>
         </Link>
 
-        <a
-          href="/user/coming-soon?feature=profile"
+        <Link
+          to="/user/profile"
           className={`flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition ${
             isProfileActive ? "text-[#f5c518]" : "text-[#8a9bb0]"
           }`}
         >
           <User size={20} />
           <span>Profile</span>
-        </a>
+        </Link>
       </div>
     </nav>
   );

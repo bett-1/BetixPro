@@ -16,6 +16,7 @@ import { adminUsersRoute } from "./routes/admin/users";
 import { forgotPasswordRoute } from "./routes/forgot-password";
 import { indexRoute } from "./routes";
 import { loginRoute } from "./routes/login";
+import { profileRoute } from "./routes/profile";
 import { registerRoute } from "./routes/register";
 import { resetPasswordRoute } from "./routes/reset-password";
 import { rootRoute } from "./routes/root";
@@ -27,6 +28,7 @@ import { userPaymentsDepositRoute } from "./routes/user/payments-deposit";
 import { userPaymentsHistoryRoute } from "./routes/user/payments-history";
 import { userPaymentsRoute } from "./routes/user/payments";
 import { userPaymentsWithdrawalRoute } from "./routes/user/payments-withdrawal";
+import { userProfileRoute } from "./routes/user/profile";
 import { userRegisterRoute } from "./routes/user/register";
 import { userResetPasswordRoute } from "./routes/user/reset-password";
 import { userRoute } from "./routes/user/route";
@@ -34,12 +36,14 @@ import { userRoute } from "./routes/user/route";
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  profileRoute,
   registerRoute,
   forgotPasswordRoute,
   resetPasswordRoute,
   userRoute.addChildren([
     userIndexRoute,
     userComingSoonRoute,
+    userProfileRoute,
     userLoginRoute,
     userRegisterRoute,
     userForgotPasswordRoute,
