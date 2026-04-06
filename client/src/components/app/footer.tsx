@@ -37,7 +37,7 @@ export default function Footer() {
   return (
     <footer className="w-full border-t border-[#23384f] bg-[#0b1120]">
       {/* Main Footer Content */}
-      <div className="mx-auto w-full max-w-[1280px] gap-8 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1280px] gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* Brand Section */}
           <div>
@@ -205,7 +205,7 @@ export default function Footer() {
           </div>
 
           {/* Why BetRixPro */}
-          <div className="rounded-xl border border-[#294157] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-5">
+          <div className="hidden rounded-xl border border-[#294157] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-5 sm:block">
             <h4 className="text-sm font-bold uppercase tracking-wider text-white">
               Why BetRixPro
             </h4>
@@ -239,12 +239,12 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="mt-8 border-t border-[#23384f]" />
+        <div className="mt-5 border-t border-[#23384f] sm:mt-8" />
 
         {/* Bottom Footer */}
-        <div className="mt-6 flex flex-col gap-3 text-xs text-[#5a6b7d] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3 -mb-4 flex flex-col gap-1.5 text-[11px]  text-[#5a6b7d] sm:mt-6 sm:gap-3 sm:text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} BetRixPro. All rights reserved.</p>
-          <div className="flex gap-3 text-xs">
+          <div className="flex gap-2 text-[11px] sm:gap-3 sm:text-xs">
             <a href="#" className="transition hover:text-[#f5c518]">
               Terms
             </a>
@@ -257,7 +257,7 @@ export default function Footer() {
               Cookies
             </a>
           </div>
-          <p className="font-medium text-[#8a9bb0]">Play Responsibly · 18+</p>
+          <p className="font-medium hidden md:block text-[#8a9bb0]">Play Responsibly · 18+</p>
         </div>
       </div>
     </footer>
