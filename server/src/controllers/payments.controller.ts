@@ -3,7 +3,10 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { emitNotificationUpdate, emitWalletUpdate } from "../lib/socket";
-import { createWithdrawalNotifications, createDepositNotifications } from "./notifications.controller";
+import {
+  createWithdrawalNotifications,
+  createDepositNotifications,
+} from "./notifications.controller";
 import {
   toTransactionType,
   getMpesaConfig,
@@ -23,8 +26,8 @@ import {
 } from "../lib/mpesa";
 
 const WITHDRAWAL_CONFIG = {
-  MIN_AMOUNT: 1,
-  MAX_AMOUNT_PER_REQUEST: 10000,
+  MIN_AMOUNT: 50,
+  MAX_AMOUNT_PER_REQUEST: 500000,
   FEE_PERCENTAGE: 5,
 };
 
@@ -33,7 +36,12 @@ const withdrawalRequestSchema = z.object({
     .string()
     .trim()
     .regex(/^254\d{9}$/, "Phone must be in format 2547XXXXXXXX"),
-  amount: z.number().int().positive().min(WITHDRAWAL_CONFIG.MIN_AMOUNT),
+  amount: z
+    .number()
+    .int()
+    .positive()
+    .min(WITHDRAWAL_CONFIG.MIN_AMOUNT)
+    .max(WITHDRAWAL_CONFIG.MAX_AMOUNT_PER_REQUEST),
   pin: z.string().trim().min(4).max(6).optional(),
 });
 
@@ -654,8 +662,8 @@ export async function checkDepositStatus(
         message:
           transaction.status === "COMPLETED"
             ? "Deposit confirmed."
-            : transaction.providerResponseDescription ??
-              "Payment not completed.",
+            : (transaction.providerResponseDescription ??
+              "Payment not completed."),
       });
     }
 

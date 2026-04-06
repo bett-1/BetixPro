@@ -5,11 +5,13 @@ import { useAuth } from "@/context/AuthContext";
 type ProtectedRouteProps = {
   children: React.ReactNode;
   requireRole?: "ADMIN" | "USER";
+  redirectTo?: string;
 };
 
 export default function ProtectedRoute({
   children,
   requireRole,
+  redirectTo,
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
@@ -22,7 +24,7 @@ export default function ProtectedRoute({
       void navigate({
         to: "/login",
         search: {
-          redirect: location.pathname,
+          redirect: redirectTo ?? location.pathname,
         },
       });
       return;
@@ -37,6 +39,7 @@ export default function ProtectedRoute({
     location.pathname,
     navigate,
     requireRole,
+    redirectTo,
     user?.role,
   ]);
 

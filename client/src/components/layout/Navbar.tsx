@@ -54,8 +54,8 @@ const navLinks: NavRoute[] = [
     badge: { text: "New", tone: "green" },
   },
   { label: "Results", icon: "=", to: "/user/payments/history" },
-  { label: "Casino", icon: "@", to: "/user/coming-soon?feature=casino" },
   { label: "My Bets", icon: "[]", to: "/user/payments" },
+  { label: "Profile", icon: "U", to: "/user/profile" },
 ];
 
 const leagues = [
