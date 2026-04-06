@@ -19,6 +19,7 @@ apiRouter.use(adminRouter);
 apiRouter.use(paymentRouter);
 apiRouter.use(profileRouter);
 apiRouter.use(notificationRouter);
+apiRouter.use(reportsRouter);
 apiRouter.use(eventsAdminRouter);
 apiRouter.use(betsAdminRouter);
 apiRouter.use(oddsAdminRouter);
