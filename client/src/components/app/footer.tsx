@@ -95,64 +95,66 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Quick Links
-            </h4>
-            <nav className="mt-4 grid gap-3">
-              <Link
-                to="/"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                Home
-              </Link>
-              <Link
-                to="/user/payments"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                Deposits
-              </Link>
-              <Link
-                to="/user/how-it-works"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                How It Works
-              </Link>
-              <Link
-                to="/user/faqs"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                FAQ
-              </Link>
-              <Link
-                to="/user/contact"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                Contact
-              </Link>
-            </nav>
-          </div>
+          <div className="grid grid-cols-2 gap-6 sm:contents">
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Quick Links
+              </h4>
+              <nav className="mt-4 grid gap-3">
+                <Link
+                  to="/"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/user/payments"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  Deposits
+                </Link>
+                <Link
+                  to="/user/how-it-works"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  How It Works
+                </Link>
+                <Link
+                  to="/user/faqs"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  FAQ
+                </Link>
+                <Link
+                  to="/user/contact"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  Contact
+                </Link>
+              </nav>
+            </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Contact
-            </h4>
-            <div className="mt-4 grid gap-3 text-sm text-[#8a9bb0]">
-              <a
-                href="mailto:support@betrixpro.com"
-                className="transition hover:text-[#f5c518]"
-              >
-                support@betrixpro.com
-              </a>
-              <a
-                href="tel:+254700000000"
-                className="transition hover:text-[#f5c518]"
-              >
-                +254 700 000 000
-              </a>
-              <p>Nairobi, Kenya</p>
+            {/* Contact */}
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Contact
+              </h4>
+              <div className="mt-4 grid gap-3 text-sm text-[#8a9bb0]">
+                <a
+                  href="mailto:support@betrixpro.com"
+                  className="transition hover:text-[#f5c518]"
+                >
+                  support@betrixpro.com
+                </a>
+                <a
+                  href="tel:+254700000000"
+                  className="transition hover:text-[#f5c518]"
+                >
+                  +254 700 000 000
+                </a>
+                <p>Nairobi, Kenya</p>
+              </div>
             </div>
           </div>
 
