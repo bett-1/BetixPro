@@ -171,7 +171,10 @@ export default function Contacts() {
   const handleStatusUpdate = (contactId: string, newStatus: string) => {
     updateStatusMutation.mutate({ contactId, newStatus });
     if (selectedContact?.id === contactId) {
-      setSelectedContact({ ...selectedContact, status: newStatus as "SUBMITTED" | "READ" | "RESOLVED" });
+      setSelectedContact({
+        ...selectedContact,
+        status: newStatus as "SUBMITTED" | "READ" | "RESOLVED",
+      });
     }
   };
 
@@ -299,7 +302,11 @@ export default function Contacts() {
                         </p>
                       </td>
                       <td className={adminTableCellClassName}>
-                        <StatusBadge status={contact.status.toLowerCase() as AdminBadgeStatus} />
+                        <StatusBadge
+                          status={
+                            contact.status.toLowerCase() as AdminBadgeStatus
+                          }
+                        />
                       </td>
                       <td className={adminTableCellClassName}>
                         <p className="text-sm text-admin-text-muted whitespace-nowrap">
@@ -449,7 +456,9 @@ export default function Contacts() {
                     </p>
                     <div className="mt-1">
                       <StatusBadge
-                        status={selectedContact.status.toLowerCase() as AdminBadgeStatus}
+                        status={
+                          selectedContact.status.toLowerCase() as AdminBadgeStatus
+                        }
                       />
                     </div>
                   </div>
