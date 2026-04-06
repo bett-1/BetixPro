@@ -278,9 +278,7 @@ reportsRouter.get(
         newUsers,
         activeUsers,
         averageBetsPerActiveUser:
-          activeUsers > 0
-            ? Math.round(totalBetsInRange / activeUsers)
-            : 0,
+          activeUsers > 0 ? Math.round(totalBetsInRange / activeUsers) : 0,
         topBettors: topBettors.map((u) => ({
           id: u.id,
           email: u.email,
