@@ -1,14 +1,32 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, Menu, Search, Zap, LogOut } from "lucide-react";
+import {
+  Bell,
+  Menu,
+  Search,
+  Zap,
+  LogOut,
+  Sun,
+  Moon,
+  Monitor,
+  User,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   useAppNotifications,
   useMarkAllNotificationsRead,
 } from "@/features/notifications/notifications";
 import { useWalletRealtime } from "@/features/user/payments/wallet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { adminNavigation } from "../config/navigation";
 
 export default function AdminShell() {
@@ -16,6 +34,8 @@ export default function AdminShell() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   useWalletRealtime();
   const { data: notificationData } = useAppNotifications(10);
   const markAllNotificationsRead = useMarkAllNotificationsRead();
@@ -114,18 +134,20 @@ export default function AdminShell() {
               !sidebarOpen && "lg:justify-center",
             )}
           >
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,var(--admin-purple),var(--admin-blue))] text-[11px] font-bold text-white">
-              SA
-            </div>
+            <button
+              aria-label="Toggle sidebar"
+              aria-expanded={sidebarOpen}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary"
+              onClick={() => setSidebarOpen((current) => !current)}
+              type="button"
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              <Menu size={16} />
+            </button>
             {sidebarOpen ? (
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-admin-text-primary">
-                  Super Admin
-                </p>
-                <p className="truncate text-[11px] text-admin-text-muted">
-                  admin@betforge.io
-                </p>
-              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                Collapse
+              </span>
             ) : null}
           </div>
         </aside>
@@ -138,16 +160,6 @@ export default function AdminShell() {
 
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b border-admin-border bg-[var(--color-bg-secondary)] px-4 py-4 backdrop-blur-[18px] sm:px-6">
             <div className="flex min-w-0 flex-1 items-center gap-3">
-              <button
-                aria-label="Toggle sidebar"
-                aria-expanded={sidebarOpen}
-                className="grid h-10 w-10 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary"
-                onClick={() => setSidebarOpen((current) => !current)}
-                type="button"
-              >
-                <Menu size={18} />
-              </button>
-
               <div className="flex h-11 w-full max-w-[560px] flex-1 items-center gap-2 rounded-2xl border border-admin-border bg-[var(--color-bg-elevated)] px-3">
                 <Search size={14} className="text-admin-text-muted" />
                 <input
@@ -237,10 +249,6 @@ export default function AdminShell() {
                 ) : null}
               </div>
 
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-[linear-gradient(135deg,var(--admin-purple),var(--admin-blue))] text-[11px] font-bold text-white">
-                SA
-              </div>
-
               <div className="relative">
                 <button
                   type="button"
@@ -261,15 +269,130 @@ export default function AdminShell() {
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-12 z-20 w-48 overflow-hidden rounded-xl border border-admin-border bg-[var(--color-bg-secondary)] shadow-[0_16px_44px_rgba(0,0,0,0.35)]">
-                    <button
-                      onClick={handleLogout}
-                      type="button"
-                      className="flex w-full items-center gap-2 border-b border-admin-border px-4 py-3 text-admin-red transition hover:bg-[var(--color-bg-hover)]"
-                    >
-                      <LogOut size={16} />
-                      <span className="text-sm font-medium">Logout</span>
-                    </button>
+                  <div className="absolute right-0 top-12 z-20 w-64 overflow-hidden rounded-2xl border border-admin-border bg-[var(--color-bg-secondary)] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+                    {/* Profile Section */}
+                    <div className="border-b border-admin-border px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-10 w-10 place-items-center rounded-full bg-[linear-gradient(135deg,var(--admin-purple),var(--admin-blue))] text-xs font-bold text-white">
+                          {user?.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-admin-text-primary">
+                            {user?.email.split("@")[0]}
+                          </p>
+                          <p className="text-[11px] text-admin-text-muted">
+                            {user?.role}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      {/* Settings */}
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          void navigate({ to: "/admin/settings" });
+                        }}
+                        type="button"
+                        className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-admin-text-primary transition hover:bg-[var(--color-bg-hover)]"
+                      >
+                        <User size={18} className="text-admin-text-secondary" />
+                        <span>Settings</span>
+                      </button>
+
+                      {/* Theme Separator */}
+                      <div className="my-1 border-t border-admin-border" />
+
+                      {/* Theme Selector */}
+                      <div className="px-5 py-3">
+                        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-admin-text-muted">
+                          Appearance
+                        </p>
+                        <DropdownMenu
+                          open={themeDropdownOpen}
+                          onOpenChange={setThemeDropdownOpen}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between gap-2 rounded-lg border border-admin-border bg-[var(--color-bg-hover)] py-2.5 px-3 text-sm font-medium text-admin-text-primary transition hover:border-admin-border hover:bg-[var(--color-bg-elevated)]"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                {theme === "dark" ? (
+                                  <Moon
+                                    size={16}
+                                    className="text-admin-text-secondary"
+                                  />
+                                ) : theme === "light" ? (
+                                  <Sun
+                                    size={16}
+                                    className="text-admin-text-secondary"
+                                  />
+                                ) : (
+                                  <Monitor
+                                    size={16}
+                                    className="text-admin-text-secondary"
+                                  />
+                                )}
+                                <span>
+                                  {theme === "dark"
+                                    ? "Dark"
+                                    : theme === "light"
+                                      ? "Light"
+                                      : "System"}
+                                </span>
+                              </div>
+                              <ChevronRight
+                                size={16}
+                                className="text-admin-text-muted"
+                              />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            side="left"
+                            sideOffset={-12}
+                          >
+                            <DropdownMenuItem
+                              onClick={() => setTheme("light")}
+                              className="cursor-pointer"
+                            >
+                              <Sun size={16} className="mr-2" />
+                              <span>Light</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setTheme("dark")}
+                              className="cursor-pointer"
+                            >
+                              <Moon size={16} className="mr-2" />
+                              <span>Dark</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setTheme("system")}
+                              className="cursor-pointer"
+                            >
+                              <Monitor size={16} className="mr-2" />
+                              <span>System</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Logout Separator */}
+                      <div className="my-1 border-t border-admin-border" />
+
+                      {/* Logout */}
+                      <button
+                        onClick={handleLogout}
+                        type="button"
+                        className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-admin-red transition hover:bg-admin-red/5"
+                      >
+                        <LogOut size={18} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
