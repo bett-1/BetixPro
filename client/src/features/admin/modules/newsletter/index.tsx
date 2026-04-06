@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Download,
-  Loader,
-  Mail,
-  MoreHorizontal,
-} from "lucide-react";
+import { Download, Loader, Mail, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminNewsletter } from "../../hooks/useAdminNewsletter";
 import {
@@ -30,7 +25,9 @@ import { Button } from "@/components/ui/button";
 
 export default function Newsletter() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<"active" | "inactive">("active");
+  const [statusFilter, setStatusFilter] = useState<"active" | "inactive">(
+    "active",
+  );
   const [itemsPerPage] = useState(20);
 
   const { data, isLoading, error } = useAdminNewsletter(
@@ -60,7 +57,9 @@ export default function Newsletter() {
           `"${sub.email}"`,
           sub.isActive ? "Active" : "Inactive",
           new Date(sub.subscribedAt).toLocaleDateString(),
-          sub.unsubscribedAt ? new Date(sub.unsubscribedAt).toLocaleDateString() : "—",
+          sub.unsubscribedAt
+            ? new Date(sub.unsubscribedAt).toLocaleDateString()
+            : "—",
         ].join(","),
       ),
     ].join("\n");
@@ -107,7 +106,9 @@ export default function Newsletter() {
       {/* Controls */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-admin-text-primary">Filter:</span>
+          <span className="text-sm font-medium text-admin-text-primary">
+            Filter:
+          </span>
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -154,7 +155,9 @@ export default function Newsletter() {
                     <th className={adminTableHeadCellClassName}>Email</th>
                     <th className={adminTableHeadCellClassName}>Status</th>
                     <th className={adminTableHeadCellClassName}>Subscribed</th>
-                    <th className={adminTableHeadCellClassName}>Unsubscribed</th>
+                    <th className={adminTableHeadCellClassName}>
+                      Unsubscribed
+                    </th>
                     <th className={adminTableHeadCellClassName}>Actions</th>
                   </tr>
                 </thead>
@@ -171,18 +174,24 @@ export default function Newsletter() {
                       </td>
                       <td className={adminTableCellClassName}>
                         <StatusBadge
-                          status={(subscriber.isActive ? "active" : "inactive") as any}
+                          status={
+                            (subscriber.isActive ? "active" : "inactive") as any
+                          }
                         />
                       </td>
                       <td className={adminTableCellClassName}>
                         <span className="text-sm text-admin-text-secondary">
-                          {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                          {new Date(
+                            subscriber.subscribedAt,
+                          ).toLocaleDateString()}
                         </span>
                       </td>
                       <td className={adminTableCellClassName}>
                         <span className="text-sm text-admin-text-secondary">
                           {subscriber.unsubscribedAt
-                            ? new Date(subscriber.unsubscribedAt).toLocaleDateString()
+                            ? new Date(
+                                subscriber.unsubscribedAt,
+                              ).toLocaleDateString()
                             : "—"}
                         </span>
                       </td>
@@ -222,12 +231,14 @@ export default function Newsletter() {
                 <div className="border-t border-admin-border px-6 py-4">
                   <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
                     <span className="text-sm text-admin-text-secondary">
-                      Page {pagination.page} of {pagination.totalPages} • Showing{" "}
-                      {subscribers.length} of {pagination.total}
+                      Page {pagination.page} of {pagination.totalPages} •
+                      Showing {subscribers.length} of {pagination.total}
                     </span>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(1, p - 1))
+                        }
                         disabled={currentPage === 1}
                         className="rounded-lg border border-admin-border bg-admin-card px-3 py-2 text-sm font-medium text-admin-text-primary transition disabled:cursor-not-allowed disabled:opacity-50 hover:bg-admin-hover"
                       >

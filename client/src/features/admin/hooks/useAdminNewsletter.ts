@@ -24,7 +24,11 @@ export interface SubscribersResponse {
   };
 }
 
-export function useAdminNewsletter(page: number = 1, limit: number = 20, active: boolean = true) {
+export function useAdminNewsletter(
+  page: number = 1,
+  limit: number = 20,
+  active: boolean = true,
+) {
   return useQuery({
     queryKey: ["admin-newsletter", { page, limit, active }],
     queryFn: async () => {
