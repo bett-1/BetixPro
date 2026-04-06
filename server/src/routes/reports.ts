@@ -16,7 +16,10 @@ const DateRangeSchema = z.object({
 type DateRangeQuery = z.infer<typeof DateRangeSchema>;
 
 // Helper function to calculate date range
-function getDateRange(query: DateRangeQuery): { startDate: Date; endDate: Date } {
+function getDateRange(query: DateRangeQuery): {
+  startDate: Date;
+  endDate: Date;
+} {
   const endDate = query.endDate ? new Date(query.endDate) : new Date();
   let startDate: Date;
 
@@ -123,9 +126,7 @@ reportsRouter.get(
           totalAmount: withdrawals._sum.amount || 0,
           averageAmount:
             withdrawals._count > 0
-              ? Math.round(
-                  (withdrawals._sum.amount || 0) / withdrawals._count
-                )
+              ? Math.round((withdrawals._sum.amount || 0) / withdrawals._count)
               : 0,
         },
         bets: {
@@ -139,7 +140,7 @@ reportsRouter.get(
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 // GET /api/reports/admin/betting - Betting statistics
@@ -216,7 +217,7 @@ reportsRouter.get(
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 // GET /api/reports/admin/users - User statistics
@@ -229,8 +230,8 @@ reportsRouter.get(
       const query = DateRangeSchema.parse(req.query);
       const { startDate, endDate } = getDateRange(query);
 
-      const [totalUsers, newUsers, activeUsers, userBetting] = await Promise.all(
-        [
+      const [totalUsers, newUsers, activeUsers, userBetting] =
+        await Promise.all([
           prisma.user.count(),
           prisma.user.count({
             where: {
@@ -256,8 +257,7 @@ reportsRouter.get(
             },
             _count: { bets: true },
           }),
-        ]
-      );
+        ]);
 
       const topBettors = await prisma.user.findMany({
         select: {
@@ -284,9 +284,7 @@ reportsRouter.get(
         activeUsers,
         averageBetsPerActiveUser:
           activeUsers > 0
-            ? Math.round(
-                userBetting._count.bets / activeUsers
-              )
+            ? Math.round(userBetting._count.bets / activeUsers)
             : 0,
         topBettors: topBettors.map((u) => ({
           id: u.id,
@@ -298,7 +296,7 @@ reportsRouter.get(
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 // GET /api/reports/admin/risk - Risk and compliance reports
@@ -364,7 +362,7 @@ reportsRouter.get(
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 // ==================== USER REPORTS ====================
@@ -419,10 +417,9 @@ reportsRouter.get(
       const roi =
         bets._sum.stake && bets._sum.stake > 0
           ? Math.round(
-              (((won._sum.potentialPayout || 0) -
-                (bets._sum.stake || 0)) /
+              (((won._sum.potentialPayout || 0) - (bets._sum.stake || 0)) /
                 (bets._sum.stake || 1)) *
-                100
+                100,
             )
           : 0;
 
@@ -435,8 +432,7 @@ reportsRouter.get(
           totalLost: lost._sum.stake || 0,
           profit: (won._sum.potentialPayout || 0) - (bets._sum.stake || 0),
           roi,
-          winRate:
-            bets._count > 0 ? (won._count / bets._count) * 100 : 0,
+          winRate: bets._count > 0 ? (won._count / bets._count) * 100 : 0,
         },
         financial: {
           totalTransactions: transactions._count,
@@ -452,7 +448,7 @@ reportsRouter.get(
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 // GET /api/reports/user/recent-bets - User's recent betting activity with pagination
@@ -517,7 +513,7 @@ reportsRouter.get(
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 // GET /api/reports/user/financial-summary - User's financial overview
@@ -530,8 +526,8 @@ reportsRouter.get(
       const query = DateRangeSchema.parse(req.query);
       const { startDate, endDate } = getDateRange(query);
 
-      const [deposits, withdrawals, walletBalance, tipTransactions] = await Promise.all(
-        [
+      const [deposits, withdrawals, walletBalance, tipTransactions] =
+        await Promise.all([
           prisma.walletTransaction.aggregate({
             where: {
               userId,
@@ -565,8 +561,7 @@ reportsRouter.get(
             _sum: { amount: true },
             _count: true,
           }),
-        ]
-      );
+        ]);
 
       res.json({
         period: { startDate, endDate },
@@ -587,14 +582,13 @@ reportsRouter.get(
               ? Math.round((withdrawals._sum.amount || 0) / withdrawals._count)
               : 0,
         },
-        netFlow:
-          (deposits._sum.amount || 0) - (withdrawals._sum.amount || 0),
+        netFlow: (deposits._sum.amount || 0) - (withdrawals._sum.amount || 0),
         transactionDetails: tipTransactions,
       });
     } catch (error) {
       res.status(400).json({ error: "Invalid query parameters" });
     }
-  }
+  },
 );
 
 export { reportsRouter };

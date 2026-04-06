@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, PlayCircle, Receipt, List, User } from "lucide-react";
+import { Home, PlayCircle, Receipt, BarChart3, User } from "lucide-react";
 
 export default function MobileBottomNav() {
   return (
@@ -25,11 +25,11 @@ export default function MobileBottomNav() {
         </button>
       </div>
 
-      {/* My Bets */}
-      <a href="#" className="flex flex-col items-center gap-1 text-admin-text-muted hover:text-white [&.active]:text-green-400">
-        <List size={20} />
-        <span className="text-[10px] font-medium">My Bets</span>
-      </a>
+      {/* Reports */}
+      <Link to="/user/reports" className="flex flex-col items-center gap-1 text-admin-text-muted hover:text-white [&.active]:text-green-400">
+        <BarChart3 size={20} />
+        <span className="text-[10px] font-medium">Reports</span>
+      </Link>
 
       {/* Profile */}
       <Link to="/user" className="flex flex-col items-center gap-1 text-admin-text-muted hover:text-white [&.active]:text-green-400">
