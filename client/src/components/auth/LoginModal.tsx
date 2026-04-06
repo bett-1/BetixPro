@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { Eye, EyeOff, Loader2, Lock, Phone, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ function getLoginErrorMessage(error: unknown) {
 
 export default function LoginModal() {
   const { login, authModal, closeAuthModal, openAuthModal } = useAuth();
+  const navigate = useNavigate();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -72,7 +74,7 @@ export default function LoginModal() {
         password,
       });
 
-      // Get user role to show appropriate welcome message
+      // Get user role and navigate accordingly
       const persistedUserJson =
         typeof window !== "undefined"
           ? window.localStorage.getItem("betixpro-auth-user")
@@ -80,12 +82,15 @@ export default function LoginModal() {
       const user = persistedUserJson ? JSON.parse(persistedUserJson) : null;
 
       if (user?.role === "ADMIN") {
-        toast.success("Welcome, Admin! 🎉 Let's manage some magic.");
+        toast.success("Admin access granted. Welcome to the control center.");
+        closeAuthModal();
+        await navigate({ to: "/admin" });
       } else {
         toast.success("Signed in successfully.");
+        closeAuthModal();
+        await navigate({ to: "/user" });
       }
 
-      closeAuthModal();
       setPhone("");
       setPassword("");
     } catch (error: unknown) {
