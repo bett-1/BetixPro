@@ -1,6 +1,15 @@
 import { useState, useMemo, useCallback, type FormEvent } from "react";
 import { isAxiosError } from "axios";
-import { Eye, EyeOff, Loader2, Lock, Mail, Phone, Check, X } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  Phone,
+  Check,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -25,9 +34,7 @@ function normalizePhoneInput(value: string) {
 
 function extractRegisterErrors(error: unknown) {
   if (
-    isAxiosError<{ errors?: Record<string, string[]>; message?: string }>(
-      error,
-    )
+    isAxiosError<{ errors?: Record<string, string[]>; message?: string }>(error)
   ) {
     const fieldErrors = error.response?.data?.errors;
     if (fieldErrors && Object.keys(fieldErrors).length > 0) {
@@ -238,7 +245,10 @@ export default function RegisterModal() {
               Password
             </label>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-3 text-slate-500" />
+              <Lock
+                size={18}
+                className="absolute left-3 top-3 text-slate-500"
+              />
               <input
                 id="register-password"
                 type={showPassword ? "text" : "password"}
@@ -274,7 +284,10 @@ export default function RegisterModal() {
               Confirm password
             </label>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-3 text-slate-500" />
+              <Lock
+                size={18}
+                className="absolute left-3 top-3 text-slate-500"
+              />
               <input
                 id="register-confirm"
                 type={showConfirmPassword ? "text" : "password"}
@@ -305,7 +318,9 @@ export default function RegisterModal() {
                 ) : (
                   <>
                     <X size={14} className="text-red-400" />
-                    <span className="text-red-400">Passwords don&apos;t match</span>
+                    <span className="text-red-400">
+                      Passwords don&apos;t match
+                    </span>
                   </>
                 )}
               </div>

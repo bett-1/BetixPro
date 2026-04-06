@@ -164,7 +164,10 @@ export default function LoginModal() {
               Password
             </label>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-3 text-slate-500" />
+              <Lock
+                size={18}
+                className="absolute left-3 top-3 text-slate-500"
+              />
               <input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
