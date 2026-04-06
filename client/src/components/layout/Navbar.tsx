@@ -1,5 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, Chevron, CircleCheck, CircleX, Menu, Plus, User } from "lucide-react";
+import {
+  Bell,
+  ChevronDown,
+  CircleCheck,
+  CircleX,
+  Menu,
+  Plus,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import AccountDropdown from "@/components/layout/AccountDropdown";
 import SearchBar from "@/components/search/SearchBar";
@@ -127,7 +134,7 @@ function toText(value: unknown, fallback = "") {
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const { data: walletSummary } = useWalletSummary();
   const { data: notificationData } = useAppNotifications(12);
@@ -138,17 +145,6 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const lastPathRef = useRef(location.pathname);
 
   const tickerLoop = useMemo(() => [...tickerItems, ...tickerItems], []);
-
-  const maskedPhone = useMemo(() => {
-    if (!user?.phone) return "";
-    const digits = user.phone.replace(/\D/g, "");
-    if (digits.length < 10) return user.phone;
-
-    const local = digits.startsWith("254") ? `0${digits.slice(3)}` : user.phone;
-    if (local.length !== 10) return local;
-
-    return `${local.slice(0, 4)}***${local.slice(-3)}`;
-  }, [user?.phone]);
 
   const initials = useMemo(() => {
     const source = user?.email?.trim() || user?.phone?.trim() || "User";
@@ -260,7 +256,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         </nav>
 
         <div className="bc-actions">
-          <div className="bc-balance" aria-label="Balance">
+          <div className="bc-balance-card" aria-label="Wallet Balance">
             <span className="bc-balance-label">BALANCE</span>
             <span className="bc-balance-value">
               {formatMoney(walletSummary?.wallet.balance ?? 0)}
@@ -360,7 +356,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 >
                   <span className="bc-trigger-avatar">{initials}</span>
                   <span className="bc-account-chevron">
-                    <Chevron size={14} />
+                    <ChevronDown size={14} />
                   </span>
                 </button>
                 <AccountDropdown

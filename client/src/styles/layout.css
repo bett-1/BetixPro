@@ -412,23 +412,46 @@
 
 .bc-balance-card {
   display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
   background: linear-gradient(
     135deg,
     var(--nav-accent) 0%,
     var(--nav-accent2) 100%
   );
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-  min-width: fit-content;
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  min-width: 140px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.bc-balance-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
 }
 
 .bc-balance-card:hover {
-  transform: translateY(-0.5px);
-  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.bc-balance-card:hover::before {
+  left: 100%;
 }
 
 .bc-balance-icon {
@@ -446,21 +469,26 @@
 .bc-balance-content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  width: 100%;
 }
 
 .bc-balance-label {
-  font-size: 9px;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 0.65);
-  letter-spacing: 1px;
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.7);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin: 0;
 }
 
 .bc-balance-value {
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-text-dark);
+  line-height: 1;
+  margin: 0;
 }
 
 .bc-icon-btn {
@@ -1158,8 +1186,13 @@
     padding: 5px 6px;
   }
 
-  .bc-balance {
-    display: none;
+  .bc-balance-card {
+    min-width: 120px;
+    padding: 8px 12px;
+  }
+
+  .bc-balance-value {
+    font-size: 16px;
   }
 
   .bc-notify {
@@ -1197,6 +1230,20 @@
 
   .bc-link-icon {
     font-size: 11px;
+  }
+
+  .bc-balance-card {
+    min-width: 110px;
+    padding: 7px 10px;
+  }
+
+  .bc-balance-label {
+    font-size: 7px;
+    letter-spacing: 0.8px;
+  }
+
+  .bc-balance-value {
+    font-size: 14px;
   }
 
   .bc-deposit-btn {
