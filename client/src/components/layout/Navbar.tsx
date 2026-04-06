@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, CircleCheck, CircleX, Menu, Plus } from "lucide-react";
+import { Bell, Chevron, CircleCheck, CircleX, Menu, Plus, User } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import AccountDropdown from "@/components/layout/AccountDropdown";
 import SearchBar from "@/components/search/SearchBar";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -133,6 +134,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const markAllNotificationsRead = useMarkAllNotificationsRead();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const lastPathRef = useRef(location.pathname);
 
   const tickerLoop = useMemo(() => [...tickerItems, ...tickerItems], []);
@@ -148,10 +150,20 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     return `${local.slice(0, 4)}***${local.slice(-3)}`;
   }, [user?.phone]);
 
+  const initials = useMemo(() => {
+    const source = user?.email?.trim() || user?.phone?.trim() || "User";
+    return source
+      .split(" ")
+      .slice(0, 2)
+      .map((part: string) => part.charAt(0).toUpperCase())
+      .join("");
+  }, [user?.email, user?.phone]);
+
   useEffect(() => {
     if (location.pathname !== lastPathRef.current) {
       lastPathRef.current = location.pathname;
       setNotificationsOpen(false);
+      setAccountOpen(false);
     }
   }, [location.pathname]);
 
@@ -340,17 +352,21 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 ) : null}
               </div>
 
-              <div className="bc-auth-group">
-                <span className="bc-phone-badge">{maskedPhone}</span>
+              <div className="bc-account-wrap">
                 <button
                   type="button"
-                  className="bc-logout-btn"
-                  onClick={() => {
-                    void logout();
-                  }}
+                  className={`bc-account-trigger ${accountOpen ? "is-open" : ""}`}
+                  onClick={() => setAccountOpen((prev) => !prev)}
                 >
-                  Logout
+                  <span className="bc-trigger-avatar">{initials}</span>
+                  <span className="bc-account-chevron">
+                    <Chevron size={14} />
+                  </span>
                 </button>
+                <AccountDropdown
+                  open={accountOpen}
+                  onClose={() => setAccountOpen(false)}
+                />
               </div>
             </>
           ) : (
@@ -364,14 +380,16 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             </div>
           )}
 
-          <Link
-            to="/user/payments/deposit"
-            className="bc-deposit-btn"
-            aria-label="Deposit funds"
-          >
-            <Plus size={14} />
-            <span className="bc-deposit-text">Deposit</span>
-          </Link>
+          {!isAuthenticated && (
+            <Link
+              to="/user/payments/deposit"
+              className="bc-deposit-btn"
+              aria-label="Deposit funds"
+            >
+              <Plus size={14} />
+              <span className="bc-deposit-text">Deposit</span>
+            </Link>
+          )}
         </div>
       </div>
 

@@ -1136,11 +1136,15 @@
     opacity: 1;
     pointer-events: auto;
   }
+
+  .bc-main-search {
+    max-width: 200px;
+  }
 }
 
 @media (max-width: 600px) {
   .bc-main-search {
-    max-width: 140px;
+    max-width: 120px;
   }
 
   .bc-link-label,
@@ -1151,20 +1155,117 @@
   .bc-nav-link {
     min-width: 44px;
     justify-content: center;
+    padding: 5px 6px;
+  }
+
+  .bc-balance {
+    display: none;
+  }
+
+  .bc-notify {
+    width: 36px;
+  }
+
+  .bc-account-trigger {
+    height: 36px;
+    padding: 0 8px;
+  }
+
+  .bc-deposit-btn {
+    padding: 0 8px;
+  }
+
+  .bc-deposit-text {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .bc-main-search,
-  .bc-balance,
-  .bc-deposit-text {
-    display: none;
+  .bc-main-search {
+    max-width: 80px;
+  }
+
+  .bc-nav-links {
+    gap: 0;
+    flex-shrink: 1;
+  }
+
+  .bc-nav-link {
+    min-width: 40px;
+    padding: 5px 4px;
+  }
+
+  .bc-link-icon {
+    font-size: 11px;
   }
 
   .bc-deposit-btn {
-    width: 44px;
+    width: 36px;
+    height: 36px;
     justify-content: center;
     padding: 0;
+  }
+
+  .bc-account-trigger {
+    height: 36px;
+    padding: 0;
+    width: 44px;
+    justify-content: center;
+  }
+
+  .bc-account-chevron {
+    display: none;
+  }
+
+  .bc-ticker {
+    display: none;
+  }
+
+  .bc-leagues {
+    height: 32px;
+    padding: 0 8px;
+    gap: 0;
+  }
+
+  .bc-league {
+    padding: 0 6px;
+    font-size: 11px;
+    min-height: 32px;
+  }
+
+  .bc-league-sep {
+    margin: 0 4px;
+  }
+
+  .bc-main-row {
+    height: 52px;
+    padding: 0 12px;
+    gap: 4px;
+  }
+
+  .bc-logo {
+    margin-right: 6px;
+  }
+
+  .bc-logo-text {
+    font-size: 16px;
+  }
+
+  .bc-logo-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .bc-actions {
+    gap: 6px;
+  }
+
+  .bc-icon-btn,
+  .bc-account-trigger {
+    width: 36px;
+    height: 36px;
+    border-radius: 5px;
   }
 }
 
