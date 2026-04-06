@@ -54,7 +54,7 @@ export default function MobileBottomNav() {
   const isHomeActive =
     location.pathname === "/" || location.pathname === "/user";
   const isLiveActive = location.pathname.startsWith("/user/payments/deposit");
-  const isMyBetsActive = location.pathname.startsWith("/user/bets");
+  const isMyBetsActive = location.pathname.startsWith("/my-bets");
   const isProfileActive = location.pathname.startsWith("/user/profile");
 
   return (
@@ -101,7 +101,12 @@ export default function MobileBottomNav() {
         </div>
 
         <Link
-          to="/user/bets"
+          to="/my-bets"
+          search={{
+            tab: "normal",
+            filter: "all",
+            page: "1",
+          }}
           className={`flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition ${
             isMyBetsActive ? "text-[#f5c518]" : "text-[#8a9bb0]"
           }`}

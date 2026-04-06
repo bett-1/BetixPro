@@ -16,6 +16,8 @@ import { adminUsersRoute } from "./routes/admin/users";
 import { forgotPasswordRoute } from "./routes/forgot-password";
 import { indexRoute } from "./routes";
 import { loginRoute } from "./routes/login";
+import { myBetDetailRoute } from "./routes/my-bets.$betId";
+import { myBetsRoute } from "./routes/my-bets";
 import { profileRoute } from "./routes/profile";
 import { registerRoute } from "./routes/register";
 import { resetPasswordRoute } from "./routes/reset-password";
@@ -37,6 +39,7 @@ import { userRoute } from "./routes/user/route";
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  myBetsRoute.addChildren([myBetDetailRoute]),
   profileRoute,
   registerRoute,
   forgotPasswordRoute,

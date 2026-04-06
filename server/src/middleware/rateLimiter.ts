@@ -58,3 +58,31 @@ export const profileUpdateRateLimiter = rateLimit({
   legacyHeaders: false,
   message: "Too many profile updates. Please wait a minute and try again.",
 });
+
+export const myBetsListRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  keyGenerator: userOrIpKeyGenerator,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many my-bets requests. Please wait a minute and try again.",
+});
+
+export const myBetDetailRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  keyGenerator: userOrIpKeyGenerator,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many bet detail requests. Please wait a minute and try again.",
+});
+
+export const cancelBetRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 3,
+  keyGenerator: userOrIpKeyGenerator,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message:
+    "Too many cancellation attempts. Please wait a minute and try again.",
+});

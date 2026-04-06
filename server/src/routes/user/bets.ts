@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { authenticate } from "../../middleware/authenticate";
+import { computePossiblePayout, generateBetCode } from "../../utils/betUtils";
 
 const userBetsRouter = Router();
 
@@ -30,15 +31,11 @@ userBetsRouter.post("/user/bets/place", async (req, res, next) => {
     const { eventId, marketType, side, stake } = parsedBody.data;
 
     if (stake < 50) {
-      return res
-        .status(400)
-        .json({ error: "Minimum stake is KES 50." });
+      return res.status(400).json({ error: "Minimum stake is KES 50." });
     }
 
     if (stake > 100000) {
-      return res
-        .status(400)
-        .json({ error: "Maximum stake is KES 100,000." });
+      return res.status(400).json({ error: "Maximum stake is KES 100,000." });
     }
 
     const stakeInCents = Math.round(stake * 100);
@@ -105,27 +102,64 @@ userBetsRouter.post("/user/bets/place", async (req, res, next) => {
         },
       });
 
-      const bet = await tx.bet.create({
-        data: {
-          userId,
-          eventId: event.eventId,
-          bookmakerId: dbOdds.bookmakerId,
-          marketType,
-          side,
-          stake,
-          displayOdds: dbOdds.displayOdds,
-          potentialPayout:
-            Math.round(stake * dbOdds.displayOdds * 100) / 100,
-          status: "PENDING",
-        },
-        select: {
-          id: true,
-          stake: true,
-          displayOdds: true,
-          potentialPayout: true,
-          status: true,
-        },
-      });
+      let bet = null as {
+        id: string;
+        betCode: string;
+        stake: number;
+        displayOdds: number;
+        potentialPayout: number;
+        status: "PENDING" | "WON" | "LOST" | "VOID";
+      } | null;
+
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          bet = await tx.bet.create({
+            data: {
+              betCode: generateBetCode(),
+              userId,
+              eventId: event.eventId,
+              bookmakerId: dbOdds.bookmakerId,
+              marketType,
+              side,
+              selectionsSnapshot: [
+                {
+                  eventId: event.eventId,
+                  homeTeam: event.homeTeam,
+                  awayTeam: event.awayTeam,
+                  marketType,
+                  side,
+                  odds: dbOdds.displayOdds,
+                },
+              ],
+              stake,
+              displayOdds: dbOdds.displayOdds,
+              potentialPayout: computePossiblePayout(stake, dbOdds.displayOdds),
+              status: "PENDING",
+            },
+            select: {
+              id: true,
+              betCode: true,
+              stake: true,
+              displayOdds: true,
+              potentialPayout: true,
+              status: true,
+            },
+          });
+          break;
+        } catch (createError) {
+          const duplicateCode =
+            createError instanceof Error &&
+            createError.message.includes("bets_bet_code_key");
+
+          if (!duplicateCode || attempt === 2) {
+            throw createError;
+          }
+        }
+      }
+
+      if (!bet) {
+        throw new Error("Could not place bet. Please try again.");
+      }
 
       await tx.walletTransaction.create({
         data: {

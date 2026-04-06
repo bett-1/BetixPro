@@ -34,6 +34,15 @@ export type NotificationRealtimeEvent = {
   createdAt: string;
 };
 
+export type BetRealtimeEvent = {
+  betId: string;
+  betCode: string;
+  status: "open" | "won" | "lost" | "cancelled" | "bonus";
+  placedAt: string;
+  updatedAt: string;
+  possiblePayout: number;
+};
+
 const USER_ROOM_PREFIX = "user:";
 
 let ioInstance: Server | null = null;
@@ -104,4 +113,15 @@ export function emitNotificationUpdate(
   ioInstance
     .to(`${USER_ROOM_PREFIX}${userId}`)
     .emit("notification:update", event);
+}
+
+export function emitBetUpdate(userId: string, event: BetRealtimeEvent) {
+  if (!ioInstance) {
+    return;
+  }
+
+  ioInstance.to(`${USER_ROOM_PREFIX}${userId}`).emit("bets:update", event);
+  ioInstance
+    .to(`${USER_ROOM_PREFIX}${userId}`)
+    .emit(`user:${userId}:bets`, event);
 }
