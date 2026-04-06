@@ -257,7 +257,9 @@ export default function Footer() {
               Cookies
             </a>
           </div>
-          <p className="font-medium hidden md:block text-[#8a9bb0]">Play Responsibly · 18+</p>
+          <p className="font-medium hidden md:block text-[#8a9bb0]">
+            Play Responsibly · 18+
+          </p>
         </div>
       </div>
     </footer>
