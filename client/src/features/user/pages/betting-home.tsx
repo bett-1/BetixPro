@@ -130,7 +130,8 @@ export default function BettingHome() {
               Bet Smarter, Win Bigger
             </h1>
             <p className="mt-1 max-w-xl text-xs text-[#d6e0e8]">
-              Explore top fixtures with real-time odds and place your best picks.
+              Explore top fixtures with real-time odds and place your best
+              picks.
             </p>
 
             <div className="mt-2 flex items-center gap-1.5">
