@@ -1,4 +1,4 @@
-import { createRoute, redirect } from "@tanstack/react-router";
+import { createRoute, redirect, isRedirectError } from "@tanstack/react-router";
 import { rootRoute } from "./root";
 
 export const indexRoute = createRoute({
@@ -21,6 +21,10 @@ export const indexRoute = createRoute({
           throw redirect({ to: "/user" });
         }
       } catch (error) {
+        // Re-throw redirect errors so the router handles them
+        if (error instanceof Error && isRedirectError(error)) {
+          throw error;
+        }
         // Invalid stored data, proceed to home
       }
     }
