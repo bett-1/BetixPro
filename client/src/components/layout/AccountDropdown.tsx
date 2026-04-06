@@ -32,7 +32,11 @@ const menuGroups: MenuItem[][] = [
       to: "/user/coming-soon?feature=profile",
       warn: true,
     },
-    { label: "My Bets", icon: "t", to: "/user/payments" },
+    {
+      label: "My Bets",
+      icon: "t",
+      to: "/my-bets?tab=normal&filter=all&page=1",
+    },
     { label: "My Results", icon: "r", to: "/user/payments/history" },
     { label: "My Wallet", icon: "w", to: "/user/payments", warn: true },
   ],

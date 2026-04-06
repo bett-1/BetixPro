@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
+import { emitBetUpdate } from "../../lib/socket";
 import { authenticate } from "../../middleware/authenticate";
 import { requireAdmin } from "../../middleware/requireAdmin";
 
@@ -35,10 +36,22 @@ betsAdminRouter.get("/admin/bets", async (req, res, next) => {
             AND: [
               {
                 OR: [
-                  { user: { email: { contains: search, mode: "insensitive" } } },
-                  { user: { phone: { contains: search, mode: "insensitive" } } },
-                  { event: { homeTeam: { contains: search, mode: "insensitive" } } },
-                  { event: { awayTeam: { contains: search, mode: "insensitive" } } },
+                  {
+                    user: { email: { contains: search, mode: "insensitive" } },
+                  },
+                  {
+                    user: { phone: { contains: search, mode: "insensitive" } },
+                  },
+                  {
+                    event: {
+                      homeTeam: { contains: search, mode: "insensitive" },
+                    },
+                  },
+                  {
+                    event: {
+                      awayTeam: { contains: search, mode: "insensitive" },
+                    },
+                  },
                 ],
               },
             ],
@@ -99,7 +112,9 @@ betsAdminRouter.get("/admin/bets", async (req, res, next) => {
 
 betsAdminRouter.post("/admin/bets/:betId/settle", async (req, res, next) => {
   try {
-    const betId = Array.isArray(req.params.betId) ? req.params.betId[0] : req.params.betId;
+    const betId = Array.isArray(req.params.betId)
+      ? req.params.betId[0]
+      : req.params.betId;
     if (!betId) {
       return res.status(400).json({ message: "Invalid bet id." });
     }
@@ -113,6 +128,7 @@ betsAdminRouter.post("/admin/bets/:betId/settle", async (req, res, next) => {
       where: { id: betId },
       select: {
         id: true,
+        betCode: true,
         userId: true,
         side: true,
         stake: true,
@@ -145,6 +161,7 @@ betsAdminRouter.post("/admin/bets/:betId/settle", async (req, res, next) => {
           data: {
             status: "VOID",
             settledAt: now,
+            lastStatusChangeAt: now,
           },
         });
 
@@ -156,6 +173,15 @@ betsAdminRouter.post("/admin/bets/:betId/settle", async (req, res, next) => {
             },
           },
         });
+      });
+
+      emitBetUpdate(bet.userId, {
+        betId: bet.id,
+        betCode: bet.betCode,
+        status: "cancelled",
+        placedAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+        possiblePayout: 0,
       });
 
       return res.status(200).json({
@@ -173,6 +199,7 @@ betsAdminRouter.post("/admin/bets/:betId/settle", async (req, res, next) => {
         data: {
           status: won ? "WON" : "LOST",
           settledAt: now,
+          lastStatusChangeAt: now,
         },
       });
 
@@ -186,6 +213,15 @@ betsAdminRouter.post("/admin/bets/:betId/settle", async (req, res, next) => {
           },
         });
       }
+    });
+
+    emitBetUpdate(bet.userId, {
+      betId: bet.id,
+      betCode: bet.betCode,
+      status: won ? "won" : "lost",
+      placedAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      possiblePayout: won ? bet.potentialPayout : 0,
     });
 
     return res.status(200).json({

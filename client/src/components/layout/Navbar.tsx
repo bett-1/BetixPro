@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Bell, CircleCheck, CircleX, Menu, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchBar from "@/components/search/SearchBar";
@@ -54,7 +54,11 @@ const navLinks: NavRoute[] = [
     badge: { text: "New", tone: "green" },
   },
   { label: "Results", icon: "=", to: "/user/payments/history" },
-  { label: "My Bets", icon: "[]", to: "/user/payments" },
+  {
+    label: "My Bets",
+    icon: "[]",
+    to: "/my-bets?tab=normal&filter=all&page=1",
+  },
   { label: "Profile", icon: "U", to: "/user/profile" },
 ];
 
@@ -121,6 +125,7 @@ function toText(value: unknown, fallback = "") {
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
 
   const { data: walletSummary } = useWalletSummary();
@@ -204,12 +209,29 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
 
         <nav className="bc-nav-links" aria-label="Primary">
           {navLinks.map((item) => {
-            const isActive = location.pathname === item.to;
+            const itemPath = item.to.split("?")[0] ?? item.to;
+            const isMyBetsLink = itemPath === "/my-bets";
+            const isActive = isMyBetsLink
+              ? location.pathname.startsWith("/my-bets")
+              : location.pathname === itemPath;
             return (
               <Link
                 key={item.label}
                 to={item.to as never}
                 className={`bc-nav-link ${isActive ? "is-active" : ""}`}
+                onClick={(event) => {
+                  if (!isMyBetsLink || isAuthenticated) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  void navigate({
+                    to: "/login",
+                    search: {
+                      redirect: "/my-bets?tab=normal&filter=all&page=1",
+                    },
+                  });
+                }}
               >
                 <span className="bc-link-icon" aria-hidden="true">
                   {item.icon}
