@@ -64,7 +64,8 @@ export default function HowItWorks() {
           <h1 className="text-4xl font-bold mb-4">How BetRixPro Works</h1>
           <p className="text-base text-[#90a2bb] max-w-2xl mx-auto leading-relaxed">
             Get started with sports betting in just a few simple steps. Follow
-            our guide to learn how to make the most of your BetRixPro experience.
+            our guide to learn how to make the most of your BetRixPro
+            experience.
           </p>
         </div>
 
