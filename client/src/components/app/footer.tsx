@@ -1,8 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import {
-  ShieldCheck,
-  Smartphone,
-  Wallet,
   Mail,
   ArrowRight,
   CheckCircle,
@@ -44,27 +41,27 @@ export default function Footer() {
   return (
     <footer className="w-full border-t border-[#23384f] bg-[#0b1120]">
       {/* Main Footer Content */}
-      <div className="mx-auto w-full max-w-[1280px] gap-6 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+      <div className="mx-auto w-full max-w-[1280px] gap-8 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand Section */}
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5c518]">
-                <span className="text-sm font-bold text-black">B</span>
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f5c518]">
+                <span className="text-lg font-bold text-black">B</span>
               </div>
-              <h3 className="text-lg font-bold text-white">BetWise</h3>
+              <h3 className="text-2xl font-bold text-white">BetWise</h3>
             </div>
-            <p className="mt-4 text-sm text-[#8a9bb0]">
+            <p className="mt-4 text-base leading-relaxed text-[#8a9bb0]">
               Smart betting with fast M-Pesa deposits and a secure wallet
               experience. Play responsibly.
             </p>
-            <div className="mt-4 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#294157] text-[#8a9bb0] transition hover:border-[#f5c518] hover:text-[#f5c518]"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#294157] text-[#8a9bb0] transition hover:border-[#f5c518] hover:text-[#f5c518]"
               >
                 <svg
-                  className="h-4 w-4"
+                  className="h-5 w-5"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -73,10 +70,10 @@ export default function Footer() {
               </a>
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#294157] text-[#8a9bb0] transition hover:border-[#f5c518] hover:text-[#f5c518]"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#294157] text-[#8a9bb0] transition hover:border-[#f5c518] hover:text-[#f5c518]"
               >
                 <svg
-                  className="h-4 w-4"
+                  className="h-5 w-5"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -85,10 +82,10 @@ export default function Footer() {
               </a>
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#294157] text-[#8a9bb0] transition hover:border-[#f5c518] hover:text-[#f5c518]"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#294157] text-[#8a9bb0] transition hover:border-[#f5c518] hover:text-[#f5c518]"
               >
                 <svg
-                  className="h-4 w-4"
+                  className="h-5 w-5"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -104,64 +101,43 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+            <h4 className="text-lg font-bold uppercase tracking-wider text-white">
               Quick Links
             </h4>
-            <nav className="mt-4 grid gap-3">
+            <nav className="mt-6 grid gap-4">
               <Link
                 to="/"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                className="text-base text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
               >
                 Home
               </Link>
               <Link
                 to="/user/payments"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                className="text-base text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
               >
                 Deposits
               </Link>
               <a
                 href="#"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                className="text-base text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
               >
                 How It Works
               </a>
               <a
                 href="#"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                className="text-base text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
               >
                 FAQ
               </a>
             </nav>
           </div>
 
-          {/* Why BetWise */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Why BetWise
-            </h4>
-            <ul className="mt-4 grid gap-3">
-              <li className="flex items-start gap-2 text-sm text-[#8a9bb0]">
-                <Smartphone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#f5c518]" />
-                <span>Mobile-first experience</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm text-[#8a9bb0]">
-                <Wallet className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#f5c518]" />
-                <span>Instant wallet top-ups</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm text-[#8a9bb0]">
-                <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#f5c518]" />
-                <span>Secure payment flow</span>
-              </li>
-            </ul>
-          </div>
-
           {/* Contact */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+            <h4 className="text-lg font-bold uppercase tracking-wider text-white">
               Contact
             </h4>
-            <div className="mt-4 grid gap-3 text-sm text-[#8a9bb0]">
+            <div className="mt-6 grid gap-4 text-base text-[#8a9bb0]">
               <a
                 href="mailto:support@betwise.com"
                 className="transition hover:text-[#f5c518]"
@@ -179,45 +155,45 @@ export default function Footer() {
           </div>
 
           {/* Newsletter Signup */}
-          <div className="rounded-2xl border border-[#23384f] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+          <div className="sm:col-span-2 lg:col-span-1 rounded-2xl border border-[#23384f] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-6">
+            <h4 className="text-lg font-bold uppercase tracking-wider text-white">
               Stay Updated
             </h4>
-            <p className="mt-2 text-xs text-[#8a9bb0]">
+            <p className="mt-2 text-sm text-[#8a9bb0]">
               Get betting tips & promotions
             </p>
 
             <form
               onSubmit={handleNewsletterSubmit}
-              className="mt-3 flex flex-col gap-2"
+              className="mt-4 flex flex-col gap-3"
             >
               {isSubscribed ? (
-                <div className="flex items-center justify-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2">
-                  <CheckCircle className="h-4 w-4 text-green-400" />
-                  <span className="text-xs font-medium text-green-400">
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                  <span className="font-medium text-green-400">
                     subscribed!
                   </span>
                 </div>
               ) : (
                 <>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8a9bb0]" />
+                    <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a9bb0]" />
                     <input
                       type="email"
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-9 w-full rounded-lg border border-[#294157] bg-[#0f1a2a] pl-9 pr-3 text-xs text-white outline-none transition placeholder:text-[#5a6b7d] focus:border-[#f5c518] focus:shadow-[0_0_0_2px_rgba(245,197,24,0.1)]"
+                      className="h-11 w-full rounded-lg border border-[#294157] bg-[#0f1a2a] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-[#5a6b7d] focus:border-[#f5c518] focus:shadow-[0_0_0_2px_rgba(245,197,24,0.1)]"
                       disabled={isSubmitting}
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#f5c518] text-xs font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#f5c518] text-sm font-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSubmitting ? "..." : "Subscribe"}
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </>
               )}
@@ -226,12 +202,12 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="mt-8 border-t border-[#23384f]" />
+        <div className="mt-12 border-t border-[#23384f]" />
 
         {/* Bottom Footer */}
-        <div className="mt-8 flex flex-col gap-4 text-xs text-[#5a6b7d] sm:flex-row sm:items-center sm:justify-between">
-          <p>© {year} BetWise. All rights reserved. | Safe Gaming Certified</p>
-          <div className="flex gap-3">
+        <div className="mt-8 flex flex-col gap-4 text-sm text-[#8a9bb0] sm:flex-row sm:items-center sm:justify-between">
+          <p>© {year} BetWise. All rights reserved.</p>
+          <div className="flex gap-4 text-sm">
             <a href="#" className="transition hover:text-[#f5c518]">
               Terms
             </a>
@@ -241,10 +217,10 @@ export default function Footer() {
             </a>
             <span className="text-[#294157]">·</span>
             <a href="#" className="transition hover:text-[#f5c518]">
-              Cookie Policy
+              Cookies
             </a>
           </div>
-          <p className="font-medium text-[#8a9bb0]">Play Responsibly · 18+</p>
+          <p className="font-medium text-[#f5c518]">Play Responsibly · 18+</p>
         </div>
       </div>
     </footer>
