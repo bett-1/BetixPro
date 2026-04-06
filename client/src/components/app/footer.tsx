@@ -38,7 +38,7 @@ export default function Footer() {
     <footer className="w-full border-t border-[#23384f] bg-[#0b1120]">
       {/* Main Footer Content */}
       <div className="mx-auto w-full max-w-[1280px] gap-8 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ export default function Footer() {
           </div>
 
           {/* Stay Updated - Newsletter Card */}
-          <div className="rounded-xl border border-[#294157] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-5">
+          <div className="lg:col-span-2 rounded-xl border border-[#294157] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-6">
             <h4 className="text-sm font-bold uppercase tracking-wider text-white">
               Stay Updated
             </h4>
@@ -161,10 +161,10 @@ export default function Footer() {
 
             <form
               onSubmit={handleNewsletterSubmit}
-              className="mt-4 flex flex-col gap-2.5"
+              className="mt-4 flex flex-col gap-3 sm:flex-row sm:gap-2.5"
             >
               {isSubscribed ? (
-                <div className="flex items-center justify-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2.5">
+                <div className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2.5">
                   <CheckCircle className="h-4 w-4 text-green-400" />
                   <span className="text-xs font-bold text-green-400">
                     Subscribed!
@@ -172,7 +172,7 @@ export default function Footer() {
                 </div>
               ) : (
                 <>
-                  <div className="relative">
+                  <div className="relative flex-1">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a9bb0]" />
                     <input
                       type="email"
@@ -186,7 +186,7 @@ export default function Footer() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#f5c518] text-xs font-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#f5c518] px-6 text-xs font-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
                   >
                     {isSubmitting ? "..." : "Subscribe"}
                     <ArrowRight className="h-3.5 w-3.5" />
