@@ -11,7 +11,10 @@ import {
   Moon,
   Sun,
   Monitor,
+  ChevronLeft,
   ChevronRight,
+  SidebarOpen,
+  SidebarClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -117,6 +120,18 @@ export default function AdminShell() {
   return (
     <ProtectedRoute requireRole="ADMIN">
       <div className="relative min-h-dvh bg-admin-bg font-admin text-admin-text-primary lg:flex">
+        {!mobileSidebarOpen ? (
+          <button
+            type="button"
+            aria-label="Open sidebar"
+            className="fixed left-4 top-4 z-30 grid h-10 w-10 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-secondary)] text-admin-text-secondary shadow-[0_10px_26px_rgba(0,0,0,0.28)] transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary lg:hidden"
+            onClick={() => setMobileSidebarOpen(true)}
+            title="Open sidebar"
+          >
+            <Menu size={18} />
+          </button>
+        ) : null}
+
         {mobileSidebarOpen ? (
           <button
             type="button"
@@ -140,23 +155,45 @@ export default function AdminShell() {
         >
           <div
             className={cn(
-              "flex min-h-16 items-center gap-3 border-b border-admin-border px-4 py-4",
-              !sidebarExpanded && "lg:justify-center",
+              "flex min-h-16 items-center border-b border-admin-border px-4 py-4",
+              showNavLabels ? "justify-between" : "justify-center",
             )}
           >
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-dark))]">
-              <Zap size={16} color="var(--color-text-dark)" />
-            </div>
-            {showNavLabels ? (
-              <div>
-                <p className="text-sm font-bold tracking-[0.03em] text-admin-text-primary">
-                  BettCenic
-                </p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
-                  Admin Panel
-                </p>
+            <div
+              className={cn(
+                "flex items-center gap-3",
+                !showNavLabels && "lg:hidden",
+              )}
+            >
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-dark))]">
+                <Zap size={16} color="var(--color-text-dark)" />
               </div>
-            ) : null}
+              {showNavLabels ? (
+                <div>
+                  <p className="text-sm font-bold tracking-[0.03em] text-admin-text-primary">
+                    BettCenic
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                    Admin Panel
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <button
+              aria-label={showNavLabels ? "Collapse sidebar" : "Expand sidebar"}
+              aria-expanded={mobileSidebarOpen || sidebarExpanded}
+              className="grid h-9 w-9 cursor-pointer shrink-0 place-items-center rounded-lg border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary"
+              onClick={toggleSidebar}
+              type="button"
+              title={showNavLabels ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {showNavLabels ? (
+                <SidebarClose size={16} />
+              ) : (
+                <SidebarOpen size={16} />
+              )}
+            </button>
           </div>
 
           <div className="app-scrollbar flex-1 overflow-y-auto px-3 py-4">
@@ -254,26 +291,6 @@ export default function AdminShell() {
 
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b border-admin-border bg-[var(--color-bg-secondary)] px-4 py-4 backdrop-blur-[18px] sm:px-6">
             <div className="flex min-w-0 flex-1 items-center gap-3">
-              <button
-                aria-label="Toggle sidebar"
-                aria-expanded={mobileSidebarOpen || sidebarExpanded}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary lg:hidden"
-                onClick={toggleSidebar}
-                type="button"
-                title={mobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
-              >
-                <Menu size={18} />
-              </button>
-              <button
-                aria-label="Collapse or expand sidebar"
-                aria-expanded={sidebarExpanded}
-                className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary lg:grid"
-                onClick={toggleSidebar}
-                type="button"
-                title={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-              >
-                <Menu size={18} />
-              </button>
               <div className="flex h-11 w-full max-w-[560px] flex-1 items-center gap-2 rounded-2xl border border-admin-border bg-[var(--color-bg-elevated)] px-3">
                 <Search size={14} className="text-admin-text-muted" />
                 <input
