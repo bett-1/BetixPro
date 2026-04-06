@@ -144,7 +144,9 @@ export default function FAQs() {
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="mb-16 text-center">
-          <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
+          <h1 className="text-4xl font-bold mb-4">
+            Frequently Asked Questions
+          </h1>
           <p className="text-base text-[#90a2bb] max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about BetWise, betting, payments,
             and account management.

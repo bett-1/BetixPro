@@ -67,7 +67,8 @@ export default function HowItWorks() {
     {
       icon: Zap,
       title: "Fast & Easy",
-      description: "Quick and intuitive betting interface designed for simplicity.",
+      description:
+        "Quick and intuitive betting interface designed for simplicity.",
     },
     {
       icon: Lock,
@@ -185,7 +186,8 @@ export default function HowItWorks() {
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-base text-[#90a2bb] mb-8 max-w-2xl mx-auto leading-relaxed">
             Join thousands of sports enthusiasts. Sign up and start betting
-            today with secure M-Pesa deposits and a world-class betting experience.
+            today with secure M-Pesa deposits and a world-class betting
+            experience.
           </p>
           <button className="inline-block rounded-xl bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-10 py-3 font-bold text-[#0b1120] hover:shadow-xl hover:scale-105 transition-all duration-200">
             Start Betting Now
