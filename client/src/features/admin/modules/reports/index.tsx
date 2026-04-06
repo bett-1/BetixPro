@@ -12,12 +12,7 @@ import {
   AdminSectionHeader,
   SummaryCard,
 } from "../../components/ui";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -250,9 +245,7 @@ function BettingReportsTab() {
         </AdminCard>
 
         <AdminCard className="space-y-4">
-          <h3 className="font-semibold text-admin-text-primary">
-            Top Markets
-          </h3>
+          <h3 className="font-semibold text-admin-text-primary">Top Markets</h3>
           <div className="space-y-3">
             {data.topMarkets.slice(0, 5).map((market) => (
               <div
@@ -577,7 +570,10 @@ export default function Reports() {
             Report Period
           </p>
         </div>
-        <Select value={period} onValueChange={(v) => setPeriod(v as ReportPeriod)}>
+        <Select
+          value={period}
+          onValueChange={(v) => setPeriod(v as ReportPeriod)}
+        >
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
