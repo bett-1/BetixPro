@@ -45,7 +45,6 @@ function isPhoneValid(phone: string) {
 export default function PaymentsWithdrawalPage() {
   const { user } = useAuth();
   const [amount, setAmount] = useState("500");
-  const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: walletData, refetch: refetchWallet } = useWalletSummary();
   const queryClient = useQueryClient();
@@ -189,7 +188,7 @@ export default function PaymentsWithdrawalPage() {
                 <button
                   key={option}
                   type="button"
-                  disabled={option > balance}
+                  disabled={option + Math.ceil((option * WITHDRAWAL_FEE_PERCENTAGE) / 100) > balance}
                   className="rounded-lg border border-[#294157] bg-[#0f1a2a] px-3 py-1.5 text-xs font-medium text-[#8a9bb0] transition hover:border-[#f5c518]/70 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => setAmount(String(option))}
                 >
