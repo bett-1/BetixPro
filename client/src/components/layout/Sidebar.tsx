@@ -33,12 +33,7 @@ const sectionOne: Item[] = [
     icon: "S",
     warn: true,
   },
-  {
-    label: "Casino",
-    to: "/user/coming-soon?feature=casino",
-    icon: "C",
-    warn: true,
-  },
+  { label: "Profile", to: "/user/profile", icon: "U" },
   {
     label: "Virtual Games",
     to: "/user/coming-soon?feature=virtual-games",
@@ -50,9 +45,8 @@ const sectionOne: Item[] = [
 const myAccount: Item[] = [
   {
     label: "My Profile",
-    to: "/user/coming-soon?feature=profile",
+    to: "/user/profile",
     icon: "U",
-    warn: true,
   },
   { label: "My Wallet", to: "/user/payments", icon: "W", warn: true },
   { label: "My Bets", to: "/user/payments", icon: "B" },
