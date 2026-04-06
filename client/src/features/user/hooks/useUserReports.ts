@@ -108,14 +108,7 @@ export function useUserRecentBets(
   endDate?: string,
 ) {
   return useQuery({
-    queryKey: [
-      "user-recent-bets",
-      period,
-      page,
-      limit,
-      startDate,
-      endDate,
-    ],
+    queryKey: ["user-recent-bets", period, page, limit, startDate, endDate],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("period", period);
