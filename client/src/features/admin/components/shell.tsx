@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, Menu, Search, Zap, LogOut, Sun, Moon, Monitor, User } from "lucide-react";
+import {
+  Bell,
+  Menu,
+  Search,
+  Zap,
+  LogOut,
+  Sun,
+  Moon,
+  Monitor,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
