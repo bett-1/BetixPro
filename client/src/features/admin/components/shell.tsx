@@ -20,6 +20,12 @@ import {
   useMarkAllNotificationsRead,
 } from "@/features/notifications/notifications";
 import { useWalletRealtime } from "@/features/user/payments/wallet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { adminNavigation } from "../config/navigation";
 
 export default function AdminShell() {
@@ -288,7 +294,7 @@ export default function AdminShell() {
                             "flex flex-1 items-center justify-center gap-1 rounded-lg py-2 px-2 text-xs font-medium transition",
                             theme === "light"
                               ? "bg-admin-accent text-admin-text-dark"
-                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]"
+                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]",
                           )}
                           title="Light theme"
                         >
@@ -305,7 +311,7 @@ export default function AdminShell() {
                             "flex flex-1 items-center justify-center gap-1 rounded-lg py-2 px-2 text-xs font-medium transition",
                             theme === "dark"
                               ? "bg-admin-accent text-admin-text-dark"
-                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]"
+                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]",
                           )}
                           title="Dark theme"
                         >
@@ -322,7 +328,7 @@ export default function AdminShell() {
                             "flex flex-1 items-center justify-center gap-1 rounded-lg py-2 px-2 text-xs font-medium transition",
                             theme === "system"
                               ? "bg-admin-accent text-admin-text-dark"
-                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]"
+                              : "text-admin-text-secondary hover:bg-[var(--color-bg-hover)]",
                           )}
                           title="System theme"
                         >
