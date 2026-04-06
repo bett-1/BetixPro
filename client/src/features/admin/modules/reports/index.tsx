@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { TrendingUp, TrendingDown, DollarSign, Users, Zap } from "lucide-react";
 import {
   useAdminFinancialReport,
   useAdminBettingReport,
@@ -62,28 +61,21 @@ function FinancialReportsTab() {
     {
       label: "Total Revenue",
       value: `KES ${(data.totalRevenue / 1000).toFixed(1)}K`,
-      icon: DollarSign,
       tone: "blue" as const,
     },
     {
       label: "Deposits",
-      value: `${data.deposits.count}`,
-      subtext: `KES ${(data.deposits.totalAmount / 1000).toFixed(1)}K`,
-      icon: TrendingUp,
+      value: `${data.deposits.count} (KES ${(data.deposits.totalAmount / 1000).toFixed(1)}K)`,
       tone: "accent" as const,
     },
     {
       label: "Withdrawals",
-      value: `${data.withdrawals.count}`,
-      subtext: `KES ${(data.withdrawals.totalAmount / 1000).toFixed(1)}K`,
-      icon: TrendingDown,
+      value: `${data.withdrawals.count} (KES ${(data.withdrawals.totalAmount / 1000).toFixed(1)}K)`,
       tone: "red" as const,
     },
     {
       label: "Bets Placed",
-      value: `${data.bets.count}`,
-      subtext: `KES ${(data.bets.totalStaked / 1000).toFixed(1)}K staked`,
-      icon: Zap,
+      value: `${data.bets.count} bets`,
       tone: "purple" as const,
     },
   ];
@@ -104,8 +96,6 @@ function FinancialReportsTab() {
             key={stat.label}
             label={stat.label}
             value={stat.value}
-            subtext={stat.subtext}
-            icon={stat.icon}
             tone={stat.tone}
           />
         ))}
@@ -153,25 +143,21 @@ function BettingReportsTab() {
     {
       label: "Total Bets",
       value: `${data.totalBets}`,
-      icon: Zap,
       tone: "blue" as const,
     },
     {
       label: "Total Staked",
       value: `KES ${(data.totalStaked / 1000).toFixed(1)}K`,
-      icon: DollarSign,
       tone: "accent" as const,
     },
     {
       label: "Win Rate",
       value: `${data.winLossStats.winRate}%`,
-      icon: TrendingUp,
       tone: "purple" as const,
     },
     {
       label: "Avg Stake",
       value: `KES ${data.averageStake}`,
-      icon: DollarSign,
       tone: "blue" as const,
     },
   ];
@@ -207,7 +193,6 @@ function BettingReportsTab() {
             key={stat.label}
             label={stat.label}
             value={stat.value}
-            icon={stat.icon}
             tone={stat.tone}
           />
         ))}
@@ -290,25 +275,21 @@ function UsersReportsTab() {
     {
       label: "Total Users",
       value: `${data.totalUsers}`,
-      icon: Users,
       tone: "blue" as const,
     },
     {
       label: "New Users",
       value: `${data.newUsers}`,
-      icon: TrendingUp,
       tone: "accent" as const,
     },
     {
       label: "Active Users",
       value: `${data.activeUsers}`,
-      icon: Zap,
       tone: "purple" as const,
     },
     {
       label: "Avg Bets/User",
       value: `${data.averageBetsPerActiveUser}`,
-      icon: DollarSign,
       tone: "gold" as const,
     },
   ];
@@ -321,7 +302,6 @@ function UsersReportsTab() {
             key={stat.label}
             label={stat.label}
             value={stat.value}
-            icon={stat.icon}
             tone={stat.tone}
           />
         ))}
@@ -387,19 +367,16 @@ function RiskReportsTab() {
     {
       label: "Total Alerts",
       value: `${data.totalAlerts}`,
-      icon: Zap,
       tone: "blue" as const,
     },
     {
       label: "High Risk",
       value: `${data.alertsBySeverity.find((a) => a.severity === "HIGH")?._count || 0}`,
-      icon: TrendingDown,
       tone: "red" as const,
     },
     {
       label: "Critical",
       value: `${data.alertsBySeverity.find((a) => a.severity === "CRITICAL")?._count || 0}`,
-      icon: TrendingDown,
       tone: "red" as const,
     },
   ];
@@ -427,7 +404,6 @@ function RiskReportsTab() {
             key={stat.label}
             label={stat.label}
             value={stat.value}
-            icon={stat.icon}
             tone={stat.tone}
           />
         ))}
