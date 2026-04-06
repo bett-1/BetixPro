@@ -236,7 +236,9 @@ export default function Dashboard() {
                           <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
                             {metric.label}
                           </p>
-                          <div className={`rounded p-1 flex-shrink-0 ${colors.icon}`}>
+                          <div
+                            className={`rounded p-1 flex-shrink-0 ${colors.icon}`}
+                          >
                             <div className="h-3 w-3" />
                           </div>
                         </div>
@@ -308,130 +310,138 @@ export default function Dashboard() {
               }
             />
 
-        <TableShell>
-          <table className={adminTableClassName}>
-            <thead>
-              <tr>
-                {[
-                  "Reference",
-                  "User",
-                  "Type",
-                  "Amount",
-                  "Status",
-                  "Time",
-                  "Actions",
-                ].map((heading) => (
-                  <th className={adminTableHeadCellClassName} key={heading}>
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td className={adminTableCellClassName} colSpan={7}>
-                    <div className="flex items-center justify-center py-8">
-                      <Loader className="animate-spin" size={24} />
-                    </div>
-                  </td>
-                </tr>
-              ) : recentTransactions.length === 0 ? (
-                <tr>
-                  <td className={adminTableCellClassName} colSpan={7}>
-                    <div className="flex items-center justify-center py-8 text-admin-text-muted">
-                      No recent activity yet.
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                recentTransactions.map((transaction) => (
-                  <tr className="even:bg-admin-surface/45" key={transaction.id}>
-                    <td
-                      className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
-                    >
-                      {transaction.mpesaCode ?? transaction.reference}
-                    </td>
-                    <td
-                      className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                    >
-                      <div>
-                        <p className="text-xs">{transaction.userEmail}</p>
-                        <p className="text-[10px] text-admin-text-muted">
-                          {transaction.userPhone}
-                        </p>
-                      </div>
-                    </td>
-                    <td className={adminTableCellClassName}>
-                      <InlinePill
-                        label={transaction.type}
-                        tone={
-                          transaction.type === "deposit" ? "accent" : "gold"
-                        }
-                      />
-                    </td>
-                    <td
-                      className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                    >
-                      {formatCurrency(transaction.amount)}
-                      {transaction.type === "withdrawal" ? (
-                        <span className="ml-2 text-[10px] text-admin-text-muted">
-                          Fee {formatCurrency(transaction.fee)}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className={adminTableCellClassName}>
-                      <StatusBadge status={transaction.status} />
-                    </td>
-                    <td
-                      className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
-                    >
-                      {new Date(transaction.createdAt).toLocaleString("en-KE", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className={adminTableCellClassName}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <AdminButton
-                            size="sm"
-                            variant="ghost"
-                            aria-label="Row actions"
-                          >
-                            <MoreHorizontal size={14} />
-                          </AdminButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem
-                            onClick={() => handleViewDetails(transaction)}
-                          >
-                            View full details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleOpenUser(transaction)}
-                          >
-                            Open user profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleReviewTransaction(transaction)}
-                          >
-                            {transaction.type === "withdrawal"
-                              ? "Review & manage payout"
-                              : "Review & manage deposit"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
+            <TableShell>
+              <table className={adminTableClassName}>
+                <thead>
+                  <tr>
+                    {[
+                      "Reference",
+                      "User",
+                      "Type",
+                      "Amount",
+                      "Status",
+                      "Time",
+                      "Actions",
+                    ].map((heading) => (
+                      <th className={adminTableHeadCellClassName} key={heading}>
+                        {heading}
+                      </th>
+                    ))}
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </TableShell>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td className={adminTableCellClassName} colSpan={7}>
+                        <div className="flex items-center justify-center py-8">
+                          <Loader className="animate-spin" size={24} />
+                        </div>
+                      </td>
+                    </tr>
+                  ) : recentTransactions.length === 0 ? (
+                    <tr>
+                      <td className={adminTableCellClassName} colSpan={7}>
+                        <div className="flex items-center justify-center py-8 text-admin-text-muted">
+                          No recent activity yet.
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    recentTransactions.map((transaction) => (
+                      <tr
+                        className="even:bg-admin-surface/45"
+                        key={transaction.id}
+                      >
+                        <td
+                          className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
+                        >
+                          {transaction.mpesaCode ?? transaction.reference}
+                        </td>
+                        <td
+                          className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
+                        >
+                          <div>
+                            <p className="text-xs">{transaction.userEmail}</p>
+                            <p className="text-[10px] text-admin-text-muted">
+                              {transaction.userPhone}
+                            </p>
+                          </div>
+                        </td>
+                        <td className={adminTableCellClassName}>
+                          <InlinePill
+                            label={transaction.type}
+                            tone={
+                              transaction.type === "deposit" ? "accent" : "gold"
+                            }
+                          />
+                        </td>
+                        <td
+                          className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
+                        >
+                          {formatCurrency(transaction.amount)}
+                          {transaction.type === "withdrawal" ? (
+                            <span className="ml-2 text-[10px] text-admin-text-muted">
+                              Fee {formatCurrency(transaction.fee)}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className={adminTableCellClassName}>
+                          <StatusBadge status={transaction.status} />
+                        </td>
+                        <td
+                          className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
+                        >
+                          {new Date(transaction.createdAt).toLocaleString(
+                            "en-KE",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </td>
+                        <td className={adminTableCellClassName}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <AdminButton
+                                size="sm"
+                                variant="ghost"
+                                aria-label="Row actions"
+                              >
+                                <MoreHorizontal size={14} />
+                              </AdminButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem
+                                onClick={() => handleViewDetails(transaction)}
+                              >
+                                View full details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenUser(transaction)}
+                              >
+                                Open user profile
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleReviewTransaction(transaction)
+                                }
+                              >
+                                {transaction.type === "withdrawal"
+                                  ? "Review & manage payout"
+                                  : "Review & manage deposit"}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </TableShell>
           </AdminCard>
         </div>
 
