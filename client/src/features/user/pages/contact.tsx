@@ -98,6 +98,9 @@ export default function Contact() {
           <div className="lg:col-span-2">
             <ContactForm
               userEmail={user?.email}
+              userFullName={user?.fullName}
+              userPhone={user?.phone}
+              isLoggedIn={!!user}
               onSuccess={handleFormSuccess}
             />
           </div>
