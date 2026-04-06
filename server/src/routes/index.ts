@@ -11,6 +11,7 @@ import { paymentRouter } from "./payments";
 import { profileRouter } from "./profile";
 import { userBetsRouter } from "./user/bets";
 import { userEventsRouter } from "./user/events";
+import { contactRouter } from "./contact";
 
 const apiRouter = Router();
 
@@ -26,5 +27,6 @@ apiRouter.use(betsAdminRouter);
 apiRouter.use(oddsAdminRouter);
 apiRouter.use(userEventsRouter);
 apiRouter.use(userBetsRouter);
+apiRouter.use(contactRouter);
 
 export { apiRouter };
