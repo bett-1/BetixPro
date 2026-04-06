@@ -515,7 +515,10 @@ export function FinancialTrendChart({ data }: { data: any[] }) {
 export function DepositWithdrawalChart({ data }: { data: any[] }) {
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={data} margin={{ top: 10, right: 20, left: -20, bottom: 10 }}>
+      <LineChart
+        data={data}
+        margin={{ top: 10, right: 20, left: -20, bottom: 10 }}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis
           dataKey="period"
