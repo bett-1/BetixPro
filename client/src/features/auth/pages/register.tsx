@@ -1,12 +1,11 @@
 import type { FormEvent } from "react";
-import { useMemo, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, ArrowRight, XCircle } from "lucide-react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthModal from "@/components/auth/AuthModal";
-import PasswordStrengthIndicator from "@/components/PasswordStrengthIndicator";
 import { useAuth } from "@/context/AuthContext";
 
 type FormErrors = Partial<Record<string, string[]>>;
@@ -45,10 +44,8 @@ function extractRegisterErrors(error: unknown) {
   return { general: ["Registration failed. Please try again."] };
 }
 
-function passwordChecks(password: string) {
-  return {
-    length: password.length >= 6,
-  };
+function isPasswordValid(password: string): boolean {
+  return password.length >= 6;
 }
 
 export default function Register() {
@@ -67,15 +64,11 @@ export default function Register() {
 
   const emailValid = isValidEmail(email);
   const phoneValid = KENYAN_PHONE_REGEX.test(phone.trim());
-  const passwordRules = passwordChecks(password);
-  const passwordValid = Object.values(passwordRules).every(Boolean);
+  const passwordValid = isPasswordValid(password);
   const confirmValid =
     confirmPassword.length > 0 && confirmPassword === password;
 
-  const formValid = useMemo(
-    () => emailValid && phoneValid && passwordValid && confirmValid,
-    [confirmValid, emailValid, passwordValid, phoneValid],
-  );
+  const formValid = emailValid && phoneValid && passwordValid && confirmValid;
 
   const clearFieldError = useCallback((field: string) => {
     setErrors((previous) => ({
@@ -225,7 +218,11 @@ export default function Register() {
                   setPassword(e.target.value);
                   clearFieldError("password");
                 }}
-                placeholder="Create a strong password"
+                onInput={(e) => {
+                  setPassword((e.target as HTMLInputElement).value);
+                  clearFieldError("password");
+                }}
+                placeholder="Minimum 6 characters"
                 className="w-full px-4 py-2.5 pr-10 rounded-lg border border-white/10 bg-white/5 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-white/20 focus:border-cyan-500/50 focus:bg-white/10 focus:ring-2 focus:ring-cyan-500/20 backdrop-blur-sm"
                 required
               />
@@ -238,7 +235,12 @@ export default function Register() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <PasswordStrengthIndicator password={password} />
+            {password.length > 0 && !passwordValid && (
+              <p className="text-xs text-amber-400 flex items-center gap-1">
+                <XCircle size={13} />
+                Password must be at least 6 characters
+              </p>
+            )}
             {errors.password?.map((message) => (
               <p key={message} className="text-xs text-red-400">
                 {message}
@@ -261,6 +263,10 @@ export default function Register() {
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
+                  clearFieldError("confirmPassword");
+                }}
+                onInput={(e) => {
+                  setConfirmPassword((e.target as HTMLInputElement).value);
                   clearFieldError("confirmPassword");
                 }}
                 placeholder="Confirm your password"
