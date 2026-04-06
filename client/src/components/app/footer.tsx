@@ -43,57 +43,9 @@ export default function Footer() {
 
   return (
     <footer className="w-full border-t border-[#23384f] bg-[#0b1120]">
-      {/* Newsletter Section */}
-      <div className="border-b border-[#23384f] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1280px]">
-          <div className="grid gap-6 md:grid-cols-2 md:items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-white">Stay Updated</h2>
-              <p className="mt-2 text-sm text-[#8a9bb0]">
-                Get the latest betting tips, promotions, and updates delivered
-                to your inbox.
-              </p>
-            </div>
-
-            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-              {isSubscribed ? (
-                <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3">
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                  <span className="text-sm font-medium text-green-400">
-                    subscribed!
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <div className="relative flex-1">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a9bb0]" />
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="h-11 w-full rounded-xl border border-[#294157] bg-[#0f1a2a] pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-[#8a9bb0] focus:border-[#f5c518] focus:shadow-[0_0_0_2px_rgba(245,197,24,0.2)]"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#f5c518] px-4 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isSubmitting ? "..." : "Subscribe"}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-            </form>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Content */}
       <div className="mx-auto w-full max-w-[1280px] gap-6 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-2">
@@ -204,10 +156,10 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact & Legal */}
+          {/* Contact */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Contact Us
+              Contact
             </h4>
             <div className="mt-4 grid gap-3 text-sm text-[#8a9bb0]">
               <a
@@ -224,28 +176,52 @@ export default function Footer() {
               </a>
               <p>Nairobi, Kenya</p>
             </div>
-            <div className="mt-4 flex gap-2">
-              <a
-                href="#"
-                className="text-xs text-[#8a9bb0] transition hover:text-[#f5c518]"
-              >
-                Terms
-              </a>
-              <span className="text-[#294157]">·</span>
-              <a
-                href="#"
-                className="text-xs text-[#8a9bb0] transition hover:text-[#f5c518]"
-              >
-                Privacy
-              </a>
-              <span className="text-[#294157]">·</span>
-              <a
-                href="#"
-                className="text-xs text-[#8a9bb0] transition hover:text-[#f5c518]"
-              >
-                Cookie Policy
-              </a>
-            </div>
+          </div>
+
+          {/* Newsletter Signup */}
+          <div className="rounded-2xl border border-[#23384f] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+              Stay Updated
+            </h4>
+            <p className="mt-2 text-xs text-[#8a9bb0]">
+              Get betting tips & promotions
+            </p>
+
+            <form
+              onSubmit={handleNewsletterSubmit}
+              className="mt-3 flex flex-col gap-2"
+            >
+              {isSubscribed ? (
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2">
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                  <span className="text-xs font-medium text-green-400">
+                    subscribed!
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8a9bb0]" />
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-[#294157] bg-[#0f1a2a] pl-9 pr-3 text-xs text-white outline-none transition placeholder:text-[#5a6b7d] focus:border-[#f5c518] focus:shadow-[0_0_0_2px_rgba(245,197,24,0.1)]"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#f5c518] text-xs font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isSubmitting ? "..." : "Subscribe"}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
+            </form>
           </div>
         </div>
 
@@ -255,6 +231,19 @@ export default function Footer() {
         {/* Bottom Footer */}
         <div className="mt-8 flex flex-col gap-4 text-xs text-[#5a6b7d] sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} BetWise. All rights reserved. | Safe Gaming Certified</p>
+          <div className="flex gap-3">
+            <a href="#" className="transition hover:text-[#f5c518]">
+              Terms
+            </a>
+            <span className="text-[#294157]">·</span>
+            <a href="#" className="transition hover:text-[#f5c518]">
+              Privacy
+            </a>
+            <span className="text-[#294157]">·</span>
+            <a href="#" className="transition hover:text-[#f5c518]">
+              Cookie Policy
+            </a>
+          </div>
           <p className="font-medium text-[#8a9bb0]">Play Responsibly · 18+</p>
         </div>
       </div>
