@@ -143,9 +143,7 @@ export default function PaymentsWithdrawalPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#294157] bg-[#0f1a2a]">
                 <ArrowUpRight size={16} className="text-[#f5c518]" />
               </div>
-              <h2 className="text-lg font-bold text-white">
-                Withdraw
-              </h2>
+              <h2 className="text-lg font-bold text-white">Withdraw</h2>
             </div>
             <p className="mt-0.5 text-xs text-[#8a9bb0]">
               Quick & secure M-Pesa transfer
@@ -240,9 +238,7 @@ export default function PaymentsWithdrawalPage() {
 
       <article className="rounded-2xl border border-[#23384f] bg-[linear-gradient(135deg,#111d2e,#0f1a2a)] p-4 sm:p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">
-            Recent Requests
-          </h3>
+          <h3 className="text-sm font-semibold text-white">Recent Requests</h3>
           <button
             type="button"
             className="inline-flex items-center gap-0.5 text-xs font-medium text-[#8a9bb0] transition hover:text-[#f5c518]"
