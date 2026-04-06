@@ -3,7 +3,14 @@ import { useMemo, useState, useCallback } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthModal from "@/components/auth/AuthModal";
 import PasswordStrengthIndicator from "@/components/PasswordStrengthIndicator";
@@ -259,7 +266,9 @@ export default function Register() {
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors"
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              aria-label={
+                showConfirmPassword ? "Hide password" : "Show password"
+              }
             >
               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
