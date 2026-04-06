@@ -1,15 +1,27 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import LoginModal from "./LoginModal";
 import RegisterModal from "./RegisterModal";
 
 /**
- * Renders all auth modals globally.
- * Should be placed in the root layout to ensure modals are available on all pages.
+ * Renders all auth modals globally using a portal.
+ * Uses React Portal to escape layout constraints and render at document body level.
+ * This ensures modals and overlays render above all other content.
  */
 export default function AuthModals() {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       <LoginModal />
       <RegisterModal />
-    </>
+    </>,
+    document.body
   );
 }
