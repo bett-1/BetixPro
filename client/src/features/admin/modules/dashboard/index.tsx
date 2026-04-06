@@ -181,16 +181,16 @@ export default function Dashboard() {
         ) : null}
 
         {/* Stat Cards - Compact */}
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {isLoading && metrics.length === 0
-              ? Array.from({ length: 8 }).map((_, index) => (
-                  <AdminCard key={index} className="animate-pulse">
-                    <div className="h-4 w-20 rounded bg-admin-surface" />
-                    <div className="mt-2 h-6 w-24 rounded bg-admin-surface" />
-                    <div className="mt-1 h-2 w-16 rounded bg-admin-surface" />
-                  </AdminCard>
-                ))
-              : metrics.map((metric) => {
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {isLoading && metrics.length === 0
+            ? Array.from({ length: 8 }).map((_, index) => (
+                <AdminCard key={index} className="animate-pulse">
+                  <div className="h-4 w-20 rounded bg-admin-surface" />
+                  <div className="mt-2 h-6 w-24 rounded bg-admin-surface" />
+                  <div className="mt-1 h-2 w-16 rounded bg-admin-surface" />
+                </AdminCard>
+              ))
+            : metrics.map((metric) => {
                 // Assign colors based on tone
                 const colorMap: Record<
                   string,
