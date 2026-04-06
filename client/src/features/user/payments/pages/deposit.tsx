@@ -28,7 +28,6 @@ import {
   type StkPushResponse,
   type WalletSummaryResponse,
 } from "../wallet";
-import { useAuth } from "@/context/AuthContext";
 
 // Reduced to exactly 4 options
 const quickAmounts = [500, 1000, 2500, 5000];
@@ -87,13 +86,13 @@ export default function PaymentsDepositPage() {
     }
   }, [phone, user?.phone]);
 
-  const sanitizedPhone = phone.replace(/\s+/g, "").replace(/^\+/, "");
-  const isPhoneValid = /^(?:254|0)7\d{8}$/.test(sanitizedPhone);
+  const sanitizedPhone = normalizePhone(phone);
+  const phoneInputValid = phone ? isPhoneValid(sanitizedPhone) : true;
 
   const isFormValid = useMemo(() => {
     const amountValue = Number(amount);
-    return isPhoneValid && amountValue >= 1 && amountValue <= 250000;
-  }, [amount, isPhoneValid]);
+    return phoneInputValid && amountValue >= 1 && amountValue <= 250000;
+  }, [amount, phoneInputValid]);
 
   useEffect(() => {
     if (
