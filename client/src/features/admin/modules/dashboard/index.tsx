@@ -157,10 +157,8 @@ export default function Dashboard() {
         }
       />
 
-      {/* Main Content + Quick Links Sidebar */}
-      <div className="grid gap-6 xl:grid-cols-[1fr_240px]">
-        {/* Main Content */}
-        <div className="space-y-6">
+      {/* Main Content */}
+      <div className="space-y-6">
           {pendingCount > 0 ? (
             <Alert className="border-amber-400/30 bg-amber-400/10">
               <TriangleAlert className="h-4 w-4 text-amber-300" />
@@ -291,8 +289,10 @@ export default function Dashboard() {
             </AdminCard>
           </div>
 
-          {/* Recent Activity */}
-          <AdminCard>
+          {/* Recent Activity + Quick Links */}
+          <div className="grid gap-4 xl:grid-cols-[1fr_260px]">
+            {/* Recent Activity */}
+            <AdminCard>
             <AdminCardHeader
               title="Recent Activity"
               subtitle="Live wallet and withdrawal flow"
@@ -442,12 +442,13 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </TableShell>
-          </AdminCard>
-        </div>
+            </AdminCard>
 
-        {/* Quick Links Sidebar */}
-        <div className="space-y-3">
-          <div className="sticky top-6 space-y-2">
+            {/* Quick Links */}
+            <AdminCard>
+              <div className="space-y-2.5">
+                <h3 className="text-sm font-semibold text-admin-text">Quick Links</h3>
+                <div className="space-y-2">
             <Link
               to="/admin/withdrawals"
               className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-gold hover:bg-admin-surface/60"
@@ -507,9 +508,11 @@ export default function Dashboard() {
                 <p className="text-[9px] text-admin-text-muted">Config</p>
               </div>
             </Link>
+                </div>
+              </div>
+            </AdminCard>
           </div>
         </div>
-      </div>
 
       {selectedTransaction && (
         <Dialog
