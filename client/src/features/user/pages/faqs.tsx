@@ -141,43 +141,41 @@ export default function FAQs() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b1120] to-[#0f172a] text-white">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold mb-2">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-sm text-[#90a2bb] max-w-2xl mx-auto">
-            Find answers to common questions about BetWise, betting, and account
-            management.
+        <div className="mb-16 text-center">
+          <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
+          <p className="text-base text-[#90a2bb] max-w-2xl mx-auto leading-relaxed">
+            Find answers to common questions about BetWise, betting, payments,
+            and account management.
           </p>
         </div>
 
         {/* FAQs by Category */}
-        <div className="space-y-8">
+        <div className="space-y-12">
           {categories.map((category) => (
             <div key={category}>
-              <h2 className="text-lg font-bold text-[#f5c518] mb-3">
+              <h2 className="text-2xl font-bold text-[#f5c518] mb-6">
                 {category}
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {faqs
                   .filter((faq) => faq.category === category)
                   .map((faq) => (
                     <Card
                       key={faq.id}
-                      className="overflow-hidden border-[#31455f] bg-[#0f172a]"
+                      className="overflow-hidden border border-[#31455f] bg-[#0f172a] rounded-2xl"
                     >
                       <button
                         onClick={() => toggleExpand(faq.id)}
-                        className="w-full px-4 py-3 text-left hover:bg-[#1a2a3a] transition-colors"
+                        className="w-full px-6 py-5 text-left"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <h3 className="text-sm font-semibold text-white">
+                        <div className="flex items-center justify-between gap-4">
+                          <h3 className="text-base font-semibold text-white leading-snug">
                             {faq.question}
                           </h3>
                           <ChevronDown
-                            className={`h-4 w-4 flex-shrink-0 text-[#f5c518] transition-transform ${
+                            className={`h-6 w-6 flex-shrink-0 text-[#f5c518] transition-all duration-300 hover:scale-110 cursor-pointer ${
                               expandedFAQ === faq.id ? "rotate-180" : ""
                             }`}
                           />
@@ -185,8 +183,8 @@ export default function FAQs() {
                       </button>
 
                       {expandedFAQ === faq.id && (
-                        <div className="border-t border-[#31455f] bg-[#0c1018] px-4 py-3">
-                          <p className="text-xs text-[#90a2bb] leading-relaxed">
+                        <div className="border-t border-[#31455f] bg-[#0c1018] px-6 py-5 animate-in fade-in duration-200">
+                          <p className="text-base text-[#90a2bb] leading-relaxed">
                             {faq.answer}
                           </p>
                         </div>
@@ -199,12 +197,13 @@ export default function FAQs() {
         </div>
 
         {/* Still Need Help Section */}
-        <div className="mt-12 rounded-lg border border-[#31455f] bg-[#0f172a] p-6 text-center">
-          <h2 className="text-lg font-bold mb-2">Still have questions?</h2>
-          <p className="text-sm text-[#90a2bb] mb-4">
-            Can't find the answer? Reach out to our support team.
+        <div className="mt-16 rounded-2xl border border-[#31455f] bg-[#0f172a] p-10 text-center">
+          <h2 className="text-2xl font-bold mb-3">Still have questions?</h2>
+          <p className="text-base text-[#90a2bb] mb-6 leading-relaxed">
+            Can't find the answer you're looking for? Please reach out to our
+            customer support team. We're here to help!
           </p>
-          <button className="inline-block rounded bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-6 py-2 text-sm font-bold text-[#0b1120] hover:shadow-lg transition">
+          <button className="inline-block rounded-xl bg-gradient-to-r from-[#f5c518] to-[#d4a500] px-10 py-3 font-bold text-[#0b1120] hover:shadow-xl hover:scale-105 transition-all duration-200">
             Contact Support
           </button>
         </div>
