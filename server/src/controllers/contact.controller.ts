@@ -11,7 +11,9 @@ const createContactSchema = {
     val.trim().length >= 10 &&
     val.trim().length <= 2000,
   fullName: (val: any) =>
-    typeof val === "string" && val.trim().length >= 2 && val.trim().length <= 100,
+    typeof val === "string" &&
+    val.trim().length >= 2 &&
+    val.trim().length <= 100,
   phone: (val: any) =>
     typeof val === "string" && /^[\d\+\-\(\)\s]{7,20}$/.test(val.trim()),
 };
@@ -41,7 +43,11 @@ export async function createContact(req: Request, res: Response) {
       });
     }
 
-    if (!fullName || typeof fullName !== "string" || fullName.trim().length < 2) {
+    if (
+      !fullName ||
+      typeof fullName !== "string" ||
+      fullName.trim().length < 2
+    ) {
       return res.status(400).json({
         message: "Full name is required and must be at least 2 characters",
       });

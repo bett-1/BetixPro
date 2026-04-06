@@ -11,8 +11,8 @@ import {
 
 const contactRouter = Router();
 
-// User routes - require authentication
-contactRouter.post("/contact", requireAuth, createContact);
+// Public route - anyone can send a contact message (no auth required)
+contactRouter.post("/contact", createContact);
 contactRouter.get("/contact/my-messages", requireAuth, getUserContacts);
 
 // Admin routes - require admin authentication
