@@ -57,9 +57,7 @@ export default function AdminShell() {
       },
       {
         title: "Trading",
-        items: adminNavigation.filter(
-          (item) => item.category === "operations",
-        ),
+        items: adminNavigation.filter((item) => item.category === "operations"),
       },
       {
         title: "Insights",
@@ -288,8 +286,6 @@ export default function AdminShell() {
             </div>
 
             <div className="ml-auto flex flex-wrap items-center gap-3">
-          
-
               <div className="relative">
                 <button
                   type="button"

@@ -27,11 +27,7 @@ export type AdminNavId =
   | "reports"
   | "settings";
 
-export type AdminNavCategory =
-  | "core"
-  | "operations"
-  | "insights"
-  | "system";
+export type AdminNavCategory = "core" | "operations" | "insights" | "system";
 
 export interface AdminNavSection {
   id: AdminNavId;
