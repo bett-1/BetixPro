@@ -587,7 +587,7 @@ myBetsRouter.post(
         });
       }
 
-      const refundAmountInCents = Math.round(bet.stake * 100);
+      const refundAmount = Math.round(bet.stake);
 
       await prisma.$transaction(async (tx) => {
         await tx.bet.update({
@@ -605,7 +605,7 @@ myBetsRouter.post(
           where: { userId },
           data: {
             balance: {
-              increment: refundAmountInCents,
+              increment: refundAmount,
             },
           },
         });
@@ -615,7 +615,7 @@ myBetsRouter.post(
             userId,
             type: "REFUND",
             status: "COMPLETED",
-            amount: refundAmountInCents,
+            amount: refundAmount,
             currency: "KES",
             channel: "betting",
             reference: `BET-CANCEL-${bet.id}`,
@@ -628,7 +628,7 @@ myBetsRouter.post(
         userId,
         betId: bet.id,
         action: "CANCEL_SUCCESS",
-        attemptedData: { refunded: refundAmountInCents },
+        attemptedData: { refunded: refundAmount },
         ipAddress: getClientIp(req.ip),
       });
 
