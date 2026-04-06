@@ -101,197 +101,199 @@ export default function BettingHome() {
   }, [heroImages.length]);
 
   return (
-    <div className="space-y-5 bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
-      <section className="overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
-        <div className="relative h-[220px] w-full sm:h-[280px] md:h-[340px]">
-          {heroImages.map((image, index) => (
-            <article
-              key={`hero-image-${index}`}
-              className="absolute inset-0 h-full w-full transition-transform duration-700 ease-out"
-              style={{
-                transform: `translateX(${(index - activeHeroIndex) * 100}%)`,
-              }}
-            >
-              <img
-                src={image}
-                alt={`Featured betting visual ${index + 1}`}
-                className="h-full w-full object-cover"
-                loading={index === 0 ? "eager" : "lazy"}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0a1218]/88 via-[#0a1218]/42 to-[#0b1120]/28" />
-            </article>
-          ))}
-
-          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 md:p-8">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-[#f5c518]">
-              BetWise Picks
-            </p>
-            <h1 className="mt-2 max-w-2xl text-xl font-extrabold text-white sm:text-2xl md:text-3xl">
-              Bet Smarter, Win Bigger
-            </h1>
-            <p className="mt-2 max-w-xl text-sm text-[#d6e0e8]">
-              Explore top fixtures with real-time odds and place your best
-              picks.
-            </p>
-
-            <div className="mt-4 flex items-center gap-2">
-              {heroImages.map((_, index) => (
-                <button
-                  key={`hero-dot-${index}`}
-                  type="button"
-                  onClick={() => setActiveHeroIndex(index)}
-                  aria-label={`Show slide ${index + 1}`}
-                  className={`h-2.5 rounded-full transition-all ${
-                    index === activeHeroIndex
-                      ? "w-7 bg-[#f5c518]"
-                      : "w-2.5 bg-white/50 hover:bg-white/80"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <LiveTicker />
-
-      <section className="overflow-x-auto rounded-xl border border-[#23384f] bg-[#101b2b] px-2.5 py-2 app-scrollbar scroll-smooth">
-        <div className="flex min-w-max gap-2.5">
-          {tabs.map((tab) => {
-            const isActive =
-              selectedSport === tab.sportKey && selectedLeague === tab.league;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setSelectedSport(tab.sportKey);
-                  setSelectedLeague(tab.league);
+    <div className="min-h-screen bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
+      <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
+          <div className="relative h-[80px] w-full sm:h-[100px] md:h-[120px]">
+            {heroImages.map((image, index) => (
+              <article
+                key={`hero-image-${index}`}
+                className="absolute inset-0 h-full w-full transition-transform duration-700 ease-out"
+                style={{
+                  transform: `translateX(${(index - activeHeroIndex) * 100}%)`,
                 }}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "border-[#f5c518] bg-[#f5c518]/12 text-[#f5c518]"
-                    : "border-[#294157] text-[#8a9bb0] hover:border-[#f5c518]/60 hover:text-white"
-                }`}
               >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+                <img
+                  src={image}
+                  alt={`Featured betting visual ${index + 1}`}
+                  className="h-full w-full object-cover"
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0a1218]/88 via-[#0a1218]/42 to-[#0b1120]/28" />
+              </article>
+            ))}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_350px]">
-        <div className="min-w-0 space-y-5">
-          {liveEvents.length > 0 ? (
-            <section className="space-y-2.5 overflow-hidden rounded-xl border border-[#23384f] bg-[#101b2b] p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#22c55e]" />
-                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-                    LIVE NOW
-                  </h2>
-                  <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
-                    {liveEvents.length}
-                  </span>
-                </div>
-                {liveEvents.length > 6 ? (
+            <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 md:p-4">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-[#f5c518]">
+                BetWise Picks
+              </p>
+              <h1 className="mt-1 max-w-2xl text-sm font-extrabold text-white sm:text-base md:text-lg">
+                Bet Smarter, Win Bigger
+              </h1>
+              <p className="mt-1 max-w-xl text-xs text-[#d6e0e8]">
+                Explore top fixtures with real-time odds and place your best
+                picks.
+              </p>
+
+              <div className="mt-2 flex items-center gap-1.5">
+                {heroImages.map((_, index) => (
                   <button
+                    key={`hero-dot-${index}`}
                     type="button"
-                    onClick={() => {
-                      setSelectedSport("");
-                      setSelectedLeague("");
-                    }}
-                    className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
-                  >
-                    View all live →
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="divide-y divide-[#21364a]">
-                {featuredLiveEvents.map((event) => (
-                  <EventCard
-                    key={event.eventId}
-                    event={event}
-                    onOddsSelect={betSlip.addSelection}
-                    selectedOdds={selectedOdds}
+                    onClick={() => setActiveHeroIndex(index)}
+                    aria-label={`Show slide ${index + 1}`}
+                    className={`h-2.5 rounded-full transition-all ${
+                      index === activeHeroIndex
+                        ? "w-7 bg-[#f5c518]"
+                        : "w-2.5 bg-white/50 hover:bg-white/80"
+                    }`}
                   />
                 ))}
               </div>
-            </section>
-          ) : null}
-
-          <section className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cfd9e2]">
-                  UPCOMING MATCHES
-                </h2>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a9bb0]">
-                  {formatToday()}
-                </p>
-              </div>
             </div>
+          </div>
+        </section>
 
-            {loading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={`event-skeleton-${index}`}
-                    className="animate-pulse rounded-[10px] border border-[#23384f] bg-[#111d2e] p-4"
-                  >
-                    <div className="h-2.5 w-1/3 rounded bg-[#243548]" />
-                    <div className="mt-3 h-4 w-full rounded bg-[#243548]" />
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      <div className="h-8 rounded bg-[#243548]" />
-                      <div className="h-8 rounded bg-[#243548]" />
-                      <div className="h-8 rounded bg-[#243548]" />
-                    </div>
+        <LiveTicker />
+
+        <section className="overflow-x-auto rounded-xl border border-[#23384f] bg-[#101b2b] px-4 py-3 app-scrollbar scroll-smooth">
+          <div className="flex min-w-max gap-3">
+            {tabs.map((tab) => {
+              const isActive =
+                selectedSport === tab.sportKey && selectedLeague === tab.league;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSport(tab.sportKey);
+                    setSelectedLeague(tab.league);
+                  }}
+                  className={`whitespace-nowrap rounded-full border px-5 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
+                    isActive
+                      ? "border-[#f5c518] bg-[#f5c518]/15 text-[#f5c518]"
+                      : "border-[#294157] text-[#8a9bb0] hover:border-[#f5c518]/60 hover:text-white"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="min-w-0 space-y-5">
+            {liveEvents.length > 0 ? (
+              <section className="space-y-3 overflow-hidden rounded-xl border border-[#23384f] bg-[#101b2b] p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#22c55e]" />
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-white">
+                      LIVE NOW
+                    </h2>
+                    <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
+                      {liveEvents.length}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className="rounded-2xl border border-[#5a222a] bg-[#2a1515] p-6 text-center">
-                <p className="text-sm text-red-200">{error}</p>
-                <button
-                  type="button"
-                  onClick={refetch}
-                  className="mt-4 rounded-lg bg-[#f5c518] px-4 py-2 text-sm font-semibold text-black"
-                >
-                  Refresh
-                </button>
-              </div>
-            ) : upcomingEvents.length === 0 ? (
-              <div className="rounded-2xl border border-[#23384f] bg-[#111d2e] px-6 py-10 text-center">
-                <p className="text-3xl">⚽</p>
-                <p className="mt-3 text-lg font-semibold text-white">
-                  No matches available right now
-                </p>
-                <p className="mt-2 text-sm text-[#8a9bb0]">
-                  Check back soon or refresh
-                </p>
-                <button
-                  type="button"
-                  onClick={refetch}
-                  className="mt-4 rounded-lg bg-[#f5c518] px-4 py-2 text-sm font-semibold text-black"
-                >
-                  Refresh
-                </button>
-              </div>
-            ) : (
-              <SportEvents
-                events={upcomingEvents}
-                onOddsSelect={betSlip.addSelection}
-                selectedOdds={selectedOdds}
-              />
-            )}
-          </section>
-        </div>
+                  {liveEvents.length > 6 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSport("");
+                        setSelectedLeague("");
+                      }}
+                      className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
+                    >
+                      View all live →
+                    </button>
+                  ) : null}
+                </div>
 
-        <div className="relative min-w-0">
-          <BetSlip {...betSlip} />
+                <div className="divide-y divide-[#21364a]">
+                  {featuredLiveEvents.map((event) => (
+                    <EventCard
+                      key={event.eventId}
+                      event={event}
+                      onOddsSelect={betSlip.addSelection}
+                      selectedOdds={selectedOdds}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#cfd9e2]">
+                    UPCOMING MATCHES
+                  </h2>
+                  <p className="mt-1.5 text-[11px] uppercase tracking-wide text-[#8a9bb0]">
+                    {formatToday()}
+                  </p>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div
+                      key={`event-skeleton-${index}`}
+                      className="animate-pulse rounded-[10px] border border-[#23384f] bg-[#111d2e] p-4"
+                    >
+                      <div className="h-2.5 w-1/3 rounded bg-[#243548]" />
+                      <div className="mt-3 h-4 w-full rounded bg-[#243548]" />
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        <div className="h-8 rounded bg-[#243548]" />
+                        <div className="h-8 rounded bg-[#243548]" />
+                        <div className="h-8 rounded bg-[#243548]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="rounded-2xl border border-[#5a222a] bg-[#2a1515] p-6 text-center">
+                  <p className="text-sm text-red-200">{error}</p>
+                  <button
+                    type="button"
+                    onClick={refetch}
+                    className="mt-4 rounded-lg bg-[#f5c518] px-4 py-2 text-sm font-semibold text-black"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              ) : upcomingEvents.length === 0 ? (
+                <div className="rounded-2xl border border-[#23384f] bg-[#111d2e] px-6 py-10 text-center">
+                  <p className="text-3xl">⚽</p>
+                  <p className="mt-3 text-lg font-semibold text-white">
+                    No matches available right now
+                  </p>
+                  <p className="mt-2 text-sm text-[#8a9bb0]">
+                    Check back soon or refresh
+                  </p>
+                  <button
+                    type="button"
+                    onClick={refetch}
+                    className="mt-4 rounded-lg bg-[#f5c518] px-4 py-2 text-sm font-semibold text-black"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              ) : (
+                <SportEvents
+                  events={upcomingEvents}
+                  onOddsSelect={betSlip.addSelection}
+                  selectedOdds={selectedOdds}
+                />
+              )}
+            </section>
+          </div>
+
+          <div className="relative min-w-0">
+            <BetSlip {...betSlip} />
+          </div>
         </div>
       </div>
     </div>
