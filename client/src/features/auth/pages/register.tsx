@@ -142,7 +142,7 @@ export default function Register() {
               Already have an account?{" "}
               <Link
                 className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-                to="/login"
+                onClick={() => openAuthModal("login")}
               >
                 Sign in
               </Link>

@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 type RouteTo =
   | "/user"
   | "/user/login"
-  | "/user/register"
+  | "/user/coming-soon";
   | "/user/payments"
   | "/user/payments/deposit"
   | "/user/payments/withdrawal"
@@ -70,7 +70,7 @@ const sportGroups: SportGroup[] = [
     children: [
       { label: "UEFA Champions League", to: "/user" },
       { label: "Championship", to: "/user/payments" },
-      { label: "Copa Libertadores", to: "/user/register" },
+      { label: "Copa Libertadores", to: "/user/coming-soon" },
     ],
   },
   {
@@ -81,7 +81,7 @@ const sportGroups: SportGroup[] = [
       { label: "NCAAB", to: "/user/login" },
       { label: "NBA", to: "/user/payments" },
       { label: "Basketball Euroleague", to: "/user" },
-      { label: "NBL", to: "/user/register" },
+      { label: "NBL", to: "/user/coming-soon" },
       { label: "WNCAAB", to: "/user/payments/history" },
     ],
   },
@@ -98,7 +98,7 @@ const sportGroups: SportGroup[] = [
     children: [
       { label: "MLB Preseason", to: "/user" },
       { label: "NCAA Baseball", to: "/user/payments" },
-      { label: "MLB", to: "/user/register" },
+      { label: "MLB", to: "/user/coming-soon" },
     ],
   },
   {
@@ -108,10 +108,10 @@ const sportGroups: SportGroup[] = [
     children: [
       { label: "SHL", to: "/user/login" },
       { label: "NHL", to: "/user/payments" },
-      { label: "AHL", to: "/user/register" },
+      { label: "AHL", to: "/user/coming-soon" },
       { label: "Liiga", to: "/user" },
       { label: "Mestis", to: "/user/payments/history" },
-      { label: "HockeyAllsvenskan", to: "/user/register" },
+      { label: "HockeyAllsvenskan", to: "/user/coming-soon" },
     ],
   },
   {
@@ -121,7 +121,7 @@ const sportGroups: SportGroup[] = [
     children: [
       { label: "International Twenty20", to: "/user" },
       { label: "T20 World Cup", to: "/user/payments" },
-      { label: "One Day Internationals", to: "/user/register" },
+      { label: "One Day Internationals", to: "/user/coming-soon" },
     ],
   },
   {
@@ -136,7 +136,7 @@ const quickLinks: SidebarLink[] = [
   { label: "Favorites", to: "/user", icon: Star },
   { label: "My Bets", to: "/user/payments", icon: Ticket },
   { label: "Analytics", to: "/user/payments/history", icon: BarChart3 },
-  { label: "Responsible Gambling", to: "/user/register", icon: ShieldCheck },
+  { label: "Responsible Gambling", to: "/user/coming-soon", icon: ShieldCheck },
 ];
 
 function SectionHeading({

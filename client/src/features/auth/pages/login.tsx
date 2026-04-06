@@ -112,12 +112,12 @@ export default function Login() {
           <div className="text-center">
             <p className="text-xs text-slate-400">
               Don&apos;t have an account?{" "}
-              <Link
+              <button
+                onClick={() => openAuthModal("register")}
                 className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-                to="/register"
               >
                 Create one
-              </Link>
+              </button>
             </p>
           </div>
         }
