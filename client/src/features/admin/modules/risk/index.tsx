@@ -270,7 +270,9 @@ export default function Risk() {
           </div>
 
           {/* Clear Filters */}
-          {(statusFilter !== "all" || severityFilter !== "all" || typeFilter !== "all") && (
+          {(statusFilter !== "all" ||
+            severityFilter !== "all" ||
+            typeFilter !== "all") && (
             <div className="flex justify-end">
               <Button
                 variant="outline"
@@ -299,7 +301,7 @@ export default function Risk() {
           <div className="space-y-4">
             <AlertCircle className="mx-auto h-12 w-12 text-admin-text-muted/50" />
             <p className="text-admin-text-muted">
-              {statusFilter || severityFilter || typeFilter
+              {statusFilter !== "all" || severityFilter !== "all" || typeFilter !== "all"
                 ? "No alerts match your filters"
                 : "No risk alerts at this time"}
             </p>
