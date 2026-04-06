@@ -159,12 +159,18 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         </div>
 
         <div className="bc-actions">
-          <div className="bc-balance-card" aria-label="Wallet Balance">
-            <span className="bc-balance-label">Balance:</span>
-            <span className="bc-balance-value">
-              {formatMoney(walletSummary?.wallet.balance ?? 0)}
+          {isAuthenticated ? (
+            <div className="bc-balance-card" aria-label="Wallet Balance">
+              <span className="bc-balance-label">Balance:</span>
+              <span className="bc-balance-value">
+                {formatMoney(walletSummary?.wallet.balance ?? 0)}
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-[#a8c4e0] font-medium">
+              Login to view balance
             </span>
-          </div>
+          )}
 
           {isAuthenticated ? (
             <>

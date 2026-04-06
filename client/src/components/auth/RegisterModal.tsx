@@ -151,7 +151,7 @@ export default function RegisterModal() {
 
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 shadow-2xl shadow-slate-950 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/40 bg-gradient-to-br from-[#1e4080] via-[#2a5298] to-[#1e4080] p-8 shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Header */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-2">
@@ -197,7 +197,7 @@ export default function RegisterModal() {
                         clearFieldError("email");
                       }}
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-600/40 bg-slate-800/50 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-slate-500/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#3d6ba3]/40 bg-[#1a3a6b]/50 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
                       required
                     />
                   </div>
@@ -209,7 +209,7 @@ export default function RegisterModal() {
                 {/* Phone field */}
                 <div className="space-y-1.5">
                   <label
-                    className="block text-xs font-medium text-slate-300"
+                    className="block text-xs font-medium text-white"
                     htmlFor="register-phone"
                   >
                     Phone (Kenyan)
@@ -228,7 +228,7 @@ export default function RegisterModal() {
                         clearFieldError("phone");
                       }}
                       placeholder="0712345678"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-600/40 bg-slate-800/50 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-slate-500/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#3d6ba3]/40 bg-[#1a3a6b]/50 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
                       required
                     />
                   </div>
@@ -259,7 +259,7 @@ export default function RegisterModal() {
                         clearFieldError("password");
                       }}
                       placeholder="Min. 8 characters"
-                      className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-600/40 bg-slate-800/50 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-slate-500/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#3d6ba3]/40 bg-[#1a3a6b]/50 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
                       required
                     />
                     <button
@@ -294,7 +294,7 @@ export default function RegisterModal() {
                         clearFieldError("confirmPassword");
                       }}
                       placeholder="Confirm your password"
-                      className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-600/40 bg-slate-800/50 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-slate-500/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#3d6ba3]/40 bg-[#1a3a6b]/50 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
                       required
                     />
                     <button
@@ -353,7 +353,7 @@ export default function RegisterModal() {
               </form>
 
               {/* Footer */}
-              <div className="border-t border-slate-700/30 pt-4 mt-4 text-center">
+              <div className="border-t border-[#3d6ba3]/30 pt-4 mt-4 text-center">
                 <p className="text-xs text-slate-400">
                   Have an account?{" "}
                   <button

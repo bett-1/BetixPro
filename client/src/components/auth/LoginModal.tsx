@@ -106,7 +106,7 @@ export default function LoginModal() {
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300"
+          className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/40 bg-gradient-to-br from-[#1e4080] via-[#2a5298] to-[#1e4080] p-8 shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-bottom-4 duration-300"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -151,7 +151,7 @@ export default function LoginModal() {
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="0712345678"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-600/40 bg-slate-800/60 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-slate-500/60 focus:border-[#f5c518]/70 focus:bg-slate-800 focus:ring-2 focus:ring-[#f5c518]/30"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#3d6ba3]/40 bg-[#1a3a6b]/60 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/70 focus:bg-[#1a3a6b] focus:ring-2 focus:ring-[#f5c518]/30"
                   required
                 />
               </div>
@@ -181,7 +181,7 @@ export default function LoginModal() {
                   value={password}
                   onChange={(e) => handlePasswordChange(e.target.value)}
                   placeholder="Your password"
-                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-600/40 bg-slate-800/60 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-slate-500/60 focus:border-[#f5c518]/70 focus:bg-slate-800 focus:ring-2 focus:ring-[#f5c518]/30"
+                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-[#3d6ba3]/40 bg-[#1a3a6b]/60 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/70 focus:bg-[#1a3a6b] focus:ring-2 focus:ring-[#f5c518]/30"
                   required
                 />
                 <button
@@ -228,7 +228,7 @@ export default function LoginModal() {
           </form>
 
           {/* Footer */}
-          <div className="border-t border-slate-700/40 pt-5 mt-6 text-center">
+          <div className="border-t border-[#3d6ba3]/30 pt-5 mt-6 text-center">
             <p className="text-sm text-slate-400">
               Don&apos;t have an account?{" "}
               <button
