@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 
 type RouteTo =
   | "/user"
-  | "/user/login"
   | "/user/coming-soon"
   | "/user/payments"
   | "/user/payments/deposit"

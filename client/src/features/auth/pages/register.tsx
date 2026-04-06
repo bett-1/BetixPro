@@ -56,7 +56,7 @@ function passwordChecks(password: string) {
 }
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, openAuthModal } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");

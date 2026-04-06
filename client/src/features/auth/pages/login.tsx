@@ -32,7 +32,7 @@ function getLoginErrorMessage(error: unknown) {
 }
 
 export default function Login() {
-  const { login, user, isAuthenticated } = useAuth();
+  const { login, user, isAuthenticated, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { redirect?: string };
 
