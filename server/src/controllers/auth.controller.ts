@@ -308,11 +308,16 @@ export async function refresh(req: Request, res: Response) {
         where: { userId: tokenRecord.user.id },
       });
       res.clearCookie("refreshToken", getRefreshTokenCookieOptions());
-      return res.status(403).json({ message: "This account has been suspended." });
+      return res
+        .status(403)
+        .json({ message: "This account has been suspended." });
     }
 
     const newRawRefreshToken = createRefreshToken();
-    const newRefreshHash = hashToken(newRawRefreshToken, getRefreshTokenSecret());
+    const newRefreshHash = hashToken(
+      newRawRefreshToken,
+      getRefreshTokenSecret(),
+    );
 
     await prisma.$transaction([
       prisma.refreshToken.delete({ where: { id: tokenRecord.id } }),
