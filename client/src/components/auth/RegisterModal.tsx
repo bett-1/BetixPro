@@ -235,7 +235,7 @@ export default function RegisterModal() {
                         clearFieldError("phone");
                       }}
                       placeholder="0712345678"
-                      autoComplete="username"
+                      autoComplete="tel"
                       className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#3d6ba3]/40 bg-[#1a3a6b]/50 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
                       required
                     />
