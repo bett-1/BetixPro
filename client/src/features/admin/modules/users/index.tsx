@@ -227,7 +227,9 @@ export default function Users() {
   // Calculate stats
   const totalUsers = total || 0;
   const activeUsers = visibleUsers.filter((u) => u.status === "active").length;
-  const suspendedUsers = visibleUsers.filter((u) => u.status === "suspended").length;
+  const suspendedUsers = visibleUsers.filter(
+    (u) => u.status === "suspended",
+  ).length;
   const bannedUsers = visibleUsers.filter((u) => u.status === "banned").length;
 
   return (
@@ -360,7 +362,10 @@ export default function Users() {
                     <td
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
-                      <span className="max-w-[120px] truncate block" title={user.email}>
+                      <span
+                        className="max-w-[120px] truncate block"
+                        title={user.email}
+                      >
                         {truncateEmailForTable(user.email)}
                       </span>
                     </td>
