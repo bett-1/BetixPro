@@ -140,7 +140,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 overflow-x-hidden">
       <AdminSectionHeader
         title="Overview"
         subtitle={
@@ -173,7 +173,7 @@ export default function Dashboard() {
               </span>
               <Link
                 to="/admin/withdrawals"
-                className="rounded-lg border border-amber-300/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-amber-100 transition hover:bg-amber-300/20"
+                className="rounded-lg border border-amber-300/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-amber-100 transition hover:bg-amber-300/20 whitespace-nowrap"
               >
                 Review Requests
               </Link>
@@ -239,9 +239,7 @@ export default function Dashboard() {
                         <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
                           {metric.label}
                         </p>
-                        <div
-                          className={`rounded p-1 flex-shrink-0 ${colors.icon}`}
-                        >
+                        <div className={`rounded p-1 shrink-0 ${colors.icon}`}>
                           <div className="h-3 w-3" />
                         </div>
                       </div>
@@ -280,15 +278,17 @@ export default function Dashboard() {
 
         {/* Charts */}
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-4">
-          <AdminCard className="p-3 sm:p-4">
+          <AdminCard className="p-3 sm:p-4 overflow-hidden w-full">
             <AdminCardHeader
               title="Deposit vs Withdrawal Trend"
               subtitle="Completed transactions over last 7 days"
             />
-            <DepositWithdrawalChart data={chartData} compact />
+            <div className="w-full overflow-x-auto">
+              <DepositWithdrawalChart data={chartData} compact />
+            </div>
           </AdminCard>
 
-          <AdminCard className="p-3 sm:p-4">
+          <AdminCard className="p-3 sm:p-4 w-full">
             <AdminCardHeader title="7 Day Totals" subtitle="Liquidity" />
             <div className="space-y-2.5 pt-2">
               <div className="rounded-lg border border-admin-border bg-admin-surface/60 p-2.5">
@@ -314,7 +314,7 @@ export default function Dashboard() {
         {/* Recent Activity + Quick Links */}
         <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
           {/* Recent Activity */}
-          <AdminCard>
+          <AdminCard className="overflow-hidden max-w-full w-full">
             <AdminCardHeader
               title="Recent Activity"
               subtitle="Live wallet and withdrawal flow"
@@ -340,152 +340,168 @@ export default function Dashboard() {
               }
             />
 
-            <p className="mt-2 text-[11px] text-admin-text-muted">
+            <p className="mt-2 text-[11px] text-admin-text-muted px-1">
               Swipe the table left and right on mobile to view every column.
             </p>
 
-            <TableShell className="mt-2">
-              <table className={`${adminTableClassName} min-w-220`}>
-                <thead>
-                  <tr>
-                    {[
-                      "Reference",
-                      "User",
-                      "Type",
-                      "Amount",
-                      "Status",
-                      "Time",
-                      "Actions",
-                    ].map((heading) => (
-                      <th className={adminTableHeadCellClassName} key={heading}>
-                        {heading}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
+            <TableShell className="mt-2 w-full border-t border-admin-border/40">
+              <div className="w-full overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+                <table
+                  className={`${adminTableClassName} w-full min-w-[700px]`}
+                >
+                  <thead>
                     <tr>
-                      <td className={adminTableCellClassName} colSpan={7}>
-                        <div className="flex items-center justify-center py-8">
-                          <Loader className="animate-spin" size={24} />
-                        </div>
-                      </td>
-                    </tr>
-                  ) : recentTransactions.length === 0 ? (
-                    <tr>
-                      <td className={adminTableCellClassName} colSpan={7}>
-                        <div className="flex items-center justify-center py-8 text-admin-text-muted">
-                          No recent activity yet.
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    recentTransactions.map((transaction) => (
-                      <tr
-                        className="even:bg-admin-surface/45"
-                        key={transaction.id}
-                      >
-                        <td
-                          className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
-                          title={transaction.mpesaCode ?? transaction.reference}
+                      {[
+                        "#", // Replaced Reference with Numbering
+                        "User",
+                        "Type",
+                        "Amount",
+                        "Status",
+                        "Time",
+                        "Actions",
+                      ].map((heading) => (
+                        <th
+                          className={adminTableHeadCellClassName}
+                          key={heading}
                         >
-                          {transaction.mpesaCode ?? transaction.reference}
-                        </td>
-                        <td
-                          className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                        >
-                          <div>
-                            <p
-                              className="text-xs break-all"
-                              title={transaction.userEmail}
-                            >
-                              {transaction.userEmail}
-                            </p>
-                            <p className="text-[10px] text-admin-text-muted break-all">
-                              {transaction.userPhone}
-                            </p>
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
+                      <tr>
+                        <td className={adminTableCellClassName} colSpan={7}>
+                          <div className="flex items-center justify-center py-8">
+                            <Loader className="animate-spin" size={24} />
                           </div>
                         </td>
-                        <td className={adminTableCellClassName}>
-                          <InlinePill
-                            label={transaction.type}
-                            tone={
-                              transaction.type === "deposit" ? "accent" : "gold"
-                            }
-                          />
-                        </td>
-                        <td
-                          className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
-                        >
-                          {formatCurrency(transaction.amount)}
-                          {transaction.type === "withdrawal" ? (
-                            <span className="ml-2 text-[10px] text-admin-text-muted">
-                              Fee {formatCurrency(transaction.fee)}
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className={adminTableCellClassName}>
-                          <StatusBadge status={transaction.status} />
-                        </td>
-                        <td
-                          className={`${adminTableCellClassName} whitespace-nowrap text-xs text-admin-text-muted`}
-                        >
-                          {new Date(transaction.createdAt).toLocaleString(
-                            "en-KE",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
-                        </td>
-                        <td className={`${adminTableCellClassName} whitespace-nowrap`}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <AdminButton
-                                size="sm"
-                                variant="ghost"
-                                aria-label="Row actions"
-                              >
-                                <MoreHorizontal size={14} />
-                              </AdminButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem
-                                onClick={() => handleViewDetails(transaction)}
-                              >
-                                View full details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleOpenUser(transaction)}
-                              >
-                                Open user profile
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleReviewTransaction(transaction)
-                                }
-                              >
-                                {transaction.type === "withdrawal"
-                                  ? "Review & manage payout"
-                                  : "Review & manage deposit"}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                      </tr>
+                    ) : recentTransactions.length === 0 ? (
+                      <tr>
+                        <td className={adminTableCellClassName} colSpan={7}>
+                          <div className="flex items-center justify-center py-8 text-admin-text-muted">
+                            No recent activity yet.
+                          </div>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      // Added index parameter to the map function
+                      recentTransactions.map((transaction, index) => (
+                        <tr
+                          className="even:bg-admin-surface/45"
+                          key={transaction.id}
+                        >
+                          <td
+                            className={`${adminTableCellClassName} text-xs font-semibold text-admin-text-muted w-10`}
+                          >
+                            {/* Render row index instead of reference */}
+                            {index + 1}
+                          </td>
+                          <td
+                            // Added max-w to contain the text and force truncation
+                            className={`${adminTableCellClassName} font-semibold text-admin-text-primary max-w-[140px]`}
+                          >
+                            <div className="w-full">
+                              <p
+                                className="text-xs truncate w-full"
+                                title={transaction.userEmail}
+                              >
+                                {transaction.userEmail}
+                              </p>
+                              <p
+                                className="text-[10px] text-admin-text-muted truncate w-full"
+                                title={transaction.userPhone}
+                              >
+                                {transaction.userPhone}
+                              </p>
+                            </div>
+                          </td>
+                          <td className={adminTableCellClassName}>
+                            <InlinePill
+                              label={transaction.type}
+                              tone={
+                                transaction.type === "deposit"
+                                  ? "accent"
+                                  : "gold"
+                              }
+                            />
+                          </td>
+                          <td
+                            className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
+                          >
+                            {formatCurrency(transaction.amount)}
+                            {transaction.type === "withdrawal" ? (
+                              <span className="ml-2 text-[10px] text-admin-text-muted block sm:inline">
+                                Fee {formatCurrency(transaction.fee)}
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className={adminTableCellClassName}>
+                            <StatusBadge status={transaction.status} />
+                          </td>
+                          <td
+                            className={`${adminTableCellClassName} whitespace-nowrap text-xs text-admin-text-muted`}
+                          >
+                            {new Date(transaction.createdAt).toLocaleString(
+                              "en-KE",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </td>
+                          <td
+                            className={`${adminTableCellClassName} whitespace-nowrap`}
+                          >
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <AdminButton
+                                  size="sm"
+                                  variant="ghost"
+                                  aria-label="Row actions"
+                                >
+                                  <MoreHorizontal size={14} />
+                                </AdminButton>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem
+                                  onClick={() => handleViewDetails(transaction)}
+                                >
+                                  View full details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenUser(transaction)}
+                                >
+                                  Open user profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleReviewTransaction(transaction)
+                                  }
+                                >
+                                  {transaction.type === "withdrawal"
+                                    ? "Review & manage payout"
+                                    : "Review & manage deposit"}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </TableShell>
           </AdminCard>
 
           {/* Quick Links */}
-          <AdminCard className="overflow-hidden">
+          <AdminCard className="overflow-hidden w-full">
             <div className="space-y-2.5">
               <h3 className="text-sm font-semibold text-admin-text">
                 Quick Links
@@ -495,7 +511,7 @@ export default function Dashboard() {
                   to="/admin/withdrawals"
                   className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-gold hover:bg-admin-surface/60 min-w-0"
                 >
-                  <div className="rounded bg-admin-gold/10 p-1 text-admin-gold group-hover:bg-admin-gold/20 flex-shrink-0">
+                  <div className="rounded bg-admin-gold/10 p-1 text-admin-gold group-hover:bg-admin-gold/20 shrink-0">
                     <CreditCard size={12} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -510,7 +526,7 @@ export default function Dashboard() {
                   to="/admin/users"
                   className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-accent hover:bg-admin-surface/60 min-w-0"
                 >
-                  <div className="rounded bg-admin-accent/10 p-1 text-admin-accent group-hover:bg-admin-accent/20 flex-shrink-0">
+                  <div className="rounded bg-admin-accent/10 p-1 text-admin-accent group-hover:bg-admin-accent/20 shrink-0">
                     <Users size={12} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -525,7 +541,7 @@ export default function Dashboard() {
                   to="/admin/analytics"
                   className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-blue hover:bg-admin-surface/60 min-w-0"
                 >
-                  <div className="rounded bg-admin-blue/10 p-1 text-admin-blue group-hover:bg-admin-blue/20 flex-shrink-0">
+                  <div className="rounded bg-admin-blue/10 p-1 text-admin-blue group-hover:bg-admin-blue/20 shrink-0">
                     <TrendingUp size={12} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -542,7 +558,7 @@ export default function Dashboard() {
                   to="/admin/settings"
                   className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-text-secondary hover:bg-admin-surface/60 min-w-0"
                 >
-                  <div className="rounded bg-admin-text-secondary/10 p-1 text-admin-text-secondary group-hover:bg-admin-text-secondary/20 flex-shrink-0">
+                  <div className="rounded bg-admin-text-secondary/10 p-1 text-admin-text-secondary group-hover:bg-admin-text-secondary/20 shrink-0">
                     <Sliders size={12} />
                   </div>
                   <div className="flex-1 min-w-0">
