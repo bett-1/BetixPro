@@ -264,7 +264,8 @@ export default function RegisterModal() {
                   </div>
                   {phone && !KENYAN_PHONE_REGEX.test(phone) && (
                     <p className="text-xs text-red-400">
-                      Please enter a valid Kenyan phone number (e.g., 0712345678 or +254712345678)
+                      Please enter a valid Kenyan phone number (e.g., 0712345678
+                      or +254712345678)
                     </p>
                   )}
                   {errors.phone && (
@@ -322,9 +323,7 @@ export default function RegisterModal() {
                     </p>
                   )}
                   {password && passwordValid && (
-                    <p className="text-xs text-green-400">
-                      Password is valid
-                    </p>
+                    <p className="text-xs text-green-400">Password is valid</p>
                   )}
                   {errors.password && (
                     <div className="space-y-1">
