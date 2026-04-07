@@ -16,15 +16,22 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  AlertCircle,
+  BarChart3,
   CreditCard,
   Download,
   Filter,
   Loader,
+  MessageSquare,
   MoreHorizontal,
+  Settings,
+  Shield,
   Sliders,
   TrendingUp,
   TriangleAlert,
   Users,
+  Wallet,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -502,70 +509,106 @@ export default function Dashboard() {
 
           {/* Quick Links */}
           <AdminCard className="overflow-hidden w-full">
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <h3 className="text-sm font-semibold text-admin-text">
                 Quick Links
               </h3>
-              <div className="space-y-2">
+              
+              {/* 2x3 Grid for Quick Links */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Pending Payouts */}
                 <Link
                   to="/admin/withdrawals"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-gold hover:bg-admin-surface/60 min-w-0"
+                  className="group flex flex-col items-start gap-2 rounded-lg border border-admin-border/50 bg-admin-surface/50 p-3 transition-all duration-200 hover:border-admin-gold hover:bg-admin-surface/80 hover:shadow-md hover:shadow-admin-gold/10"
                 >
-                  <div className="rounded bg-admin-gold/10 p-1 text-admin-gold group-hover:bg-admin-gold/20 shrink-0">
-                    <CreditCard size={12} />
+                  <div className="rounded-md bg-admin-gold/20 p-1.5 text-admin-gold transition-colors duration-200 group-hover:bg-admin-gold/30">
+                    <Wallet size={16} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-admin-text text-[10px] truncate">
-                      Pending: {pendingCount}
+                  <div className="space-y-0.5 flex-1">
+                    <p className="text-xs font-bold text-admin-text-primary leading-tight">
+                      {pendingCount}
                     </p>
-                    <p className="text-[9px] text-admin-text-muted">Payouts</p>
+                    <p className="text-[11px] text-admin-text-muted">Payouts</p>
                   </div>
                 </Link>
 
+                {/* Users Management */}
                 <Link
                   to="/admin/users"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-accent hover:bg-admin-surface/60 min-w-0"
+                  className="group flex flex-col items-start gap-2 rounded-lg border border-admin-border/50 bg-admin-surface/50 p-3 transition-all duration-200 hover:border-admin-accent hover:bg-admin-surface/80 hover:shadow-md hover:shadow-admin-accent/10"
                 >
-                  <div className="rounded bg-admin-accent/10 p-1 text-admin-accent group-hover:bg-admin-accent/20 shrink-0">
-                    <Users size={12} />
+                  <div className="rounded-md bg-admin-accent/20 p-1.5 text-admin-accent transition-colors duration-200 group-hover:bg-admin-accent/30">
+                    <Users size={16} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-admin-text text-[10px] truncate">
+                  <div className="space-y-0.5 flex-1">
+                    <p className="text-xs font-bold text-admin-text-primary leading-tight">
                       Users
                     </p>
-                    <p className="text-[9px] text-admin-text-muted">Manage</p>
+                    <p className="text-[11px] text-admin-text-muted">Manage</p>
                   </div>
                 </Link>
 
+                {/* Analytics Page */}
                 <Link
                   to="/admin/analytics"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-blue hover:bg-admin-surface/60 min-w-0"
+                  className="group flex flex-col items-start gap-2 rounded-lg border border-admin-border/50 bg-admin-surface/50 p-3 transition-all duration-200 hover:border-admin-blue hover:bg-admin-surface/80 hover:shadow-md hover:shadow-admin-blue/10"
                 >
-                  <div className="rounded bg-admin-blue/10 p-1 text-admin-blue group-hover:bg-admin-blue/20 shrink-0">
-                    <TrendingUp size={12} />
+                  <div className="rounded-md bg-admin-blue/20 p-1.5 text-admin-blue transition-colors duration-200 group-hover:bg-admin-blue/30">
+                    <TrendingUp size={16} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-admin-text text-[10px] truncate">
-                      Reports
-                    </p>
-                    <p className="text-[9px] text-admin-text-muted">
+                  <div className="space-y-0.5 flex-1">
+                    <p className="text-xs font-bold text-admin-text-primary leading-tight">
                       Analytics
                     </p>
+                    <p className="text-[11px] text-admin-text-muted">Insights</p>
                   </div>
                 </Link>
 
+                {/* Risk Management */}
+                <Link
+                  to="/admin/risk"
+                  className="group flex flex-col items-start gap-2 rounded-lg border border-admin-border/50 bg-admin-surface/50 p-3 transition-all duration-200 hover:border-red-500/60 hover:bg-admin-surface/80 hover:shadow-md hover:shadow-red-500/10"
+                >
+                  <div className="rounded-md bg-red-500/20 p-1.5 text-red-500 transition-colors duration-200 group-hover:bg-red-500/30">
+                    <AlertCircle size={16} />
+                  </div>
+                  <div className="space-y-0.5 flex-1">
+                    <p className="text-xs font-bold text-admin-text-primary leading-tight">
+                      Risk
+                    </p>
+                    <p className="text-[11px] text-admin-text-muted">Alerts</p>
+                  </div>
+                </Link>
+
+                {/* Settings */}
                 <Link
                   to="/admin/settings"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-text-secondary hover:bg-admin-surface/60 min-w-0"
+                  className="group flex flex-col items-start gap-2 rounded-lg border border-admin-border/50 bg-admin-surface/50 p-3 transition-all duration-200 hover:border-admin-text-secondary hover:bg-admin-surface/80 hover:shadow-md hover:shadow-admin-text-secondary/10"
                 >
-                  <div className="rounded bg-admin-text-secondary/10 p-1 text-admin-text-secondary group-hover:bg-admin-text-secondary/20 shrink-0">
-                    <Sliders size={12} />
+                  <div className="rounded-md bg-admin-text-secondary/20 p-1.5 text-admin-text-secondary transition-colors duration-200 group-hover:bg-admin-text-secondary/30">
+                    <Settings size={16} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-admin-text text-[10px] truncate">
+                  <div className="space-y-0.5 flex-1">
+                    <p className="text-xs font-bold text-admin-text-primary leading-tight">
                       Settings
                     </p>
-                    <p className="text-[9px] text-admin-text-muted">Config</p>
+                    <p className="text-[11px] text-admin-text-muted">Config</p>
+                  </div>
+                </Link>
+
+                {/* Contact Messages */}
+                <Link
+                  to="/admin/contact"
+                  className="group flex flex-col items-start gap-2 rounded-lg border border-admin-border/50 bg-admin-surface/50 p-3 transition-all duration-200 hover:border-purple-500/60 hover:bg-admin-surface/80 hover:shadow-md hover:shadow-purple-500/10"
+                >
+                  <div className="rounded-md bg-purple-500/20 p-1.5 text-purple-500 transition-colors duration-200 group-hover:bg-purple-500/30">
+                    <MessageSquare size={16} />
+                  </div>
+                  <div className="space-y-0.5 flex-1">
+                    <p className="text-xs font-bold text-admin-text-primary leading-tight">
+                      Messages
+                    </p>
+                    <p className="text-[11px] text-admin-text-muted">Contact</p>
                   </div>
                 </Link>
               </div>
