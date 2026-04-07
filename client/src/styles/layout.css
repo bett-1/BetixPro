@@ -10,7 +10,6 @@
   margin-top: var(--navbar-height);
   min-height: calc(100vh - var(--navbar-height));
   background: var(--color-bg-primary);
-  padding-top: 8px;
 }
 
 .bc-layout-main {
