@@ -65,16 +65,17 @@ export default function RegisterModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Simplified Validation Logic
+  // Validation Logic
   const emailValid = isValidEmail(email);
   const phoneValid = KENYAN_PHONE_REGEX.test(phone.trim());
   const passwordValid = password.length >= 6;
   const confirmValid =
     confirmPassword.length > 0 && confirmPassword === password;
 
-  const formValid = useMemo(
-    () => emailValid && phoneValid && passwordValid && confirmValid,
-    [confirmValid, emailValid, passwordValid, phoneValid],
+  // Only require all fields to be filled, allow submit even if validation fails to get server feedback
+  const canSubmit = useMemo(
+    () => email.length > 0 && phone.length > 0 && password.length > 0 && confirmPassword.length > 0,
+    [email, phone, password, confirmPassword],
   );
 
   const clearFieldError = useCallback((field: string) => {
@@ -87,9 +88,9 @@ export default function RegisterModal() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!formValid) {
+    if (!canSubmit) {
       setErrors({
-        general: ["Please complete all fields correctly before submitting."],
+        general: ["Please fill in all fields before submitting."],
       });
       return;
     }
@@ -173,11 +174,11 @@ export default function RegisterModal() {
                 </p>
               </div>
 
-              <form className="space-y-3" onSubmit={handleSubmit}>
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Error Message */}
                 {errors.general && (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                    {errors.general[0]}
+                  <div className="rounded-lg border border-red-500/50 bg-red-500/20 px-4 py-3 text-sm text-red-100">
+                    <p className="font-semibold">{errors.general[0]}</p>
                   </div>
                 )}
 
@@ -203,13 +204,22 @@ export default function RegisterModal() {
                         clearFieldError("email");
                       }}
                       placeholder="you@example.com"
-                      autoComplete="off"
+                      autoComplete="email"
                       className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#3d6ba3]/40 bg-[#1a3a6b]/50 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/50 focus:ring-2 focus:ring-[#f5c518]/30"
                       required
                     />
                   </div>
                   {!emailValid && email.length > 0 && (
                     <p className="text-xs text-red-400">Valid email required</p>
+                  )}
+                  {errors.email && (
+                    <div className="space-y-1">
+                      {errors.email.map((error, idx) => (
+                        <p key={idx} className="text-xs text-red-400">
+                          {error}
+                        </p>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -242,6 +252,15 @@ export default function RegisterModal() {
                   </div>
                   {!phoneValid && phone.length > 0 && (
                     <p className="text-xs text-red-400">Invalid phone number</p>
+                  )}
+                  {errors.phone && (
+                    <div className="space-y-1">
+                      {errors.phone.map((error, idx) => (
+                        <p key={idx} className="text-xs text-red-400">
+                          {error}
+                        </p>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -283,6 +302,15 @@ export default function RegisterModal() {
                     <p className="text-xs text-red-400">
                       Password must be at least 6 characters
                     </p>
+                  )}
+                  {errors.password && (
+                    <div className="space-y-1">
+                      {errors.password.map((error, idx) => (
+                        <p key={idx} className="text-xs text-red-400">
+                          {error}
+                        </p>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -345,12 +373,21 @@ export default function RegisterModal() {
                       )}
                     </div>
                   )}
+                  {errors.confirmPassword && (
+                    <div className="space-y-1">
+                      {errors.confirmPassword.map((error, idx) => (
+                        <p key={idx} className="text-xs text-red-400">
+                          {error}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={!formValid || isSubmitting}
+                  disabled={!canSubmit || isSubmitting}
                   className="w-full py-3 mt-5 rounded-lg bg-[#f5c518] hover:bg-[#e6b800] font-semibold text-slate-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:shadow-[#f5c518]/40 hover:-translate-y-0.5 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
