@@ -18,6 +18,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -169,7 +170,7 @@ export default function Risk() {
       />
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {isSummaryLoading ? (
           <div className="col-span-full flex items-center justify-center py-8">
             <Loader className="h-6 w-6 animate-spin text-admin-accent" />
@@ -360,8 +361,11 @@ export default function Risk() {
                             <p className="text-sm font-medium">
                               {alert.user.fullName || "N/A"}
                             </p>
-                            <p className="text-xs text-admin-text-muted">
-                              {alert.user.email}
+                            <p
+                              className="max-w-[120px] truncate text-xs text-admin-text-muted"
+                              title={alert.user.email}
+                            >
+                              {truncateEmailForTable(alert.user.email)}
                             </p>
                           </div>
                         ) : (

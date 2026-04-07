@@ -9,6 +9,10 @@ import {
   AdminCard,
   AdminSectionHeader,
   StatusBadge,
+  TableShell,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
 } from "../../components/ui";
 
 type OddsFilter = "configured" | "configured-with-odds" | "all-with-odds";
@@ -135,7 +139,13 @@ function pageItems(current: number, totalPages: number) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
   }
 
-  const pages = new Set<number>([1, totalPages, current, current - 1, current + 1]);
+  const pages = new Set<number>([
+    1,
+    totalPages,
+    current,
+    current - 1,
+    current + 1,
+  ]);
   const normalized = Array.from(pages)
     .filter((value) => value >= 1 && value <= totalPages)
     .sort((left, right) => left - right);
@@ -163,12 +173,14 @@ export default function Odds() {
   };
 
   const activeFilter: OddsFilter =
-    search.filter === "configured-with-odds" || search.filter === "all-with-odds"
+    search.filter === "configured-with-odds" ||
+    search.filter === "all-with-odds"
       ? search.filter
       : "configured";
   const currentPage =
     typeof search.page === "number" && search.page > 0 ? search.page : 1;
-  const selectedEventId = typeof search.eventId === "string" ? search.eventId : "";
+  const selectedEventId =
+    typeof search.eventId === "string" ? search.eventId : "";
 
   const [searchInput, setSearchInput] = useState(search.search ?? "");
   const [jumpInput, setJumpInput] = useState(String(currentPage));
@@ -190,7 +202,9 @@ export default function Odds() {
     hasPrev: false,
   });
 
-  const [availableOddsEvents, setAvailableOddsEvents] = useState<DropdownEvent[]>([]);
+  const [availableOddsEvents, setAvailableOddsEvents] = useState<
+    DropdownEvent[]
+  >([]);
   const [availableOddsLoading, setAvailableOddsLoading] = useState(false);
   const [availableOddsError, setAvailableOddsError] = useState("");
 
@@ -199,8 +213,12 @@ export default function Odds() {
   const [configuredError, setConfiguredError] = useState("");
 
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
-  const [bookmarkingEventIds, setBookmarkingEventIds] = useState<Record<string, boolean>>({});
-  const [bookmarkedEventIds, setBookmarkedEventIds] = useState<Record<string, boolean>>({});
+  const [bookmarkingEventIds, setBookmarkingEventIds] = useState<
+    Record<string, boolean>
+  >({});
+  const [bookmarkedEventIds, setBookmarkedEventIds] = useState<
+    Record<string, boolean>
+  >({});
   const [bulkBookmarking, setBulkBookmarking] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
 
@@ -208,13 +226,20 @@ export default function Odds() {
   const [oddsDetailsByEventId, setOddsDetailsByEventId] = useState<
     Record<string, OddsDetailsResponse>
   >({});
-  const [oddsLoadingByEventId, setOddsLoadingByEventId] = useState<Record<string, boolean>>({});
-  const [oddsErrorByEventId, setOddsErrorByEventId] = useState<Record<string, string>>({});
+  const [oddsLoadingByEventId, setOddsLoadingByEventId] = useState<
+    Record<string, boolean>
+  >({});
+  const [oddsErrorByEventId, setOddsErrorByEventId] = useState<
+    Record<string, string>
+  >({});
 
   const [syncing, setSyncing] = useState(false);
 
   const debouncedSearch = debounceValue(searchInput.trim(), 300);
-  const debouncedOddsDropdownSearch = debounceValue(oddsDropdownSearch.trim(), 300);
+  const debouncedOddsDropdownSearch = debounceValue(
+    oddsDropdownSearch.trim(),
+    300,
+  );
   const debouncedConfiguredDropdownSearch = debounceValue(
     configuredDropdownSearch.trim(),
     300,
@@ -240,7 +265,9 @@ export default function Odds() {
         ...(prev as Record<string, unknown>),
         filter: next.filter ?? activeFilter,
         page: next.page ?? currentPage,
-        search: next.search ?? (typeof search.search === "string" ? search.search : ""),
+        search:
+          next.search ??
+          (typeof search.search === "string" ? search.search : ""),
         eventId: next.eventId ?? selectedEventId,
       }),
       replace: false,
@@ -248,7 +275,8 @@ export default function Odds() {
   }
 
   useEffect(() => {
-    const currentSearch = typeof search.search === "string" ? search.search : "";
+    const currentSearch =
+      typeof search.search === "string" ? search.search : "";
     if (debouncedSearch === currentSearch) {
       return;
     }
@@ -323,12 +351,15 @@ export default function Odds() {
     setConfiguredError("");
 
     try {
-      const response = await api.get<DropdownResponse>("/admin/events/configured", {
-        params: {
-          search: debouncedConfiguredDropdownSearch || undefined,
-          limit: 50,
+      const response = await api.get<DropdownResponse>(
+        "/admin/events/configured",
+        {
+          params: {
+            search: debouncedConfiguredDropdownSearch || undefined,
+            limit: 50,
+          },
         },
-      });
+      );
       setConfiguredEvents(response.data.events);
     } catch (error) {
       setConfiguredError(
@@ -344,8 +375,13 @@ export default function Odds() {
     setOddsErrorByEventId((current) => ({ ...current, [eventId]: "" }));
 
     try {
-      const response = await api.get<OddsDetailsResponse>(`/admin/odds/${eventId}`);
-      setOddsDetailsByEventId((current) => ({ ...current, [eventId]: response.data }));
+      const response = await api.get<OddsDetailsResponse>(
+        `/admin/odds/${eventId}`,
+      );
+      setOddsDetailsByEventId((current) => ({
+        ...current,
+        [eventId]: response.data,
+      }));
     } catch (error) {
       const message = getErrorMessage(error, "Unable to load odds details.");
       setOddsErrorByEventId((current) => ({ ...current, [eventId]: message }));
@@ -372,12 +408,15 @@ export default function Odds() {
 
   useEffect(() => {
     setSelectedEventIds((current) =>
-      current.filter((eventId) => events.some((event) => event.eventId === eventId)),
+      current.filter((eventId) =>
+        events.some((event) => event.eventId === eventId),
+      ),
     );
   }, [events]);
 
   const allOnPageSelected =
-    events.length > 0 && events.every((event) => selectedEventIds.includes(event.eventId));
+    events.length > 0 &&
+    events.every((event) => selectedEventIds.includes(event.eventId));
 
   const pages = useMemo(
     () => pageItems(pagination.page, pagination.totalPages),
@@ -389,19 +428,26 @@ export default function Odds() {
   }
 
   function goToPage(page: number) {
-    const normalized = Math.min(Math.max(page, 1), Math.max(1, pagination.totalPages));
+    const normalized = Math.min(
+      Math.max(page, 1),
+      Math.max(1, pagination.totalPages),
+    );
     updateUrl({ page: normalized });
   }
 
   function toggleSelectAllOnPage(checked: boolean) {
     if (!checked) {
       const pageIds = new Set(events.map((event) => event.eventId));
-      setSelectedEventIds((current) => current.filter((eventId) => !pageIds.has(eventId)));
+      setSelectedEventIds((current) =>
+        current.filter((eventId) => !pageIds.has(eventId)),
+      );
       return;
     }
 
     setSelectedEventIds((current) =>
-      Array.from(new Set([...current, ...events.map((event) => event.eventId)])),
+      Array.from(
+        new Set([...current, ...events.map((event) => event.eventId)]),
+      ),
     );
   }
 
@@ -419,7 +465,11 @@ export default function Odds() {
     try {
       const response = await api.post<{ message: string }>("/admin/odds/sync");
       toast.success(response.data.message);
-      await Promise.all([loadStats(), loadEventList(), loadAvailableOddsEvents()]);
+      await Promise.all([
+        loadStats(),
+        loadEventList(),
+        loadAvailableOddsEvents(),
+      ]);
     } catch (error) {
       toast.error(getErrorMessage(error, "Unable to sync odds feed."));
     } finally {
@@ -479,7 +529,10 @@ export default function Odds() {
       await api.post("/admin/odds/bookmark-bulk", {
         eventIds: selectedEventIds,
       });
-      setBulkProgress({ current: selectedEventIds.length, total: selectedEventIds.length });
+      setBulkProgress({
+        current: selectedEventIds.length,
+        total: selectedEventIds.length,
+      });
       setSelectedEventIds([]);
       await Promise.all([loadStats(), loadEventList()]);
       toast.success("Bulk bookmark completed.");
@@ -492,79 +545,115 @@ export default function Odds() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <AdminSectionHeader
         title="Odds Control"
         subtitle="Real-time odds monitoring and best-price curation"
         actions={
-          <AdminButton variant="ghost" onClick={() => void handleSyncFeed()} disabled={syncing}>
-            {syncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+          <AdminButton
+            size="sm"
+            variant="ghost"
+            className="w-full rounded-full border-admin-border/70 bg-admin-surface/65 text-[11px] font-semibold text-admin-text-primary hover:border-admin-accent/50 hover:bg-admin-accent/10 sm:w-auto"
+            onClick={() => void handleSyncFeed()}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <RefreshCw size={13} />
+            )}
             {syncing ? "Syncing..." : "Sync Feed"}
           </AdminButton>
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <button className="text-left" type="button" onClick={() => setFilter("configured")}>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+        <button
+          className="h-full w-full text-left"
+          type="button"
+          onClick={() => setFilter("configured")}
+        >
           <AdminCard
-            className={`p-4 transition ${
-              activeFilter === "configured" ? "border-admin-accent ring-1 ring-admin-accent" : ""
+            className={`h-full p-3 transition sm:p-4 ${
+              activeFilter === "configured"
+                ? "border-admin-accent ring-1 ring-admin-accent"
+                : ""
             }`}
             interactive
           >
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Configured Games</p>
-            <p className="mt-2 text-2xl font-bold text-admin-blue">
-              {statsLoading ? "..." : stats?.totalConfigured ?? 0}
+            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+              Configured Games
+            </p>
+            <p className="mt-1.5 text-xl font-bold text-admin-blue sm:text-2xl">
+              {statsLoading ? "..." : (stats?.totalConfigured ?? 0)}
             </p>
             <p className="mt-1 text-xs text-admin-text-muted">Active events</p>
           </AdminCard>
         </button>
         <button
-          className="text-left"
+          className="h-full w-full text-left"
           type="button"
           onClick={() => setFilter("configured-with-odds")}
         >
           <AdminCard
-            className={`p-4 transition ${
+            className={`h-full p-3 transition sm:p-4 ${
               activeFilter === "configured-with-odds"
                 ? "border-admin-accent ring-1 ring-admin-accent"
                 : ""
             }`}
             interactive
           >
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">With Odds</p>
-            <p className="mt-2 text-2xl font-bold text-admin-accent">
-              {statsLoading ? "..." : stats?.withOdds ?? 0}
+            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+              With Odds
             </p>
-            <p className="mt-1 text-xs text-admin-text-muted">Configured + odds</p>
+            <p className="mt-1.5 text-xl font-bold text-admin-accent sm:text-2xl">
+              {statsLoading ? "..." : (stats?.withOdds ?? 0)}
+            </p>
+            <p className="mt-1 text-xs text-admin-text-muted">
+              Configured + odds
+            </p>
           </AdminCard>
         </button>
-        <button className="text-left" type="button" onClick={() => setFilter("all-with-odds")}>
+        <button
+          className="h-full w-full text-left"
+          type="button"
+          onClick={() => setFilter("all-with-odds")}
+        >
           <AdminCard
-            className={`p-4 transition ${
-              activeFilter === "all-with-odds" ? "border-admin-accent ring-1 ring-admin-accent" : ""
+            className={`h-full p-3 transition sm:p-4 ${
+              activeFilter === "all-with-odds"
+                ? "border-admin-accent ring-1 ring-admin-accent"
+                : ""
             }`}
             interactive
           >
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">All With Odds</p>
-            <p className="mt-2 text-2xl font-bold text-admin-gold">
-              {statsLoading ? "..." : stats?.withOdds ?? 0}
+            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+              All With Odds
             </p>
-            <p className="mt-1 text-xs text-admin-text-muted">Configured or not</p>
+            <p className="mt-1.5 text-xl font-bold text-admin-gold sm:text-2xl">
+              {statsLoading ? "..." : (stats?.withOdds ?? 0)}
+            </p>
+            <p className="mt-1 text-xs text-admin-text-muted">
+              Configured or not
+            </p>
           </AdminCard>
         </button>
-        <AdminCard className="p-4" interactive>
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Bookmakers</p>
-          <p className="mt-2 text-2xl font-bold text-admin-gold">
-            {statsLoading ? "..." : stats?.bookmakers ?? 0}
+        <AdminCard className="h-full p-3 sm:p-4" interactive>
+          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+            Bookmakers
+          </p>
+          <p className="mt-1.5 text-xl font-bold text-admin-gold sm:text-2xl">
+            {statsLoading ? "..." : (stats?.bookmakers ?? 0)}
           </p>
           <p className="mt-1 text-xs text-admin-text-muted">Visible sources</p>
         </AdminCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:gap-3">
         <AdminCard className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Select Odds</p>
+          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+            Select Odds
+          </p>
           <Input
             placeholder="Search events with odds..."
             value={oddsDropdownSearch}
@@ -579,11 +668,15 @@ export default function Odds() {
           ) : availableOddsError ? (
             <p className="text-xs text-admin-red">{availableOddsError}</p>
           ) : !availableOddsEvents.length ? (
-            <p className="text-xs text-admin-text-muted">No events with odds found.</p>
+            <p className="text-xs text-admin-text-muted">
+              No events with odds found.
+            </p>
           ) : (
             <select
               value={selectedEventId}
-              onChange={(event) => updateUrl({ eventId: event.target.value, page: 1 })}
+              onChange={(event) =>
+                updateUrl({ eventId: event.target.value, page: 1 })
+              }
               className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
             >
               <option value="">All matching events</option>
@@ -597,7 +690,9 @@ export default function Odds() {
         </AdminCard>
 
         <AdminCard className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Configured Games</p>
+          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
+            Configured Games
+          </p>
           <div className="relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-muted"
@@ -606,7 +701,9 @@ export default function Odds() {
             <Input
               placeholder="Search configured games..."
               value={configuredDropdownSearch}
-              onChange={(event) => setConfiguredDropdownSearch(event.target.value)}
+              onChange={(event) =>
+                setConfiguredDropdownSearch(event.target.value)
+              }
               className="pl-9 border-admin-border bg-admin-surface text-admin-text-primary"
             />
           </div>
@@ -618,11 +715,15 @@ export default function Odds() {
           ) : configuredError ? (
             <p className="text-xs text-admin-red">{configuredError}</p>
           ) : !configuredEvents.length ? (
-            <p className="text-xs text-admin-text-muted">No configured events found.</p>
+            <p className="text-xs text-admin-text-muted">
+              No configured events found.
+            </p>
           ) : (
             <select
               value={selectedEventId}
-              onChange={(event) => updateUrl({ eventId: event.target.value, page: 1 })}
+              onChange={(event) =>
+                updateUrl({ eventId: event.target.value, page: 1 })
+              }
               className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
             >
               <option value="">All configured events</option>
@@ -636,7 +737,7 @@ export default function Odds() {
         </AdminCard>
       </div>
 
-      <AdminCard className="space-y-3">
+      <AdminCard className="space-y-3 p-3 sm:p-4">
         <div className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-muted"
@@ -650,7 +751,7 @@ export default function Odds() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="inline-flex items-center gap-2 text-xs text-admin-text-muted">
             <input
               checked={allOnPageSelected}
@@ -664,6 +765,7 @@ export default function Odds() {
             size="sm"
             onClick={() => void handleBookmarkBulk()}
             disabled={bulkBookmarking || selectedEventIds.length === 0}
+            className="w-full sm:w-auto"
           >
             {bulkBookmarking ? (
               <>
@@ -676,7 +778,9 @@ export default function Odds() {
           </AdminButton>
         </div>
 
-        {listError ? <p className="text-sm text-admin-red">{listError}</p> : null}
+        {listError ? (
+          <p className="text-sm text-admin-red">{listError}</p>
+        ) : null}
 
         {listLoading ? (
           <div className="space-y-2">
@@ -685,7 +789,9 @@ export default function Odds() {
             <div className="h-20 animate-pulse rounded bg-admin-surface" />
           </div>
         ) : !events.length ? (
-          <p className="text-sm text-admin-text-muted">No events match the current filter.</p>
+          <p className="text-sm text-admin-text-muted">
+            No events match the current filter.
+          </p>
         ) : (
           <div className="space-y-3">
             {events.map((event) => {
@@ -695,18 +801,24 @@ export default function Odds() {
               const oddsError = oddsErrorByEventId[event.eventId];
 
               return (
-                <AdminCard key={event.eventId} className="space-y-3 border-admin-border bg-admin-surface">
+                <AdminCard
+                  key={event.eventId}
+                  className="space-y-3 border-admin-border bg-admin-surface p-3 sm:p-4"
+                >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
                       <input
                         checked={selectedEventIds.includes(event.eventId)}
                         className="h-4 w-4 rounded border-admin-border bg-admin-surface"
                         onChange={(checkboxEvent) =>
-                          toggleEventSelection(event.eventId, checkboxEvent.target.checked)
+                          toggleEventSelection(
+                            event.eventId,
+                            checkboxEvent.target.checked,
+                          )
                         }
                         type="checkbox"
                       />
-                      <div>
+                      <div className="min-w-0">
                         <div className="mb-1 flex flex-wrap items-center gap-2">
                           <StatusBadge status={toBadgeStatus(event.status)} />
                           <span className="rounded-lg bg-admin-accent-dim px-2 py-1 text-[11px] font-semibold text-admin-accent">
@@ -716,33 +828,52 @@ export default function Odds() {
                             {event.leagueName ?? "Unknown league"}
                           </span>
                         </div>
-                        <p className="text-base font-semibold text-admin-text-primary">
-                          {event.homeTeam} <span className="text-admin-text-muted">vs</span> {event.awayTeam}
+                        <p className="text-sm font-semibold leading-snug text-admin-text-primary sm:text-base">
+                          {event.homeTeam}{" "}
+                          <span className="text-admin-text-muted">vs</span>{" "}
+                          {event.awayTeam}
                         </p>
                         <p className="mt-1 text-xs text-admin-text-muted">
                           {new Date(event.commenceTime).toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
                       <AdminButton
                         size="sm"
+                        className="w-full px-2.5 sm:w-auto sm:px-3.5"
                         variant="ghost"
                         onClick={() => void handleViewOdds(event.eventId)}
                       >
-                        {expanded ? "Hide Odds" : "View Odds"}
+                        <span className="sm:hidden">
+                          {expanded ? "Hide" : "Odds"}
+                        </span>
+                        <span className="hidden sm:inline">
+                          {expanded ? "Hide Odds" : "View Odds"}
+                        </span>
                       </AdminButton>
                       <AdminButton
                         size="sm"
+                        className="w-full px-2.5 sm:w-auto sm:px-3.5"
                         onClick={() => void handleBookmarkSingle(event.eventId)}
                         disabled={Boolean(bookmarkingEventIds[event.eventId])}
                       >
                         {bookmarkingEventIds[event.eventId] ? (
                           <Loader2 className="animate-spin" size={13} />
                         ) : bookmarkedEventIds[event.eventId] ? (
-                          "Bookmarked ✓"
+                          <>
+                            <span className="sm:hidden">Saved ✓</span>
+                            <span className="hidden sm:inline">
+                              Bookmarked ✓
+                            </span>
+                          </>
                         ) : (
-                          "Bookmark Best"
+                          <>
+                            <span className="sm:hidden">Bookmark</span>
+                            <span className="hidden sm:inline">
+                              Bookmark Best
+                            </span>
+                          </>
                         )}
                       </AdminButton>
                     </div>
@@ -759,10 +890,12 @@ export default function Odds() {
                       ) : oddsError ? (
                         <p className="text-sm text-admin-red">{oddsError}</p>
                       ) : !oddsDetails ? (
-                        <p className="text-sm text-admin-text-muted">No odds data available.</p>
+                        <p className="text-sm text-admin-text-muted">
+                          No odds data available.
+                        </p>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-[760px] w-full border-collapse">
+                        <TableShell>
+                          <table className={`${adminTableClassName} min-w-170`}>
                             <thead>
                               <tr>
                                 {[
@@ -774,7 +907,7 @@ export default function Odds() {
                                 ].map((heading) => (
                                   <th
                                     key={heading}
-                                    className="border-b border-admin-border px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted"
+                                    className={adminTableHeadCellClassName}
                                   >
                                     {heading}
                                   </th>
@@ -784,17 +917,21 @@ export default function Odds() {
                             <tbody>
                               {oddsDetails.markets.flatMap((market) =>
                                 market.odds.map((row, index) => (
-                                  <tr key={`${market.marketType}-${row.bookmakerId}-${row.selection}-${index}`}>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-primary">
+                                  <tr
+                                    key={`${market.marketType}-${row.bookmakerId}-${row.selection}-${index}`}
+                                  >
+                                    <td
+                                      className={`${adminTableCellClassName} text-admin-text-primary`}
+                                    >
                                       {row.bookmakerName}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {market.marketType}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {row.selection}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm">
+                                    <td className={adminTableCellClassName}>
                                       <span
                                         className={
                                           row.isBest
@@ -805,7 +942,7 @@ export default function Odds() {
                                         {row.odds.toFixed(2)}
                                       </span>
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {new Date(row.updatedAt).toLocaleString()}
                                     </td>
                                   </tr>
@@ -813,7 +950,7 @@ export default function Odds() {
                               )}
                             </tbody>
                           </table>
-                        </div>
+                        </TableShell>
                       )}
                     </div>
                   ) : null}
@@ -823,48 +960,53 @@ export default function Odds() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <AdminButton
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={!pagination.hasPrev}
-            >
-              ← Prev
-            </AdminButton>
-            {pages.map((item, index) =>
-              item === "..." ? (
-                <span key={`ellipsis-${index}`} className="px-1 text-xs text-admin-text-muted">
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  onClick={() => goToPage(Number(item))}
-                  type="button"
-                  className={`h-8 min-w-8 rounded px-2 text-xs font-semibold ${
-                    item === currentPage
-                      ? "bg-yellow-300 text-black"
-                      : "border border-admin-border text-admin-text-secondary"
-                  }`}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <AdminButton
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={!pagination.hasNext}
-            >
-              Next →
-            </AdminButton>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="w-full overflow-x-auto pb-1 [scrollbar-width:thin]">
+            <div className="inline-flex min-w-max items-center gap-2">
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={!pagination.hasPrev}
+              >
+                ← Prev
+              </AdminButton>
+              {pages.map((item, index) =>
+                item === "..." ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-1 text-xs text-admin-text-muted"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => goToPage(Number(item))}
+                    type="button"
+                    className={`h-8 min-w-8 rounded px-2 text-xs font-semibold ${
+                      item === currentPage
+                        ? "bg-yellow-300 text-black"
+                        : "border border-admin-border text-admin-text-secondary"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ),
+              )}
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={!pagination.hasNext}
+              >
+                Next →
+              </AdminButton>
+            </div>
           </div>
 
           <form
-            className="flex items-center gap-2"
+            className="flex w-full items-center gap-2 md:w-auto"
             onSubmit={(event) => {
               event.preventDefault();
               const pageNumber = Number(jumpInput);
@@ -874,7 +1016,9 @@ export default function Odds() {
               }
 
               if (pageNumber < 1 || pageNumber > pagination.totalPages) {
-                toast.error(`Page must be between 1 and ${pagination.totalPages}.`);
+                toast.error(
+                  `Page must be between 1 and ${pagination.totalPages}.`,
+                );
                 return;
               }
 
@@ -885,7 +1029,7 @@ export default function Odds() {
             <Input
               value={jumpInput}
               onChange={(event) => setJumpInput(event.target.value)}
-              className="h-8 w-20 border-admin-border bg-admin-surface text-admin-text-primary"
+              className="h-8 w-full border-admin-border bg-admin-surface text-admin-text-primary sm:w-20"
             />
             <AdminButton size="sm" type="submit">
               Go

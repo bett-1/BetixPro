@@ -7,7 +7,6 @@ import {
   AdminCard,
   AdminSectionHeader,
   StatusBadge,
-  adminFilterRowClassName,
 } from "../../components/ui";
 import {
   Dialog,
@@ -660,16 +659,17 @@ export default function Events() {
         title="Events & Sports"
         subtitle="Manage live and upcoming events"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <AdminButton
               variant={bulkPanelOpen ? "solid" : "ghost"}
               onClick={() => setBulkPanelOpen((open) => !open)}
+              size="sm"
             >
               ⚡ Bulk Configure
             </AdminButton>
             <Dialog>
               <DialogTrigger asChild>
-                <AdminButton>
+                <AdminButton size="sm">
                   <Plus size={13} />
                   Add Event
                 </AdminButton>
@@ -714,37 +714,37 @@ export default function Events() {
         }
       />
 
-      <div className={`${adminFilterRowClassName} items-center`}>
-        {filterOptions.map((filter) => (
-          <AdminButton
-            key={filter.label}
-            variant={activeFilter === filter.value ? "solid" : "ghost"}
-            onClick={() => {
-              setPage(1);
-              setActiveFilter(filter.value);
-            }}
-          >
-            {filter.label}
-            <span className="ml-1 rounded-full bg-admin-surface px-2 py-[2px] text-[10px] font-semibold text-admin-text-muted">
-              {statsLoading ? "..." : filter.count}
-            </span>
-          </AdminButton>
-        ))}
-        <div className="min-w-[240px] flex-1">
-          <Input
-            placeholder="Search teams or league..."
-            value={searchQuery}
-            onChange={(event) => {
-              setPage(1);
-              setSearchQuery(event.target.value);
-            }}
-            className="border-admin-border bg-admin-surface text-admin-text-primary"
-          />
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+          {filterOptions.map((filter) => (
+            <AdminButton
+              key={filter.label}
+              variant={activeFilter === filter.value ? "solid" : "ghost"}
+              size="sm"
+              className="shrink-0"
+              onClick={() => {
+                setPage(1);
+                setActiveFilter(filter.value);
+              }}
+            >
+              {filter.label}
+              <span className="ml-1 rounded-full bg-admin-surface px-2 py-[2px] text-[10px] font-semibold text-admin-text-muted">
+                {statsLoading ? "..." : filter.count}
+              </span>
+            </AdminButton>
+          ))}
         </div>
-      </div>
+        <Input
+          placeholder="Search teams or league..."
+          value={searchQuery}
+          onChange={(event) => {
+            setPage(1);
+            setSearchQuery(event.target.value);
+          }}
+          className="h-9 border-admin-border bg-admin-surface text-admin-text-primary"
+        />
 
-      <div className={`${adminFilterRowClassName} items-center`}>
-        <div className="min-w-[220px]">
+        <div className="grid gap-2 sm:grid-cols-[minmax(220px,320px)_1fr] sm:items-center">
           <select
             className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary"
             value={selectedLeague}
@@ -767,9 +767,9 @@ export default function Events() {
               </optgroup>
             ))}
           </select>
-        </div>
-        <div className="text-xs text-admin-text-muted">
-          {refreshing ? "Refreshing events..." : ""}
+          <div className="text-xs text-admin-text-muted sm:text-right">
+            {refreshing ? "Refreshing events..." : ""}
+          </div>
         </div>
       </div>
 
@@ -865,7 +865,7 @@ export default function Events() {
         </AdminCard>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
         {[
           {
             label: "Live",
@@ -888,11 +888,13 @@ export default function Events() {
             tone: "text-admin-gold",
           },
         ].map((metric) => (
-          <AdminCard className="p-4" key={metric.label}>
+          <AdminCard className="p-3 sm:p-4" key={metric.label}>
             <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">
               {metric.label}
             </p>
-            <p className={`mt-2 text-2xl font-bold ${metric.tone}`}>
+            <p
+              className={`mt-1.5 text-xl font-bold sm:text-2xl ${metric.tone}`}
+            >
               {statsLoading ? "..." : metric.value}
             </p>
           </AdminCard>
@@ -958,7 +960,7 @@ export default function Events() {
 
         {events.map((event) => (
           <AdminCard
-            className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+            className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
             key={event.eventId}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -993,10 +995,12 @@ export default function Events() {
                       ✗ No odds
                     </span>
                   )}
-                  <span className="text-[11px] text-admin-text-muted">
+                  <span className="max-w-[150px] truncate text-[11px] text-admin-text-muted sm:max-w-none">
                     {event.leagueName ?? "Unknown league"}
                   </span>
-                  <span className="text-[11px] text-admin-text-muted">-</span>
+                  <span className="hidden text-[11px] text-admin-text-muted sm:inline">
+                    -
+                  </span>
                   <span className="text-[11px] text-admin-text-muted">
                     {new Date(event.commenceTime).toLocaleString()}
                   </span>
@@ -1008,20 +1012,25 @@ export default function Events() {
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-admin-text-muted">
                   <span>Margin: {event.houseMargin}%</span>
-                  <span>Markets: {event.marketsEnabled.join(", ")}</span>
+                  <span className="hidden sm:inline">
+                    Markets: {event.marketsEnabled.join(", ")}
+                  </span>
+                  <span className="sm:hidden">
+                    Markets: {event.marketsEnabled.length}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center lg:min-w-[276px]">
+            <div className="grid grid-cols-3 gap-2 rounded-xl border border-admin-border/60 bg-admin-surface/35 p-2 text-center sm:gap-3 sm:border-0 sm:bg-transparent sm:p-0 lg:min-w-[276px]">
               <div>
-                <p className="text-xl font-bold text-admin-blue">
+                <p className="text-lg font-bold text-admin-blue sm:text-xl">
                   {event._count.odds}
                 </p>
                 <p className="text-[11px] text-admin-text-muted">Markets</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-admin-gold">
+                <p className="text-lg font-bold text-admin-gold sm:text-xl">
                   {event._count.bets.toLocaleString()}
                 </p>
                 <p className="text-[11px] text-admin-text-muted">Bets</p>
@@ -1037,7 +1046,7 @@ export default function Events() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex w-full flex-wrap items-center justify-end gap-1 lg:w-auto">
               <Dialog>
                 <DialogTrigger asChild>
                   <AdminButton

@@ -283,7 +283,7 @@ export default function Analytics() {
             </AdminCard>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {(data?.signalCards ?? []).map((card) => (
               <AdminCard className="p-3" key={card.label}>
                 <p className="text-[10px] uppercase tracking-[0.08em] text-admin-text-muted">

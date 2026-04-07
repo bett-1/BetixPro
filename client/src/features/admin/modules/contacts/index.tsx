@@ -21,6 +21,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -192,7 +193,7 @@ export default function Contacts() {
       />
 
       {/* Summary Stats - Constrained width and smaller gap to make cards smaller */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 max-w-5xl">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 max-w-5xl">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -286,7 +287,12 @@ export default function Contacts() {
                           {contact.user?.email && (
                             <p className="text-xs text-admin-text-muted flex items-center gap-1 mt-0.5">
                               <Mail size={12} />
-                              {contact.user.email}
+                              <span
+                                className="max-w-[120px] truncate"
+                                title={contact.user.email}
+                              >
+                                {truncateEmailForTable(contact.user.email)}
+                              </span>
                             </p>
                           )}
                         </div>

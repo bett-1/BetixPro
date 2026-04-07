@@ -20,6 +20,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -79,10 +80,7 @@ export default function WithdrawalsAdmin() {
   });
 
   // --- Queries & Mutations ---
-  const {
-    data: withdrawalsData,
-    isLoading,
-  } = useQuery({
+  const { data: withdrawalsData, isLoading } = useQuery({
     queryKey: ["admin-withdrawals", statusFilter],
     queryFn: async () => {
       const response = await api.get<WithdrawalsResponse>(
@@ -306,7 +304,7 @@ export default function WithdrawalsAdmin() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -363,7 +361,12 @@ export default function WithdrawalsAdmin() {
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
                       <div>
-                        <p className="text-xs">{withdrawal.userEmail}</p>
+                        <p
+                          className="max-w-[110px] truncate text-xs"
+                          title={withdrawal.userEmail}
+                        >
+                          {truncateEmailForTable(withdrawal.userEmail)}
+                        </p>
                         <p className="text-[10px] text-admin-text-muted">
                           {withdrawal.userId.slice(0, 8)}...
                         </p>
