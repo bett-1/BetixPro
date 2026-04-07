@@ -15,11 +15,11 @@ import {
   AdminCard,
   AdminSectionHeader,
   StatusBadge,
-  SummaryCard,
   TableShell,
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -79,10 +79,7 @@ export default function WithdrawalsAdmin() {
   });
 
   // --- Queries & Mutations ---
-  const {
-    data: withdrawalsData,
-    isLoading,
-  } = useQuery({
+  const { data: withdrawalsData, isLoading } = useQuery({
     queryKey: ["admin-withdrawals", statusFilter],
     queryFn: async () => {
       const response = await api.get<WithdrawalsResponse>(
@@ -166,7 +163,7 @@ export default function WithdrawalsAdmin() {
       {
         label: "Pending",
         value: String(pendingCount),
-        tone: "accent" as const,
+        tone: "gold" as const,
       },
       {
         label: "Total Pending Amount",
@@ -176,12 +173,12 @@ export default function WithdrawalsAdmin() {
       {
         label: "Total Fees (Pending)",
         value: `KES ${pendingFees.toLocaleString()}`,
-        tone: "accent" as const,
+        tone: "red" as const,
       },
       {
         label: "Completed",
         value: String(completedCount),
-        tone: "accent" as const,
+        tone: "blue" as const,
       },
     ];
   }, [withdrawals]);
@@ -306,15 +303,61 @@ export default function WithdrawalsAdmin() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <SummaryCard
-            key={stat.label}
-            label={stat.label}
-            tone={stat.tone}
-            value={stat.value}
-          />
-        ))}
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
+        {stats.map((metric) => {
+          const colorMap: Record<
+            string,
+            { bg: string; text: string; icon: string; border: string }
+          > = {
+            accent: {
+              bg: "bg-admin-accent/5",
+              text: "text-admin-accent",
+              icon: "bg-admin-accent/15 text-admin-accent",
+              border: "border-admin-accent/20",
+            },
+            blue: {
+              bg: "bg-admin-blue/5",
+              text: "text-admin-blue",
+              icon: "bg-admin-blue/15 text-admin-blue",
+              border: "border-admin-blue/20",
+            },
+            gold: {
+              bg: "bg-admin-gold/5",
+              text: "text-admin-gold",
+              icon: "bg-admin-gold/15 text-admin-gold",
+              border: "border-admin-gold/20",
+            },
+            red: {
+              bg: "bg-red-500/5",
+              text: "text-red-500",
+              icon: "bg-red-500/15 text-red-500",
+              border: "border-red-500/20",
+            },
+          };
+
+          const colors = colorMap[metric.tone] || colorMap.accent;
+
+          return (
+            <AdminCard
+              key={metric.label}
+              className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
+                    {metric.label}
+                  </p>
+                  <div className={`rounded p-1 shrink-0 ${colors.icon}`}>
+                    <div className="h-3 w-3" />
+                  </div>
+                </div>
+                <p className={`text-base font-bold sm:text-lg ${colors.text}`}>
+                  {metric.value}
+                </p>
+              </div>
+            </AdminCard>
+          );
+        })}
       </div>
 
       <AdminCard>
@@ -363,7 +406,12 @@ export default function WithdrawalsAdmin() {
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
                       <div>
-                        <p className="text-xs">{withdrawal.userEmail}</p>
+                        <p
+                          className="max-w-[110px] truncate text-xs"
+                          title={withdrawal.userEmail}
+                        >
+                          {truncateEmailForTable(withdrawal.userEmail)}
+                        </p>
                         <p className="text-[10px] text-admin-text-muted">
                           {withdrawal.userId.slice(0, 8)}...
                         </p>

@@ -9,6 +9,10 @@ import {
   AdminCard,
   AdminSectionHeader,
   StatusBadge,
+  TableShell,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
 } from "../../components/ui";
 
 type OddsFilter = "configured" | "configured-with-odds" | "all-with-odds";
@@ -135,7 +139,13 @@ function pageItems(current: number, totalPages: number) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
   }
 
-  const pages = new Set<number>([1, totalPages, current, current - 1, current + 1]);
+  const pages = new Set<number>([
+    1,
+    totalPages,
+    current,
+    current - 1,
+    current + 1,
+  ]);
   const normalized = Array.from(pages)
     .filter((value) => value >= 1 && value <= totalPages)
     .sort((left, right) => left - right);
@@ -163,12 +173,14 @@ export default function Odds() {
   };
 
   const activeFilter: OddsFilter =
-    search.filter === "configured-with-odds" || search.filter === "all-with-odds"
+    search.filter === "configured-with-odds" ||
+    search.filter === "all-with-odds"
       ? search.filter
       : "configured";
   const currentPage =
     typeof search.page === "number" && search.page > 0 ? search.page : 1;
-  const selectedEventId = typeof search.eventId === "string" ? search.eventId : "";
+  const selectedEventId =
+    typeof search.eventId === "string" ? search.eventId : "";
 
   const [searchInput, setSearchInput] = useState(search.search ?? "");
   const [jumpInput, setJumpInput] = useState(String(currentPage));
@@ -190,7 +202,9 @@ export default function Odds() {
     hasPrev: false,
   });
 
-  const [availableOddsEvents, setAvailableOddsEvents] = useState<DropdownEvent[]>([]);
+  const [availableOddsEvents, setAvailableOddsEvents] = useState<
+    DropdownEvent[]
+  >([]);
   const [availableOddsLoading, setAvailableOddsLoading] = useState(false);
   const [availableOddsError, setAvailableOddsError] = useState("");
 
@@ -199,8 +213,12 @@ export default function Odds() {
   const [configuredError, setConfiguredError] = useState("");
 
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
-  const [bookmarkingEventIds, setBookmarkingEventIds] = useState<Record<string, boolean>>({});
-  const [bookmarkedEventIds, setBookmarkedEventIds] = useState<Record<string, boolean>>({});
+  const [bookmarkingEventIds, setBookmarkingEventIds] = useState<
+    Record<string, boolean>
+  >({});
+  const [bookmarkedEventIds, setBookmarkedEventIds] = useState<
+    Record<string, boolean>
+  >({});
   const [bulkBookmarking, setBulkBookmarking] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
 
@@ -208,13 +226,20 @@ export default function Odds() {
   const [oddsDetailsByEventId, setOddsDetailsByEventId] = useState<
     Record<string, OddsDetailsResponse>
   >({});
-  const [oddsLoadingByEventId, setOddsLoadingByEventId] = useState<Record<string, boolean>>({});
-  const [oddsErrorByEventId, setOddsErrorByEventId] = useState<Record<string, string>>({});
+  const [oddsLoadingByEventId, setOddsLoadingByEventId] = useState<
+    Record<string, boolean>
+  >({});
+  const [oddsErrorByEventId, setOddsErrorByEventId] = useState<
+    Record<string, string>
+  >({});
 
   const [syncing, setSyncing] = useState(false);
 
   const debouncedSearch = debounceValue(searchInput.trim(), 300);
-  const debouncedOddsDropdownSearch = debounceValue(oddsDropdownSearch.trim(), 300);
+  const debouncedOddsDropdownSearch = debounceValue(
+    oddsDropdownSearch.trim(),
+    300,
+  );
   const debouncedConfiguredDropdownSearch = debounceValue(
     configuredDropdownSearch.trim(),
     300,
@@ -240,7 +265,9 @@ export default function Odds() {
         ...(prev as Record<string, unknown>),
         filter: next.filter ?? activeFilter,
         page: next.page ?? currentPage,
-        search: next.search ?? (typeof search.search === "string" ? search.search : ""),
+        search:
+          next.search ??
+          (typeof search.search === "string" ? search.search : ""),
         eventId: next.eventId ?? selectedEventId,
       }),
       replace: false,
@@ -248,7 +275,8 @@ export default function Odds() {
   }
 
   useEffect(() => {
-    const currentSearch = typeof search.search === "string" ? search.search : "";
+    const currentSearch =
+      typeof search.search === "string" ? search.search : "";
     if (debouncedSearch === currentSearch) {
       return;
     }
@@ -323,12 +351,15 @@ export default function Odds() {
     setConfiguredError("");
 
     try {
-      const response = await api.get<DropdownResponse>("/admin/events/configured", {
-        params: {
-          search: debouncedConfiguredDropdownSearch || undefined,
-          limit: 50,
+      const response = await api.get<DropdownResponse>(
+        "/admin/events/configured",
+        {
+          params: {
+            search: debouncedConfiguredDropdownSearch || undefined,
+            limit: 50,
+          },
         },
-      });
+      );
       setConfiguredEvents(response.data.events);
     } catch (error) {
       setConfiguredError(
@@ -344,8 +375,13 @@ export default function Odds() {
     setOddsErrorByEventId((current) => ({ ...current, [eventId]: "" }));
 
     try {
-      const response = await api.get<OddsDetailsResponse>(`/admin/odds/${eventId}`);
-      setOddsDetailsByEventId((current) => ({ ...current, [eventId]: response.data }));
+      const response = await api.get<OddsDetailsResponse>(
+        `/admin/odds/${eventId}`,
+      );
+      setOddsDetailsByEventId((current) => ({
+        ...current,
+        [eventId]: response.data,
+      }));
     } catch (error) {
       const message = getErrorMessage(error, "Unable to load odds details.");
       setOddsErrorByEventId((current) => ({ ...current, [eventId]: message }));
@@ -372,12 +408,15 @@ export default function Odds() {
 
   useEffect(() => {
     setSelectedEventIds((current) =>
-      current.filter((eventId) => events.some((event) => event.eventId === eventId)),
+      current.filter((eventId) =>
+        events.some((event) => event.eventId === eventId),
+      ),
     );
   }, [events]);
 
   const allOnPageSelected =
-    events.length > 0 && events.every((event) => selectedEventIds.includes(event.eventId));
+    events.length > 0 &&
+    events.every((event) => selectedEventIds.includes(event.eventId));
 
   const pages = useMemo(
     () => pageItems(pagination.page, pagination.totalPages),
@@ -389,19 +428,26 @@ export default function Odds() {
   }
 
   function goToPage(page: number) {
-    const normalized = Math.min(Math.max(page, 1), Math.max(1, pagination.totalPages));
+    const normalized = Math.min(
+      Math.max(page, 1),
+      Math.max(1, pagination.totalPages),
+    );
     updateUrl({ page: normalized });
   }
 
   function toggleSelectAllOnPage(checked: boolean) {
     if (!checked) {
       const pageIds = new Set(events.map((event) => event.eventId));
-      setSelectedEventIds((current) => current.filter((eventId) => !pageIds.has(eventId)));
+      setSelectedEventIds((current) =>
+        current.filter((eventId) => !pageIds.has(eventId)),
+      );
       return;
     }
 
     setSelectedEventIds((current) =>
-      Array.from(new Set([...current, ...events.map((event) => event.eventId)])),
+      Array.from(
+        new Set([...current, ...events.map((event) => event.eventId)]),
+      ),
     );
   }
 
@@ -419,7 +465,11 @@ export default function Odds() {
     try {
       const response = await api.post<{ message: string }>("/admin/odds/sync");
       toast.success(response.data.message);
-      await Promise.all([loadStats(), loadEventList(), loadAvailableOddsEvents()]);
+      await Promise.all([
+        loadStats(),
+        loadEventList(),
+        loadAvailableOddsEvents(),
+      ]);
     } catch (error) {
       toast.error(getErrorMessage(error, "Unable to sync odds feed."));
     } finally {
@@ -479,7 +529,10 @@ export default function Odds() {
       await api.post("/admin/odds/bookmark-bulk", {
         eventIds: selectedEventIds,
       });
-      setBulkProgress({ current: selectedEventIds.length, total: selectedEventIds.length });
+      setBulkProgress({
+        current: selectedEventIds.length,
+        total: selectedEventIds.length,
+      });
       setSelectedEventIds([]);
       await Promise.all([loadStats(), loadEventList()]);
       toast.success("Bulk bookmark completed.");
@@ -492,143 +545,209 @@ export default function Odds() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminSectionHeader
         title="Odds Control"
         subtitle="Real-time odds monitoring and best-price curation"
         actions={
-          <AdminButton variant="ghost" onClick={() => void handleSyncFeed()} disabled={syncing}>
-            {syncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+          <AdminButton
+            size="sm"
+            variant="ghost"
+            className="w-full rounded-full border-admin-border/70 bg-admin-surface/65 text-[11px] font-semibold text-admin-text-primary hover:border-admin-accent/50 hover:bg-admin-accent/10 sm:w-auto"
+            onClick={() => void handleSyncFeed()}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <RefreshCw size={13} />
+            )}
             {syncing ? "Syncing..." : "Sync Feed"}
           </AdminButton>
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <button className="text-left" type="button" onClick={() => setFilter("configured")}>
-          <AdminCard
-            className={`p-4 transition ${
-              activeFilter === "configured" ? "border-admin-accent ring-1 ring-admin-accent" : ""
-            }`}
-            interactive
-          >
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Configured Games</p>
-            <p className="mt-2 text-2xl font-bold text-admin-blue">
-              {statsLoading ? "..." : stats?.totalConfigured ?? 0}
-            </p>
-            <p className="mt-1 text-xs text-admin-text-muted">Active events</p>
-          </AdminCard>
-        </button>
-        <button
-          className="text-left"
-          type="button"
-          onClick={() => setFilter("configured-with-odds")}
-        >
-          <AdminCard
-            className={`p-4 transition ${
-              activeFilter === "configured-with-odds"
-                ? "border-admin-accent ring-1 ring-admin-accent"
-                : ""
-            }`}
-            interactive
-          >
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">With Odds</p>
-            <p className="mt-2 text-2xl font-bold text-admin-accent">
-              {statsLoading ? "..." : stats?.withOdds ?? 0}
-            </p>
-            <p className="mt-1 text-xs text-admin-text-muted">Configured + odds</p>
-          </AdminCard>
-        </button>
-        <button className="text-left" type="button" onClick={() => setFilter("all-with-odds")}>
-          <AdminCard
-            className={`p-4 transition ${
-              activeFilter === "all-with-odds" ? "border-admin-accent ring-1 ring-admin-accent" : ""
-            }`}
-            interactive
-          >
-            <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">All With Odds</p>
-            <p className="mt-2 text-2xl font-bold text-admin-gold">
-              {statsLoading ? "..." : stats?.withOdds ?? 0}
-            </p>
-            <p className="mt-1 text-xs text-admin-text-muted">Configured or not</p>
-          </AdminCard>
-        </button>
-        <AdminCard className="p-4" interactive>
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Bookmakers</p>
-          <p className="mt-2 text-2xl font-bold text-admin-gold">
-            {statsLoading ? "..." : stats?.bookmakers ?? 0}
-          </p>
-          <p className="mt-1 text-xs text-admin-text-muted">Visible sources</p>
-        </AdminCard>
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
+        {[
+          {
+            filter: "configured" as OddsFilter,
+            label: "Configured",
+            value: stats?.totalConfigured ?? 0,
+            tone: "blue" as const,
+          },
+          {
+            filter: "configured-with-odds" as OddsFilter,
+            label: "With Odds",
+            value: stats?.withOdds ?? 0,
+            tone: "accent" as const,
+          },
+          {
+            filter: "all-with-odds" as OddsFilter,
+            label: "All w/ Odds",
+            value: stats?.withOdds ?? 0,
+            tone: "gold" as const,
+          },
+          {
+            filter: null,
+            label: "Bookmakers",
+            value: stats?.bookmakers ?? 0,
+            tone: "gold" as const,
+          },
+        ].map((metric: any) => {
+          const colorMap: Record<
+            string,
+            { bg: string; text: string; icon: string; border: string }
+          > = {
+            accent: {
+              bg: "bg-admin-accent/5",
+              text: "text-admin-accent",
+              icon: "bg-admin-accent/15 text-admin-accent",
+              border: "border-admin-accent/20",
+            },
+            blue: {
+              bg: "bg-admin-blue/5",
+              text: "text-admin-blue",
+              icon: "bg-admin-blue/15 text-admin-blue",
+              border: "border-admin-blue/20",
+            },
+            gold: {
+              bg: "bg-admin-gold/5",
+              text: "text-admin-gold",
+              icon: "bg-admin-gold/15 text-admin-gold",
+              border: "border-admin-gold/20",
+            },
+            red: {
+              bg: "bg-red-500/5",
+              text: "text-red-500",
+              icon: "bg-red-500/15 text-red-500",
+              border: "border-red-500/20",
+            },
+          };
+
+          const colors = colorMap[metric.tone] || colorMap.accent;
+          const isClickable = metric.filter !== null;
+
+          const card = (
+            <AdminCard
+              className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3 ${
+                isClickable && activeFilter === metric.filter
+                  ? "ring-1 ring-offset-0"
+                  : ""
+              }`}
+              interactive={isClickable}
+            >
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
+                    {metric.label}
+                  </p>
+                  <div className={`rounded p-1 shrink-0 ${colors.icon}`}>
+                    <div className="h-3 w-3" />
+                  </div>
+                </div>
+                <p className={`text-base font-bold sm:text-lg ${colors.text}`}>
+                  {statsLoading ? "—" : metric.value}
+                </p>
+              </div>
+            </AdminCard>
+          );
+
+          return isClickable ? (
+            <button
+              key={metric.label}
+              className="h-full w-full text-left"
+              type="button"
+              onClick={() => setFilter(metric.filter!)}
+            >
+              {card}
+            </button>
+          ) : (
+            <div key={metric.label}>{card}</div>
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <AdminCard className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Select Odds</p>
-          <Input
-            placeholder="Search events with odds..."
-            value={oddsDropdownSearch}
-            onChange={(event) => setOddsDropdownSearch(event.target.value)}
-            className="border-admin-border bg-admin-surface text-admin-text-primary"
-          />
-          {availableOddsLoading ? (
-            <div className="space-y-2">
-              <div className="h-8 animate-pulse rounded bg-admin-surface" />
-              <div className="h-8 animate-pulse rounded bg-admin-surface" />
-            </div>
-          ) : availableOddsError ? (
-            <p className="text-xs text-admin-red">{availableOddsError}</p>
-          ) : !availableOddsEvents.length ? (
-            <p className="text-xs text-admin-text-muted">No events with odds found.</p>
+      {/* ── Event selectors: stacked compact panels ── */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {/* Select Odds */}
+        <AdminCard className="p-2.5 sm:p-3">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+            Filter by odds event
+          </p>
+          <div className="flex gap-1.5">
+            <Input
+              placeholder="Search…"
+              value={oddsDropdownSearch}
+              onChange={(e) => setOddsDropdownSearch(e.target.value)}
+              className="h-8 flex-1 border-admin-border bg-admin-surface text-xs text-admin-text-primary"
+            />
+            {availableOddsLoading ? (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                <Loader2
+                  size={13}
+                  className="animate-spin text-admin-text-muted"
+                />
+              </div>
+            ) : null}
+          </div>
+          {availableOddsError ? (
+            <p className="mt-1 text-[10px] text-admin-red">
+              {availableOddsError}
+            </p>
           ) : (
             <select
               value={selectedEventId}
-              onChange={(event) => updateUrl({ eventId: event.target.value, page: 1 })}
-              className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
+              onChange={(e) => updateUrl({ eventId: e.target.value, page: 1 })}
+              className="mt-1.5 h-8 w-full rounded-lg border border-admin-border bg-admin-surface px-2.5 text-xs text-admin-text-primary"
             >
               <option value="">All matching events</option>
               {availableOddsEvents.map((event) => (
                 <option key={event.eventId} value={event.eventId}>
-                  {`${event.homeTeam} vs ${event.awayTeam} (${event.oddsCount ?? event._count?.odds ?? 0} odds)`}
+                  {`${event.homeTeam} vs ${event.awayTeam} (${event.oddsCount ?? event._count?.odds ?? 0})`}
                 </option>
               ))}
             </select>
           )}
         </AdminCard>
 
-        <AdminCard className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.08em] text-admin-text-muted">Configured Games</p>
-          <div className="relative">
+        {/* Configured Games */}
+        <AdminCard className="p-2.5 sm:p-3">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+            Filter by configured game
+          </p>
+          <div className="relative flex gap-1.5">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-muted"
-              size={14}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-admin-text-muted"
+              size={12}
             />
             <Input
-              placeholder="Search configured games..."
+              placeholder="Search…"
               value={configuredDropdownSearch}
-              onChange={(event) => setConfiguredDropdownSearch(event.target.value)}
-              className="pl-9 border-admin-border bg-admin-surface text-admin-text-primary"
+              onChange={(e) => setConfiguredDropdownSearch(e.target.value)}
+              className="h-8 flex-1 border-admin-border bg-admin-surface pl-7 text-xs text-admin-text-primary"
             />
+            {configuredLoading ? (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                <Loader2
+                  size={13}
+                  className="animate-spin text-admin-text-muted"
+                />
+              </div>
+            ) : null}
           </div>
-          {configuredLoading ? (
-            <div className="space-y-2">
-              <div className="h-8 animate-pulse rounded bg-admin-surface" />
-              <div className="h-8 animate-pulse rounded bg-admin-surface" />
-            </div>
-          ) : configuredError ? (
-            <p className="text-xs text-admin-red">{configuredError}</p>
-          ) : !configuredEvents.length ? (
-            <p className="text-xs text-admin-text-muted">No configured events found.</p>
+          {configuredError ? (
+            <p className="mt-1 text-[10px] text-admin-red">{configuredError}</p>
           ) : (
             <select
               value={selectedEventId}
-              onChange={(event) => updateUrl({ eventId: event.target.value, page: 1 })}
-              className="h-9 w-full rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text-primary font-medium"
+              onChange={(e) => updateUrl({ eventId: e.target.value, page: 1 })}
+              className="mt-1.5 h-8 w-full rounded-lg border border-admin-border bg-admin-surface px-2.5 text-xs text-admin-text-primary"
             >
               <option value="">All configured events</option>
               {configuredEvents.map((event) => (
                 <option key={event.eventId} value={event.eventId}>
-                  {`${event.homeTeam} vs ${event.awayTeam} (${event._count?.odds ?? 0} odds)`}
+                  {`${event.homeTeam} vs ${event.awayTeam} (${event._count?.odds ?? 0})`}
                 </option>
               ))}
             </select>
@@ -636,58 +755,72 @@ export default function Odds() {
         </AdminCard>
       </div>
 
-      <AdminCard className="space-y-3">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-muted"
-            size={14}
-          />
-          <Input
-            placeholder="Search by team or league..."
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            className="pl-9 border-admin-border bg-admin-surface text-admin-text-primary"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center gap-2 text-xs text-admin-text-muted">
-            <input
-              checked={allOnPageSelected}
-              className="h-4 w-4 rounded border-admin-border bg-admin-surface"
-              onChange={(event) => toggleSelectAllOnPage(event.target.checked)}
-              type="checkbox"
+      {/* ── Main events panel ── */}
+      <AdminCard className="space-y-3 p-2.5 sm:p-3">
+        {/* Search + bulk toolbar in one tight row */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-admin-text-muted"
+              size={13}
             />
-            Select all in current filter
-          </label>
-          <AdminButton
-            size="sm"
-            onClick={() => void handleBookmarkBulk()}
-            disabled={bulkBookmarking || selectedEventIds.length === 0}
-          >
-            {bulkBookmarking ? (
-              <>
-                <Loader2 className="animate-spin" size={13} />
-                {`Bookmarking ${bulkProgress.current} of ${bulkProgress.total}...`}
-              </>
-            ) : (
-              "Bookmark Best for Selected"
-            )}
-          </AdminButton>
+            <Input
+              placeholder="Search by team or league…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="h-8 pl-8 border-admin-border bg-admin-surface text-xs text-admin-text-primary"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-admin-text-muted">
+              <input
+                checked={allOnPageSelected}
+                className="h-3.5 w-3.5 rounded border-admin-border bg-admin-surface"
+                onChange={(e) => toggleSelectAllOnPage(e.target.checked)}
+                type="checkbox"
+              />
+              <span className="hidden sm:inline">Select all</span>
+              <span className="sm:hidden">All</span>
+            </label>
+            <AdminButton
+              size="sm"
+              onClick={() => void handleBookmarkBulk()}
+              disabled={bulkBookmarking || selectedEventIds.length === 0}
+              className="shrink-0 text-xs"
+            >
+              {bulkBookmarking ? (
+                <>
+                  <Loader2 className="animate-spin" size={12} />
+                  {`${bulkProgress.current}/${bulkProgress.total}`}
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">
+                    Bookmark Best for Selected
+                  </span>
+                  <span className="sm:hidden">Bookmark Selected</span>
+                </>
+              )}
+            </AdminButton>
+          </div>
         </div>
 
-        {listError ? <p className="text-sm text-admin-red">{listError}</p> : null}
+        {listError ? (
+          <p className="text-sm text-admin-red">{listError}</p>
+        ) : null}
 
         {listLoading ? (
           <div className="space-y-2">
-            <div className="h-20 animate-pulse rounded bg-admin-surface" />
-            <div className="h-20 animate-pulse rounded bg-admin-surface" />
-            <div className="h-20 animate-pulse rounded bg-admin-surface" />
+            <div className="h-16 animate-pulse rounded bg-admin-surface" />
+            <div className="h-16 animate-pulse rounded bg-admin-surface" />
+            <div className="h-16 animate-pulse rounded bg-admin-surface" />
           </div>
         ) : !events.length ? (
-          <p className="text-sm text-admin-text-muted">No events match the current filter.</p>
+          <p className="text-sm text-admin-text-muted">
+            No events match the current filter.
+          </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {events.map((event) => {
               const expanded = expandedEventId === event.eventId;
               const oddsDetails = oddsDetailsByEventId[event.eventId];
@@ -695,74 +828,85 @@ export default function Odds() {
               const oddsError = oddsErrorByEventId[event.eventId];
 
               return (
-                <AdminCard key={event.eventId} className="space-y-3 border-admin-border bg-admin-surface">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <input
-                        checked={selectedEventIds.includes(event.eventId)}
-                        className="h-4 w-4 rounded border-admin-border bg-admin-surface"
-                        onChange={(checkboxEvent) =>
-                          toggleEventSelection(event.eventId, checkboxEvent.target.checked)
-                        }
-                        type="checkbox"
-                      />
-                      <div>
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <StatusBadge status={toBadgeStatus(event.status)} />
-                          <span className="rounded-lg bg-admin-accent-dim px-2 py-1 text-[11px] font-semibold text-admin-accent">
-                            {event._count.odds} odds
-                          </span>
-                          <span className="text-[11px] text-admin-text-muted">
-                            {event.leagueName ?? "Unknown league"}
-                          </span>
-                        </div>
-                        <p className="text-base font-semibold text-admin-text-primary">
-                          {event.homeTeam} <span className="text-admin-text-muted">vs</span> {event.awayTeam}
-                        </p>
-                        <p className="mt-1 text-xs text-admin-text-muted">
-                          {new Date(event.commenceTime).toLocaleString()}
-                        </p>
+                <AdminCard
+                  key={event.eventId}
+                  className="space-y-2 border-admin-border bg-admin-surface p-2.5 sm:p-3"
+                >
+                  <div className="flex items-start gap-2.5">
+                    {/* checkbox */}
+                    <input
+                      checked={selectedEventIds.includes(event.eventId)}
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-admin-border bg-admin-surface"
+                      onChange={(e) =>
+                        toggleEventSelection(event.eventId, e.target.checked)
+                      }
+                      type="checkbox"
+                    />
+
+                    {/* main info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={toBadgeStatus(event.status)} />
+                        <span className="rounded bg-admin-accent-dim px-1.5 py-0.5 text-[10px] font-semibold text-admin-accent">
+                          {event._count.odds} odds
+                        </span>
+                        <span className="text-[10px] text-admin-text-muted">
+                          {event.leagueName ?? "Unknown league"}
+                        </span>
                       </div>
+                      <p className="text-sm font-semibold leading-snug text-admin-text-primary">
+                        {event.homeTeam}{" "}
+                        <span className="text-admin-text-muted">vs</span>{" "}
+                        {event.awayTeam}
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-admin-text-muted">
+                        {new Date(event.commenceTime).toLocaleString()}
+                      </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+
+                    {/* action buttons — stacked on mobile, row on sm+ */}
+                    <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row sm:items-center">
                       <AdminButton
                         size="sm"
+                        className="px-2.5 text-xs"
                         variant="ghost"
                         onClick={() => void handleViewOdds(event.eventId)}
                       >
-                        {expanded ? "Hide Odds" : "View Odds"}
+                        {expanded ? "Hide" : "Odds"}
                       </AdminButton>
                       <AdminButton
                         size="sm"
+                        className="px-2.5 text-xs"
                         onClick={() => void handleBookmarkSingle(event.eventId)}
                         disabled={Boolean(bookmarkingEventIds[event.eventId])}
                       >
                         {bookmarkingEventIds[event.eventId] ? (
-                          <Loader2 className="animate-spin" size={13} />
+                          <Loader2 className="animate-spin" size={12} />
                         ) : bookmarkedEventIds[event.eventId] ? (
-                          "Bookmarked ✓"
+                          "Saved ✓"
                         ) : (
-                          "Bookmark Best"
+                          "Bookmark"
                         )}
                       </AdminButton>
                     </div>
                   </div>
 
                   {expanded ? (
-                    <div className="rounded-xl border border-admin-border bg-admin-card p-3">
+                    <div className="rounded-lg border border-admin-border bg-admin-card p-2.5">
                       {oddsLoading ? (
                         <div className="space-y-2">
-                          <div className="h-8 animate-pulse rounded bg-admin-surface" />
-                          <div className="h-8 animate-pulse rounded bg-admin-surface" />
-                          <div className="h-8 animate-pulse rounded bg-admin-surface" />
+                          <div className="h-7 animate-pulse rounded bg-admin-surface" />
+                          <div className="h-7 animate-pulse rounded bg-admin-surface" />
                         </div>
                       ) : oddsError ? (
-                        <p className="text-sm text-admin-red">{oddsError}</p>
+                        <p className="text-xs text-admin-red">{oddsError}</p>
                       ) : !oddsDetails ? (
-                        <p className="text-sm text-admin-text-muted">No odds data available.</p>
+                        <p className="text-xs text-admin-text-muted">
+                          No odds data available.
+                        </p>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-[760px] w-full border-collapse">
+                        <TableShell>
+                          <table className={`${adminTableClassName} min-w-170`}>
                             <thead>
                               <tr>
                                 {[
@@ -774,7 +918,7 @@ export default function Odds() {
                                 ].map((heading) => (
                                   <th
                                     key={heading}
-                                    className="border-b border-admin-border px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted"
+                                    className={adminTableHeadCellClassName}
                                   >
                                     {heading}
                                   </th>
@@ -784,28 +928,32 @@ export default function Odds() {
                             <tbody>
                               {oddsDetails.markets.flatMap((market) =>
                                 market.odds.map((row, index) => (
-                                  <tr key={`${market.marketType}-${row.bookmakerId}-${row.selection}-${index}`}>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-primary">
+                                  <tr
+                                    key={`${market.marketType}-${row.bookmakerId}-${row.selection}-${index}`}
+                                  >
+                                    <td
+                                      className={`${adminTableCellClassName} text-admin-text-primary`}
+                                    >
                                       {row.bookmakerName}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {market.marketType}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {row.selection}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm">
+                                    <td className={adminTableCellClassName}>
                                       <span
                                         className={
                                           row.isBest
-                                            ? "rounded bg-yellow-300 px-2 py-1 font-bold text-black"
+                                            ? "rounded bg-yellow-300 px-2 py-0.5 font-bold text-black"
                                             : "text-admin-text-secondary"
                                         }
                                       >
                                         {row.odds.toFixed(2)}
                                       </span>
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {new Date(row.updatedAt).toLocaleString()}
                                     </td>
                                   </tr>
@@ -813,7 +961,7 @@ export default function Odds() {
                               )}
                             </tbody>
                           </table>
-                        </div>
+                        </TableShell>
                       )}
                     </div>
                   ) : null}
@@ -823,71 +971,79 @@ export default function Odds() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <AdminButton
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={!pagination.hasPrev}
-            >
-              ← Prev
-            </AdminButton>
-            {pages.map((item, index) =>
-              item === "..." ? (
-                <span key={`ellipsis-${index}`} className="px-1 text-xs text-admin-text-muted">
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  onClick={() => goToPage(Number(item))}
-                  type="button"
-                  className={`h-8 min-w-8 rounded px-2 text-xs font-semibold ${
-                    item === currentPage
-                      ? "bg-yellow-300 text-black"
-                      : "border border-admin-border text-admin-text-secondary"
-                  }`}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <AdminButton
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={!pagination.hasNext}
-            >
-              Next →
-            </AdminButton>
+        {/* Pagination */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-full overflow-x-auto pb-1 [scrollbar-width:thin]">
+            <div className="inline-flex min-w-max items-center gap-1.5">
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={!pagination.hasPrev}
+                className="text-xs"
+              >
+                ← Prev
+              </AdminButton>
+              {pages.map((item, index) =>
+                item === "..." ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-1 text-xs text-admin-text-muted"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => goToPage(Number(item))}
+                    type="button"
+                    className={`h-7 min-w-7 rounded px-1.5 text-xs font-semibold ${
+                      item === currentPage
+                        ? "bg-yellow-300 text-black"
+                        : "border border-admin-border text-admin-text-secondary"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ),
+              )}
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={!pagination.hasNext}
+                className="text-xs"
+              >
+                Next →
+              </AdminButton>
+            </div>
           </div>
 
           <form
-            className="flex items-center gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
+            className="flex shrink-0 items-center gap-1.5"
+            onSubmit={(e) => {
+              e.preventDefault();
               const pageNumber = Number(jumpInput);
               if (!Number.isInteger(pageNumber)) {
                 toast.error("Enter a valid page number.");
                 return;
               }
-
               if (pageNumber < 1 || pageNumber > pagination.totalPages) {
-                toast.error(`Page must be between 1 and ${pagination.totalPages}.`);
+                toast.error(
+                  `Page must be between 1 and ${pagination.totalPages}.`,
+                );
                 return;
               }
-
               goToPage(pageNumber);
             }}
           >
-            <span className="text-xs text-admin-text-muted">Jump to page</span>
+            <span className="text-xs text-admin-text-muted">Page</span>
             <Input
               value={jumpInput}
-              onChange={(event) => setJumpInput(event.target.value)}
-              className="h-8 w-20 border-admin-border bg-admin-surface text-admin-text-primary"
+              onChange={(e) => setJumpInput(e.target.value)}
+              className="h-7 w-14 border-admin-border bg-admin-surface text-center text-xs text-admin-text-primary"
             />
-            <AdminButton size="sm" type="submit">
+            <AdminButton size="sm" type="submit" className="text-xs">
               Go
             </AdminButton>
           </form>
