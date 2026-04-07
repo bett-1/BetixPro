@@ -1,17 +1,4 @@
-import { useState } from "react";
-import { MoreVertical, RefreshCw } from "lucide-react";
-import {
-  AdminButton,
-  AdminCard,
-  AdminSectionHeader,
-  StatusBadge,
-  TableShell,
-  adminCompactActionsClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
-  truncateEmailForTable,
-} from "../../components/ui";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,19 +12,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  useUsers,
-  useGetUserDetail,
   banUserAction,
-  unbanUserAction,
+  createUserAction,
   suspendUserAction,
+  unbanUserAction,
   unsuspendUserAction,
   updateUserAction,
-  createUserAction,
+  useGetUserDetail,
+  useUsers,
   type User,
 } from "@/hooks/useUsers";
+import { MoreVertical } from "lucide-react";
+import { useState } from "react";
+import {
+  AdminButton,
+  AdminCard,
+  AdminSectionHeader,
+  StatusBadge,
+  TableShell,
+  adminCompactActionsClassName,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
+  truncateEmailForTable,
+} from "../../components/ui";
 
 export default function Users() {
   const [search, setSearch] = useState("");

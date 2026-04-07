@@ -1,18 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, RefreshCw, MoreHorizontal } from "lucide-react";
 import { api } from "@/api/axiosConfig";
-import {
-  AdminButton,
-  AdminCard,
-  AdminSectionHeader,
-  StatusBadge,
-  TableShell,
-  adminFilterRowClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
-  truncateEmailForTable,
-} from "../../components/ui";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +15,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Download, Eye, MoreHorizontal, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AdminButton,
+  AdminCard,
+  AdminSectionHeader,
+  StatusBadge,
+  TableShell,
+  adminFilterRowClassName,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
+  truncateEmailForTable,
+} from "../../components/ui";
 
 interface ApiBet {
   id: string;
@@ -123,7 +123,7 @@ export default function Bets() {
 
   const betStats = useMemo(() => {
     const totalOpen = bets.filter((bet) => bet.status === "PENDING").length;
-    const settledToday = bets.filter((bet) => bet.status !== "PENDING").length;
+    // const settledToday = bets.filter((bet) => bet.status !== "PENDING").length;
     const voided = bets.filter((bet) => bet.status === "VOID").length;
     const flagged = bets.filter((bet) => bet.stake > 10_000).length;
     const liability = bets
