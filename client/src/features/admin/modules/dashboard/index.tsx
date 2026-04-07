@@ -348,7 +348,7 @@ export default function Dashboard() {
                     ].map((heading) => (
                       <th
                         className={`${adminTableHeadCellClassName} ${
-                          (heading === "Type" || heading === "Time")
+                          heading === "Type" || heading === "Time"
                             ? "hidden sm:table-cell"
                             : ""
                         }`}
