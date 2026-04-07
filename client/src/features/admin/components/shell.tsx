@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -12,6 +12,8 @@ import {
   Sun,
   Monitor,
   ChevronRight,
+  SidebarOpen,
+  SidebarClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -31,7 +33,8 @@ import {
 import { adminNavigation } from "../config/navigation";
 
 export default function AdminShell() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -48,6 +51,29 @@ export default function AdminShell() {
   const notifications = notificationData?.notifications ?? [];
   const unreadCount = notificationData?.unreadCount ?? 0;
 
+  const groupedNavigation = useMemo(
+    () => [
+      {
+        title: "Core",
+        items: adminNavigation.filter((item) => item.category === "core"),
+      },
+      {
+        title: "Trading",
+        items: adminNavigation.filter((item) => item.category === "operations"),
+      },
+      {
+        title: "Insights",
+        items: adminNavigation.filter((item) => item.category === "insights"),
+      },
+    ],
+    [],
+  );
+
+  const settingsItem = useMemo(
+    () => adminNavigation.find((item) => item.id === "settings"),
+    [],
+  );
+
   const handleLogout = async () => {
     await logout();
     toast.success("Logged out successfully");
@@ -57,101 +83,203 @@ export default function AdminShell() {
   const isWithdrawalNotification = (type: string) =>
     type === "WITHDRAWAL_SUCCESS" || type === "WITHDRAWAL_FAILED";
 
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileSidebarOpen) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [mobileSidebarOpen]);
+
+  const toggleSidebar = () => {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setSidebarExpanded((current) => !current);
+      return;
+    }
+
+    setMobileSidebarOpen((current) => !current);
+  };
+
+  const showNavLabels = sidebarExpanded || mobileSidebarOpen;
+
   return (
     <ProtectedRoute requireRole="ADMIN">
-      <div className="min-h-dvh bg-admin-bg font-admin text-admin-text-primary lg:flex">
+      <div className="relative min-h-dvh bg-admin-bg font-admin text-admin-text-primary lg:flex">
+        {!mobileSidebarOpen ? (
+          <button
+            type="button"
+            aria-label="Open sidebar"
+            className="fixed left-4 top-4 z-30 grid h-10 w-10 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-secondary)] text-admin-text-secondary shadow-[0_10px_26px_rgba(0,0,0,0.28)] transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary lg:hidden"
+            onClick={() => setMobileSidebarOpen(true)}
+            title="Open sidebar"
+          >
+            <Menu size={18} />
+          </button>
+        ) : null}
+
+        {mobileSidebarOpen ? (
+          <button
+            type="button"
+            aria-label="Close sidebar"
+            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[1px] lg:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        ) : null}
+
         <aside
           className={cn(
-            "flex w-full flex-col overflow-hidden border-b border-admin-border bg-admin-card",
+            "fixed inset-y-0 left-0 z-40 flex w-[278px] max-w-[88vw] flex-col overflow-hidden border-r border-admin-border bg-admin-card",
             "bg-[linear-gradient(180deg,var(--color-bg-hover),transparent_140px)]",
-            "transition-[width,min-width] duration-300 lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r",
-            sidebarOpen
+            "shadow-[0_24px_68px_rgba(0,0,0,0.45)] transition-[transform,width,min-width] duration-300",
+            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+            "lg:sticky lg:top-0 lg:h-dvh lg:max-w-none lg:translate-x-0 lg:shadow-none",
+            sidebarExpanded
               ? "lg:w-[252px] lg:min-w-[252px]"
               : "lg:w-[78px] lg:min-w-[78px]",
           )}
         >
           <div
             className={cn(
-              "flex min-h-16 items-center gap-3 border-b border-admin-border px-4 py-4",
-              !sidebarOpen && "lg:justify-center",
+              "flex min-h-16 items-center border-b border-admin-border px-4 py-4",
+              showNavLabels ? "justify-between" : "justify-center",
             )}
           >
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-dark))]">
-              <Zap size={16} color="var(--color-text-dark)" />
-            </div>
-            {sidebarOpen ? (
-              <div>
-                <p className="text-sm font-bold tracking-[0.03em] text-admin-text-primary">
-                  BettCenic
-                </p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
-                  Admin Panel
-                </p>
+            <div
+              className={cn(
+                "flex items-center gap-3",
+                !showNavLabels && "lg:hidden",
+              )}
+            >
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-dark))]">
+                <Zap size={16} color="var(--color-text-dark)" />
               </div>
-            ) : null}
+              {showNavLabels ? (
+                <div>
+                  <p className="text-sm font-bold tracking-[0.03em] text-admin-text-primary">
+                    BetixPro
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                    Admin Panel
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <button
+              aria-label={showNavLabels ? "Collapse sidebar" : "Expand sidebar"}
+              aria-expanded={mobileSidebarOpen || sidebarExpanded}
+              className="grid h-9 w-9 cursor-pointer shrink-0 place-items-center rounded-lg border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary"
+              onClick={toggleSidebar}
+              type="button"
+              title={showNavLabels ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {showNavLabels ? (
+                <SidebarClose size={16} />
+              ) : (
+                <SidebarOpen size={16} />
+              )}
+            </button>
           </div>
 
           <div className="app-scrollbar flex-1 overflow-y-auto px-3 py-4">
-            {sidebarOpen ? (
-              <p className="px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-admin-text-muted">
-                Navigation
-              </p>
-            ) : null}
-            {adminNavigation.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                pathname === item.to || pathname.startsWith(`${item.to}/`);
+            {groupedNavigation.map((group) => (
+              <section className="mb-5" key={group.title}>
+                {showNavLabels ? (
+                  <p className="px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-admin-text-muted">
+                    {group.title}
+                  </p>
+                ) : null}
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    pathname === item.to || pathname.startsWith(`${item.to}/`);
 
-              return (
-                <Link
-                  className={cn(
-                    "mb-1.5 flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left text-admin-text-secondary transition",
-                    sidebarOpen
-                      ? "justify-start"
-                      : "justify-center px-0 lg:px-0",
-                    isActive
-                      ? "border-[var(--color-border-accent)] bg-admin-accent-dim text-admin-accent shadow-[inset_0_0_0_1px_var(--color-accent-soft)]"
-                      : "border-transparent hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary",
-                  )}
-                  key={item.id}
-                  title={item.label}
-                  to={item.to}
-                >
-                  <Icon size={18} />
-                  {sidebarOpen ? (
-                    <span
-                      className={cn("text-sm", isActive && "font-semibold")}
+                  return (
+                    <Link
+                      className={cn(
+                        "mb-1.5 flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left text-admin-text-secondary transition",
+                        showNavLabels
+                          ? "justify-start"
+                          : "justify-center px-0 lg:px-0",
+                        isActive
+                          ? "border-[var(--color-border-accent)] bg-admin-accent-dim text-admin-accent shadow-[inset_0_0_0_1px_var(--color-accent-soft)]"
+                          : "border-transparent hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary",
+                      )}
+                      key={item.id}
+                      onClick={() => setMobileSidebarOpen(false)}
+                      title={item.label}
+                      to={item.to}
                     >
-                      {item.label}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
+                      <Icon size={18} />
+                      {showNavLabels ? (
+                        <span
+                          className={cn("text-sm", isActive && "font-semibold")}
+                        >
+                          {item.label}
+                        </span>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+              </section>
+            ))}
           </div>
 
-          <div
-            className={cn(
-              "flex items-center gap-3 border-t border-admin-border px-4 py-4",
-              !sidebarOpen && "lg:justify-center",
-            )}
-          >
-            <button
-              aria-label="Toggle sidebar"
-              aria-expanded={sidebarOpen}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary"
-              onClick={() => setSidebarOpen((current) => !current)}
-              type="button"
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          {settingsItem ? (
+            <div
+              className={cn(
+                "border-t border-admin-border px-3 py-4",
+                !sidebarExpanded && "lg:px-2",
+              )}
             >
-              <Menu size={16} />
-            </button>
-            {sidebarOpen ? (
-              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
-                Collapse
-              </span>
-            ) : null}
-          </div>
+              {showNavLabels ? (
+                <p className="px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-admin-text-muted">
+                  System
+                </p>
+              ) : null}
+              <Link
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left text-admin-text-secondary transition",
+                  showNavLabels
+                    ? "justify-start"
+                    : "justify-center px-0 lg:px-0",
+                  pathname === settingsItem.to ||
+                    pathname.startsWith(`${settingsItem.to}/`)
+                    ? "border-[var(--color-border-accent)] bg-admin-accent-dim text-admin-accent shadow-[inset_0_0_0_1px_var(--color-accent-soft)]"
+                    : "border-transparent hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary",
+                )}
+                onClick={() => setMobileSidebarOpen(false)}
+                title={settingsItem.label}
+                to={settingsItem.to}
+              >
+                <settingsItem.icon size={18} />
+                {showNavLabels ? (
+                  <span
+                    className={cn(
+                      "text-sm",
+                      pathname === settingsItem.to && "font-semibold",
+                    )}
+                  >
+                    {settingsItem.label}
+                  </span>
+                ) : null}
+              </Link>
+            </div>
+          ) : null}
         </aside>
 
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-admin-bg">
@@ -160,10 +288,16 @@ export default function AdminShell() {
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,var(--color-accent-soft),transparent_28%),linear-gradient(180deg,var(--color-bg-elevated),var(--color-bg-primary)_180px)]"
           />
 
-          <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b border-admin-border bg-[var(--color-bg-secondary)] px-4 py-4 backdrop-blur-[18px] sm:px-6">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="flex h-11 w-full max-w-[560px] flex-1 items-center gap-2 rounded-2xl border border-admin-border bg-[var(--color-bg-elevated)] px-3">
-                <Search size={14} className="text-admin-text-muted" />
+          <header
+            className={cn(
+              "sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b border-admin-border bg-[var(--color-bg-secondary)] px-4 py-4 backdrop-blur-[18px] sm:px-6",
+              !mobileSidebarOpen && "pl-16",
+              "lg:pl-6",
+            )}
+          >
+            <div className="order-2  hidden md:flex min-w-0 basis-full items-center gap-3 lg:order-1 lg:basis-auto lg:flex-1">
+              <div className="flex h-11 w-full max-w-full flex-1 items-center gap-2 rounded-2xl border border-admin-border bg-[var(--color-bg-elevated)] px-3 lg:max-w-[560px]">
+                <Search size={14} className=" text-admin-text-muted" />
                 <input
                   className="w-full min-w-0 border-0 bg-transparent text-sm text-admin-text-primary outline-none placeholder:text-admin-text-muted"
                   onChange={(event) => setSearchQuery(event.target.value)}
@@ -173,12 +307,7 @@ export default function AdminShell() {
               </div>
             </div>
 
-            <div className="ml-auto flex flex-wrap items-center gap-3">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-admin-accent-dim px-3 py-1.5 text-[11px] font-semibold text-admin-accent">
-                <span className="animate-admin-pulse h-1.5 w-1.5 rounded-full bg-admin-accent" />
-                <span>LIVE</span>
-              </div>
-
+            <div className="order-1 ml-auto flex w-full items-center justify-end gap-2 sm:gap-3 lg:order-2 lg:w-auto">
               <div className="relative">
                 <button
                   type="button"
@@ -204,7 +333,7 @@ export default function AdminShell() {
                 </button>
 
                 {notificationsOpen ? (
-                  <div className="absolute right-0 top-12 z-20 w-[360px] overflow-hidden rounded-2xl border border-admin-border bg-[var(--color-bg-secondary)] shadow-[0_16px_44px_rgba(0,0,0,0.35)]">
+                  <div className="absolute right-0 top-12 z-20 w-[min(360px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-admin-border bg-[var(--color-bg-secondary)] shadow-[0_16px_44px_rgba(0,0,0,0.35)]">
                     <div className="border-b border-admin-border px-4 py-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
                         Admin Notifications
@@ -255,12 +384,12 @@ export default function AdminShell() {
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen((prev) => !prev)}
-                  className="flex flex-1 items-center gap-2 rounded-lg p-2 text-left transition hover:bg-[var(--color-bg-hover)]"
+                  className="flex max-w-[160px] items-center gap-2 rounded-lg p-2 text-left transition hover:bg-[var(--color-bg-hover)] sm:max-w-none"
                 >
                   <div className="grid h-8 w-8 place-items-center rounded-full bg-[linear-gradient(135deg,var(--admin-purple),var(--admin-blue))] text-[11px] font-bold text-white">
                     {user?.email.charAt(0).toUpperCase()}
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="hidden min-w-0 flex-1 sm:block">
                     <p className="text-xs font-semibold text-admin-text-primary">
                       {user?.email.split("@")[0]}
                     </p>
@@ -271,7 +400,7 @@ export default function AdminShell() {
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-12 z-20 w-64 overflow-hidden rounded-2xl border border-admin-border bg-[var(--color-bg-secondary)] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+                  <div className="absolute right-0 top-12 z-20 w-[min(320px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-admin-border bg-[var(--color-bg-secondary)] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
                     {/* Profile Section */}
                     <div className="border-b border-admin-border px-5 py-4">
                       <div className="flex items-center gap-3">
