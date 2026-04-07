@@ -373,7 +373,7 @@ export default function BetSlip(props: UseBetSlipReturn) {
 
   return (
     <>
-      <div className="hidden md:sticky md:top-[calc(var(--navbar-height)+8px)] md:z-20 md:block md:h-[calc(100vh-var(--navbar-height)-16px)] md:max-h-[calc(100vh-var(--navbar-height)-16px)] md:pr-1">
+      <div className="hidden md:sticky md:top-6 md:z-20 md:block md:h-[calc(100vh-var(--navbar-height)-48px)] md:max-h-[calc(100vh-var(--navbar-height)-48px)] md:pr-1">
         <BetSlipPanel {...props} />
       </div>
 
