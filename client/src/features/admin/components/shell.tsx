@@ -92,7 +92,6 @@ export default function AdminShell() {
   const isWithdrawalNotification = (type: string) =>
     type === "WITHDRAWAL_SUCCESS" || type === "WITHDRAWAL_FAILED";
 
-  // Updated to return purely the icon with appropriate colors and larger size (no wrappers needed)
   const getNotificationIcon = (type: string) => {
     if (type === "WITHDRAWAL_SUCCESS") return <CheckCircle2 size={20} className="text-emerald-500" />;
     if (type === "WITHDRAWAL_FAILED") return <XCircle size={20} className="text-red-500" />;
@@ -100,14 +99,12 @@ export default function AdminShell() {
     return <Bell size={20} className="text-admin-text-secondary" />;
   };
 
-  // Handle route changes
   useEffect(() => {
     setMobileSidebarOpen(false);
     setNotificationsOpen(false);
     setUserMenuOpen(false);
   }, [pathname]);
 
-  // Click outside handlers for custom popovers
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
@@ -121,7 +118,6 @@ export default function AdminShell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Escape key handler
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -273,22 +269,22 @@ export default function AdminShell() {
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-accent-soft),transparent_50%)] opacity-40"
           />
 
-          {/* Top Header */}
-          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-admin-border/50 bg-admin-bg/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+          {/* Top Header - Updated to match sidebar background */}
+          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-admin-border bg-admin-card px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 lg:hidden">
               <button
                 type="button"
                 aria-label="Open sidebar"
-                className="grid h-9 w-9 place-items-center rounded-lg border border-admin-border bg-admin-card text-admin-text-secondary transition-colors hover:bg-admin-border/50 hover:text-admin-text-primary"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-admin-border bg-admin-bg text-admin-text-secondary transition-colors hover:bg-admin-border/50 hover:text-admin-text-primary"
                 onClick={() => setMobileSidebarOpen(true)}
               >
                 <Menu size={18} />
               </button>
             </div>
 
-            {/* Search Bar */}
+            {/* Search Bar - Updated for contrast */}
             <div className="hidden max-w-md flex-1 items-center md:flex">
-              <div className="group flex h-10 w-full items-center gap-2.5 rounded-full border border-admin-border bg-admin-card/50 px-4 transition-all focus-within:border-admin-accent/50 focus-within:bg-admin-card focus-within:ring-4 focus-within:ring-admin-accent/10 hover:bg-admin-card">
+              <div className="group flex h-10 w-full items-center gap-2.5 rounded-full border border-admin-border bg-admin-bg/50 px-4 transition-all focus-within:border-admin-accent/50 focus-within:bg-admin-bg focus-within:ring-4 focus-within:ring-admin-accent/10 hover:bg-admin-bg/80">
                 <Search size={16} className="text-admin-text-muted transition-colors group-focus-within:text-admin-accent" />
                 <input
                   className="w-full bg-transparent text-sm text-admin-text-primary outline-none placeholder:text-admin-text-muted"
@@ -296,7 +292,7 @@ export default function AdminShell() {
                   placeholder="Search anything..."
                   value={searchQuery}
                 />
-                <div className="hidden items-center gap-1 rounded-md border border-admin-border/60 bg-admin-bg px-1.5 py-0.5 text-[10px] font-medium text-admin-text-muted lg:flex">
+                <div className="hidden items-center gap-1 rounded-md border border-admin-border/60 bg-admin-card px-1.5 py-0.5 text-[10px] font-medium text-admin-text-muted lg:flex">
                   ⌘K
                 </div>
               </div>
@@ -312,7 +308,7 @@ export default function AdminShell() {
                   aria-label="View notifications"
                   className={cn(
                     "relative grid h-10 w-10 place-items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-admin-accent/50",
-                    notificationsOpen ? "bg-admin-border text-admin-text-primary" : "bg-admin-card border border-admin-border text-admin-text-secondary hover:bg-admin-border/50 hover:text-admin-text-primary"
+                    notificationsOpen ? "bg-admin-border text-admin-text-primary" : "bg-admin-bg/50 border border-admin-border text-admin-text-secondary hover:bg-admin-border/50 hover:text-admin-text-primary"
                   )}
                   onClick={() => {
                     setNotificationsOpen((prev) => {
@@ -325,7 +321,7 @@ export default function AdminShell() {
                 >
                   <Bell size={18} className={cn("transition-transform", notificationsOpen && "scale-110")} />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-admin-bg bg-admin-red px-1 text-[9px] font-bold text-white shadow-sm">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-admin-card bg-admin-red px-1 text-[9px] font-bold text-white shadow-sm">
                       {Math.min(unreadCount, 99)}
                     </span>
                   )}
@@ -401,7 +397,7 @@ export default function AdminShell() {
                 )}
               </div>
 
-              {/* User Dropdown */}
+              {/* User Dropdown - Updated for contrast */}
               <div className="relative" ref={userMenuRef}>
                 <button
                   type="button"
@@ -411,7 +407,7 @@ export default function AdminShell() {
                   }}
                   className={cn(
                     "flex items-center gap-2.5 rounded-full border p-1 pl-1.5 pr-3 transition-all focus:outline-none focus:ring-2 focus:ring-admin-accent/50",
-                    userMenuOpen ? "border-admin-border bg-admin-border/30" : "border-transparent hover:bg-admin-card hover:border-admin-border/80"
+                    userMenuOpen ? "border-admin-border bg-admin-border/30" : "border-transparent hover:bg-admin-bg/50 hover:border-admin-border/80"
                   )}
                 >
                   <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-[11px] font-bold text-white shadow-inner">
