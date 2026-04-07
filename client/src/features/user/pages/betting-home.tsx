@@ -90,6 +90,7 @@ export default function BettingHome() {
   const upcomingEvents = events.filter((event) => event.status !== "LIVE");
   const featuredLiveEvents = liveEvents.slice(0, 6);
   const heroImages = [heroOne, heroTwo, heroThree, heroFour, heroFive];
+  const hasSelections = betSlip.selections.length > 0;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -102,8 +103,8 @@ export default function BettingHome() {
   }, [heroImages.length]);
 
   return (
-    <div className="min-h-screen  bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
-      <div className="mx-auto max-w-7xl  space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
+      <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <section className="overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
           <div className="relative h-[80px] w-full sm:h-[100px] md:h-[120px]">
             {heroImages.map((image, index) => (
@@ -184,79 +185,99 @@ export default function BettingHome() {
           </div>
         </section>
 
-        <div className={`grid gap-6 ${
-          betSlip.selections.length > 0
-            ? "md:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]"
-            : "md:grid-cols-1"
-        } md:items-start`}>
-          <div className="min-w-0 space-y-5">
-            {liveEvents.length > 0 ? (
-              <section className="space-y-3 overflow-hidden rounded-xl border border-[#23384f] bg-[#101b2b] p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#22c55e]" />
-                    <h2 className="text-xs font-bold uppercase tracking-widest text-white">
-                      LIVE NOW
-                    </h2>
-                    <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
-                      {liveEvents.length}
-                    </span>
-                  </div>
-                  {liveEvents.length > 6 ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedSport("");
-                        setSelectedLeague("");
-                      }}
-                      className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
-                    >
-                      View all live →
-                    </button>
-                  ) : null}
+        <div className="space-y-5">
+          {liveEvents.length > 0 ? (
+            <section className="space-y-3 overflow-hidden rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0e1726_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.24)]">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#22c55e]" />
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-white">
+                    LIVE NOW
+                  </h2>
+                  <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
+                    {liveEvents.length}
+                  </span>
                 </div>
+                {liveEvents.length > 6 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSport("");
+                      setSelectedLeague("");
+                    }}
+                    className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
+                  >
+                    View all live
+                  </button>
+                ) : null}
+              </div>
 
-                <div className="space-y-3">
-                  {featuredLiveEvents.map((event) => (
-                    <EventCard
-                      key={event.eventId}
-                      event={event}
-                      onOddsSelect={betSlip.addSelection}
-                      selectedOdds={selectedOdds}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
+              <div className="space-y-3">
+                {featuredLiveEvents.map((event) => (
+                  <EventCard
+                    key={event.eventId}
+                    event={event}
+                    onOddsSelect={betSlip.addSelection}
+                    selectedOdds={selectedOdds}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
 
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            className={`grid items-start gap-6 ${
+              hasSelections
+                ? "xl:grid-cols-[minmax(0,1fr)_380px]"
+                : "grid-cols-1"
+            }`}
+          >
+            <section className="min-w-0 space-y-5 rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0d1624_100%)] p-4 shadow-[0_22px_42px_rgba(0,0,0,0.22)] sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#22384d] pb-4">
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#cfd9e2]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f5c518]">
+                    Match Centre
+                  </p>
+                  <h2 className="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-[#e4edf5]">
                     UPCOMING MATCHES
                   </h2>
-                  <p className="mt-1.5 text-[11px] uppercase tracking-wide text-[#8a9bb0]">
+                  <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[#8a9bb0]">
                     {formatToday()}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#28435c] bg-[#122034] px-4 py-3 text-right">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-[#8a9bb0]">
+                    Available Fixtures
+                  </p>
+                  <p className="mt-1 text-2xl font-black text-white">
+                    {upcomingEvents.length}
                   </p>
                 </div>
               </div>
 
               {loading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <div
-                      key={`event-skeleton-${index}`}
-                      className="animate-pulse rounded-[10px] border border-[#23384f] bg-[#111d2e] p-4"
-                    >
-                      <div className="h-2.5 w-1/3 rounded bg-[#243548]" />
-                      <div className="mt-3 h-4 w-full rounded bg-[#243548]" />
-                      <div className="mt-4 grid grid-cols-3 gap-2">
-                        <div className="h-8 rounded bg-[#243548]" />
-                        <div className="h-8 rounded bg-[#243548]" />
-                        <div className="h-8 rounded bg-[#243548]" />
+                <div
+                  className={`grid gap-3 ${
+                    hasSelections ? "lg:grid-cols-2" : "md:grid-cols-2 xl:grid-cols-3"
+                  }`}
+                >
+                  {Array.from({ length: hasSelections ? 4 : 6 }).map(
+                    (_, index) => (
+                      <div
+                        key={`event-skeleton-${index}`}
+                        className="animate-pulse rounded-2xl border border-[#23384f] bg-[#111d2e] p-4"
+                      >
+                        <div className="h-2.5 w-1/3 rounded bg-[#243548]" />
+                        <div className="mt-3 h-4 w-full rounded bg-[#243548]" />
+                        <div className="mt-4 grid grid-cols-3 gap-2">
+                          <div className="h-8 rounded bg-[#243548]" />
+                          <div className="h-8 rounded bg-[#243548]" />
+                          <div className="h-8 rounded bg-[#243548]" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
               ) : error ? (
                 <div className="rounded-2xl border border-[#5a222a] bg-[#2a1515] p-6 text-center">
@@ -291,16 +312,17 @@ export default function BettingHome() {
                   events={upcomingEvents}
                   onOddsSelect={betSlip.addSelection}
                   selectedOdds={selectedOdds}
+                  cardsPerRow={hasSelections ? 2 : 3}
                 />
               )}
             </section>
-          </div>
 
-          {betSlip.selections.length > 0 && (
-            <div className="min-w-0">
-              <BetSlip {...betSlip} />
-            </div>
-          )}
+            {hasSelections ? (
+              <div className="min-w-0 self-start">
+                <BetSlip {...betSlip} />
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

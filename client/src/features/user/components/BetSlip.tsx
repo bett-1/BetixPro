@@ -96,6 +96,10 @@ function BetSlipPanel({
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
+  if (selections.length === 0) {
+    return null;
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col rounded-2xl border border-[#2a3f55] bg-[#0d1820] p-2.5 text-white shadow-[0_18px_36px_rgba(0,0,0,0.25)]">
       {/* Header */}
@@ -373,7 +377,7 @@ export default function BetSlip(props: UseBetSlipReturn) {
 
   return (
     <>
-      <div className="hidden md:sticky md:top-6 md:z-20 md:block md:h-[calc(100vh-var(--navbar-height)-48px)] md:max-h-[calc(100vh-var(--navbar-height)-48px)] md:pr-1">
+      <div className="hidden md:block md:pr-1">
         <BetSlipPanel {...props} />
       </div>
 
