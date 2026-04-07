@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, ChevronDown, CircleCheck, CircleX, Menu } from "lucide-react";
+import { Bell, ChevronDown, CircleCheck, CircleX, Menu, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import AccountDropdown from "@/components/layout/AccountDropdown";
 import SearchBar from "@/components/search/SearchBar";
@@ -8,8 +8,12 @@ import {
   useAppNotifications,
   useMarkAllNotificationsRead,
 } from "@/features/notifications/notifications";
+import { useMyBetsCount } from "@/features/user/hooks/useMyBets";
 import { formatMoney } from "@/features/user/payments/data";
 import { useWalletSummary } from "@/features/user/payments/wallet";
+
+// ✅ NEW: Import your logo (standard Vite + shadcn alias)
+import Logo from "@/assets/logo.png";
 
 type NavbarProps = {
   onToggleSidebar: () => void;
@@ -86,15 +90,19 @@ function toText(value: unknown, fallback = "") {
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, openAuthModal } = useAuth();
 
   const { data: walletSummary } = useWalletSummary();
+  const { data: myBetsCount = 0 } = useMyBetsCount();
   const { data: notificationData } = useAppNotifications(12);
   const markAllNotificationsRead = useMarkAllNotificationsRead();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const lastPathRef = useRef(location.pathname);
+  const notifyRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   const tickerLoop = useMemo(() => [...tickerItems, ...tickerItems], []);
 
@@ -105,6 +113,30 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       setAccountOpen(false);
     }
   }, [location.pathname]);
+
+  // Handle click outside dropdowns
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+
+      // Close notifications if clicking outside
+      if (notifyRef.current && !notifyRef.current.contains(target)) {
+        setNotificationsOpen(false);
+      }
+
+      // Close account dropdown if clicking outside
+      if (accountRef.current && !accountRef.current.contains(target)) {
+        setAccountOpen(false);
+      }
+    }
+
+    if (notificationsOpen || accountOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [notificationsOpen, accountOpen]);
 
   const notifications = notificationData?.notifications ?? [];
   const unreadCount = notificationData?.unreadCount ?? 0;
@@ -134,55 +166,84 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         </div>
       </div>
 
-      <div className="bc-main-row">
+      {/* ✅ MOBILE + DESKTOP LAYOUT (following your latest request) */}
+      <div className="bc-main-row flex items-center justify-between">
         <button
           type="button"
           className="bc-hamburger"
           aria-label="Open sidebar"
           onClick={onToggleSidebar}
         >
-          <Menu size={18} />
+          <Menu size={22} />
         </button>
 
-        <Link to="/user" className="bc-logo" aria-label="BetixPro home">
-          <span className="bc-logo-icon" aria-hidden="true">
-            *
-          </span>
-          <span className="bc-logo-text">
-            <span className="is-white">Betix</span>
-            <span className="is-gold">Pro</span>
-          </span>
+        {/* ✅ Logo + Mobile-only Search Icon */}
+        <div className="flex items-center gap-3">
+          <Link to="/user" className="bc-logo" aria-label="BetixPro home">
+          <img
+            src={Logo}
+            alt="BetixPro"
+            className="h-11 w-auto 
+                       drop-shadow-[0_0_10px_#ffffff] 
+                       drop-shadow-[0_0_18px_#fefce8] 
+                       transition-all 
+                       hover:drop-shadow-[0_0_12px_#ffffff] 
+                       hover:drop-shadow-[0_0_22px_#fefce8]"
+          />
         </Link>
 
-        <div className="bc-main-search">
+          {/* ✅ New mobile search icon (visible only on mobile) */}
+          <button
+            type="button"
+            className="md:hidden p-2 text-[#a8c4e0] hover:text-white transition-colors"
+            aria-label="Search"
+          >
+            <Search size={22} />
+          </button>
+        </div>
+
+        {/* ✅ Full search bar kept ONLY on desktop (hidden on mobile) */}
+        <div className="bc-main-search hidden md:flex flex-1 max-w-xl mx-auto">
           <SearchBar />
         </div>
 
-        <div className="bc-actions">
-          <Link
-            to="/user/live"
-            className="bc-deposit-btn"
-            aria-label="Open live bets"
-          >
-            Live Bets
-          </Link>
+        <div className="bc-actions flex items-center gap-2">
+          
+
+          {isAuthenticated && myBetsCount > 0 ? (
+            <Link
+              to="/my-bets"
+              className="bc-my-bets-btn"
+              aria-label={`Open My Bets (${myBetsCount})`}
+            >
+              My Bets
+              <span className="bc-my-bets-badge" aria-hidden="true">
+                {myBetsCount > 99 ? "99+" : myBetsCount}
+              </span>
+            </Link>
+          ) : null}
 
           {isAuthenticated ? (
-            <div className="bc-balance-card" aria-label="Wallet Balance">
+            <button
+              type="button"
+              className="bc-balance-card"
+              aria-label="Wallet Balance"
+              onClick={() => navigate({ to: "/user/payments" })}
+            >
               <span className="bc-balance-label">Balance:</span>
               <span className="bc-balance-value">
                 {formatMoney(walletSummary?.wallet.balance ?? 0)}
               </span>
-            </div>
+            </button>
           ) : (
-            <span className="text-xs text-[#a8c4e0] font-medium">
+            <span className="text-xs text-[#a8c4e0] font-medium hidden">
               Login to view balance
             </span>
           )}
 
           {isAuthenticated ? (
             <>
-              <div className="bc-notify">
+              <div className="bc-notify" ref={notifyRef}>
                 <button
                   type="button"
                   className="bc-icon-btn bc-notify-trigger"
@@ -265,7 +326,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 ) : null}
               </div>
 
-              <div className="bc-account-wrap">
+              <div className="bc-account-wrap" ref={accountRef}>
                 <button
                   type="button"
                   className={`bc-account-trigger ${accountOpen ? "is-open" : ""}`}
@@ -281,7 +342,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               </div>
             </>
           ) : (
-            <div className="bc-auth-group">
+            <div className="bc-auth-group flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => openAuthModal("register")}

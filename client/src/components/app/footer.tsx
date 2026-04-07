@@ -2,6 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { Mail, ArrowRight, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { api } from "@/lib/axios";
+
+// Assuming logo.png is in your assets folder
+import logo from "@/assets/logo.png";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -19,16 +23,18 @@ export default function Footer() {
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await api.post("/newsletter/subscribe", { email });
       toast.success("Successfully subscribed to newsletter!");
-      setIsSubscribed(true);
+      setIsSubscribed(true); 
       setEmail("");
 
       // Reset subscription state after 5 seconds
       setTimeout(() => setIsSubscribed(false), 5000);
-    } catch (error) {
-      toast.error("Failed to subscribe. Please try again.");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to subscribe. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -37,15 +43,19 @@ export default function Footer() {
   return (
     <footer className="w-full border-t border-[#23384f] bg-[#0b1120]">
       {/* Main Footer Content */}
-      <div className="mx-auto w-full max-w-[1280px] gap-8 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1280px] gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5c518]">
-                <span className="text-sm font-bold text-black">B</span>
-              </div>
-              <h3 className="text-lg font-bold text-white">BetRixPro</h3>
+              <Link to="/">
+                <img
+                  src={logo}
+                  alt="BetRixPro Logo"
+                  className="h-8 w-auto"
+                />
+              </Link>
             </div>
             <p className="mt-3 text-sm text-[#8a9bb0]">
               Smart betting with fast M-Pesa deposits and a secure wallet
@@ -95,64 +105,66 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Quick Links
-            </h4>
-            <nav className="mt-4 grid gap-3">
-              <Link
-                to="/"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                Home
-              </Link>
-              <Link
-                to="/user/payments"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                Deposits
-              </Link>
-              <Link
-                to="/user/how-it-works"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                How It Works
-              </Link>
-              <Link
-                to="/user/faqs"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                FAQ
-              </Link>
-              <Link
-                to="/user/contact"
-                className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
-              >
-                Contact
-              </Link>
-            </nav>
-          </div>
+          <div className="grid grid-cols-2 gap-6 sm:contents">
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Quick Links
+              </h4>
+              <nav className="mt-4 grid gap-3">
+                <Link
+                  to="/"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/user/payments"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  Deposits
+                </Link>
+                <Link
+                  to="/user/how-it-works"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  How It Works
+                </Link>
+                <Link
+                  to="/user/faqs"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  FAQ
+                </Link>
+                <Link
+                  to="/user/contact"
+                  className="text-sm text-[#8a9bb0] transition hover:text-[#f5c518] hover:translate-x-0.5"
+                >
+                  Contact
+                </Link>
+              </nav>
+            </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Contact
-            </h4>
-            <div className="mt-4 grid gap-3 text-sm text-[#8a9bb0]">
-              <a
-                href="mailto:support@betrixpro.com"
-                className="transition hover:text-[#f5c518]"
-              >
-                support@betrixpro.com
-              </a>
-              <a
-                href="tel:+254700000000"
-                className="transition hover:text-[#f5c518]"
-              >
-                +254 700 000 000
-              </a>
-              <p>Nairobi, Kenya</p>
+            {/* Contact */}
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Contact
+              </h4>
+              <div className="mt-4 grid gap-3 text-sm text-[#8a9bb0]">
+                <a
+                  href="mailto:support@betrixpro.com"
+                  className="transition hover:text-[#f5c518]"
+                >
+                  support@betrixpro.com
+                </a>
+                <a
+                  href="tel:+254700000000"
+                  className="transition hover:text-[#f5c518]"
+                >
+                  +254 700 000 000
+                </a>
+                <p>Nairobi, Kenya</p>
+              </div>
             </div>
           </div>
 
@@ -203,7 +215,7 @@ export default function Footer() {
           </div>
 
           {/* Why BetRixPro */}
-          <div className="rounded-xl border border-[#294157] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-5">
+          <div className="hidden rounded-xl border border-[#294157] bg-[linear-gradient(135deg,#111d2e_0%,#0f1a2a_100%)] p-5 sm:block">
             <h4 className="text-sm font-bold uppercase tracking-wider text-white">
               Why BetRixPro
             </h4>
@@ -237,12 +249,12 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="mt-8 border-t border-[#23384f]" />
+        <div className="mt-5 border-t border-[#23384f] sm:mt-8" />
 
         {/* Bottom Footer */}
-        <div className="mt-6 flex flex-col gap-3 text-xs text-[#5a6b7d] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3 -mb-4 flex flex-col gap-1.5 text-[11px] text-[#5a6b7d] sm:mt-6 sm:gap-3 sm:text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} BetRixPro. All rights reserved.</p>
-          <div className="flex gap-3 text-xs">
+          <div className="flex gap-2 text-[11px] sm:gap-3 sm:text-xs">
             <a href="#" className="transition hover:text-[#f5c518]">
               Terms
             </a>
@@ -255,7 +267,9 @@ export default function Footer() {
               Cookies
             </a>
           </div>
-          <p className="font-medium text-[#8a9bb0]">Play Responsibly · 18+</p>
+          <p className="font-medium hidden md:block text-[#8a9bb0]">
+            Play Responsibly · 18+
+          </p>
         </div>
       </div>
     </footer>

@@ -102,8 +102,8 @@ export default function BettingHome() {
   }, [heroImages.length]);
 
   return (
-    <div className="min-h-screen bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
-      <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen  bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
+      <div className="mx-auto max-w-7xl  space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <section className="overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
           <div className="relative h-[80px] w-full sm:h-[100px] md:h-[120px]">
             {heroImages.map((image, index) => (
@@ -124,19 +124,19 @@ export default function BettingHome() {
               </article>
             ))}
 
-            <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 md:p-4">
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:p-6">
               <p className="text-[9px] uppercase tracking-[0.18em] text-[#f5c518]">
                 BetixPro Picks
               </p>
-              <h1 className="mt-1 max-w-2xl text-sm font-extrabold text-white sm:text-base md:text-lg">
+              <h1 className="mt-2 max-w-2xl text-sm font-extrabold text-white sm:text-base md:text-lg">
                 Bet Smarter, Win Bigger
               </h1>
-              <p className="mt-1 max-w-xl text-xs text-[#d6e0e8]">
+              <p className="mt-2 max-w-xl text-xs text-[#d6e0e8]">
                 Explore top fixtures with real-time odds and place your best
                 picks.
               </p>
 
-              <div className="mt-2 flex items-center gap-1.5">
+              <div className="mt-3 flex items-center gap-1.5">
                 {heroImages.map((_, index) => (
                   <button
                     key={`hero-dot-${index}`}

@@ -1,16 +1,4 @@
-import { useState } from "react";
-import { MoreVertical, RefreshCw } from "lucide-react";
-import {
-  AdminButton,
-  AdminCard,
-  AdminSectionHeader,
-  StatusBadge,
-  TableShell,
-  adminCompactActionsClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
-} from "../../components/ui";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -24,19 +12,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  useUsers,
-  useGetUserDetail,
   banUserAction,
-  unbanUserAction,
+  createUserAction,
   suspendUserAction,
+  unbanUserAction,
   unsuspendUserAction,
   updateUserAction,
-  createUserAction,
+  useGetUserDetail,
+  useUsers,
   type User,
 } from "@/hooks/useUsers";
+import { MoreVertical } from "lucide-react";
+import { useState } from "react";
+import {
+  AdminButton,
+  AdminCard,
+  AdminSectionHeader,
+  StatusBadge,
+  TableShell,
+  adminCompactActionsClassName,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
+  truncateEmailForTable,
+} from "../../components/ui";
 
 export default function Users() {
   const [search, setSearch] = useState("");
@@ -69,7 +70,7 @@ export default function Users() {
   const [actionReason, setActionReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { users, loading, error, refetch } = useUsers({
+  const { users, loading, error, refetch, total } = useUsers({
     page,
     search,
     status,
@@ -222,6 +223,14 @@ export default function Users() {
 
   const visibleUsers = users || [];
 
+  // Calculate stats
+  const totalUsers = total || 0;
+  const activeUsers = visibleUsers.filter((u) => u.status === "active").length;
+  const suspendedUsers = visibleUsers.filter(
+    (u) => u.status === "suspended",
+  ).length;
+  const bannedUsers = visibleUsers.filter((u) => u.status === "banned").length;
+
   return (
     <div className="space-y-6">
       <AdminSectionHeader
@@ -229,14 +238,14 @@ export default function Users() {
         subtitle="Manage user accounts and permissions"
         actions={
           <>
-            <AdminButton
+            {/* <AdminButton
               variant="ghost"
               size="sm"
               onClick={() => void refetch()}
             >
               <RefreshCw size={13} />
               Refresh
-            </AdminButton>
+            </AdminButton> */}
             <AdminButton
               variant="solid"
               size="sm"
@@ -248,6 +257,85 @@ export default function Users() {
           </>
         }
       />
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
+        {[
+          {
+            label: "Total Users",
+            value: totalUsers.toString(),
+            tone: "blue" as const,
+          },
+          {
+            label: "Active Users",
+            value: activeUsers.toString(),
+            tone: "accent" as const,
+          },
+          {
+            label: "Suspended Users",
+            value: suspendedUsers.toString(),
+            tone: "gold" as const,
+          },
+          {
+            label: "Banned Users",
+            value: bannedUsers.toString(),
+            tone: "red" as const,
+          },
+        ].map((metric) => {
+          const colorMap: Record<
+            string,
+            { bg: string; text: string; icon: string; border: string }
+          > = {
+            accent: {
+              bg: "bg-admin-accent/5",
+              text: "text-admin-accent",
+              icon: "bg-admin-accent/15 text-admin-accent",
+              border: "border-admin-accent/20",
+            },
+            blue: {
+              bg: "bg-admin-blue/5",
+              text: "text-admin-blue",
+              icon: "bg-admin-blue/15 text-admin-blue",
+              border: "border-admin-blue/20",
+            },
+            gold: {
+              bg: "bg-admin-gold/5",
+              text: "text-admin-gold",
+              icon: "bg-admin-gold/15 text-admin-gold",
+              border: "border-admin-gold/20",
+            },
+            red: {
+              bg: "bg-red-500/5",
+              text: "text-red-500",
+              icon: "bg-red-500/15 text-red-500",
+              border: "border-red-500/20",
+            },
+          };
+
+          const colors = colorMap[metric.tone] || colorMap.accent;
+
+          return (
+            <AdminCard
+              key={metric.label}
+              className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
+                    {metric.label}
+                  </p>
+                  <div className={`rounded p-1 shrink-0 ${colors.icon}`}>
+                    <div className="h-3 w-3" />
+                  </div>
+                </div>
+                <p className={`text-base font-bold sm:text-lg ${colors.text}`}>
+                  {metric.value}
+                </p>
+              </div>
+            </AdminCard>
+          );
+        })}
+      </div>
 
       {error && (
         <AdminCard className="border-admin-red/40 bg-admin-red-dim/20 text-admin-red">
@@ -328,7 +416,12 @@ export default function Users() {
                     <td
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
-                      {user.email}
+                      <span
+                        className="max-w-[120px] truncate block"
+                        title={user.email}
+                      >
+                        {truncateEmailForTable(user.email)}
+                      </span>
                     </td>
                     <td className={adminTableCellClassName}>{user.phone}</td>
                     <td className={adminTableCellClassName}>

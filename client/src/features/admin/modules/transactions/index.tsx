@@ -1,34 +1,39 @@
-import { useState, useMemo } from "react";
-import { Download, Eye, Loader } from "lucide-react";
-import { toast } from "sonner";
-import {
-  useAdminPayments,
-  useAdminPaymentStats,
-  type Payment,
-} from "../../hooks/useAdminPayments";
-import {
-  AdminButton,
-  AdminCard,
-  AdminSectionHeader,
-  InlinePill,
-  StatusBadge,
-  SummaryCard,
-  TableShell,
-  adminCompactActionsClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
-} from "../../components/ui";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Download, Loader, MoreHorizontal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  AdminButton,
+  AdminCard,
+  adminCompactActionsClassName,
+  AdminSectionHeader,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
+  InlinePill,
+  StatusBadge,
+  TableShell,
+  truncateEmailForTable,
+} from "../../components/ui";
+import {
+  useAdminPayments,
+  useAdminPaymentStats,
+  type Payment,
+} from "../../hooks/useAdminPayments";
 
 export default function Transactions() {
   const [selectedTxn, setSelectedTxn] = useState<Payment | null>(null);
@@ -140,7 +145,7 @@ export default function Transactions() {
   };
 
   const getToneForType = (type: "deposit" | "withdrawal") => {
-    return type === "deposit" ? "accent" : "red";
+    return type === "deposit" ? "live" : "gold";
   };
 
   const getStatusForBadge = (
@@ -164,15 +169,61 @@ export default function Transactions() {
       />
 
       {/* Summary Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <SummaryCard
-            key={stat.label}
-            label={stat.label}
-            tone={stat.tone}
-            value={stat.value}
-          />
-        ))}
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
+        {stats.map((metric) => {
+          const colorMap: Record<
+            string,
+            { bg: string; text: string; icon: string; border: string }
+          > = {
+            accent: {
+              bg: "bg-admin-accent/5",
+              text: "text-admin-accent",
+              icon: "bg-admin-accent/15 text-admin-accent",
+              border: "border-admin-accent/20",
+            },
+            blue: {
+              bg: "bg-admin-blue/5",
+              text: "text-admin-blue",
+              icon: "bg-admin-blue/15 text-admin-blue",
+              border: "border-admin-blue/20",
+            },
+            gold: {
+              bg: "bg-admin-gold/5",
+              text: "text-admin-gold",
+              icon: "bg-admin-gold/15 text-admin-gold",
+              border: "border-admin-gold/20",
+            },
+            red: {
+              bg: "bg-red-500/5",
+              text: "text-red-500",
+              icon: "bg-red-500/15 text-red-500",
+              border: "border-red-500/20",
+            },
+          };
+
+          const colors = colorMap[metric.tone] || colorMap.accent;
+
+          return (
+            <AdminCard
+              key={metric.label}
+              className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
+                    {metric.label}
+                  </p>
+                  <div className={`rounded p-1 shrink-0 ${colors.icon}`}>
+                    <div className="h-3 w-3" />
+                  </div>
+                </div>
+                <p className={`text-base font-bold sm:text-lg ${colors.text}`}>
+                  {metric.value}
+                </p>
+              </div>
+            </AdminCard>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -254,8 +305,12 @@ export default function Transactions() {
               <tbody>
                 {transactions.map((transaction) => (
                   <tr
-                    className="even:bg-[var(--color-bg-elevated)]"
+                    className="even:bg-(--color-bg-elevated) hover:bg-admin-surface/60 cursor-pointer transition-colors"
                     key={transaction.id}
+                    onClick={() => {
+                      setSelectedTxn(transaction);
+                      setDetailsOpen(true);
+                    }}
                   >
                     <td
                       className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
@@ -264,8 +319,11 @@ export default function Transactions() {
                     </td>
                     <td className={adminTableCellClassName}>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-admin-text-primary">
-                          {transaction.userEmail}
+                        <span
+                          className="max-w-30 truncate text-sm font-semibold text-admin-text-primary"
+                          title={transaction.userEmail}
+                        >
+                          {truncateEmailForTable(transaction.userEmail)}
                         </span>
                         <span className="text-xs text-admin-text-muted">
                           {transaction.userPhone}
@@ -303,160 +361,29 @@ export default function Transactions() {
                     </td>
                     <td
                       className={`${adminTableCellClassName} ${adminCompactActionsClassName}`}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-                        <DialogTrigger asChild>
-                          <button
-                            className="text-admin-accent hover:text-admin-accent-dark transition"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <AdminButton
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Row actions"
+                          >
+                            <MoreHorizontal size={16} />
+                          </AdminButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem
                             onClick={() => {
                               setSelectedTxn(transaction);
                               setDetailsOpen(true);
                             }}
                           >
-                            <Eye size={16} />
-                          </button>
-                        </DialogTrigger>
-                        {selectedTxn && selectedTxn.id === transaction.id && (
-                          <DialogContent className="max-w-lg border-admin-border bg-admin-card text-admin-text-primary">
-                            <DialogHeader>
-                              <DialogTitle>Transaction Details</DialogTitle>
-                              <DialogDescription className="text-admin-text-muted">
-                                Review complete transaction information
-                              </DialogDescription>
-                            </DialogHeader>
-                            <ScrollArea className="h-96 pr-4">
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                    Transaction ID
-                                  </label>
-                                  <p className="font-mono text-sm font-semibold">
-                                    {selectedTxn.id}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                    User
-                                  </label>
-                                  <p className="text-sm font-semibold">
-                                    {selectedTxn.userEmail}
-                                  </p>
-                                  <p className="text-xs text-admin-text-muted">
-                                    {selectedTxn.userPhone}
-                                  </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      Type
-                                    </label>
-                                    <p className="text-sm font-semibold capitalize">
-                                      {selectedTxn.type}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      Status
-                                    </label>
-                                    <p className="text-sm font-semibold capitalize">
-                                      {selectedTxn.status}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      Amount
-                                    </label>
-                                    <p className="text-sm font-semibold">
-                                      KES {selectedTxn.amount.toLocaleString()}
-                                    </p>
-                                  </div>
-                                  {selectedTxn.fee > 0 && (
-                                    <div>
-                                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                        Fee
-                                      </label>
-                                      <p className="text-sm font-semibold">
-                                        KES {selectedTxn.fee.toLocaleString()}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                                {selectedTxn.totalDebit > 0 && (
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      Total Debit
-                                    </label>
-                                    <p className="text-sm font-semibold">
-                                      KES{" "}
-                                      {selectedTxn.totalDebit.toLocaleString()}
-                                    </p>
-                                  </div>
-                                )}
-                                <div>
-                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                    Reference
-                                  </label>
-                                  <p className="font-mono text-sm font-semibold">
-                                    {selectedTxn.reference}
-                                  </p>
-                                </div>
-                                {selectedTxn.mpesaCode && (
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      M-Pesa Code
-                                    </label>
-                                    <p className="font-mono text-sm font-semibold">
-                                      {selectedTxn.mpesaCode}
-                                    </p>
-                                  </div>
-                                )}
-                                {selectedTxn.phone && (
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      Phone
-                                    </label>
-                                    <p className="font-mono text-sm font-semibold">
-                                      {selectedTxn.phone}
-                                    </p>
-                                  </div>
-                                )}
-                                <div>
-                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                    Channel
-                                  </label>
-                                  <p className="text-sm font-semibold">
-                                    {selectedTxn.channel}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                    Created At
-                                  </label>
-                                  <p className="text-sm font-semibold">
-                                    {new Date(
-                                      selectedTxn.createdAt,
-                                    ).toLocaleString()}
-                                  </p>
-                                </div>
-                                {selectedTxn.processedAt && (
-                                  <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
-                                      Processed At
-                                    </label>
-                                    <p className="text-sm font-semibold">
-                                      {new Date(
-                                        selectedTxn.processedAt,
-                                      ).toLocaleString()}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </ScrollArea>
-                          </DialogContent>
-                        )}
-                      </Dialog>
+                            View details
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -464,6 +391,145 @@ export default function Transactions() {
             </table>
           </TableShell>
         )}
+
+        {/* Transaction Details Dialog */}
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          {selectedTxn && (
+            <DialogContent className="max-w-lg border-admin-border bg-admin-card text-admin-text-primary">
+              <DialogHeader>
+                <DialogTitle>Transaction Details</DialogTitle>
+                <DialogDescription className="text-admin-text-muted">
+                  Review complete transaction information
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="h-96 pr-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                      Transaction ID
+                    </label>
+                    <p className="font-mono text-sm font-semibold">
+                      {selectedTxn.id}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                      User
+                    </label>
+                    <p className="text-sm font-semibold">
+                      {selectedTxn.userEmail}
+                    </p>
+                    <p className="text-xs text-admin-text-muted">
+                      {selectedTxn.userPhone}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        Type
+                      </label>
+                      <p className="text-sm font-semibold capitalize">
+                        {selectedTxn.type}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        Status
+                      </label>
+                      <p className="text-sm font-semibold capitalize">
+                        {selectedTxn.status}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        Amount
+                      </label>
+                      <p className="text-sm font-semibold">
+                        KES {selectedTxn.amount.toLocaleString()}
+                      </p>
+                    </div>
+                    {selectedTxn.fee > 0 && (
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                          Fee
+                        </label>
+                        <p className="text-sm font-semibold">
+                          KES {selectedTxn.fee.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {selectedTxn.totalDebit > 0 && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        Total Debit
+                      </label>
+                      <p className="text-sm font-semibold">
+                        KES {selectedTxn.totalDebit.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                      Reference
+                    </label>
+                    <p className="font-mono text-sm font-semibold">
+                      {selectedTxn.reference}
+                    </p>
+                  </div>
+                  {selectedTxn.mpesaCode && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        M-Pesa Code
+                      </label>
+                      <p className="font-mono text-sm font-semibold">
+                        {selectedTxn.mpesaCode}
+                      </p>
+                    </div>
+                  )}
+                  {selectedTxn.phone && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        Phone
+                      </label>
+                      <p className="font-mono text-sm font-semibold">
+                        {selectedTxn.phone}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                      Channel
+                    </label>
+                    <p className="text-sm font-semibold">
+                      {selectedTxn.channel}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                      Created At
+                    </label>
+                    <p className="text-sm font-semibold">
+                      {new Date(selectedTxn.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {selectedTxn.processedAt && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                        Processed At
+                      </label>
+                      <p className="text-sm font-semibold">
+                        {new Date(selectedTxn.processedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          )}
+        </Dialog>
       </AdminCard>
 
       {/* Pagination */}

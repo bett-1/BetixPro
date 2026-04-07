@@ -14,7 +14,7 @@ const placeBetBodySchema = z.object({
   eventId: z.string().trim().min(1),
   marketType: z.string().trim().min(1),
   side: z.string().trim().min(1),
-  stake: z.number().positive(),
+  stake: z.number().int().positive(),
   odds: z.number().positive(),
   confirmOddsChange: z.boolean().optional(),
 });
@@ -51,7 +51,7 @@ userBetsRouter.post(
         return res.status(400).json({ error: "Maximum stake is KES 100,000." });
       }
 
-      const stakeInCents = Math.round(stake * 100);
+      const stakeAmount = stake;
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await tx.sportEvent.findUnique({
@@ -85,7 +85,7 @@ userBetsRouter.post(
           throw new Error("Wallet not found. Please deposit first.");
         }
 
-        if (wallet.balance < stakeInCents) {
+        if (wallet.balance < stakeAmount) {
           throw new Error("Insufficient balance");
         }
 
@@ -121,7 +121,7 @@ userBetsRouter.post(
           where: { userId },
           data: {
             balance: {
-              decrement: stakeInCents,
+              decrement: stakeAmount,
             },
           },
           select: {
@@ -197,7 +197,7 @@ userBetsRouter.post(
             walletId: wallet.id,
             type: "BET_STAKE",
             status: "COMPLETED",
-            amount: stakeInCents,
+            amount: stakeAmount,
             currency: "KES",
             channel: "betting",
             reference: `BET-${bet.id}`,
@@ -207,7 +207,7 @@ userBetsRouter.post(
 
         return {
           bet,
-          newBalance: updatedWallet.balance / 100,
+          newBalance: updatedWallet.balance,
         };
       });
 

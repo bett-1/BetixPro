@@ -1,7 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
-  LayoutDashboard,
   CreditCard,
   LogOut,
   Send,
@@ -9,6 +8,7 @@ import {
   Ticket,
   TrendingUp,
   Wallet,
+  Zap,
 } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -28,11 +28,17 @@ type MenuItem = {
 const menuGroups: MenuItem[][] = [
   [
     {
-      label: "Dashboard",
-      icon: <LayoutDashboard size={18} />,
-      to: "/user/coming-soon?feature=dashboard",
-      warn: true,
+      label: "Live Bets",
+      icon: <Zap size={18} />,
+      to: "/user/live",
     },
+    {
+      label: "My Bets",
+      icon: <Ticket size={18} />,
+      to: "/user/bets?tab=normal&filter=all&page=1",
+    },
+  ],
+  [
     {
       label: "Deposit",
       icon: <CreditCard size={18} />,
@@ -49,11 +55,6 @@ const menuGroups: MenuItem[][] = [
       label: "My Profile",
       icon: <User size={18} />,
       to: "/user/profile",
-    },
-    {
-      label: "My Bets",
-      icon: <Ticket size={18} />,
-      to: "/user/bets?tab=normal&filter=all&page=1",
     },
     {
       label: "My Results",
@@ -94,9 +95,9 @@ export default function AccountDropdown({
           {initials}
         </div>
         <div className="bc-account-head-meta">
-          <p className="bc-account-name">{user?.phone || "BettCenic User"}</p>
+          <p className="bc-account-name">{user?.phone || "BetixPro User"}</p>
           <p className="bc-account-email">
-            {user?.email || "guest@bettcenic.com"}
+            {user?.email || "guest@BetixPro.com"}
           </p>
         </div>
       </div>
