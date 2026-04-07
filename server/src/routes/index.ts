@@ -13,6 +13,7 @@ import { liveRouter } from "./live";
 import { userBetsRouter } from "./user/bets";
 import { userEventsRouter } from "./user/events";
 import { contactRouter } from "./contact";
+import { newsletterRouter } from "./newsletter";
 
 const apiRouter = Router();
 
@@ -30,5 +31,6 @@ apiRouter.use(oddsAdminRouter);
 apiRouter.use(userEventsRouter);
 apiRouter.use(userBetsRouter);
 apiRouter.use(contactRouter);
+apiRouter.use(newsletterRouter);
 
 export { apiRouter };

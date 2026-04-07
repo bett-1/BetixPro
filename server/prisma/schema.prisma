@@ -481,4 +481,19 @@ model Contact {
   @@map("contacts")
 }
 
+model NewsletterSubscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  email      String    @unique
+  isActive   Boolean   @default(true) @map("is_active")
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+  unsubscribedAt DateTime? @map("unsubscribed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([isActive])
+  @@index([subscribedAt])
+  @@map("newsletter_subscriptions")
+}
+
 
