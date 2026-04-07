@@ -119,18 +119,6 @@ export default function AdminShell() {
   return (
     <ProtectedRoute requireRole="ADMIN">
       <div className="relative min-h-dvh bg-admin-bg font-admin text-admin-text-primary lg:flex">
-        {!mobileSidebarOpen ? (
-          <button
-            type="button"
-            aria-label="Open sidebar"
-            className="fixed left-4 top-4 z-30 grid h-10 w-10 place-items-center rounded-xl border border-admin-border bg-[var(--color-bg-secondary)] text-admin-text-secondary shadow-[0_10px_26px_rgba(0,0,0,0.28)] transition hover:bg-[var(--color-bg-hover)] hover:text-admin-text-primary lg:hidden"
-            onClick={() => setMobileSidebarOpen(true)}
-            title="Open sidebar"
-          >
-            <Menu size={18} />
-          </button>
-        ) : null}
-
         {mobileSidebarOpen ? (
           <button
             type="button"
@@ -290,12 +278,26 @@ export default function AdminShell() {
 
           <header
             className={cn(
-              "sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b border-admin-border bg-[var(--color-bg-secondary)] px-4 py-4 backdrop-blur-[18px] sm:px-6",
-              !mobileSidebarOpen && "pl-16",
-              "lg:pl-6",
+              "sticky top-0 z-20 flex items-center gap-2 border-b border-admin-border bg-[color-mix(in_srgb,var(--color-bg-secondary)_88%,transparent)] px-3 py-2.5 backdrop-blur-[18px] sm:gap-3 sm:px-4 sm:py-3 lg:flex-wrap lg:px-6 lg:py-4",
             )}
           >
-            <div className="order-2  hidden md:flex min-w-0 basis-full items-center gap-3 lg:order-1 lg:basis-auto lg:flex-1">
+            <div className="flex items-center gap-2 lg:hidden">
+              <button
+                type="button"
+                aria-label="Open sidebar"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-admin-border bg-[var(--color-bg-hover)] text-admin-text-secondary transition hover:text-admin-text-primary"
+                onClick={() => setMobileSidebarOpen(true)}
+              >
+                <Menu size={16} />
+              </button>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                  Admin Panel
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden min-w-0 flex-1 items-center gap-3 md:flex">
               <div className="flex h-11 w-full max-w-full flex-1 items-center gap-2 rounded-2xl border border-admin-border bg-[var(--color-bg-elevated)] px-3 lg:max-w-[560px]">
                 <Search size={14} className=" text-admin-text-muted" />
                 <input
@@ -307,7 +309,7 @@ export default function AdminShell() {
               </div>
             </div>
 
-            <div className="order-1 ml-auto flex w-full items-center justify-end gap-2 sm:gap-3 lg:order-2 lg:w-auto">
+            <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <div className="relative">
                 <button
                   type="button"

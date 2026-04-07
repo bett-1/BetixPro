@@ -139,7 +139,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <AdminSectionHeader
         title="Overview"
         subtitle={
@@ -181,7 +181,7 @@ export default function Dashboard() {
         ) : null}
 
         {/* Stat Cards - Compact */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
           {isLoading && metrics.length === 0
             ? Array.from({ length: 8 }).map((_, index) => (
                 <AdminCard key={index} className="animate-pulse">
@@ -227,11 +227,11 @@ export default function Dashboard() {
                 return (
                   <AdminCard
                     key={metric.label}
-                    className={`border ${colors.border} transition hover:border-opacity-50 p-3`}
+                    className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                        <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
                           {metric.label}
                         </p>
                         <div
@@ -241,11 +241,11 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div>
-                        <p className={`text-lg font-bold ${colors.text}`}>
+                        <p className={`text-base font-bold sm:text-lg ${colors.text}`}>
                           {metric.value}
                         </p>
                         {metric.helper && (
-                          <p className="mt-1 text-[9px] text-admin-text-muted line-clamp-1">
+                          <p className="mt-1 text-[8px] text-admin-text-muted line-clamp-1 sm:text-[9px]">
                             {metric.helper}
                           </p>
                         )}
@@ -257,23 +257,23 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <AdminCard>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-4">
+          <AdminCard className="p-3 sm:p-4">
             <AdminCardHeader
               title="Deposit vs Withdrawal Trend"
               subtitle="Completed transactions over last 7 days"
             />
-            <DepositWithdrawalChart data={chartData} />
+            <DepositWithdrawalChart data={chartData} compact />
           </AdminCard>
 
-          <AdminCard>
+          <AdminCard className="p-3 sm:p-4">
             <AdminCardHeader title="7 Day Totals" subtitle="Liquidity" />
             <div className="space-y-2.5 pt-2">
               <div className="rounded-lg border border-admin-border bg-admin-surface/60 p-2.5">
                 <p className="text-[9px] uppercase tracking-[0.08em] text-admin-text-muted">
                   Deposits
                 </p>
-                <p className="mt-1 text-lg font-bold text-admin-accent">
+                <p className="mt-1 text-base font-bold text-admin-accent sm:text-lg">
                   {formatCurrency(data?.charts.totals.deposits7d ?? 0)}
                 </p>
               </div>
@@ -281,7 +281,7 @@ export default function Dashboard() {
                 <p className="text-[9px] uppercase tracking-[0.08em] text-admin-text-muted">
                   Withdrawals
                 </p>
-                <p className="mt-1 text-lg font-bold text-admin-gold">
+                <p className="mt-1 text-base font-bold text-admin-gold sm:text-lg">
                   {formatCurrency(data?.charts.totals.withdrawals7d ?? 0)}
                 </p>
               </div>
@@ -298,13 +298,13 @@ export default function Dashboard() {
               subtitle="Live wallet and withdrawal flow"
               actions={
                 <>
-                  <AdminButton variant="ghost">
+                  <AdminButton variant="ghost" className="px-2.5 sm:px-3.5">
                     <Filter size={13} />
-                    Filter
+                    <span className="hidden sm:inline">Filter</span>
                   </AdminButton>
-                  <AdminButton variant="ghost">
+                  <AdminButton variant="ghost" className="px-2.5 sm:px-3.5">
                     <Download size={13} />
-                    Export
+                    <span className="hidden sm:inline">Export</span>
                   </AdminButton>
                 </>
               }

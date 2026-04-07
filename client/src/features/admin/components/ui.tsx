@@ -109,11 +109,11 @@ interface AdminButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const adminTableClassName =
-  "min-w-[640px] w-full border-collapse text-sm";
+  "min-w-[480px] w-full border-collapse text-xs sm:min-w-[560px] sm:text-sm lg:min-w-[760px]";
 export const adminTableHeadCellClassName =
-  "border-b border-admin-border px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:px-4 sm:py-3.5 sm:text-[11px]";
+  "border-b border-admin-border px-2.5 py-2 text-left text-[9px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:px-3 sm:py-2.5 sm:text-[10px] lg:px-4 lg:py-3.5 lg:text-[11px]";
 export const adminTableCellClassName =
-  "border-b border-admin-border px-3 py-3 align-top text-xs text-admin-text-secondary sm:px-4 sm:py-4 sm:text-sm";
+  "border-b border-admin-border px-2.5 py-2.5 align-top text-[11px] text-admin-text-secondary sm:px-3 sm:py-3 sm:text-xs lg:px-4 lg:py-4 lg:text-sm";
 export const adminCompactActionsClassName = "flex flex-wrap items-center gap-1";
 export const adminFilterRowClassName = "flex flex-wrap gap-3";
 
@@ -133,7 +133,7 @@ export function AdminCard({
   return (
     <section
       className={cn(
-        "relative rounded-2xl border border-admin-border bg-admin-card p-5 text-admin-text-primary shadow-[0_12px_40px_var(--color-bg-deepest)]",
+        "relative rounded-2xl border border-admin-border bg-admin-card p-3 text-admin-text-primary shadow-[0_12px_40px_var(--color-bg-deepest)] sm:p-4 lg:p-5",
         "bg-[linear-gradient(180deg,var(--color-bg-hover),transparent_120px)]",
         interactive &&
           "transition duration-200 hover:-translate-y-0.5 hover:border-admin-border-strong",
@@ -187,10 +187,14 @@ export function AdminSectionHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-admin-text-primary">{title}</h1>
-        <p className="mt-1 text-sm text-admin-text-muted">{subtitle}</p>
+        <h1 className="text-xl font-bold text-admin-text-primary sm:text-2xl">
+          {title}
+        </h1>
+        <p className="mt-1 text-xs text-admin-text-muted sm:text-sm">
+          {subtitle}
+        </p>
       </div>
       {actions ? (
         <div className="flex flex-wrap items-center gap-3">{actions}</div>
@@ -290,11 +294,18 @@ export function SummaryCard({
   tone: AdminTone;
 }) {
   return (
-    <AdminCard className="text-center">
-      <p className={cn("text-[1.45rem] font-bold", toneTextClasses[tone])}>
+    <AdminCard className="p-3 text-center sm:p-4">
+      <p
+        className={cn(
+          "text-[1.1rem] font-bold leading-tight sm:text-[1.35rem]",
+          toneTextClasses[tone],
+        )}
+      >
         {value}
       </p>
-      <p className="mt-1 text-xs text-admin-text-muted">{label}</p>
+      <p className="mt-1 text-[10px] text-admin-text-muted sm:text-xs">
+        {label}
+      </p>
     </AdminCard>
   );
 }
@@ -336,7 +347,7 @@ export function InlinePill({
 
 export function TableShell({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-admin-border/70 bg-admin-surface/20">
+    <div className="w-full overflow-x-auto rounded-lg border border-admin-border/70 bg-admin-surface/20 sm:rounded-xl">
       {children}
     </div>
   );
@@ -521,12 +532,18 @@ export function FinancialTrendChart({ data }: { data: any[] }) {
   );
 }
 
-export function DepositWithdrawalChart({ data }: { data: any[] }) {
+export function DepositWithdrawalChart({
+  data,
+  compact = false,
+}: {
+  data: any[];
+  compact?: boolean;
+}) {
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={compact ? 230 : 320}>
       <LineChart
         data={data}
-        margin={{ top: 10, right: 20, left: -20, bottom: 10 }}
+        margin={{ top: 8, right: 8, left: -24, bottom: 2 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis
@@ -545,7 +562,7 @@ export function DepositWithdrawalChart({ data }: { data: any[] }) {
           labelStyle={{ color: "#00e5a0", fontSize: "11px" }}
           cursor={{ fill: "rgba(255,255,255,0.05)" }}
         />
-        <Legend />
+        <Legend iconSize={8} wrapperStyle={{ fontSize: "11px", paddingTop: 8 }} />
         <Line
           type="monotone"
           dataKey="deposits"
