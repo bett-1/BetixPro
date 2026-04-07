@@ -100,7 +100,16 @@ export default function Dashboard() {
   const handleExportCSV = () => {
     if (recentTransactions.length === 0) return;
 
-    const headers = ["#", "User Email", "Phone", "Type", "Amount", "Fee", "Status", "Time"];
+    const headers = [
+      "#",
+      "User Email",
+      "Phone",
+      "Type",
+      "Amount",
+      "Fee",
+      "Status",
+      "Time",
+    ];
     const rows = recentTransactions.map((tx, idx) => [
       idx + 1,
       tx.userEmail,
