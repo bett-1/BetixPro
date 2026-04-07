@@ -74,7 +74,11 @@ export default function RegisterModal() {
 
   // Only require all fields to be filled, allow submit even if validation fails to get server feedback
   const canSubmit = useMemo(
-    () => email.length > 0 && phone.length > 0 && password.length > 0 && confirmPassword.length > 0,
+    () =>
+      email.length > 0 &&
+      phone.length > 0 &&
+      password.length > 0 &&
+      confirmPassword.length > 0,
     [email, phone, password, confirmPassword],
   );
 
