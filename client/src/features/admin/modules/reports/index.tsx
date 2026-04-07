@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useAdminFinancialReport,
   useAdminBettingReport,
@@ -35,8 +35,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
+  LineChart,
+  Line,
 } from "recharts";
-import { Loader } from "lucide-react";
+import { Loader, AlertCircle, TrendingUp } from "lucide-react";
 
 const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: "7d", label: "Last 7 Days" },
@@ -48,9 +51,13 @@ const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: "all", label: "All Time" },
 ];
 
-function FinancialReportsTab() {
-  const [period] = useState<ReportPeriod>("30d");
-  const { data, isLoading } = useAdminFinancialReport(period);
+function getChartHeight(isMobile: boolean): number {
+  return isMobile ? 250 : 320;
+}
+
+function FinancialReportsTab({ period }: { period: ReportPeriod }) {
+  const { data, isLoading, isError, error } = useAdminFinancialReport(period);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   if (isLoading) {
     return (
@@ -60,7 +67,18 @@ function FinancialReportsTab() {
     );
   }
 
-  if (!data) return <div>No data available</div>;
+  if (isError) {
+    return (
+      <AdminCard className="flex items-center gap-3">
+        <AlertCircle className="h-5 w-5 text-admin-red" />
+        <p className="text-sm text-admin-red">
+          {(error as Error)?.message ?? "Failed to load financial report"}
+        </p>
+      </AdminCard>
+    );
+  }
+
+  if (!data) return <div className="text-admin-text-muted">No data available</div>;
 
   const stats = [
     {
@@ -70,32 +88,39 @@ function FinancialReportsTab() {
     },
     {
       label: "Deposits",
-      value: `${data.deposits.count} (KES ${(data.deposits.totalAmount / 1000).toFixed(1)}K)`,
+      value: `${data.deposits.count}`,
+      subtitle: `KES ${(data.deposits.totalAmount / 1000).toFixed(1)}K`,
       tone: "accent" as const,
     },
     {
       label: "Withdrawals",
-      value: `${data.withdrawals.count} (KES ${(data.withdrawals.totalAmount / 1000).toFixed(1)}K)`,
+      value: `${data.withdrawals.count}`,
+      subtitle: `KES ${(data.withdrawals.totalAmount / 1000).toFixed(1)}K`,
       tone: "red" as const,
     },
     {
       label: "Bets Placed",
-      value: `${data.bets.count} bets`,
+      value: `${data.bets.count}`,
+      subtitle: `KES ${(data.bets.totalStaked / 1000).toFixed(1)}K staked`,
       tone: "purple" as const,
     },
   ];
 
-  const transactionData = data.transactionsByType
-    .filter((t) => t._sum.amount)
-    .map((t) => ({
-      name: `${t.type} (${t.status})`,
-      value: (t._sum.amount || 0) / 1000,
-      count: t._count,
-    }));
+  const transactionData = useMemo(
+    () =>
+      data.transactionsByType
+        .filter((t) => t._sum.amount)
+        .map((t) => ({
+          name: `${t.type} (${t.status})`,
+          value: (t._sum.amount || 0) / 1000,
+          count: t._count,
+        })),
+    [data.transactionsByType]
+  );
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -107,32 +132,89 @@ function FinancialReportsTab() {
       </div>
 
       <AdminCard className="space-y-4">
-        <h3 className="font-semibold text-admin-text-primary">
-          Transaction Breakdown (KES 000s)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={transactionData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="name" tick={{ fill: "#999", fontSize: 12 }} />
-            <YAxis tick={{ fill: "#999", fontSize: 12 }} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1e1e1e",
-                border: "1px solid #444",
-                borderRadius: "8px",
-              }}
-            />
-            <Bar dataKey="value" fill="#3b82f6" name="Amount (KES 000s)" />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="flex flex-col gap-1">
+          <h3 className="font-semibold text-admin-text-primary">
+            Transaction Breakdown
+          </h3>
+          <p className="text-xs text-admin-text-muted">(KES Thousands)</p>
+        </div>
+        <div className="w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={getChartHeight(isMobile)} minWidth={300}>
+            <BarChart data={transactionData} margin={{ top: 8, right: 12, left: 0, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: isMobile ? 10 : 12 }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "rgba(15,20,35,0.95)",
+                  border: "1px solid rgba(0,229,160,0.2)",
+                  borderRadius: "8px",
+                }}
+              />
+              <Bar dataKey="value" fill="#0088fe" name="Amount (KES 000s)" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </AdminCard>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AdminCard className="space-y-4">
+          <h3 className="font-semibold text-admin-text-primary">Deposit Summary</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between rounded-lg bg-admin-surface/50 p-3">
+              <span className="text-sm text-admin-text-muted">Total Deposits</span>
+              <span className="font-semibold text-admin-accent">
+                KES {(data.deposits.totalAmount / 1000).toFixed(1)}K
+              </span>
+            </div>
+            <div className="flex justify-between rounded-lg bg-admin-surface/50 p-3">
+              <span className="text-sm text-admin-text-muted">Transaction Count</span>
+              <span className="font-semibold text-admin-text-primary">{data.deposits.count}</span>
+            </div>
+            <div className="flex justify-between rounded-lg bg-admin-surface/50 p-3">
+              <span className="text-sm text-admin-text-muted">Average Deposit</span>
+              <span className="font-semibold text-admin-text-primary">
+                KES {Math.round(data.deposits.averageAmount).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </AdminCard>
+
+        <AdminCard className="space-y-4">
+          <h3 className="font-semibold text-admin-text-primary">Withdrawal Summary</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between rounded-lg bg-admin-surface/50 p-3">
+              <span className="text-sm text-admin-text-muted">Total Withdrawals</span>
+              <span className="font-semibold text-admin-red">
+                KES {(data.withdrawals.totalAmount / 1000).toFixed(1)}K
+              </span>
+            </div>
+            <div className="flex justify-between rounded-lg bg-admin-surface/50 p-3">
+              <span className="text-sm text-admin-text-muted">Transaction Count</span>
+              <span className="font-semibold text-admin-text-primary">{data.withdrawals.count}</span>
+            </div>
+            <div className="flex justify-between rounded-lg bg-admin-surface/50 p-3">
+              <span className="text-sm text-admin-text-muted">Average Withdrawal</span>
+              <span className="font-semibold text-admin-text-primary">
+                KES {Math.round(data.withdrawals.averageAmount).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </AdminCard>
+      </div>
     </div>
   );
 }
 
-function BettingReportsTab() {
-  const [period] = useState<ReportPeriod>("30d");
-  const { data, isLoading } = useAdminBettingReport(period);
+function BettingReportsTab({ period }: { period: ReportPeriod }) {
+  const { data, isLoading, isError, error } = useAdminBettingReport(period);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   if (isLoading) {
     return (
@@ -142,12 +224,23 @@ function BettingReportsTab() {
     );
   }
 
-  if (!data) return <div>No data available</div>;
+  if (isError) {
+    return (
+      <AdminCard className="flex items-center gap-3">
+        <AlertCircle className="h-5 w-5 text-admin-red" />
+        <p className="text-sm text-admin-red">
+          {(error as Error)?.message ?? "Failed to load betting report"}
+        </p>
+      </AdminCard>
+    );
+  }
+
+  if (!data) return <div className="text-admin-text-muted">No data available</div>;
 
   const stats = [
     {
       label: "Total Bets",
-      value: `${data.totalBets}`,
+      value: `${data.totalBets.toLocaleString()}`,
       tone: "blue" as const,
     },
     {
@@ -162,37 +255,30 @@ function BettingReportsTab() {
     },
     {
       label: "Avg Stake",
-      value: `KES ${data.averageStake}`,
-      tone: "blue" as const,
+      value: `KES ${data.averageStake.toLocaleString()}`,
+      tone: "gold" as const,
     },
   ];
 
-  const winLossData = [
-    {
-      name: "Won",
-      value: data.winLossStats.won,
-      color: "#10b981",
-    },
-    {
-      name: "Lost",
-      value: data.winLossStats.lost,
-      color: "#ef4444",
-    },
-    {
-      name: "Pending",
-      value: data.winLossStats.pending,
-      color: "#f59e0b",
-    },
-    {
-      name: "Void",
-      value: data.winLossStats.void,
-      color: "#6b7280",
-    },
-  ].filter((d) => d.value > 0);
+  const winLossData = useMemo(
+    () =>
+      [
+        { name: "Won", value: data.winLossStats.won, color: "#10b981" },
+        { name: "Lost", value: data.winLossStats.lost, color: "#ef4444" },
+        { name: "Pending", value: data.winLossStats.pending, color: "#f59e0b" },
+        { name: "Void", value: data.winLossStats.void, color: "#6b7280" },
+      ].filter((d) => d.value > 0),
+    [data.winLossStats]
+  );
+
+  const topMarketsData = useMemo(
+    () => data.topMarkets.slice(0, 5),
+    [data.topMarkets]
+  );
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -203,68 +289,103 @@ function BettingReportsTab() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <AdminCard className="space-y-4">
-          <h3 className="font-semibold text-admin-text-primary">
-            Bet Status Distribution
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={winLossData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={({ name, value }) => `${name}: ${value}`}
-              >
-                {winLossData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e1e1e",
-                  border: "1px solid #444",
-                  borderRadius: "8px",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <h3 className="font-semibold text-admin-text-primary">Bet Status Distribution</h3>
+          <div className="w-full overflow-x-auto flex justify-center">
+            <ResponsiveContainer width={300} height={250} minWidth={250}>
+              <PieChart>
+                <Pie
+                  data={winLossData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={isMobile ? 70 : 85}
+                  label={({ name, percent }) =>
+                    `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                  }
+                  labelLine={false}
+                >
+                  {winLossData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(15,20,35,0.95)",
+                    border: "1px solid rgba(0,229,160,0.2)",
+                    borderRadius: "8px",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </AdminCard>
 
         <AdminCard className="space-y-4">
           <h3 className="font-semibold text-admin-text-primary">Top Markets</h3>
-          <div className="space-y-3">
-            {data.topMarkets.slice(0, 5).map((market) => (
+          <div className="space-y-2">
+            {topMarketsData.map((market) => (
               <div
                 key={market.marketType}
-                className="flex items-center justify-between rounded-lg bg-admin-surface/50 p-3"
+                className="flex items-center justify-between rounded-lg bg-admin-surface/50 p-3 hover:bg-admin-surface/70 transition-colors"
               >
-                <div>
-                  <p className="text-sm font-medium text-admin-text-primary">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-admin-text-primary truncate">
                     {market.marketType}
                   </p>
-                  <p className="text-xs text-admin-text-muted">
-                    {market.count} bets
+                  <p className="text-xs text-admin-text-muted">{market.count} bets</p>
+                </div>
+                <div className="ml-2 text-right flex-shrink-0">
+                  <p className="font-semibold text-admin-accent">
+                    KES {(market.totalStaked / 1000).toFixed(1)}K
                   </p>
                 </div>
-                <p className="font-semibold text-admin-accent">
-                  KES {(market.totalStaked / 1000).toFixed(1)}K
-                </p>
               </div>
             ))}
+            {topMarketsData.length === 0 && (
+              <p className="text-sm text-admin-text-muted text-center py-6">No market data</p>
+            )}
           </div>
         </AdminCard>
       </div>
+
+      <AdminCard className="space-y-4">
+        <h3 className="font-semibold text-admin-text-primary">Bet Status Breakdown</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg bg-admin-surface/50 p-3">
+            <p className="text-xs text-admin-text-muted">Won</p>
+            <p className="mt-2 text-lg font-bold text-green-400">
+              {data.winLossStats.won.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-lg bg-admin-surface/50 p-3">
+            <p className="text-xs text-admin-text-muted">Lost</p>
+            <p className="mt-2 text-lg font-bold text-red-400">
+              {data.winLossStats.lost.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-lg bg-admin-surface/50 p-3">
+            <p className="text-xs text-admin-text-muted">Pending</p>
+            <p className="mt-2 text-lg font-bold text-amber-400">
+              {data.winLossStats.pending.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-lg bg-admin-surface/50 p-3">
+            <p className="text-xs text-admin-text-muted">Void</p>
+            <p className="mt-2 text-lg font-bold text-gray-400">
+              {data.winLossStats.void.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </AdminCard>
     </div>
   );
 }
 
-function UsersReportsTab() {
-  const [period] = useState<ReportPeriod>("30d");
-  const { data, isLoading } = useAdminUsersReport(period);
+function UsersReportsTab({ period }: { period: ReportPeriod }) {
+  const { data, isLoading, isError, error } = useAdminUsersReport(period);
 
   if (isLoading) {
     return (
@@ -274,12 +395,23 @@ function UsersReportsTab() {
     );
   }
 
-  if (!data) return <div>No data available</div>;
+  if (isError) {
+    return (
+      <AdminCard className="flex items-center gap-3">
+        <AlertCircle className="h-5 w-5 text-admin-red" />
+        <p className="text-sm text-admin-red">
+          {(error as Error)?.message ?? "Failed to load users report"}
+        </p>
+      </AdminCard>
+    );
+  }
+
+  if (!data) return <div className="text-admin-text-muted">No data available</div>;
 
   const stats = [
     {
       label: "Total Users",
-      value: `${data.totalUsers}`,
+      value: `${data.totalUsers.toLocaleString()}`,
       tone: "blue" as const,
     },
     {
@@ -294,14 +426,16 @@ function UsersReportsTab() {
     },
     {
       label: "Avg Bets/User",
-      value: `${data.averageBetsPerActiveUser}`,
+      value: `${parseFloat(data.averageBetsPerActiveUser.toString()).toFixed(1)}`,
       tone: "gold" as const,
     },
   ];
 
+  const topBettors = useMemo(() => data.topBettors, [data.topBettors]);
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -314,39 +448,45 @@ function UsersReportsTab() {
 
       <AdminCard className="space-y-4">
         <h3 className="font-semibold text-admin-text-primary">Top Bettors</h3>
-        <TableShell>
-          <table className={adminTableClassName}>
-            <thead>
-              <tr className="border-b border-admin-border">
-                <th className={adminTableHeadCellClassName}>Email</th>
-                <th className={adminTableHeadCellClassName}>Name</th>
-                <th className={`${adminTableHeadCellClassName} text-right`}>
-                  Bets Placed
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.topBettors.map((bettor) => (
-                <tr
-                  key={bettor.id}
-                  className="border-b border-admin-border/50 hover:bg-admin-surface/50"
-                >
-                  <td className={adminTableCellClassName} title={bettor.email}>
-                    {truncateEmailForTable(bettor.email)}
-                  </td>
-                  <td className={adminTableCellClassName}>
-                    {bettor.name || "-"}
-                  </td>
-                  <td
-                    className={`${adminTableCellClassName} text-right font-semibold text-admin-accent`}
-                  >
-                    {bettor.betCount}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </TableShell>
+        {topBettors.length > 0 ? (
+          <div className="overflow-x-auto">
+            <TableShell>
+              <table className={adminTableClassName}>
+                <thead>
+                  <tr className="border-b border-admin-border">
+                    <th className={adminTableHeadCellClassName}>Email</th>
+                    <th className={adminTableHeadCellClassName}>Name</th>
+                    <th className={`${adminTableHeadCellClassName} text-right`}>
+                      Bets Placed
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topBettors.map((bettor, idx) => (
+                    <tr
+                      key={bettor.id}
+                      className={idx % 2 === 0 ? "border-b border-admin-border/50 even:bg-admin-surface/50" : "border-b border-admin-border/50 hover:bg-admin-surface/50"}
+                    >
+                      <td className={adminTableCellClassName} title={bettor.email}>
+                        {truncateEmailForTable(bettor.email)}
+                      </td>
+                      <td className={adminTableCellClassName}>
+                        {bettor.name || "—"}
+                      </td>
+                      <td
+                        className={`${adminTableCellClassName} text-right font-semibold text-admin-accent`}
+                      >
+                        {bettor.betCount}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableShell>
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-admin-text-muted">No bettors found</p>
+        )}
       </AdminCard>
     </div>
   );
