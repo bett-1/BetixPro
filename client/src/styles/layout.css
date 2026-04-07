@@ -1,7 +1,7 @@
 .bc-layout-root {
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--nav-bg);
+  background: var(--color-bg-primary);
   color: var(--nav-text);
   font-family: "Barlow", sans-serif;
 }
@@ -9,6 +9,7 @@
 .bc-layout-body {
   margin-top: var(--navbar-height);
   min-height: calc(100vh - var(--navbar-height));
+  background: var(--color-bg-primary);
 }
 
 .bc-layout-main {
@@ -411,6 +412,12 @@
   border: 1px solid var(--color-border-primary);
   min-width: auto;
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.bc-balance-card:hover {
+  border-color: var(--nav-accent);
+  background: var(--nav-surface);
 }
 
 .bc-balance-icon {
@@ -724,12 +731,12 @@
 
 .bc-account-chevron {
   color: var(--nav-muted);
-  font-size: 10px;
-  transition: transform 0.2s;
+  font-size: 14px;
+  transition: transform 0.3s ease;
 }
 
 .bc-account-trigger.is-open .bc-account-chevron {
-  transform: rotate(180deg);
+  transform: rotate(-180deg);
 }
 
 .bc-account-dropdown {
@@ -833,6 +840,12 @@
 
 .bc-account-item.is-logout:hover {
   background: var(--color-live-bg);
+}
+
+@media (max-width: 768px) {
+  .bc-live-games-dropdown {
+    display: none !important;
+  }
 }
 
 .bc-deposit-btn {
@@ -1058,17 +1071,28 @@
 }
 
 .bc-side-section {
-  padding-top: 8px;
+  padding-top: 16px;
 }
 
 .bc-side-heading {
-  margin: 20px 0 4px;
-  padding: 6px 16px;
-  color: var(--nav-muted);
-  font-size: 10px;
-  font-weight: 700;
+  margin: 0 0 10px 0;
+  padding: 0 16px;
+  color: var(--nav-accent);
+  font-size: 11px;
+  font-weight: 800;
   letter-spacing: 1.4px;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bc-side-heading::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--nav-accent);
 }
 
 .bc-sidebar-link,
@@ -1079,7 +1103,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 16px;
+  padding: 10px 16px;
   text-decoration: none;
   color: var(--nav-muted);
   font-size: 13px;
@@ -1087,6 +1111,9 @@
   border: 0;
   background: transparent;
   text-align: left;
+  margin: 2px 0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .bc-sidebar-link:hover,
@@ -1094,6 +1121,7 @@
 .bc-side-logout:hover {
   color: var(--nav-text);
   background: var(--color-bg-hover);
+  padding-left: 18px;
 }
 
 .bc-sidebar-link.is-active {
@@ -1157,18 +1185,212 @@
   font-size: 12px;
 }
 
+.bc-live-sports-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin: 0;
+  text-decoration: none;
+  color: var(--nav-text);
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--nav-accent) 15%, transparent),
+    color-mix(in srgb, var(--nav-accent2) 10%, transparent)
+  );
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid color-mix(in srgb, var(--nav-accent) 20%, transparent);
+}
+
+.bc-live-sports-toggle:hover {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--nav-accent) 25%, transparent),
+    color-mix(in srgb, var(--nav-accent2) 20%, transparent)
+  );
+  border-color: var(--nav-accent);
+  color: var(--nav-accent);
+}
+
+.bc-live-sports-chevron {
+  margin-left: auto;
+  transition: transform 0.25s ease;
+  color: var(--nav-accent);
+}
+
+.bc-live-sports-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.bc-live-sports-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.bc-live-sports-list.is-open {
+  max-height: 800px;
+}
+
+.bc-live-sport-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px 9px 32px;
+  text-decoration: none;
+  color: var(--nav-muted);
+  font-size: 12px;
+  font-weight: 500;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  margin: 1px 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  width: 100%;
+  cursor: pointer;
+}
+
+.bc-live-sport-item:hover {
+  color: var(--nav-text);
+  background: var(--color-bg-hover);
+  padding-left: 36px;
+}
+
+.bc-live-sport-name {
+  flex: 1;
+}
+
+.bc-live-sport-count {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--nav-red), #ff8a8a);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+}
+
 .bc-side-bottom {
   border-top: 1px solid var(--color-border-primary);
-  padding: 12px 16px;
+  padding: 16px;
+  margin-top: 16px;
 }
 
 .bc-side-logout {
   color: var(--nav-red);
   border-radius: 6px;
+  background: transparent;
+  transition: all 0.2s ease;
 }
 
 .bc-side-logout:hover {
-  background: var(--color-live-bg);
+  background: color-mix(in srgb, var(--nav-red) 15%, transparent);
+  padding-left: 18px;
+}
+
+.bc-live-sports-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin: 0;
+  text-decoration: none;
+  color: var(--nav-text);
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--nav-accent) 15%, transparent),
+    color-mix(in srgb, var(--nav-accent2) 10%, transparent)
+  );
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid color-mix(in srgb, var(--nav-accent) 20%, transparent);
+}
+
+.bc-live-sports-toggle:hover {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--nav-accent) 25%, transparent),
+    color-mix(in srgb, var(--nav-accent2) 20%, transparent)
+  );
+  border-color: var(--nav-accent);
+  color: var(--nav-accent);
+}
+
+.bc-live-sports-chevron {
+  margin-left: auto;
+  transition: transform 0.25s ease;
+  color: var(--nav-accent);
+}
+
+.bc-live-sports-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.bc-live-sports-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.bc-live-sports-list.is-open {
+  max-height: 800px;
+}
+
+.bc-live-sport-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px 9px 32px;
+  text-decoration: none;
+  color: var(--nav-muted);
+  font-size: 12px;
+  font-weight: 500;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  margin: 1px 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  width: 100%;
+  cursor: pointer;
+}
+
+.bc-live-sport-item:hover {
+  color: var(--nav-text);
+  background: var(--color-bg-hover);
+  padding-left: 36px;
+}
+
+.bc-live-sport-name {
+  flex: 1;
+}
+
+.bc-live-sport-count {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--nav-red), #ff8a8a);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
 }
 
 .bc-side-backdrop {
@@ -1190,10 +1412,12 @@
 
   .bc-hamburger {
     display: inline-flex;
-    margin-right: 10px;
+    margin-right: 8px;
   }
 
   .bc-sidebar {
+    top: 0;
+    height: 100vh;
     transform: translateX(-100%);
   }
 
@@ -1206,149 +1430,99 @@
     pointer-events: auto;
   }
 
+  /* Hide search on tablet and down */
   .bc-main-search {
-    max-width: 200px;
+    display: none;
+  }
+
+  /* Hide non-essential links on tablet */
+  .bc-deposit-btn,
+  .bc-my-bets-btn {
+    display: none;
+  }
+
+  /* Adjust actions spacing */
+  .bc-actions {
+    gap: 8px;
+  }
+
+  /* Adjust balance card on tablet */
+  .bc-balance-card {
+    padding: 0 10px;
+    height: 32px;
+  }
+
+  .bc-balance-label {
+    display: none;
+  }
+
+  .bc-balance-value {
+    font-size: 12px;
+  }
+
+  /* Hide leagues on tablet */
+  .bc-leagues {
+    display: none;
+  }
+
+  /* Adjust navbar height for mobile */
+  .bc-ticker {
+    height: 20px;
+  }
+
+  .bc-main-row {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .bc-logo {
+    margin-right: 8px;
+  }
+
+  .bc-logo-text {
+    font-size: 18px;
+  }
+
+  .bc-logo-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
   }
 }
 
 @media (max-width: 600px) {
+  /* Mobile: Hide search completely */
   .bc-main-search {
-    max-width: 120px;
+    display: none !important;
   }
 
-  .bc-link-label,
-  .bc-account-label {
-    display: none;
-  }
-
-  .bc-nav-link {
-    min-width: 44px;
-    justify-content: center;
-    padding: 5px 6px;
-  }
-
-  .bc-balance-card {
-    padding: 5px 10px;
-  }
-
-  .bc-balance-label {
-    font-size: 10px;
-  }
-
-  .bc-balance-value {
-    font-size: 11px;
-  }
-
-  .bc-notify {
-    width: 36px;
-  }
-
-  .bc-account-trigger {
-    height: 36px;
-    padding: 0 10px;
-    font-size: 11px;
-  }
-
-  .bc-deposit-btn {
-    padding: 0 8px;
-  }
-
+  /* Hide all nav buttons except balance and account */
+  .bc-deposit-btn,
   .bc-my-bets-btn {
-    padding: 0 10px;
+    display: none !important;
   }
 
-  .bc-deposit-text {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .bc-main-search {
-    max-width: 80px;
-  }
-
-  .bc-nav-links {
-    gap: 0;
-    flex-shrink: 1;
-  }
-
-  .bc-nav-link {
-    min-width: 40px;
-    padding: 5px 4px;
-  }
-
-  .bc-link-icon {
-    font-size: 11px;
-  }
-
-  .bc-balance-card {
-    padding: 4px 8px;
-  }
-
-  .bc-balance-label {
-    font-size: 9px;
-  }
-
-  .bc-balance-value {
-    font-size: 10px;
-  }
-
-  .bc-deposit-btn {
-    width: 36px;
-    height: 36px;
-    justify-content: center;
-    padding: 0;
-  }
-
-  .bc-my-bets-btn {
-    width: 36px;
-    padding: 0;
-    font-size: 0;
-  }
-
-  .bc-my-bets-badge {
-    top: -5px;
-    right: -5px;
-  }
-
-  .bc-account-trigger {
-    height: 36px;
-    padding: 0 10px;
-    font-size: 11px;
-  }
-
-  .bc-account-chevron {
-    display: none;
-  }
-
+  /* Hide ticker on smaller screens */
   .bc-ticker {
-    display: none;
+    display: none !important;
   }
 
+  /* Hide leagues completely */
   .bc-leagues {
-    height: 32px;
-    padding: 0 8px;
-    gap: 0;
+    display: none !important;
   }
 
-  .bc-league {
-    padding: 0 6px;
-    font-size: 11px;
-    min-height: 32px;
-  }
-
-  .bc-league-sep {
-    margin: 0 4px;
-  }
-
+  /* Adjust main row for mobile */
   .bc-main-row {
     height: 52px;
-    padding: 0 12px;
-    gap: 4px;
+    padding: 0 10px;
+    gap: 6px;
   }
 
+  /* Logo sizing for mobile */
   .bc-logo {
     margin-right: 6px;
+    gap: 6px;
   }
 
   .bc-logo-text {
@@ -1361,15 +1535,161 @@
     font-size: 11px;
   }
 
-  .bc-actions {
-    gap: 6px;
+  /* Balance card mobile */
+  .bc-balance-card {
+    padding: 0 8px;
+    height: 32px;
+    font-size: 11px;
   }
 
-  .bc-icon-btn,
+  .bc-balance-label {
+    display: none !important;
+  }
+
+  .bc-balance-value {
+    font-size: 11px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Hamburger sizing */
+  .bc-hamburger {
+    width: 40px;
+    height: 40px;
+    margin-right: 6px;
+  }
+
+  /* Account button mobile */
   .bc-account-trigger {
-    width: auto;
     height: 36px;
-    border-radius: 5px;
+    padding: 0 10px;
+    font-size: 11px;
+    border-radius: 12px;
+  }
+
+  .bc-account-chevron {
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
+  }
+
+  /* Hide logo icon on mobile */
+  .bc-logo-icon {
+    display: none;
+  }
+
+  /* Icon buttons */
+  .bc-icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Actions container */
+  .bc-actions {
+    gap: 6px;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra mobile breakpoint - ultra compact */
+
+  /* Hide ticker entirely */
+  .bc-ticker {
+    display: none !important;
+  }
+
+  /* Hide leagues entirely */
+  .bc-leagues {
+    display: none !important;
+  }
+
+  /* Compact main row */
+  .bc-main-row {
+    height: 48px;
+    padding: 0 8px;
+    gap: 4px;
+  }
+
+  /* Logo ultra compact */
+  .bc-logo {
+    margin-right: 4px;
+    gap: 4px;
+  }
+
+  .bc-logo-text {
+    font-size: 15px;
+  }
+
+  .bc-logo-icon {
+    display: none;
+  }
+
+  /* Hamburger button */
+  .bc-hamburger {
+    width: 38px;
+    height: 38px;
+    margin-right: 4px;
+    padding: 0;
+  }
+
+  /* Balance - ultra compact */
+  .bc-balance-card {
+    padding: 0 6px;
+    height: 30px;
+    border-radius: 8px;
+    gap: 0;
+  }
+
+  .bc-balance-label {
+    display: none !important;
+  }
+
+  .bc-balance-value {
+    font-size: 10px;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Account button ultra compact */
+  .bc-account-trigger {
+    height: 34px;
+    padding: 0 8px;
+    font-size: 10px;
+    border-radius: 12px;
+    gap: 4px;
+  }
+
+  .bc-account-chevron {
+    display: none !important;
+  }
+
+  /* Icon buttons smaller */
+  .bc-icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Actions tighter spacing */
+  .bc-actions {
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  /* Notify dropdown adjustment */
+  .bc-notify-dropdown {
+    width: min(320px, calc(100vw - 16px));
+    top: calc(100% + 6px);
+    right: -4px;
+  }
+
+  /* Account dropdown adjustment */
+  .bc-account-dropdown {
+    width: 200px;
+    max-height: 70vh;
+    overflow-y: auto;
   }
 }
 
