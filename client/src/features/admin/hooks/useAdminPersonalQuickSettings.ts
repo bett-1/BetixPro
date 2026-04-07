@@ -52,9 +52,11 @@ export function useAdminPersonalQuickSettings() {
       setSettingsState((current) => {
         const resolved =
           typeof next === "function"
-            ? (next as (value: AdminPersonalQuickSettings) => AdminPersonalQuickSettings)(
-                current,
-              )
+            ? (
+                next as (
+                  value: AdminPersonalQuickSettings,
+                ) => AdminPersonalQuickSettings
+              )(current)
             : next;
 
         const sanitized = sanitizePersonalQuickSettings(resolved);

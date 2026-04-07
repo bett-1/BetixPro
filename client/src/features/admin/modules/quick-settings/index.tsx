@@ -47,14 +47,17 @@ export default function AdminQuickSettings() {
     }
 
     const audio = new Audio(settings.withdrawalSoundTone);
-    audio.volume = clampQuickSettingVolume(settings.withdrawalSoundVolume) / 100;
+    audio.volume =
+      clampQuickSettingVolume(settings.withdrawalSoundVolume) / 100;
 
     setIsPlayingPreview(true);
 
     try {
       await audio.play();
     } catch {
-      toast.error("Could not play sound preview. Interact with the page and try again.");
+      toast.error(
+        "Could not play sound preview. Interact with the page and try again.",
+      );
     } finally {
       window.setTimeout(() => {
         setIsPlayingPreview(false);
@@ -118,7 +121,8 @@ export default function AdminQuickSettings() {
                   Enable admin sound alert
                 </p>
                 <p className="text-xs text-admin-text-muted">
-                  Plays when a new withdrawal request notification is received for you.
+                  Plays when a new withdrawal request notification is received
+                  for you.
                 </p>
               </div>
               <Switch
@@ -162,7 +166,8 @@ export default function AdminQuickSettings() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-admin-text-primary">
-                  Alert volume: {clampQuickSettingVolume(settings.withdrawalSoundVolume)}%
+                  Alert volume:{" "}
+                  {clampQuickSettingVolume(settings.withdrawalSoundVolume)}%
                 </p>
                 <p className="text-xs text-admin-text-muted">
                   Controls sound level for admin withdrawal request alerts.
@@ -240,7 +245,8 @@ export default function AdminQuickSettings() {
               Auto-save personal quick settings
             </p>
             <p className="mt-1 text-xs text-admin-text-muted">
-              Changes here are saved instantly for your admin profile on this device.
+              Changes here are saved instantly for your admin profile on this
+              device.
             </p>
             <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-admin-live-dim px-3 py-1 text-xs font-semibold text-admin-live">
               <Lock size={12} />
@@ -255,7 +261,8 @@ export default function AdminQuickSettings() {
           <CircleAlert size={13} />
           Scope:
         </span>{" "}
-        these preferences do not change platform-wide system settings for other admins.
+        these preferences do not change platform-wide system settings for other
+        admins.
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   XCircle,
   Settings,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -30,7 +31,7 @@ import {
   type AppNotification,
 } from "@/features/notifications/notifications";
 import { useWalletRealtime } from "@/features/user/payments/wallet";
-import { useAdminSettings } from "../hooks/useAdminSettings";
+import { useAdminPersonalQuickSettings } from "../hooks/useAdminPersonalQuickSettings";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +56,7 @@ export default function AdminShell() {
   const { theme, setTheme } = useTheme();
   useWalletRealtime();
   const { data: notificationData } = useAppNotifications(10);
-  const { data: adminSettingsData } = useAdminSettings();
+  const { settings: personalQuickSettings } = useAdminPersonalQuickSettings();
   const markAllNotificationsRead = useMarkAllNotificationsRead();
   const { logout, user } = useAuth();
   const pathname = useLocation({
@@ -65,12 +66,12 @@ export default function AdminShell() {
   const notifications = notificationData?.notifications ?? [];
   const unreadCount = notificationData?.unreadCount ?? 0;
   const withdrawalSoundEnabled =
-    adminSettingsData?.config.adminQuickSettings.withdrawalSoundEnabled ?? true;
-  const withdrawalSoundTone =
-    adminSettingsData?.config.adminQuickSettings.withdrawalSoundTone ??
-    "/sounds/universfield-new-notification-010-352755.mp3";
+    personalQuickSettings.withdrawalSoundEnabled;
+  const withdrawalSoundTone = personalQuickSettings.withdrawalSoundTone;
   const withdrawalSoundVolume =
-    adminSettingsData?.config.adminQuickSettings.withdrawalSoundVolume ?? 80;
+    personalQuickSettings.withdrawalSoundVolume;
+  const playSoundOnlyWhenPageVisible =
+    personalQuickSettings.playSoundOnlyWhenPageVisible;
 
   const groupedNavigation = useMemo(
     () => [
@@ -170,6 +171,10 @@ export default function AdminShell() {
       return;
     }
 
+    if (playSoundOnlyWhenPageVisible && document.hidden) {
+      return;
+    }
+
     const audio = new Audio(withdrawalSoundTone);
     audio.volume = Math.max(0, Math.min(1, withdrawalSoundVolume / 100));
     void audio.play().catch(() => {
@@ -180,6 +185,7 @@ export default function AdminShell() {
     withdrawalSoundEnabled,
     withdrawalSoundTone,
     withdrawalSoundVolume,
+    playSoundOnlyWhenPageVisible,
   ]);
 
   useEffect(() => {
@@ -589,6 +595,17 @@ export default function AdminShell() {
                     </div>
 
                     <div className="p-2 space-y-1">
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          void navigate({ to: "/admin/quick-settings" });
+                        }}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-admin-text-secondary transition-colors hover:bg-admin-border/50 hover:text-admin-text-primary active:scale-[0.98]"
+                      >
+                        <SlidersHorizontal size={16} />
+                        <span>Quick Settings</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
