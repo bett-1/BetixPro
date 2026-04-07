@@ -718,7 +718,7 @@ export default function Dashboard() {
           open={viewDetailsDialogOpen}
           onOpenChange={setViewDetailsDialogOpen}
         >
-          <AdminDialogContent className="max-w-md bg-admin-bg">
+          <AdminDialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="text-admin-text-primary">
                 Transaction Details

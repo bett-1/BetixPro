@@ -388,7 +388,7 @@ export default function AdminShell() {
         </aside>
 
         {/* Main Content Area */}
-        <div className="relative flex min-w-0 flex-1 flex-col bg-admin-bg">
+        <div className="relative flex min-w-0 flex-1 flex-col bg-transparent">
 
           {/* Top Header - Updated to match sidebar background */}
           <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-admin-border bg-admin-card px-4 sm:px-6 lg:px-8">
@@ -696,7 +696,7 @@ export default function AdminShell() {
           </header>
 
           {/* Page Content */}
-          <main className="relative flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+          <main className="relative flex-1 overflow-x-hidden bg-transparent p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl">
               <Outlet />
             </div>
