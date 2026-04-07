@@ -24,18 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { Loader, AlertCircle } from "lucide-react";
 
 const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
@@ -48,25 +36,8 @@ const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: "all", label: "All Time" },
 ];
 
-function getChartHeight(isMobile: boolean): number {
-  return isMobile ? 250 : 320;
-}
-
 function FinancialReportsTab({ period }: { period: ReportPeriod }) {
   const { data, isLoading, isError, error } = useAdminFinancialReport(period);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  const transactionData = useMemo(
-    () =>
-      data?.transactionsByType
-        ?.filter((t) => t._sum.amount)
-        .map((t) => ({
-          name: `${t.type} (${t.status})`,
-          value: (t._sum.amount || 0) / 1000,
-          count: t._count,
-        })) ?? [],
-    [data?.transactionsByType],
-  );
 
   if (isLoading) {
     return (
@@ -128,56 +99,6 @@ function FinancialReportsTab({ period }: { period: ReportPeriod }) {
           />
         ))}
       </div>
-
-      <AdminCard className="space-y-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="font-semibold text-admin-text-primary">
-            Transaction Breakdown
-          </h3>
-          <p className="text-xs text-admin-text-muted">(KES Thousands)</p>
-        </div>
-        <div className="w-full overflow-x-auto">
-          <ResponsiveContainer
-            width="100%"
-            height={getChartHeight(isMobile)}
-            minWidth={300}
-          >
-            <BarChart
-              data={transactionData}
-              margin={{ top: 8, right: 12, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.08)"
-              />
-              <XAxis
-                dataKey="name"
-                tick={{
-                  fill: "rgba(255,255,255,0.5)",
-                  fontSize: isMobile ? 10 : 12,
-                }}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgba(15,20,35,0.95)",
-                  border: "1px solid rgba(0,229,160,0.2)",
-                  borderRadius: "8px",
-                }}
-              />
-              <Bar
-                dataKey="value"
-                fill="#0088fe"
-                name="Amount (KES 000s)"
-                radius={[6, 6, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </AdminCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <AdminCard className="space-y-4">
@@ -251,22 +172,6 @@ function FinancialReportsTab({ period }: { period: ReportPeriod }) {
 
 function BettingReportsTab({ period }: { period: ReportPeriod }) {
   const { data, isLoading, isError, error } = useAdminBettingReport(period);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  const winLossData = useMemo(
-    () =>
-      [
-        { name: "Won", value: data?.winLossStats.won ?? 0, color: "#10b981" },
-        { name: "Lost", value: data?.winLossStats.lost ?? 0, color: "#ef4444" },
-        {
-          name: "Pending",
-          value: data?.winLossStats.pending ?? 0,
-          color: "#f59e0b",
-        },
-        { name: "Void", value: data?.winLossStats.void ?? 0, color: "#6b7280" },
-      ].filter((d) => d.value > 0),
-    [data?.winLossStats],
-  );
 
   const topMarketsData = useMemo(
     () => data?.topMarkets.slice(0, 5) ?? [],
@@ -331,46 +236,10 @@ function BettingReportsTab({ period }: { period: ReportPeriod }) {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <AdminCard className="space-y-4">
-          <h3 className="font-semibold text-admin-text-primary">
-            Bet Status Distribution
-          </h3>
-          <div className="w-full overflow-x-auto flex justify-center">
-            <ResponsiveContainer width={300} height={250} minWidth={250}>
-              <PieChart>
-                <Pie
-                  data={winLossData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={isMobile ? 70 : 85}
-                  label={({ name, percent }) =>
-                    `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
-                  labelLine={false}
-                >
-                  {winLossData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(15,20,35,0.95)",
-                    border: "1px solid rgba(0,229,160,0.2)",
-                    borderRadius: "8px",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </AdminCard>
-
-        <AdminCard className="space-y-4">
-          <h3 className="font-semibold text-admin-text-primary">Top Markets</h3>
-          <div className="space-y-2">
-            {topMarketsData.map((market) => (
+      <AdminCard className="space-y-4">
+        <h3 className="font-semibold text-admin-text-primary">Top Markets</h3>
+        <div className="space-y-2">
+          {topMarketsData.map((market) => (
               <div
                 key={market.marketType}
                 className="flex items-center justify-between rounded-lg bg-admin-surface/50 p-3 hover:bg-admin-surface/70 transition-colors"
@@ -397,7 +266,7 @@ function BettingReportsTab({ period }: { period: ReportPeriod }) {
             )}
           </div>
         </AdminCard>
-      </div>
+
 
       <AdminCard className="space-y-4">
         <h3 className="font-semibold text-admin-text-primary">
@@ -554,26 +423,6 @@ function UsersReportsTab({ period }: { period: ReportPeriod }) {
 
 function RiskReportsTab({ period }: { period: ReportPeriod }) {
   const { data, isLoading, isError, error } = useAdminRiskReport(period);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  const severityData = useMemo(
-    () =>
-      (data?.alertsBySeverity ?? [])
-        .map((a) => ({
-          name: a.severity,
-          value: a._count,
-          color:
-            a.severity === "CRITICAL"
-              ? "#dc2626"
-              : a.severity === "HIGH"
-                ? "#f97316"
-                : a.severity === "MEDIUM"
-                  ? "#eab308"
-                  : "#22c55e",
-        }))
-        .filter((d) => d.value > 0),
-    [data?.alertsBySeverity],
-  );
 
   const topAlertTypes = useMemo(
     () => data?.alertsByType.slice(0, 5) ?? [],
@@ -643,55 +492,13 @@ function RiskReportsTab({ period }: { period: ReportPeriod }) {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <AdminCard className="space-y-4">
-          <h3 className="font-semibold text-admin-text-primary">
-            Alerts by Severity
-          </h3>
-          {severityData.length > 0 ? (
-            <div className="w-full overflow-x-auto flex justify-center">
-              <ResponsiveContainer width={250} height={250} minWidth={250}>
-                <PieChart>
-                  <Pie
-                    data={severityData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={isMobile ? 70 : 80}
-                    label={({ name, percent }) =>
-                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                    }
-                    labelLine={false}
-                  >
-                    {severityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgba(15,20,35,0.95)",
-                      border: "1px solid rgba(0,229,160,0.2)",
-                      borderRadius: "8px",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="py-8 text-center text-sm text-admin-text-muted">
-              No alert data
-            </p>
-          )}
-        </AdminCard>
-
-        <AdminCard className="space-y-4">
-          <h3 className="font-semibold text-admin-text-primary">
-            Top Alert Types
-          </h3>
-          {topAlertTypes.length > 0 ? (
-            <div className="space-y-2">
-              {topAlertTypes.map((alert) => (
+      <AdminCard className="space-y-4">
+        <h3 className="font-semibold text-admin-text-primary">
+          Top Alert Types
+        </h3>
+        {topAlertTypes.length > 0 ? (
+          <div className="space-y-2">
+            {topAlertTypes.map((alert) => (
                 <div
                   key={alert.alertType}
                   className="flex items-center justify-between rounded-lg bg-admin-surface/50 p-3 hover:bg-admin-surface/70 transition-colors"
@@ -711,7 +518,6 @@ function RiskReportsTab({ period }: { period: ReportPeriod }) {
             </p>
           )}
         </AdminCard>
-      </div>
 
       {recentAlerts.length > 0 && (
         <AdminCard className="space-y-4">
