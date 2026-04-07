@@ -233,8 +233,7 @@ export const defaultAdminSettings: AdminSettingsConfig = {
   },
   adminQuickSettings: {
     withdrawalSoundEnabled: true,
-    withdrawalSoundTone:
-      "/sounds/universfield-new-notification-010-352755.mp3",
+    withdrawalSoundTone: "/sounds/universfield-new-notification-010-352755.mp3",
     withdrawalSoundVolume: 80,
   },
   apiAndIntegrationsConfig: {
