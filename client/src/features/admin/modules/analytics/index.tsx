@@ -135,10 +135,7 @@ export default function Analytics() {
     [data?.breakdowns.sports],
   );
 
-  const trendChartData = useMemo(
-    () => data?.trend ?? [],
-    [data?.trend],
-  );
+  const trendChartData = useMemo(() => data?.trend ?? [], [data?.trend]);
 
   const topLeagues = useMemo(
     () => (data?.breakdowns.leagues ?? []).slice(0, 8),
@@ -158,7 +155,8 @@ export default function Analytics() {
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-admin-red mt-0.5 flex-shrink-0" />
             <p className="text-sm text-admin-red">
-              {(error as Error)?.message ?? "Unable to load analytics data. Please try again."}
+              {(error as Error)?.message ??
+                "Unable to load analytics data. Please try again."}
             </p>
           </div>
           <button
@@ -186,7 +184,9 @@ export default function Analytics() {
             </div>
             <select
               value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value as AnalyticsTimeframe)}
+              onChange={(e) =>
+                setTimeframe(e.target.value as AnalyticsTimeframe)
+              }
               className="w-full sm:w-auto rounded border border-admin-border bg-admin-surface px-3 py-2 text-sm font-medium text-admin-text-primary transition-colors hover:border-admin-accent focus:border-admin-accent focus:outline-none focus:ring-2 focus:ring-admin-accent/20"
             >
               {timeframeOptions.map((option) => (
@@ -200,23 +200,47 @@ export default function Analytics() {
           {/* Main Trend Chart */}
           <AdminCard className="overflow-hidden">
             <div className="mb-4 border-b border-admin-border pb-4">
-              <h3 className="text-sm font-semibold text-admin-text-primary">Financial Trend</h3>
-              <p className="text-xs text-admin-text-muted mt-1">Handle, payouts, and NGR over selected periods</p>
+              <h3 className="text-sm font-semibold text-admin-text-primary">
+                Financial Trend
+              </h3>
+              <p className="text-xs text-admin-text-muted mt-1">
+                Handle, payouts, and NGR over selected periods
+              </p>
             </div>
             <div className="w-full overflow-x-auto">
-              <ResponsiveContainer width="100%" height={getChartHeight(isMobile)} minWidth={300}>
+              <ResponsiveContainer
+                width="100%"
+                height={getChartHeight(isMobile)}
+                minWidth={300}
+              >
                 <AreaChart
                   data={trendChartData}
                   margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
                 >
                   <defs>
                     <linearGradient id="stakeFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00e5a0" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#00e5a0" stopOpacity={0.01} />
+                      <stop
+                        offset="5%"
+                        stopColor="#00e5a0"
+                        stopOpacity={0.25}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="#00e5a0"
+                        stopOpacity={0.01}
+                      />
                     </linearGradient>
                     <linearGradient id="payoutFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ffbe55" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#ffbe55" stopOpacity={0.01} />
+                      <stop
+                        offset="5%"
+                        stopColor="#ffbe55"
+                        stopOpacity={0.25}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="#ffbe55"
+                        stopOpacity={0.01}
+                      />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -228,7 +252,10 @@ export default function Analytics() {
                     stroke="rgba(255,255,255,0.45)"
                     fontSize={isMobile ? 10 : 11}
                   />
-                  <YAxis stroke="rgba(255,255,255,0.45)" fontSize={isMobile ? 10 : 11} />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.45)"
+                    fontSize={isMobile ? 10 : 11}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "rgba(20,24,40,0.98)",
@@ -344,19 +371,42 @@ export default function Analytics() {
                 subtitle="Stake and GGR by sport"
               />
               <div className="w-full overflow-x-auto">
-                <ResponsiveContainer width="100%" height={getChartHeight(isMobile)} minWidth={300}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={getChartHeight(isMobile)}
+                  minWidth={300}
+                >
                   <BarChart
                     data={sportsChartData}
-                    margin={{ top: 8, right: 12, left: 0, bottom: isMobile ? 20 : 4 }}
+                    margin={{
+                      top: 8,
+                      right: 12,
+                      left: 0,
+                      bottom: isMobile ? 20 : 4,
+                    }}
                   >
                     <defs>
-                      <linearGradient id="stakeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient
+                        id="stakeGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
                         <stop offset="0%" stopColor="#00e5a0" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#00e5a0" stopOpacity={0.65} />
+                        <stop
+                          offset="100%"
+                          stopColor="#00e5a0"
+                          stopOpacity={0.65}
+                        />
                       </linearGradient>
                       <linearGradient id="ggrGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#4aa3ff" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#4aa3ff" stopOpacity={0.65} />
+                        <stop
+                          offset="100%"
+                          stopColor="#4aa3ff"
+                          stopOpacity={0.65}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -413,7 +463,11 @@ export default function Analytics() {
                 subtitle="Won, lost, void, and pending distribution"
               />
               <div className="w-full flex justify-center">
-                <ResponsiveContainer width={isMobile ? 250 : 300} height={getChartHeight(isMobile)} minWidth={250}>
+                <ResponsiveContainer
+                  width={isMobile ? 250 : 300}
+                  height={getChartHeight(isMobile)}
+                  minWidth={250}
+                >
                   <PieChart>
                     <Pie
                       data={data?.breakdowns.outcomes ?? []}
@@ -460,15 +514,33 @@ export default function Analytics() {
                 subtitle="Handle split across stake bands"
               />
               <div className="w-full overflow-x-auto">
-                <ResponsiveContainer width="100%" height={getChartHeight(isMobile)} minWidth={300}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={getChartHeight(isMobile)}
+                  minWidth={300}
+                >
                   <BarChart
                     data={data?.breakdowns.stakeDistribution ?? []}
                     margin={{ top: 8, right: 12, left: 0, bottom: 4 }}
                   >
                     <defs>
-                      <linearGradient id="handleGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ff9800" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#ff6b6b" stopOpacity={0.5} />
+                      <linearGradient
+                        id="handleGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#ff9800"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#ff6b6b"
+                          stopOpacity={0.5}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -514,7 +586,11 @@ export default function Analytics() {
                 subtitle="Win rate and hold by quoted odds"
               />
               <div className="w-full overflow-x-auto">
-                <ResponsiveContainer width="100%" height={getChartHeight(isMobile)} minWidth={300}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={getChartHeight(isMobile)}
+                  minWidth={300}
+                >
                   <LineChart
                     data={data?.breakdowns.oddsPerformance ?? []}
                     margin={{ top: 8, right: 12, left: 0, bottom: 4 }}
@@ -592,29 +668,55 @@ export default function Analytics() {
                     <thead>
                       <tr className="border-b border-admin-border">
                         <th className={adminTableHeadCellClassName}>League</th>
-                        <th className={`${adminTableHeadCellClassName} hidden sm:table-cell`}>Sport</th>
+                        <th
+                          className={`${adminTableHeadCellClassName} hidden sm:table-cell`}
+                        >
+                          Sport
+                        </th>
                         <th className={adminTableHeadCellClassName}>Handle</th>
-                        <th className={`${adminTableHeadCellClassName} hidden md:table-cell`}>GGR</th>
-                        <th className={`${adminTableHeadCellClassName} hidden lg:table-cell text-right`}>Share%</th>
+                        <th
+                          className={`${adminTableHeadCellClassName} hidden md:table-cell`}
+                        >
+                          GGR
+                        </th>
+                        <th
+                          className={`${adminTableHeadCellClassName} hidden lg:table-cell text-right`}
+                        >
+                          Share%
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {topLeagues.map((league, idx) => (
                         <tr
-                          className={idx % 2 === 0 ? "border-b border-admin-border/50 even:bg-admin-surface/50" : "border-b border-admin-border/50"}
+                          className={
+                            idx % 2 === 0
+                              ? "border-b border-admin-border/50 even:bg-admin-surface/50"
+                              : "border-b border-admin-border/50"
+                          }
                           key={`${league.sport}-${league.league}`}
                         >
-                          <td className={`${adminTableCellClassName} font-medium`}>{league.league}</td>
-                          <td className={`${adminTableCellClassName} hidden sm:table-cell text-xs`}>
+                          <td
+                            className={`${adminTableCellClassName} font-medium`}
+                          >
+                            {league.league}
+                          </td>
+                          <td
+                            className={`${adminTableCellClassName} hidden sm:table-cell text-xs`}
+                          >
                             {league.sport}
                           </td>
                           <td className={adminTableCellClassName}>
                             {formatCurrency(league.stake)}
                           </td>
-                          <td className={`${adminTableCellClassName} hidden md:table-cell`}>
+                          <td
+                            className={`${adminTableCellClassName} hidden md:table-cell`}
+                          >
                             {formatCurrency(league.ggr)}
                           </td>
-                          <td className={`${adminTableCellClassName} hidden lg:table-cell text-right`}>
+                          <td
+                            className={`${adminTableCellClassName} hidden lg:table-cell text-right`}
+                          >
                             {formatPercent(league.shareOfHandle)}
                           </td>
                         </tr>
