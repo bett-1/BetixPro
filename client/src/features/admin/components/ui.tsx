@@ -109,7 +109,7 @@ interface AdminButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const adminTableClassName =
-  "w-full table-fixed border-collapse text-[10px] sm:text-xs lg:text-sm";
+  "w-full border-collapse text-[10px] sm:text-xs lg:text-sm";
 export const adminTableHeadCellClassName =
   "border-b border-admin-border px-2 py-2 text-left text-[9px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted break-words sm:px-3 sm:py-2.5 sm:text-[10px] lg:px-4 lg:py-3 lg:text-[11px]";
 export const adminTableCellClassName =
@@ -355,7 +355,7 @@ export function InlinePill({
 
 export function TableShell({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full overflow-x-hidden rounded-lg border border-admin-border/70 bg-admin-surface/20 sm:rounded-xl">
+    <div className="w-full overflow-x-auto rounded-lg border border-admin-border/70 bg-admin-surface/20 sm:rounded-xl">
       {children}
     </div>
   );

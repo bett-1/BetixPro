@@ -346,14 +346,7 @@ export default function Dashboard() {
                       "Time",
                       "Actions",
                     ].map((heading) => (
-                      <th
-                        className={`${adminTableHeadCellClassName} ${
-                          heading === "Type" || heading === "Time"
-                            ? "hidden sm:table-cell"
-                            : ""
-                        }`}
-                        key={heading}
-                      >
+                      <th className={adminTableHeadCellClassName} key={heading}>
                         {heading}
                       </th>
                     ))}
@@ -403,9 +396,7 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </td>
-                        <td
-                          className={`${adminTableCellClassName} hidden sm:table-cell`}
-                        >
+                        <td className={adminTableCellClassName}>
                           <InlinePill
                             label={transaction.type}
                             tone={
@@ -427,7 +418,7 @@ export default function Dashboard() {
                           <StatusBadge status={transaction.status} />
                         </td>
                         <td
-                          className={`${adminTableCellClassName} hidden sm:table-cell text-xs text-admin-text-muted`}
+                          className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
                         >
                           {new Date(transaction.createdAt).toLocaleString(
                             "en-KE",
