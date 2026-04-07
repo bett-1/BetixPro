@@ -963,45 +963,45 @@ export default function Odds() {
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="w-full overflow-x-auto pb-1 [scrollbar-width:thin]">
             <div className="inline-flex min-w-max items-center gap-2">
-            <AdminButton
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={!pagination.hasPrev}
-            >
-              ← Prev
-            </AdminButton>
-            {pages.map((item, index) =>
-              item === "..." ? (
-                <span
-                  key={`ellipsis-${index}`}
-                  className="px-1 text-xs text-admin-text-muted"
-                >
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  onClick={() => goToPage(Number(item))}
-                  type="button"
-                  className={`h-8 min-w-8 rounded px-2 text-xs font-semibold ${
-                    item === currentPage
-                      ? "bg-yellow-300 text-black"
-                      : "border border-admin-border text-admin-text-secondary"
-                  }`}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <AdminButton
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={!pagination.hasNext}
-            >
-              Next →
-            </AdminButton>
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={!pagination.hasPrev}
+              >
+                ← Prev
+              </AdminButton>
+              {pages.map((item, index) =>
+                item === "..." ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-1 text-xs text-admin-text-muted"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => goToPage(Number(item))}
+                    type="button"
+                    className={`h-8 min-w-8 rounded px-2 text-xs font-semibold ${
+                      item === currentPage
+                        ? "bg-yellow-300 text-black"
+                        : "border border-admin-border text-admin-text-secondary"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ),
+              )}
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={!pagination.hasNext}
+              >
+                Next →
+              </AdminButton>
             </div>
           </div>
 
