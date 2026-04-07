@@ -1,7 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
-  LayoutDashboard,
   CreditCard,
   LogOut,
   Send,
