@@ -1,31 +1,10 @@
-import { useState, useMemo } from "react";
-import { Download, Loader, MoreHorizontal } from "lucide-react";
-import { toast } from "sonner";
-import {
-  useAdminPayments,
-  useAdminPaymentStats,
-  type Payment,
-} from "../../hooks/useAdminPayments";
-import {
-  AdminButton,
-  AdminCard,
-  AdminSectionHeader,
-  InlinePill,
-  StatusBadge,
-  TableShell,
-  adminCompactActionsClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
-  truncateEmailForTable,
-} from "../../components/ui";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -33,8 +12,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Download, Loader, MoreHorizontal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  AdminButton,
+  AdminCard,
+  adminCompactActionsClassName,
+  AdminSectionHeader,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
+  InlinePill,
+  StatusBadge,
+  TableShell,
+  truncateEmailForTable,
+} from "../../components/ui";
+import {
+  useAdminPayments,
+  useAdminPaymentStats,
+  type Payment,
+} from "../../hooks/useAdminPayments";
 
 export default function Transactions() {
   const [selectedTxn, setSelectedTxn] = useState<Payment | null>(null);
