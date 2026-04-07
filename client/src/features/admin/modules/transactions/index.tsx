@@ -18,6 +18,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -264,8 +265,11 @@ export default function Transactions() {
                     </td>
                     <td className={adminTableCellClassName}>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-admin-text-primary">
-                          {transaction.userEmail}
+                        <span
+                          className="max-w-[120px] truncate text-sm font-semibold text-admin-text-primary"
+                          title={transaction.userEmail}
+                        >
+                          {truncateEmailForTable(transaction.userEmail)}
                         </span>
                         <span className="text-xs text-admin-text-muted">
                           {transaction.userPhone}

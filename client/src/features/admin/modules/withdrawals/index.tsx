@@ -20,6 +20,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -360,7 +361,12 @@ export default function WithdrawalsAdmin() {
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
                       <div>
-                        <p className="text-xs">{withdrawal.userEmail}</p>
+                        <p
+                          className="max-w-[110px] truncate text-xs"
+                          title={withdrawal.userEmail}
+                        >
+                          {truncateEmailForTable(withdrawal.userEmail)}
+                        </p>
                         <p className="text-[10px] text-admin-text-muted">
                           {withdrawal.userId.slice(0, 8)}...
                         </p>

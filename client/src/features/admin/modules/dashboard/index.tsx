@@ -39,6 +39,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 
 type DashboardMetric = {
@@ -89,6 +90,7 @@ export default function Dashboard() {
   const [selectedTransaction, setSelectedTransaction] =
     useState<DashboardTransaction | null>(null);
   const [viewDetailsDialogOpen, setViewDetailsDialogOpen] = useState(false);
+  const [showAllStatsMobile, setShowAllStatsMobile] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-dashboard-summary"],
@@ -180,18 +182,22 @@ export default function Dashboard() {
           </Alert>
         ) : null}
 
-        {/* Stat Cards - Compact */}
+        {/* Stat Cards */}
         <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
           {isLoading && metrics.length === 0
             ? Array.from({ length: 8 }).map((_, index) => (
-                <AdminCard key={index} className="animate-pulse">
+                <AdminCard
+                  key={index}
+                  className={`animate-pulse ${index > 3 ? "hidden sm:block" : ""}`}
+                >
                   <div className="h-4 w-20 rounded bg-admin-surface" />
                   <div className="mt-2 h-6 w-24 rounded bg-admin-surface" />
                   <div className="mt-1 h-2 w-16 rounded bg-admin-surface" />
                 </AdminCard>
               ))
-            : metrics.map((metric) => {
-                // Assign colors based on tone
+            : metrics.map((metric, index) => {
+                const hideOnMobile = !showAllStatsMobile && index > 3;
+
                 const colorMap: Record<
                   string,
                   { bg: string; text: string; icon: string; border: string }
@@ -227,7 +233,7 @@ export default function Dashboard() {
                 return (
                   <AdminCard
                     key={metric.label}
-                    className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3`}
+                    className={`border ${colors.border} p-2.5 transition hover:border-opacity-50 sm:p-3 ${hideOnMobile ? "hidden sm:block" : ""}`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -257,6 +263,21 @@ export default function Dashboard() {
                 );
               })}
         </div>
+
+        {metrics.length > 4 ? (
+          <div className="sm:hidden">
+            <AdminButton
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowAllStatsMobile((previous) => !previous)}
+            >
+              {showAllStatsMobile
+                ? "Show fewer stats"
+                : `View ${metrics.length - 4} more stats`}
+            </AdminButton>
+          </div>
+        ) : null}
 
         {/* Charts */}
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-4">
@@ -325,7 +346,14 @@ export default function Dashboard() {
                       "Time",
                       "Actions",
                     ].map((heading) => (
-                      <th className={adminTableHeadCellClassName} key={heading}>
+                      <th
+                        className={`${adminTableHeadCellClassName} ${
+                          (heading === "Type" || heading === "Time")
+                            ? "hidden sm:table-cell"
+                            : ""
+                        }`}
+                        key={heading}
+                      >
                         {heading}
                       </th>
                     ))}
@@ -355,7 +383,8 @@ export default function Dashboard() {
                         key={transaction.id}
                       >
                         <td
-                          className={`${adminTableCellClassName} text-xs font-semibold text-admin-blue`}
+                          className={`${adminTableCellClassName} max-w-[110px] truncate text-xs font-semibold text-admin-blue`}
+                          title={transaction.mpesaCode ?? transaction.reference}
                         >
                           {transaction.mpesaCode ?? transaction.reference}
                         </td>
@@ -363,13 +392,20 @@ export default function Dashboard() {
                           className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                         >
                           <div>
-                            <p className="text-xs">{transaction.userEmail}</p>
+                            <p
+                              className="max-w-[92px] truncate text-xs"
+                              title={transaction.userEmail}
+                            >
+                              {truncateEmailForTable(transaction.userEmail)}
+                            </p>
                             <p className="text-[10px] text-admin-text-muted">
                               {transaction.userPhone}
                             </p>
                           </div>
                         </td>
-                        <td className={adminTableCellClassName}>
+                        <td
+                          className={`${adminTableCellClassName} hidden sm:table-cell`}
+                        >
                           <InlinePill
                             label={transaction.type}
                             tone={
@@ -391,7 +427,7 @@ export default function Dashboard() {
                           <StatusBadge status={transaction.status} />
                         </td>
                         <td
-                          className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
+                          className={`${adminTableCellClassName} hidden sm:table-cell text-xs text-admin-text-muted`}
                         >
                           {new Date(transaction.createdAt).toLocaleString(
                             "en-KE",
@@ -447,7 +483,7 @@ export default function Dashboard() {
           </AdminCard>
 
           {/* Quick Links */}
-          <AdminCard>
+          <AdminCard className="overflow-hidden">
             <div className="space-y-2.5">
               <h3 className="text-sm font-semibold text-admin-text">
                 Quick Links
@@ -455,7 +491,7 @@ export default function Dashboard() {
               <div className="space-y-2">
                 <Link
                   to="/admin/withdrawals"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-gold hover:bg-admin-surface/60"
+                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-gold hover:bg-admin-surface/60 min-w-0"
                 >
                   <div className="rounded bg-admin-gold/10 p-1 text-admin-gold group-hover:bg-admin-gold/20 flex-shrink-0">
                     <CreditCard size={12} />
@@ -470,7 +506,7 @@ export default function Dashboard() {
 
                 <Link
                   to="/admin/users"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-accent hover:bg-admin-surface/60"
+                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-accent hover:bg-admin-surface/60 min-w-0"
                 >
                   <div className="rounded bg-admin-accent/10 p-1 text-admin-accent group-hover:bg-admin-accent/20 flex-shrink-0">
                     <Users size={12} />
@@ -485,7 +521,7 @@ export default function Dashboard() {
 
                 <Link
                   to="/admin/analytics"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-blue hover:bg-admin-surface/60"
+                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-blue hover:bg-admin-surface/60 min-w-0"
                 >
                   <div className="rounded bg-admin-blue/10 p-1 text-admin-blue group-hover:bg-admin-blue/20 flex-shrink-0">
                     <TrendingUp size={12} />
@@ -502,7 +538,7 @@ export default function Dashboard() {
 
                 <Link
                   to="/admin/settings"
-                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-text-secondary hover:bg-admin-surface/60"
+                  className="group flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface/40 p-2 text-xs transition hover:border-admin-text-secondary hover:bg-admin-surface/60 min-w-0"
                 >
                   <div className="rounded bg-admin-text-secondary/10 p-1 text-admin-text-secondary group-hover:bg-admin-text-secondary/20 flex-shrink-0">
                     <Sliders size={12} />

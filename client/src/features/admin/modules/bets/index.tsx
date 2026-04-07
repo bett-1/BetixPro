@@ -12,6 +12,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -80,8 +81,12 @@ function toBadgeStatus(status: ApiBet["status"], stake: number) {
   }
 }
 
-function getUserLabel(bet: ApiBet) {
-  return bet.user.email || bet.user.phone;
+function getUserLabel(bet: ApiBet, compact = false) {
+  if (!bet.user.email) {
+    return bet.user.phone;
+  }
+
+  return compact ? truncateEmailForTable(bet.user.email) : bet.user.email;
 }
 
 // Helper to format dates cleanly (e.g., "Apr 6, 10:22 PM")
@@ -354,7 +359,7 @@ export default function Bets() {
                           className={`${adminTableCellClassName} font-semibold text-admin-text-primary max-w-[150px] truncate`}
                           title={getUserLabel(bet)}
                         >
-                          {getUserLabel(bet)}
+                          {getUserLabel(bet, true)}
                         </td>
                         <td
                           className={`${adminTableCellClassName} max-w-[200px]`}

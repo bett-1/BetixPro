@@ -10,6 +10,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   Dialog,
@@ -328,7 +329,9 @@ export default function Users() {
                     <td
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
-                      {user.email}
+                      <span className="max-w-[120px] truncate block" title={user.email}>
+                        {truncateEmailForTable(user.email)}
+                      </span>
                     </td>
                     <td className={adminTableCellClassName}>{user.phone}</td>
                     <td className={adminTableCellClassName}>

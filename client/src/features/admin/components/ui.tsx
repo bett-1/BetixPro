@@ -109,13 +109,21 @@ interface AdminButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const adminTableClassName =
-  "min-w-[360px] w-full border-collapse text-xs sm:min-w-[520px] sm:text-sm lg:min-w-[760px]";
+  "w-full table-fixed border-collapse text-[10px] sm:text-xs lg:text-sm";
 export const adminTableHeadCellClassName =
-  "border-b border-admin-border px-2.5 py-2 text-left text-[9px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:px-3 sm:py-2.5 sm:text-[10px] lg:px-4 lg:py-3.5 lg:text-[11px]";
+  "border-b border-admin-border px-2 py-2 text-left text-[9px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted break-words sm:px-3 sm:py-2.5 sm:text-[10px] lg:px-4 lg:py-3 lg:text-[11px]";
 export const adminTableCellClassName =
-  "border-b border-admin-border px-2.5 py-2.5 align-top text-[11px] text-admin-text-secondary sm:px-3 sm:py-3 sm:text-xs lg:px-4 lg:py-4 lg:text-sm";
+  "border-b border-admin-border px-2 py-2.5 align-top text-[10px] text-admin-text-secondary break-words sm:px-3 sm:py-3 sm:text-xs lg:px-4 lg:py-3.5 lg:text-sm";
 export const adminCompactActionsClassName = "flex flex-wrap items-center gap-1";
 export const adminFilterRowClassName = "flex flex-wrap gap-3";
+
+export function truncateEmailForTable(email: string, visibleChars = 8) {
+  if (!email) return "-";
+
+  return email.length <= visibleChars
+    ? email
+    : `${email.slice(0, visibleChars)}...`;
+}
 
 export function adminToneTextClass(tone: AdminTone) {
   return toneTextClasses[tone];
@@ -347,7 +355,7 @@ export function InlinePill({
 
 export function TableShell({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-admin-border/70 bg-admin-surface/20 sm:rounded-xl">
+    <div className="w-full overflow-x-hidden rounded-lg border border-admin-border/70 bg-admin-surface/20 sm:rounded-xl">
       {children}
     </div>
   );

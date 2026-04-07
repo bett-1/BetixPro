@@ -14,6 +14,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -330,7 +331,9 @@ function UsersReportsTab() {
                   key={bettor.id}
                   className="border-b border-admin-border/50 hover:bg-admin-surface/50"
                 >
-                  <td className={adminTableCellClassName}>{bettor.email}</td>
+                  <td className={adminTableCellClassName} title={bettor.email}>
+                    {truncateEmailForTable(bettor.email)}
+                  </td>
                   <td className={adminTableCellClassName}>
                     {bettor.name || "-"}
                   </td>
@@ -498,8 +501,13 @@ function RiskReportsTab() {
                         {alert.severity}
                       </span>
                     </td>
-                    <td className={adminTableCellClassName}>
-                      {alert.user?.email || "System"}
+                    <td
+                      className={adminTableCellClassName}
+                      title={alert.user?.email || "System"}
+                    >
+                      {alert.user?.email
+                        ? truncateEmailForTable(alert.user.email)
+                        : "System"}
                     </td>
                     <td className={adminTableCellClassName}>
                       <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-400">

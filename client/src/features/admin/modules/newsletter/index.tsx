@@ -12,6 +12,7 @@ import {
   adminTableCellClassName,
   adminTableClassName,
   adminTableHeadCellClassName,
+  truncateEmailForTable,
 } from "../../components/ui";
 import {
   DropdownMenu,
@@ -167,8 +168,11 @@ export default function Newsletter() {
                       <td className={adminTableCellClassName}>
                         <div className="flex items-center gap-2">
                           <Mail size={16} className="text-admin-text-muted" />
-                          <span className="truncate font-medium text-admin-text-primary">
-                            {subscriber.email}
+                          <span
+                            className="max-w-[130px] truncate font-medium text-admin-text-primary"
+                            title={subscriber.email}
+                          >
+                            {truncateEmailForTable(subscriber.email)}
                           </span>
                         </div>
                       </td>
