@@ -352,9 +352,7 @@ export default function Dashboard() {
 
             <TableShell className="mt-2 w-full border-t border-admin-border/40">
               <div className="w-full overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
-                <table
-                  className={`${adminTableClassName} w-full min-w-175`}
-                >
+                <table className={`${adminTableClassName} w-full min-w-175`}>
                   <thead>
                     <tr>
                       {[
@@ -401,108 +399,124 @@ export default function Dashboard() {
                         )
                         .map((transaction, index) => (
                           <tr
-                            className="even:bg-admin-surface/45 h-10"
+                            className="even:bg-admin-surface/45 h-8"
                             key={transaction.id}
                           >
-                          <td
-                            className={`${adminTableCellClassName} text-xs font-semibold text-admin-text-muted w-10 py-1.5 sm:py-2`}
-                          >
-                            {/* Render row index instead of reference */}
-                            {index + 1}
-                          </td>
-                          <td
-                            className={`${adminTableCellClassName} font-semibold text-admin-text-primary max-w-35 py-1.5 sm:py-2`}
-                          >
-                            <div className="w-full">
-                              <p
-                                className="text-xs truncate w-full"
-                                title={transaction.userEmail}
-                              >
-                                {transaction.userEmail}
-                              </p>
-                              <p
-                                className="text-[10px] text-admin-text-muted truncate w-full"
-                                title={transaction.userPhone}
-                              >
-                                {transaction.userPhone}
-                              </p>
-                            </div>
-                          </td>
-                          <td className={`${adminTableCellClassName} py-1.5 sm:py-2`}>
-                            <InlinePill
-                              label={transaction.type}
-                              tone={
-                                transaction.type === "deposit"
-                                  ? "accent"
-                                  : "gold"
-                              }
-                            />
-                          </td>
-                          <td
-                            className={`${adminTableCellClassName} font-semibold text-admin-text-primary py-1.5 sm:py-2`}
-                          >
-                            {formatCurrency(transaction.amount)}
-                            {transaction.type === "withdrawal" ? (
-                              <span className="ml-2 text-[10px] text-admin-text-muted block sm:inline">
-                                Fee {formatCurrency(transaction.fee)}
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className={`${adminTableCellClassName} py-1.5 sm:py-2`}>
-                            <StatusBadge status={transaction.status} />
-                          </td>
-                          <td
-                            className={`${adminTableCellClassName} whitespace-nowrap text-xs text-admin-text-muted py-1.5 sm:py-2`}
-                          >
-                            {new Date(transaction.createdAt).toLocaleString(
-                              "en-KE",
-                              {
+                            <td
+                              className={`${adminTableCellClassName} text-xs font-semibold text-admin-text-muted w-8 px-1.5 py-1 align-middle`}
+                            >
+                              {index + 1}
+                            </td>
+                            <td
+                              className={`${adminTableCellClassName} font-semibold text-admin-text-primary max-w-35 px-2 py-1 align-middle`}
+                              title={`${transaction.userEmail} • ${transaction.userPhone}`}
+                            >
+                              <div className="flex items-center gap-1 truncate">
+                                <span className="truncate text-xs">
+                                  {transaction.userEmail}
+                                </span>
+                                <span className="hidden sm:inline text-[10px] text-admin-text-muted shrink-0">
+                                  •
+                                </span>
+                                <span className="hidden sm:inline text-[10px] text-admin-text-muted truncate">
+                                  {transaction.userPhone}
+                                </span>
+                              </div>
+                            </td>
+                            <td
+                              className={`${adminTableCellClassName} px-1.5 py-1 align-middle`}
+                            >
+                              <InlinePill
+                                label={transaction.type}
+                                tone={
+                                  transaction.type === "deposit"
+                                    ? "accent"
+                                    : "gold"
+                                }
+                              />
+                            </td>
+                            <td
+                              className={`${adminTableCellClassName} font-semibold text-admin-text-primary px-2 py-1 align-middle whitespace-nowrap`}
+                              title={`${formatCurrency(transaction.amount)}${transaction.type === "withdrawal" ? ` • Fee ${formatCurrency(transaction.fee)}` : ""}`}
+                            >
+                              {formatCurrency(transaction.amount)}
+                              {transaction.type === "withdrawal" ? (
+                                <span className="ml-1 text-[10px] text-admin-text-muted">
+                                  Fee {formatCurrency(transaction.fee)}
+                                </span>
+                              ) : null}
+                            </td>
+                            <td
+                              className={`${adminTableCellClassName} px-1.5 py-1 align-middle`}
+                            >
+                              <StatusBadge status={transaction.status} />
+                            </td>
+                            <td
+                              className={`${adminTableCellClassName} whitespace-nowrap text-xs text-admin-text-muted px-2 py-1 align-middle`}
+                              title={new Date(
+                                transaction.createdAt,
+                              ).toLocaleString("en-KE", {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              },
-                            )}
-                          </td>
-                          <td
-                            className={`${adminTableCellClassName} whitespace-nowrap py-1.5 sm:py-2`}
-                          >
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <AdminButton
-                                  size="sm"
-                                  variant="ghost"
-                                  aria-label="Row actions"
+                              })}
+                            >
+                              {new Date(transaction.createdAt).toLocaleString(
+                                "en-KE",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </td>
+                            <td
+                              className={`${adminTableCellClassName} whitespace-nowrap px-1 py-1 align-middle`}
+                            >
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <AdminButton
+                                    size="sm"
+                                    variant="ghost"
+                                    aria-label="Row actions"
+                                  >
+                                    <MoreHorizontal size={14} />
+                                  </AdminButton>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-56"
                                 >
-                                  <MoreHorizontal size={14} />
-                                </AdminButton>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuItem
-                                  onClick={() => handleViewDetails(transaction)}
-                                >
-                                  View full details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleOpenUser(transaction)}
-                                >
-                                  Open user profile
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleReviewTransaction(transaction)
-                                  }
-                                >
-                                  {transaction.type === "withdrawal"
-                                    ? "Review & manage payout"
-                                    : "Review & manage deposit"}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      ))
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleViewDetails(transaction)
+                                    }
+                                  >
+                                    View full details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleOpenUser(transaction)}
+                                  >
+                                    Open user profile
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleReviewTransaction(transaction)
+                                    }
+                                  >
+                                    {transaction.type === "withdrawal"
+                                      ? "Review & manage payout"
+                                      : "Review & manage deposit"}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))
                     )}
                   </tbody>
                 </table>
@@ -512,22 +526,36 @@ export default function Dashboard() {
               {recentTransactions.length > itemsPerPage && (
                 <div className="flex items-center justify-between border-t border-admin-border/40 px-4 py-2.5">
                   <div className="text-xs text-admin-text-muted">
-                    Showing {Math.min((currentPage - 1) * itemsPerPage + 1, recentTransactions.length)} to{" "}
-                    {Math.min(currentPage * itemsPerPage, recentTransactions.length)} of{" "}
-                    {recentTransactions.length} transactions
+                    Showing{" "}
+                    {Math.min(
+                      (currentPage - 1) * itemsPerPage + 1,
+                      recentTransactions.length,
+                    )}{" "}
+                    to{" "}
+                    {Math.min(
+                      currentPage * itemsPerPage,
+                      recentTransactions.length,
+                    )}{" "}
+                    of {recentTransactions.length} transactions
                   </div>
                   <div className="flex gap-2">
                     <AdminButton
                       variant="ghost"
                       size="sm"
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft size={16} />
                     </AdminButton>
                     <div className="flex items-center gap-1">
                       {Array.from(
-                        { length: Math.ceil(recentTransactions.length / itemsPerPage) },
+                        {
+                          length: Math.ceil(
+                            recentTransactions.length / itemsPerPage,
+                          ),
+                        },
                         (_, i) => i + 1,
                       ).map((page) => (
                         <button
