@@ -192,7 +192,7 @@ export default function Contacts() {
       />
 
       {/* Summary Stats - Constrained width and smaller gap to make cards smaller */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 max-w-5xl">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 max-w-5xl">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}

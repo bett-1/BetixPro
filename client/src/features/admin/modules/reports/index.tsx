@@ -10,6 +10,10 @@ import {
   AdminCard,
   AdminSectionHeader,
   SummaryCard,
+  TableShell,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
 } from "../../components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -90,7 +94,7 @@ function FinancialReportsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -187,7 +191,7 @@ function BettingReportsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -296,7 +300,7 @@ function UsersReportsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -309,17 +313,17 @@ function UsersReportsTab() {
 
       <AdminCard className="space-y-4">
         <h3 className="font-semibold text-admin-text-primary">Top Bettors</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <TableShell>
+          <table className={adminTableClassName}>
             <thead>
               <tr className="border-b border-admin-border">
-                <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                <th className={adminTableHeadCellClassName}>
                   Email
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                <th className={adminTableHeadCellClassName}>
                   Name
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-admin-text-primary">
+                <th className={`${adminTableHeadCellClassName} text-right`}>
                   Bets Placed
                 </th>
               </tr>
@@ -330,20 +334,22 @@ function UsersReportsTab() {
                   key={bettor.id}
                   className="border-b border-admin-border/50 hover:bg-admin-surface/50"
                 >
-                  <td className="px-4 py-3 text-admin-text-secondary">
+                  <td className={adminTableCellClassName}>
                     {bettor.email}
                   </td>
-                  <td className="px-4 py-3 text-admin-text-secondary">
+                  <td className={adminTableCellClassName}>
                     {bettor.name || "-"}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-admin-accent">
+                  <td
+                    className={`${adminTableCellClassName} text-right font-semibold text-admin-accent`}
+                  >
                     {bettor.betCount}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </TableShell>
       </AdminCard>
     </div>
   );
@@ -398,7 +404,7 @@ function RiskReportsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         {stats.map((stat) => (
           <SummaryCard
             key={stat.label}
@@ -467,23 +473,23 @@ function RiskReportsTab() {
           <h3 className="font-semibold text-admin-text-primary">
             Recent High-Risk Alerts
           </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <TableShell>
+            <table className={adminTableClassName}>
               <thead>
                 <tr className="border-b border-admin-border">
-                  <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                  <th className={adminTableHeadCellClassName}>
                     Type
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                  <th className={adminTableHeadCellClassName}>
                     Severity
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                  <th className={adminTableHeadCellClassName}>
                     User
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                  <th className={adminTableHeadCellClassName}>
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-admin-text-primary">
+                  <th className={adminTableHeadCellClassName}>
                     Date
                   </th>
                 </tr>
@@ -494,10 +500,10 @@ function RiskReportsTab() {
                     key={alert.id}
                     className="border-b border-admin-border/50 hover:bg-admin-surface/50"
                   >
-                    <td className="px-4 py-3 text-admin-text-secondary">
+                    <td className={adminTableCellClassName}>
                       {alert.alertType.replace(/_/g, " ")}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={adminTableCellClassName}>
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-semibold ${
                           alert.severity === "CRITICAL"
@@ -508,22 +514,24 @@ function RiskReportsTab() {
                         {alert.severity}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-admin-text-secondary">
+                    <td className={adminTableCellClassName}>
                       {alert.user?.email || "System"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={adminTableCellClassName}>
                       <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-400">
                         {alert.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-admin-text-muted">
+                    <td
+                      className={`${adminTableCellClassName} text-xs text-admin-text-muted`}
+                    >
                       {new Date(alert.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableShell>
         </AdminCard>
       )}
     </div>

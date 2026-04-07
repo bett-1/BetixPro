@@ -865,7 +865,7 @@ export default function Events() {
         </AdminCard>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
           {
             label: "Live",

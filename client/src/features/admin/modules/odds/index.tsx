@@ -9,6 +9,10 @@ import {
   AdminCard,
   AdminSectionHeader,
   StatusBadge,
+  TableShell,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
 } from "../../components/ui";
 
 type OddsFilter = "configured" | "configured-with-odds" | "all-with-odds";
@@ -504,7 +508,7 @@ export default function Odds() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <button className="text-left" type="button" onClick={() => setFilter("configured")}>
           <AdminCard
             className={`p-4 transition ${
@@ -761,8 +765,8 @@ export default function Odds() {
                       ) : !oddsDetails ? (
                         <p className="text-sm text-admin-text-muted">No odds data available.</p>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-[760px] w-full border-collapse">
+                        <TableShell>
+                          <table className={adminTableClassName}>
                             <thead>
                               <tr>
                                 {[
@@ -774,7 +778,7 @@ export default function Odds() {
                                 ].map((heading) => (
                                   <th
                                     key={heading}
-                                    className="border-b border-admin-border px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted"
+                                    className={adminTableHeadCellClassName}
                                   >
                                     {heading}
                                   </th>
@@ -785,16 +789,18 @@ export default function Odds() {
                               {oddsDetails.markets.flatMap((market) =>
                                 market.odds.map((row, index) => (
                                   <tr key={`${market.marketType}-${row.bookmakerId}-${row.selection}-${index}`}>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-primary">
+                                    <td
+                                      className={`${adminTableCellClassName} text-admin-text-primary`}
+                                    >
                                       {row.bookmakerName}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {market.marketType}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {row.selection}
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm">
+                                    <td className={adminTableCellClassName}>
                                       <span
                                         className={
                                           row.isBest
@@ -805,7 +811,7 @@ export default function Odds() {
                                         {row.odds.toFixed(2)}
                                       </span>
                                     </td>
-                                    <td className="border-b border-admin-border px-3 py-2.5 text-sm text-admin-text-secondary">
+                                    <td className={adminTableCellClassName}>
                                       {new Date(row.updatedAt).toLocaleString()}
                                     </td>
                                   </tr>
@@ -813,7 +819,7 @@ export default function Odds() {
                               )}
                             </tbody>
                           </table>
-                        </div>
+                        </TableShell>
                       )}
                     </div>
                   ) : null}
