@@ -16,11 +16,32 @@ function getRequiredEnv(
   return value;
 }
 
+function getOptionalBooleanEnv(name: "EMAIL_SECURE") {
+  const value = process.env[name];
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1") {
+    return true;
+  }
+
+  if (normalized === "false" || normalized === "0") {
+    return false;
+  }
+
+  return undefined;
+}
+
 function getTransporter() {
+  const port = Number(getRequiredEnv("EMAIL_PORT"));
+  const secure = getOptionalBooleanEnv("EMAIL_SECURE") ?? port === 465;
+
   return nodemailer.createTransport({
     host: getRequiredEnv("EMAIL_HOST"),
-    port: Number(getRequiredEnv("EMAIL_PORT")),
-    secure: false,
+    port,
+    secure,
     auth: {
       user: getRequiredEnv("EMAIL_USER"),
       pass: getRequiredEnv("EMAIL_PASS"),

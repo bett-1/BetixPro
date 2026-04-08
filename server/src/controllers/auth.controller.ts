@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { randomBytes, randomInt } from "node:crypto";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import {
@@ -110,6 +111,63 @@ async function isAdminTwoFactorRequired() {
   });
 
   return settings?.adminTwoFactorRequired ?? true;
+}
+
+function getAdminMfaFailureResponse(error: unknown) {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2021"
+  ) {
+    return {
+      status: 503,
+      message:
+        "Admin login verification is temporarily unavailable. Please contact support.",
+    };
+  }
+
+  if (error instanceof Error) {
+    const maybeMailError = error as Error & {
+      code?: string;
+      responseCode?: number;
+    };
+
+    if (
+      maybeMailError.code === "EAUTH" ||
+      maybeMailError.responseCode === 535
+    ) {
+      return {
+        status: 503,
+        message:
+          "Admin login verification is temporarily unavailable. Please contact support.",
+      };
+    }
+
+    if (
+      error.message.includes("EMAIL_HOST is required") ||
+      error.message.includes("EMAIL_PORT is required") ||
+      error.message.includes("EMAIL_USER is required") ||
+      error.message.includes("EMAIL_PASS is required")
+    ) {
+      return {
+        status: 503,
+        message:
+          "Admin login verification is temporarily unavailable. Please contact support.",
+      };
+    }
+
+    if (error.message.toLowerCase().includes("admin_login_challenges")) {
+      return {
+        status: 503,
+        message:
+          "Admin login verification is temporarily unavailable. Please contact support.",
+      };
+    }
+  }
+
+  return {
+    status: 500,
+    message: "Internal server error",
+  };
 }
 
 function normalizeKenyanPhone(rawPhone: string) {
@@ -340,42 +398,51 @@ export async function login(req: Request, res: Response) {
     user.role === "ADMIN" && (await isAdminTwoFactorRequired());
 
   if (requireAdminMfa) {
-    await prisma.adminLoginChallenge.deleteMany({
-      where: {
-        userId: user.id,
-        OR: [{ consumedAt: { not: null } }, { expiresAt: { lte: new Date() } }],
-      },
-    });
+    try {
+      await prisma.adminLoginChallenge.deleteMany({
+        where: {
+          userId: user.id,
+          OR: [
+            { consumedAt: { not: null } },
+            { expiresAt: { lte: new Date() } },
+          ],
+        },
+      });
 
-    const otpCode = generateAdminOtpCode();
-    const rawChallengeId = randomBytes(32).toString("hex");
-    const challengeHash = hashToken(rawChallengeId, getRefreshTokenSecret());
-    const otpHash = hashToken(otpCode, getRefreshTokenSecret());
+      const otpCode = generateAdminOtpCode();
+      const rawChallengeId = randomBytes(32).toString("hex");
+      const challengeHash = hashToken(rawChallengeId, getRefreshTokenSecret());
+      const otpHash = hashToken(otpCode, getRefreshTokenSecret());
 
-    await prisma.adminLoginChallenge.create({
-      data: {
-        userId: user.id,
-        challengeHash,
-        otpHash,
-        expiresAt: new Date(Date.now() + ADMIN_MFA_TTL_MS),
-        ipAddress: getIpAddress(req),
-        deviceInfo: req.headers["user-agent"] ?? null,
-      },
-    });
+      await prisma.adminLoginChallenge.create({
+        data: {
+          userId: user.id,
+          challengeHash,
+          otpHash,
+          expiresAt: new Date(Date.now() + ADMIN_MFA_TTL_MS),
+          ipAddress: getIpAddress(req),
+          deviceInfo: req.headers["user-agent"] ?? null,
+        },
+      });
 
-    await sendAdminLoginOtpEmail({
-      email: user.email,
-      otpCode,
-      expiresInMinutes: Math.floor(ADMIN_MFA_TTL_MS / 60000),
-    });
+      await sendAdminLoginOtpEmail({
+        email: user.email,
+        otpCode,
+        expiresInMinutes: Math.floor(ADMIN_MFA_TTL_MS / 60000),
+      });
 
-    return res.status(202).json({
-      mfaRequired: true,
-      challengeId: rawChallengeId,
-      expiresInSeconds: Math.floor(ADMIN_MFA_TTL_MS / 1000),
-      message: "Admin verification code sent to your email.",
-      emailHint: maskEmail(user.email),
-    });
+      return res.status(202).json({
+        mfaRequired: true,
+        challengeId: rawChallengeId,
+        expiresInSeconds: Math.floor(ADMIN_MFA_TTL_MS / 1000),
+        message: "Admin verification code sent to your email.",
+        emailHint: maskEmail(user.email),
+      });
+    } catch (error) {
+      console.error("Admin MFA login setup failed:", error);
+      const failure = getAdminMfaFailureResponse(error);
+      return res.status(failure.status).json({ message: failure.message });
+    }
   }
 
   const session = await createAuthenticatedSession({
