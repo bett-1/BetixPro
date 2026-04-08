@@ -64,7 +64,7 @@ export default function SportEvents({
           key={leagueName}
           className="overflow-hidden rounded-lg border border-[#24384c] bg-[#0f1a2a] sm:rounded-xl"
         >
-          <div className="flex items-center justify-between gap-2 border-b border-[#24384c] bg-[#121f31] px-2.5 py-1.5 sm:px-3 sm:py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#24384c] bg-[#121f31] px-2.5 py-1.5 sm:flex-nowrap sm:px-3 sm:py-2">
             <div className="flex min-w-0 items-center gap-2">
               <span className="text-[12px] sm:text-[13px]" aria-hidden="true">
                 {getLeagueIcon(leagueName)}
@@ -75,13 +75,15 @@ export default function SportEvents({
             </div>
 
             {leagueEvents[0] ? (
-              <p className="shrink-0 text-[9px] font-medium uppercase tracking-[0.08em] text-[#8a9bb0] sm:text-[10px] sm:tracking-[0.1em]">
+              <p className="max-w-full text-[9px] font-medium uppercase tracking-[0.08em] text-[#8a9bb0] sm:shrink-0 sm:text-[10px] sm:tracking-[0.1em]">
                 Kickoff {formatKickoffTime(leagueEvents[0].commenceTime)}
               </p>
             ) : null}
           </div>
 
-          <div className={`grid gap-2 p-2 sm:gap-3 sm:p-3 ${eventGridClassName}`}>
+          <div
+            className={`grid gap-2 p-2 sm:gap-3 sm:p-3 ${eventGridClassName}`}
+          >
             {leagueEvents.map((event) => (
               <EventCard
                 key={event.eventId}

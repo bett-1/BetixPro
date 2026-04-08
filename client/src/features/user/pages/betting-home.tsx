@@ -13,7 +13,15 @@ import heroFour from "@/assets/h4.jfif";
 import heroFive from "@/assets/h5.jfif";
 
 // Custom hook-based component for smooth number animation
-function AnimatedNumber({ value, suffix = "", isFloat = false }: { value: number, suffix?: string, isFloat?: boolean }) {
+function AnimatedNumber({
+  value,
+  suffix = "",
+  isFloat = false,
+}: {
+  value: number;
+  suffix?: string;
+  isFloat?: boolean;
+}) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
@@ -23,7 +31,7 @@ function AnimatedNumber({ value, suffix = "", isFloat = false }: { value: number
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      
+
       // Easing function (easeOutExpo) for a smooth deceleration
       const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       setDisplayValue(value * ease);
@@ -138,9 +146,13 @@ export default function BettingHome() {
   }, [heroImages.length]);
 
   return (
-    <div className="min-h-screen bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
-      <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
+    <div className="min-h-screen overflow-x-hidden bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
+      <div
+        className={`betting-home-main mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8 ${
+          hasSelections ? "has-betslip" : ""
+        }`}
+      >
+        <section className="hero-section overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
           <div className="relative h-[80px] w-full sm:h-[100px] md:h-[120px]">
             {heroImages.map((image, index) => (
               <article
@@ -164,28 +176,33 @@ export default function BettingHome() {
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:p-6">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-[#ffd500] font-bold">
+                  <p className="text-[7px] uppercase tracking-[0.18em] text-[#ffd500] font-bold sm:text-[8px] md:text-[9px]">
                     BetixPro Picks
                   </p>
-                  <h1 className="mt-1 max-w-2xl text-base font-extrabold text-white sm:text-xl md:text-2xl drop-shadow-md">
+                  <h1 className="mt-1.5 max-w-2xl text-sm font-extrabold text-white sm:text-base md:text-xl lg:text-2xl drop-shadow-md">
                     Bet Smarter, Win Bigger
                   </h1>
-                  
-                  <div className="mt-2.5 flex items-center gap-3 sm:gap-5 text-[10px] sm:text-xs font-medium text-[#d6e0e8]">
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-[8px] sm:text-[9px] md:text-xs font-medium text-[#d6e0e8]">
                     <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 backdrop-blur-sm shadow-sm">
-                      <Users className="h-3.5 w-3.5 text-[#ffd500]" />
+                      <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#ffd500]" />
                       <span>
-                        <AnimatedNumber value={11.2} suffix="K" isFloat={true} /> Active
+                        <AnimatedNumber
+                          value={11.2}
+                          suffix="K"
+                          isFloat={true}
+                        />{" "}
+                        Active
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 backdrop-blur-sm shadow-sm">
-                      <Activity className="h-3.5 w-3.5 text-[#ffd500]" />
+                      <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#ffd500]" />
                       <span>
                         <AnimatedNumber value={94} suffix="%" /> Engagement
                       </span>
                     </div>
                     <div className="hidden items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 backdrop-blur-sm shadow-sm sm:flex">
-                      <Trophy className="h-3.5 w-3.5 text-[#ffd500]" />
+                      <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#ffd500]" />
                       <span>Top Odds</span>
                     </div>
                   </div>
@@ -213,7 +230,7 @@ export default function BettingHome() {
 
         <LiveTicker />
 
-        <section className="overflow-x-auto rounded-xl border border-[#2d4362] bg-[#1e304a] px-4 py-3 app-scrollbar scroll-smooth">
+        <section className="overflow-x-auto rounded-lg border border-[#2d4362] bg-[#1e304a] px-3 py-2.5 app-scrollbar scroll-smooth sm:rounded-lg sm:px-4 sm:py-3 md:rounded-xl">
           <div className="flex min-w-max gap-3">
             {tabs.map((tab) => {
               const isActive =
@@ -227,7 +244,7 @@ export default function BettingHome() {
                     setSelectedSport(tab.sportKey);
                     setSelectedLeague(tab.league);
                   }}
-                  className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] transition sm:px-5 sm:py-2.5 sm:text-xs sm:tracking-wide ${
+                  className={`whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.06em] transition sm:px-4 sm:py-2 sm:text-[10px] md:px-5 md:py-2.5 md:text-xs md:tracking-wide ${
                     isActive
                       ? "border-[#ffd500] bg-[#ffd500]/15 text-[#ffd500]"
                       : "border-[#365074] text-[#8a9bb0] hover:border-[#ffd500]/60 hover:text-white"
@@ -240,69 +257,67 @@ export default function BettingHome() {
           </div>
         </section>
 
-        <div className="space-y-5">
-          {liveEvents.length > 0 ? (
-            <section className="space-y-3 overflow-hidden rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0e1726_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.24)]">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#22c55e]" />
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-white">
-                    LIVE NOW
-                  </h2>
-                  <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
-                    {liveEvents.length}
-                  </span>
-                </div>
-                {liveEvents.length > 6 ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedSport("");
-                      setSelectedLeague("");
-                    }}
-                    className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
-                  >
-                    View all live
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="space-y-3">
-                {featuredLiveEvents.map((event) => (
-                  <EventCard
-                    key={event.eventId}
-                    event={event}
-                    onOddsSelect={betSlip.addSelection}
-                    selectedOdds={selectedOdds}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-
+        <div className="betting-content min-w-0">
           <div
-            className={`grid items-start gap-6 ${
-              hasSelections
-                ? "xl:grid-cols-[minmax(0,1fr)_380px]"
-                : "grid-cols-1"
+            className={`events-pane min-w-0 space-y-5 ${
+              hasSelections ? "lg:min-w-0 lg:flex-1" : ""
             }`}
           >
-            <section className="min-w-0 space-y-5 rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0d1624_100%)] p-4 shadow-[0_22px_42px_rgba(0,0,0,0.22)] sm:p-5">
+            {liveEvents.length > 0 ? (
+              <section className="space-y-3 overflow-hidden rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0e1726_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.24)]">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#22c55e]" />
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-white">
+                      LIVE NOW
+                    </h2>
+                    <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
+                      {liveEvents.length}
+                    </span>
+                  </div>
+                  {liveEvents.length > 6 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSport("");
+                        setSelectedLeague("");
+                      }}
+                      className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
+                    >
+                      View all live
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3">
+                  {featuredLiveEvents.map((event) => (
+                    <EventCard
+                      key={event.eventId}
+                      event={event}
+                      onOddsSelect={betSlip.addSelection}
+                      selectedOdds={selectedOdds}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="matches-section min-w-0 space-y-5 rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0d1624_100%)] p-4 shadow-[0_22px_42px_rgba(0,0,0,0.22)] sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#22384d] pb-4">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f5c518]">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-[#f5c518] sm:text-[9px] md:text-[10px]">
                     Match Centre
                   </p>
-                  <h2 className="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-[#e4edf5]">
+                  <h2 className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-[#e4edf5] sm:text-sm md:text-base">
                     UPCOMING MATCHES
                   </h2>
-                  <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[#8a9bb0]">
+                  <p className="mt-2 text-[9px] uppercase tracking-[0.12em] text-[#8a9bb0] sm:text-[10px] md:text-xs">
                     {formatToday()}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-[#28435c] bg-[#122034] px-4 py-3 text-right">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-[#8a9bb0]">
+                <div className="rounded-lg border border-[#28435c] bg-[#122034] px-3 py-2.5 text-right sm:rounded-xl sm:px-4 sm:py-3">
+                  <p className="text-[8px] uppercase tracking-[0.16em] text-[#8a9bb0] sm:text-[9px] md:text-[10px]">
                     Available Fixtures
                   </p>
                   <p className="mt-1 text-2xl font-black text-white">
@@ -373,13 +388,9 @@ export default function BettingHome() {
                 />
               )}
             </section>
-
-            {hasSelections ? (
-              <div className="min-w-0 self-start">
-                <BetSlip {...betSlip} />
-              </div>
-            ) : null}
           </div>
+
+          {hasSelections ? <BetSlip {...betSlip} /> : null}
         </div>
       </div>
     </div>

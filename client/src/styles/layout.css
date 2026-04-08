@@ -30,6 +30,83 @@
   padding: 0;
 }
 
+.betting-content {
+  width: 100%;
+}
+
+.events-pane {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.events-pane::-webkit-scrollbar {
+  display: none;
+}
+
+.matches-section {
+  margin-top: 20px;
+}
+
+@media (min-width: 1024px) {
+  .betting-home-main.has-betslip {
+    padding-right: 390px;
+  }
+
+  .betting-home-main.has-betslip .hero-section {
+    margin-bottom: 20px;
+    margin-right: 16px;
+  }
+
+  .betting-home-main.has-betslip .betting-content {
+    padding-right: 28px;
+  }
+
+  .betting-home-main.has-betslip .matches-section {
+    margin-right: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .betting-home-main,
+  .betting-content,
+  .events-pane,
+  .hero-section,
+  .matches-section {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .betting-home-main {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+  }
+
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow-x: hidden;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  .events-pane::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* Reduce shadows on mobile for performance in betting surfaces only */
+  .events-pane article,
+  .hero-section,
+  .matches-section {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
 .bc-navbar {
   position: fixed;
   top: 0;
