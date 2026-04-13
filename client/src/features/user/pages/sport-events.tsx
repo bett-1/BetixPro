@@ -58,31 +58,33 @@ export default function SportEvents({
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-4">
       {Object.entries(groupedEvents).map(([leagueName, leagueEvents]) => (
         <section
           key={leagueName}
-          className="overflow-hidden rounded-lg border border-[#24384c] bg-[#0f1a2a] sm:rounded-xl"
+          className="overflow-hidden rounded-xl border border-[#1e3350]/40 bg-[#0c1625]"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#24384c] bg-[#121f31] px-2.5 py-1.5 sm:flex-nowrap sm:px-3 sm:py-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="text-[12px] sm:text-[13px]" aria-hidden="true">
+          {/* League header */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e3350]/30 bg-gradient-to-r from-[#101d30] to-[#0f1a2d] px-2.5 py-1.5 sm:flex-nowrap sm:px-3 sm:py-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="text-xs sm:text-sm" aria-hidden="true">
                 {getLeagueIcon(leagueName)}
               </span>
-              <h3 className="truncate text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8a9bb0] sm:text-[10px] sm:tracking-[0.18em]">
+              <h3 className="truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-[#7a94b8] sm:text-[10px]">
                 {leagueName}
               </h3>
             </div>
 
             {leagueEvents[0] ? (
-              <p className="max-w-full text-[9px] font-medium uppercase tracking-[0.08em] text-[#8a9bb0] sm:shrink-0 sm:text-[10px] sm:tracking-[0.1em]">
+              <p className="max-w-full shrink-0 text-[8px] font-medium uppercase tracking-[0.08em] text-[#546e8f] sm:text-[9px]">
                 Kickoff {formatKickoffTime(leagueEvents[0].commenceTime)}
               </p>
             ) : null}
           </div>
 
+          {/* Event cards grid */}
           <div
-            className={`grid gap-2 p-2 sm:gap-3 sm:p-3 ${eventGridClassName}`}
+            className={`grid gap-1.5 p-1.5 sm:gap-2 sm:p-2 ${eventGridClassName}`}
           >
             {leagueEvents.map((event) => (
               <EventCard

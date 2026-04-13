@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BetSlip from "../components/BetSlip";
 import EventCard from "../components/EventCard";
 import LiveTicker from "../components/LiveTicker";
 import useBetSlip from "../hooks/useBetSlip";
 import useEvents from "../hooks/useEvents";
 import SportEvents from "./sport-events";
-import { Users, Activity, Trophy } from "lucide-react";
+import { Users, Activity, Trophy, ChevronLeft, ChevronRight, RefreshCw, Flame, Calendar } from "lucide-react";
 import heroOne from "@/assets/h1.jfif";
 import heroTwo from "@/assets/h2.jfif";
 import heroThree from "@/assets/h3.jfif";
@@ -87,6 +87,7 @@ export default function BettingHome() {
   } = useEvents();
   const betSlip = useBetSlip();
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   const selectedOdds = useMemo(
     () =>
@@ -145,21 +146,34 @@ export default function BettingHome() {
     };
   }, [heroImages.length]);
 
+  const scrollTabs = (direction: "left" | "right") => {
+    if (!tabsRef.current) return;
+    const scrollAmount = 200;
+    tabsRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
+    <div className="betting-home-wrapper min-h-screen overflow-x-hidden bg-[#0b1120] font-[Inter,Roboto,Segoe_UI,sans-serif] text-white">
       <div
-        className={`betting-home-main mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8 ${
+        className={`betting-home-main mx-auto max-w-7xl px-3 py-3 sm:px-5 sm:py-4 lg:px-6 ${
           hasSelections ? "has-betslip" : ""
         }`}
       >
-        <section className="hero-section overflow-hidden rounded-2xl border border-[#23384f] bg-[#101b2b]">
-          <div className="relative h-[80px] w-full sm:h-[100px] md:h-[120px]">
+        {/* ═══════════════════════════════════════════════════
+            HERO CAROUSEL — compact, professional banner
+          ═══════════════════════════════════════════════════ */}
+        <section className="hero-section relative overflow-hidden rounded-xl border border-[#1e3350]/60 shadow-[0_4px_20px_rgba(0,0,0,0.35)] sm:rounded-2xl">
+          <div className="relative h-[110px] w-full sm:h-[120px] md:h-[140px] lg:h-[160px]">
             {heroImages.map((image, index) => (
               <article
                 key={`hero-image-${index}`}
-                className="absolute inset-0 h-full w-full transition-transform duration-700 ease-out"
+                className="absolute inset-0 h-full w-full transition-all duration-700 ease-out"
                 style={{
                   transform: `translateX(${(index - activeHeroIndex) * 100}%)`,
+                  opacity: index === activeHeroIndex ? 1 : 0.7,
                 }}
               >
                 <img
@@ -168,57 +182,63 @@ export default function BettingHome() {
                   className="h-full w-full object-cover"
                   loading={index === 0 ? "eager" : "lazy"}
                 />
-                {/* Darkened overlay: transitioning from a deeper navy back into the royal blue */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0b1f4a]/95 via-[#122d6b]/80 to-[#1d428a]/30" />
+                {/* Multi-layer gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#060d18]/95 via-[#0b1a30]/75 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120]/90 via-transparent to-transparent" />
               </article>
             ))}
 
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                  <p className="text-[7px] uppercase tracking-[0.18em] text-[#ffd500] font-bold sm:text-[8px] md:text-[9px]">
-                    BetixPro Picks
-                  </p>
-                  <h1 className="mt-1.5 max-w-2xl text-sm font-extrabold text-white sm:text-base md:text-xl lg:text-2xl drop-shadow-md">
-                    Bet Smarter, Win Bigger
+            {/* Hero content */}
+            <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-4 md:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+                <div className="z-10 max-w-xl">
+                  <div className="mb-1 inline-flex items-center gap-1 rounded-full border border-[#ffd500]/20 bg-[#ffd500]/10 px-2 py-0.5 backdrop-blur-sm">
+                    <Flame className="h-2 w-2 text-[#ffd500] sm:h-2.5 sm:w-2.5" />
+                    <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-[#ffd500] sm:text-[8px] md:text-[9px]">
+                      BetixPro Picks
+                    </span>
+                  </div>
+                  <h1 className="text-sm font-extrabold leading-tight text-white sm:text-lg md:text-xl lg:text-2xl">
+                    Bet Smarter,{" "}
+                    <span className="bg-gradient-to-r from-[#ffd500] to-[#ffaa00] bg-clip-text text-transparent">
+                      Win Bigger
+                    </span>
                   </h1>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-[8px] sm:text-[9px] md:text-xs font-medium text-[#d6e0e8]">
-                    <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 backdrop-blur-sm shadow-sm">
-                      <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#ffd500]" />
-                      <span>
-                        <AnimatedNumber
-                          value={11.2}
-                          suffix="K"
-                          isFloat={true}
-                        />{" "}
-                        Active
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    <div className="hero-stat-pill flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-1 backdrop-blur-md sm:px-3 sm:py-1.5">
+                      <Users className="h-3 w-3 text-[#ffd500] sm:h-3.5 sm:w-3.5" />
+                      <span className="text-[9px] font-semibold text-white/90 sm:text-[10px] md:text-xs">
+                        <AnimatedNumber value={11.2} suffix="K" isFloat={true} /> Active
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 backdrop-blur-sm shadow-sm">
-                      <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#ffd500]" />
-                      <span>
+                    <div className="hero-stat-pill flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-1 backdrop-blur-md sm:px-3 sm:py-1.5">
+                      <Activity className="h-3 w-3 text-[#00c853] sm:h-3.5 sm:w-3.5" />
+                      <span className="text-[9px] font-semibold text-white/90 sm:text-[10px] md:text-xs">
                         <AnimatedNumber value={94} suffix="%" /> Engagement
                       </span>
                     </div>
-                    <div className="hidden items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 backdrop-blur-sm shadow-sm sm:flex">
-                      <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#ffd500]" />
-                      <span>Top Odds</span>
+                    <div className="hero-stat-pill hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-1 backdrop-blur-md sm:flex sm:px-3 sm:py-1.5">
+                      <Trophy className="h-3 w-3 text-[#ffd500] sm:h-3.5 sm:w-3.5" />
+                      <span className="text-[9px] font-semibold text-white/90 sm:text-[10px] md:text-xs">
+                        Top Odds
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                {/* Dot indicators */}
+                <div className="z-10 flex items-center gap-1.5 self-start sm:self-auto">
                   {heroImages.map((_, index) => (
                     <button
                       key={`hero-dot-${index}`}
                       type="button"
                       onClick={() => setActiveHeroIndex(index)}
                       aria-label={`Show slide ${index + 1}`}
-                      className={`h-2 rounded-full transition-all ${
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
                         index === activeHeroIndex
-                          ? "w-6 bg-[#ffd500]"
-                          : "w-2 bg-white/40 hover:bg-white/70"
+                          ? "w-6 bg-[#ffd500] shadow-[0_0_8px_rgba(255,213,0,0.5)]"
+                          : "w-1.5 bg-white/30 hover:bg-white/60"
                       }`}
                     />
                   ))}
@@ -228,50 +248,93 @@ export default function BettingHome() {
           </div>
         </section>
 
-        <LiveTicker />
+        {/* ═══════════════════════════════════════════════════
+            LIVE TICKER
+          ═══════════════════════════════════════════════════ */}
+        <div className="mt-3 sm:mt-4">
+          <LiveTicker />
+        </div>
 
-        <section className="overflow-x-auto rounded-lg border border-[#2d4362] bg-[#1e304a] px-3 py-2.5 app-scrollbar scroll-smooth sm:rounded-lg sm:px-4 sm:py-3 md:rounded-xl">
-          <div className="flex min-w-max gap-3">
-            {tabs.map((tab) => {
-              const isActive =
-                selectedSport === tab.sportKey && selectedLeague === tab.league;
+        {/* ═══════════════════════════════════════════════════
+            SPORT / LEAGUE TABS — pill style with scroll arrows
+          ═══════════════════════════════════════════════════ */}
+        <section className="relative mt-3 sm:mt-4">
+          {/* Left scroll arrow */}
+          <button
+            type="button"
+            onClick={() => scrollTabs("left")}
+            className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-[#2d4362] bg-[#0b1120]/90 p-1 text-[#8a9bb0] backdrop-blur-sm transition hover:border-[#ffd500]/40 hover:text-white sm:flex"
+            aria-label="Scroll tabs left"
+          >
+            <ChevronLeft size={14} />
+          </button>
 
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedSport(tab.sportKey);
-                    setSelectedLeague(tab.league);
-                  }}
-                  className={`whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.06em] transition sm:px-4 sm:py-2 sm:text-[10px] md:px-5 md:py-2.5 md:text-xs md:tracking-wide ${
-                    isActive
-                      ? "border-[#ffd500] bg-[#ffd500]/15 text-[#ffd500]"
-                      : "border-[#365074] text-[#8a9bb0] hover:border-[#ffd500]/60 hover:text-white"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
+          <div
+            ref={tabsRef}
+            className="app-scrollbar scroll-smooth overflow-x-auto rounded-xl border border-[#1e3350]/60 bg-gradient-to-r from-[#0f1b2d] to-[#131f33] px-2 py-2 sm:mx-6 sm:px-3 sm:py-2.5"
+          >
+            <div className="flex min-w-max gap-1.5 sm:gap-2">
+              {tabs.map((tab) => {
+                const isActive =
+                  selectedSport === tab.sportKey && selectedLeague === tab.league;
+
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSport(tab.sportKey);
+                      setSelectedLeague(tab.league);
+                    }}
+                    className={`sport-tab relative whitespace-nowrap rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.06em] transition-all duration-200 sm:px-4 sm:py-2 sm:text-[11px] md:px-5 md:py-2 md:text-xs ${
+                      isActive
+                        ? "bg-gradient-to-r from-[#ffd500]/20 to-[#ffaa00]/10 text-[#ffd500] shadow-[inset_0_0_0_1px_rgba(255,213,0,0.35)]"
+                        : "text-[#637fa0] hover:bg-white/[0.04] hover:text-[#a8c0dc]"
+                    }`}
+                  >
+                    {tab.label}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 h-[2px] w-3/5 -translate-x-1/2 rounded-full bg-[#ffd500]" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Right scroll arrow */}
+          <button
+            type="button"
+            onClick={() => scrollTabs("right")}
+            className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-[#2d4362] bg-[#0b1120]/90 p-1 text-[#8a9bb0] backdrop-blur-sm transition hover:border-[#ffd500]/40 hover:text-white sm:flex"
+            aria-label="Scroll tabs right"
+          >
+            <ChevronRight size={14} />
+          </button>
         </section>
 
-        <div className="betting-content min-w-0">
+        {/* ═══════════════════════════════════════════════════
+            MAIN CONTENT AREA — events + betslip (sticky right on desktop)
+          ═══════════════════════════════════════════════════ */}
+        <div className={`betting-content mt-3 min-w-0 sm:mt-4 ${hasSelections ? "lg:flex lg:items-start lg:gap-5" : ""}`}>
           <div
-            className={`events-pane min-w-0 space-y-5 ${
+            className={`events-pane min-w-0 ${
               hasSelections ? "lg:min-w-0 lg:flex-1" : ""
             }`}
           >
+            {/* LIVE NOW section */}
             {liveEvents.length > 0 ? (
-              <section className="space-y-3 overflow-hidden rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0e1726_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.24)]">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#22c55e]" />
-                    <h2 className="text-xs font-bold uppercase tracking-widest text-white">
-                      LIVE NOW
+              <section className="mb-3 overflow-hidden rounded-xl border border-[#1e3350]/60 bg-gradient-to-b from-[#0f1a2d] to-[#0b1525] shadow-[0_8px_24px_rgba(0,0,0,0.25)] sm:mb-4 sm:rounded-2xl">
+                <div className="flex items-center justify-between border-b border-[#1e3350]/40 px-3 py-2 sm:px-4 sm:py-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-[#22c55e]" />
+                    </span>
+                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white sm:text-[11px]">
+                      Live Now
                     </h2>
-                    <span className="rounded-full bg-[#18283b] px-2 py-1 text-[10px] font-semibold text-[#f5c518]">
+                    <span className="rounded-md bg-[#22c55e]/10 px-1.5 py-0.5 text-[9px] font-bold text-[#22c55e]">
                       {liveEvents.length}
                     </span>
                   </div>
@@ -282,14 +345,14 @@ export default function BettingHome() {
                         setSelectedSport("");
                         setSelectedLeague("");
                       }}
-                      className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f5c518]"
+                      className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#ffd500] transition hover:text-[#ffe566] sm:text-[10px]"
                     >
-                      View all live
+                      View all →
                     </button>
                   ) : null}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-1.5 p-2 sm:space-y-2 sm:p-3">
                   {featuredLiveEvents.map((event) => (
                     <EventCard
                       key={event.eventId}
@@ -302,95 +365,118 @@ export default function BettingHome() {
               </section>
             ) : null}
 
-            <section className="matches-section min-w-0 space-y-5 rounded-2xl border border-[#23384f] bg-[linear-gradient(180deg,#101b2b_0%,#0d1624_100%)] p-4 shadow-[0_22px_42px_rgba(0,0,0,0.22)] sm:p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#22384d] pb-4">
-                <div>
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-[#f5c518] sm:text-[9px] md:text-[10px]">
-                    Match Centre
-                  </p>
-                  <h2 className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-[#e4edf5] sm:text-sm md:text-base">
-                    UPCOMING MATCHES
-                  </h2>
-                  <p className="mt-2 text-[9px] uppercase tracking-[0.12em] text-[#8a9bb0] sm:text-[10px] md:text-xs">
-                    {formatToday()}
-                  </p>
-                </div>
+            {/* UPCOMING MATCHES section */}
+            <section className="matches-section min-w-0 overflow-hidden rounded-xl border border-[#1e3350]/60 bg-gradient-to-b from-[#0f1a2d] to-[#0b1525] shadow-[0_8px_24px_rgba(0,0,0,0.25)] sm:rounded-2xl">
+              {/* Match Centre header */}
+              <div className="border-b border-[#1e3350]/40 px-3 py-3 sm:px-4 sm:py-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="mb-1 flex items-center gap-1.5">
+                      <Calendar className="h-2.5 w-2.5 text-[#ffd500] sm:h-3 sm:w-3" />
+                      <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#ffd500] sm:text-[9px]">
+                        Match Centre
+                      </p>
+                    </div>
+                    <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-white sm:text-sm md:text-base">
+                      Upcoming Matches
+                    </h2>
+                    <p className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-[#637fa0] sm:text-[10px]">
+                      {formatToday()}
+                    </p>
+                  </div>
 
-                <div className="rounded-lg border border-[#28435c] bg-[#122034] px-3 py-2.5 text-right sm:rounded-xl sm:px-4 sm:py-3">
-                  <p className="text-[8px] uppercase tracking-[0.16em] text-[#8a9bb0] sm:text-[9px] md:text-[10px]">
-                    Available Fixtures
-                  </p>
-                  <p className="mt-1 text-2xl font-black text-white">
-                    {upcomingEvents.length}
-                  </p>
+                  <div className="flex items-center gap-2 rounded-lg border border-[#1e3350]/50 bg-[#0b1525]/80 px-2.5 py-2 sm:px-3 sm:py-2.5">
+                    <div className="text-right">
+                      <p className="text-[7px] uppercase tracking-[0.16em] text-[#637fa0] sm:text-[8px]">
+                        Fixtures
+                      </p>
+                      <p className="text-lg font-black text-white sm:text-xl">
+                        {upcomingEvents.length}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {loading ? (
-                <div
-                  className={`grid gap-3 ${
-                    hasSelections
-                      ? "lg:grid-cols-2"
-                      : "md:grid-cols-2 xl:grid-cols-3"
-                  }`}
-                >
-                  {Array.from({ length: hasSelections ? 4 : 6 }).map(
-                    (_, index) => (
-                      <div
-                        key={`event-skeleton-${index}`}
-                        className="animate-pulse rounded-2xl border border-[#23384f] bg-[#111d2e] p-4"
-                      >
-                        <div className="h-2.5 w-1/3 rounded bg-[#243548]" />
-                        <div className="mt-3 h-4 w-full rounded bg-[#243548]" />
-                        <div className="mt-4 grid grid-cols-3 gap-2">
-                          <div className="h-8 rounded bg-[#243548]" />
-                          <div className="h-8 rounded bg-[#243548]" />
-                          <div className="h-8 rounded bg-[#243548]" />
+              {/* Match content */}
+              <div className="p-2 sm:p-3">
+                {loading ? (
+                  <div
+                    className={`grid gap-2 ${
+                      hasSelections
+                        ? "lg:grid-cols-2"
+                        : "md:grid-cols-2 xl:grid-cols-3"
+                    }`}
+                  >
+                    {Array.from({ length: hasSelections ? 4 : 6 }).map(
+                      (_, index) => (
+                        <div
+                          key={`event-skeleton-${index}`}
+                          className="animate-pulse rounded-xl border border-[#1e3350]/40 bg-[#111d2e] p-3"
+                        >
+                          <div className="h-2 w-1/3 rounded-full bg-[#1e3350]/60" />
+                          <div className="mt-2.5 h-3.5 w-full rounded-full bg-[#1e3350]/60" />
+                          <div className="mt-3 grid grid-cols-3 gap-1.5">
+                            <div className="h-7 rounded-lg bg-[#1e3350]/60" />
+                            <div className="h-7 rounded-lg bg-[#1e3350]/60" />
+                            <div className="h-7 rounded-lg bg-[#1e3350]/60" />
+                          </div>
                         </div>
-                      </div>
-                    ),
-                  )}
-                </div>
-              ) : error ? (
-                <div className="rounded-2xl border border-[#5a222a] bg-[#2a1515] p-6 text-center">
-                  <p className="text-sm text-red-200">{error}</p>
-                  <button
-                    type="button"
-                    onClick={refetch}
-                    className="mt-4 rounded-lg bg-[#ffd500] px-4 py-2 text-sm font-semibold text-black"
-                  >
-                    Refresh
-                  </button>
-                </div>
-              ) : upcomingEvents.length === 0 ? (
-                <div className="rounded-2xl border border-[#2d4362] bg-[#1e304a] px-6 py-10 text-center">
-                  <p className="text-3xl">⚽</p>
-                  <p className="mt-3 text-lg font-semibold text-white">
-                    No matches available right now
-                  </p>
-                  <p className="mt-2 text-sm text-[#8a9bb0]">
-                    Check back soon or refresh
-                  </p>
-                  <button
-                    type="button"
-                    onClick={refetch}
-                    className="mt-4 rounded-lg bg-[#ffd500] px-4 py-2 text-sm font-semibold text-black"
-                  >
-                    Refresh
-                  </button>
-                </div>
-              ) : (
-                <SportEvents
-                  events={upcomingEvents}
-                  onOddsSelect={betSlip.addSelection}
-                  selectedOdds={selectedOdds}
-                  cardsPerRow={hasSelections ? 2 : 3}
-                />
-              )}
+                      ),
+                    )}
+                  </div>
+                ) : error ? (
+                  <div className="flex flex-col items-center rounded-xl border border-[#5a222a]/40 bg-[#1a0f0f] px-6 py-10 text-center">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#5a222a]/20">
+                      <RefreshCw className="h-5 w-5 text-red-300" />
+                    </div>
+                    <p className="text-sm font-medium text-red-200">{error}</p>
+                    <button
+                      type="button"
+                      onClick={refetch}
+                      className="mt-4 rounded-lg bg-gradient-to-r from-[#ffd500] to-[#ffaa00] px-5 py-2 text-sm font-bold text-[#0b1120] transition hover:shadow-[0_4px_16px_rgba(255,213,0,0.3)]"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : upcomingEvents.length === 0 ? (
+                  <div className="flex flex-col items-center rounded-xl border border-[#1e3350]/40 bg-[#0f1a2d] px-6 py-12 text-center">
+                    <div className="mb-3 text-4xl">⚽</div>
+                    <p className="text-base font-semibold text-white">
+                      No matches available right now
+                    </p>
+                    <p className="mt-1.5 text-sm text-[#637fa0]">
+                      Check back soon or refresh to see latest fixtures
+                    </p>
+                    <button
+                      type="button"
+                      onClick={refetch}
+                      className="mt-5 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#ffd500] to-[#ffaa00] px-5 py-2.5 text-sm font-bold text-[#0b1120] transition hover:shadow-[0_4px_16px_rgba(255,213,0,0.3)]"
+                    >
+                      <RefreshCw size={14} />
+                      Refresh
+                    </button>
+                  </div>
+                ) : (
+                  <SportEvents
+                    events={upcomingEvents}
+                    onOddsSelect={betSlip.addSelection}
+                    selectedOdds={selectedOdds}
+                    cardsPerRow={hasSelections ? 2 : 3}
+                  />
+                )}
+              </div>
             </section>
           </div>
 
-          {hasSelections ? <BetSlip {...betSlip} /> : null}
+          {/* BetSlip — sticky sidebar on desktop, mobile bottom sheet handled internally */}
+          {hasSelections ? (
+            <div className="betslip-sidebar shrink-0 lg:w-[320px]">
+              <div className="betslip-sticky-wrap lg:sticky lg:overflow-y-auto lg:app-scrollbar">
+                <BetSlip {...betSlip} />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
