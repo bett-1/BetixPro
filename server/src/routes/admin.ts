@@ -20,6 +20,9 @@ import {
   getRiskAlertDetail,
   updateRiskAlert,
   getRiskSummary,
+  getBanAppeals,
+  getBanAppealDetail,
+  respondToBanAppeal,
 } from "../controllers/admin.controller";
 import { requireAdmin } from "../middleware/requireAdmin";
 
