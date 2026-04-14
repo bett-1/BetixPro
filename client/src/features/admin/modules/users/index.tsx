@@ -4,6 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import {
   banUserAction,
   createUserAction,
-  respondToBanAppealAction,
   updateUserPasswordAction,
   updateUserAction,
   unbanUserAction,
@@ -50,13 +50,7 @@ export default function Users() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [actionDialog, setActionDialog] = useState<{
-    type:
-      | "edit"
-      | "ban"
-      | "unban"
-      | "changePassword"
-      | "create"
-      | "respondAppeal";
+    type: "edit" | "ban" | "unban" | "changePassword" | "create";
     userId?: string;
   } | null>(null);
   const [formData, setFormData] = useState({
@@ -79,10 +73,6 @@ export default function Users() {
     accountStatus: "ACTIVE" as "ACTIVE" | "SUSPENDED",
   });
   const [actionReason, setActionReason] = useState("");
-  const [appealResponse, setAppealResponse] = useState("");
-  const [appealDecision, setAppealDecision] = useState<
-    "APPROVE" | "REJECT" | null
-  >(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { users, loading, error, refetch, total } = useUsers({
@@ -121,18 +111,6 @@ export default function Users() {
   const handleOpenUnban = (userId: string) => {
     setSelectedUserId(null);
     setActionDialog({ type: "unban", userId });
-  };
-
-  const handleOpenRespondAppeal = () => {
-    if (!selectedUserId || !selectedUser?.banAppeal) {
-      return;
-    }
-
-    setAppealResponse(selectedUser.banAppeal.responseText || "");
-    setAppealDecision(
-      selectedUser.banAppeal.status === "APPROVED" ? "APPROVE" : "REJECT",
-    );
-    setActionDialog({ type: "respondAppeal", userId: selectedUserId });
   };
 
   const handleOpenChangePassword = (userId: string) => {
@@ -242,44 +220,6 @@ export default function Users() {
       toast.success("User unbanned successfully");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to unban user");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleRespondToAppeal = async () => {
-    if (!actionDialog?.userId || !selectedUser?.banAppeal) return;
-    if (!appealDecision) {
-      toast.error("Select approve or reject first");
-      return;
-    }
-    if (appealResponse.trim().length < 10) {
-      toast.error("Response must be at least 10 characters");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await respondToBanAppealAction(
-        selectedUser.banAppeal.id,
-        appealDecision,
-        appealResponse.trim(),
-      );
-
-      void refetch();
-      setSelectedUserId(null);
-      setActionDialog(null);
-      setAppealResponse("");
-      setAppealDecision(null);
-      toast.success(
-        appealDecision === "APPROVE"
-          ? "Appeal approved and user restored"
-          : "Appeal rejected and response sent",
-      );
-    } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || "Failed to respond to appeal",
-      );
     } finally {
       setIsSubmitting(false);
     }
@@ -637,9 +577,15 @@ export default function Users() {
                     <AdminButton
                       size="sm"
                       variant="ghost"
-                      onClick={handleOpenRespondAppeal}
+                      className="px-0"
                     >
-                      Respond
+                      <Link
+                        className="inline-flex h-full w-full items-center justify-center px-3"
+                        to="/admin/appeals/$appealId"
+                        params={{ appealId: selectedUser.banAppeal.id }}
+                      >
+                        Open Review Page
+                      </Link>
                     </AdminButton>
                   </div>
                   <div className="mt-3 space-y-3">
@@ -700,14 +646,13 @@ export default function Users() {
                     </AdminButton>
                   ) : null}
                   {selectedUser.banAppeal?.status === "PENDING" && (
-                    <AdminButton
-                      onClick={handleOpenRespondAppeal}
-                      tone="accent"
-                      className="col-span-2"
-                      size="sm"
+                    <Link
+                      to="/admin/appeals/$appealId"
+                      params={{ appealId: selectedUser.banAppeal.id }}
+                      className="col-span-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-admin-accent px-3.5 text-sm font-medium text-black shadow-[0_6px_16px_rgba(0,0,0,0.1)] transition duration-200 hover:opacity-95"
                     >
                       Review Appeal
-                    </AdminButton>
+                    </Link>
                   )}
                 </div>
               </div>
@@ -717,84 +662,6 @@ export default function Users() {
               No user data available
             </div>
           )}
-        </AdminDialogContent>
-      </Dialog>
-
-      <Dialog
-        open={actionDialog?.type === "respondAppeal"}
-        onOpenChange={(open) => {
-          if (!open) {
-            setActionDialog(null);
-            setAppealResponse("");
-            setAppealDecision(null);
-          }
-        }}
-      >
-        <AdminDialogContent className="max-w-xl">
-          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-admin-accent">
-              Respond to Ban Appeal
-            </DialogTitle>
-            <DialogDescription>
-              Review the appeal, reply to the user, and lift the ban if
-              approved.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-accent/20 bg-admin-accent/8 p-3 text-sm text-admin-text-secondary">
-              {selectedUser?.banAppeal?.appealText}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <AdminButton
-                variant={appealDecision === "APPROVE" ? "solid" : "ghost"}
-                onClick={() => setAppealDecision("APPROVE")}
-              >
-                Approve and Lift Ban
-              </AdminButton>
-              <AdminButton
-                variant={appealDecision === "REJECT" ? "solid" : "ghost"}
-                onClick={() => setAppealDecision("REJECT")}
-              >
-                Reject Appeal
-              </AdminButton>
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
-                Response to user
-              </label>
-              <textarea
-                value={appealResponse}
-                onChange={(e) => setAppealResponse(e.target.value)}
-                className="mt-2 min-h-32 w-full rounded-xl border border-white/10 bg-[rgba(13,33,55,0.16)] px-3 py-2 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50"
-                placeholder="Explain the decision and any next steps..."
-              />
-            </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
-              <AdminButton
-                variant="ghost"
-                className="flex-1"
-                onClick={() => {
-                  setActionDialog(null);
-                  setAppealResponse("");
-                  setAppealDecision(null);
-                }}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </AdminButton>
-              <AdminButton
-                className="flex-1 bg-admin-accent hover:bg-admin-accent/90"
-                onClick={() => void handleRespondToAppeal()}
-                disabled={
-                  isSubmitting ||
-                  !appealDecision ||
-                  appealResponse.trim().length < 10
-                }
-              >
-                {isSubmitting ? "Submitting..." : "Send Response"}
-              </AdminButton>
-            </div>
-          </div>
         </AdminDialogContent>
       </Dialog>
 
