@@ -12,7 +12,11 @@ function normalizePhoneInput(value: string) {
 }
 
 function getLoginErrorMessage(error: unknown) {
-  if (isAxiosError<{ message?: string; isBanned?: boolean; banReason?: string }>(error)) {
+  if (
+    isAxiosError<{ message?: string; isBanned?: boolean; banReason?: string }>(
+      error,
+    )
+  ) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
     const isBanned = error.response?.data?.isBanned;
