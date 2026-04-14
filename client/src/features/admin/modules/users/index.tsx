@@ -152,15 +152,22 @@ export default function Users() {
     }
   };
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = () => {
+    if (!passwordData.password) return;
+    setConfirmPasswordDialog(true);
+  };
+
+  const handleConfirmPasswordChange = async () => {
     if (!actionDialog?.userId) return;
     setIsSubmitting(true);
     try {
       await updateUserPasswordAction(actionDialog.userId, {
         password: passwordData.password,
-        confirmPassword: passwordData.confirmPassword,
+        confirmPassword: passwordData.password,
       });
-      setPasswordData({ password: "", confirmPassword: "" });
+      setPasswordData({ password: "" });
+      setShowPassword(false);
+      setConfirmPasswordDialog(false);
       setActionDialog(null);
       toast.success("Password updated successfully");
     } catch (err: any) {
