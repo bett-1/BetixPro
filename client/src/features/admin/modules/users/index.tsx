@@ -414,7 +414,16 @@ export default function Users() {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className={adminTableCellClassName}>
-                      <div className={adminCompactActionsClassName}>
+                      <div className={`${adminCompactActionsClassName} gap-1.5`}>
+                        {user.banAppeal?.status === "PENDING" && (
+                          <Link
+                            to="/admin/appeals/$appealId"
+                            params={{ appealId: user.banAppeal.id }}
+                            className="inline-flex h-8 items-center justify-center rounded-lg bg-admin-accent/10 px-2 text-xs font-medium text-admin-accent hover:bg-admin-accent/20 transition-colors"
+                          >
+                            Appeal
+                          </Link>
+                        )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <AdminButton size="sm" variant="ghost">
