@@ -134,7 +134,7 @@ export const adminTableCellClassName =
 export const adminCompactActionsClassName = "flex flex-wrap items-center gap-1";
 export const adminFilterRowClassName = "flex flex-wrap gap-3";
 export const adminDialogContentClassName =
-  "overflow-hidden rounded-[1.35rem] border border-[rgba(245,197,24,0.16)] bg-[linear-gradient(180deg,#244a8e,#1f4380)] text-admin-text-primary shadow-[0_18px_42px_rgba(13,33,55,0.22)]";
+  "overflow-hidden rounded-[1.35rem] border border-[rgba(245,197,24,0.16)] bg-[linear-gradient(180deg,#244a8e_0%,#1f4380_50%,#1a3a70_100%)] text-admin-text-primary shadow-[0_20px_60px_rgba(13,33,55,0.35),0_0px_1px_rgba(245,197,24,0.1)] backdrop-blur-md max-h-[85vh] overflow-y-auto";
 export const adminInputClassName =
   "h-10 rounded-xl border border-admin-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] px-3 text-admin-text-primary placeholder:text-admin-text-muted focus-visible:border-admin-border-strong focus-visible:ring-[3px] focus-visible:ring-admin-accent/15";
 export const adminSelectTriggerClassName =
@@ -364,7 +364,12 @@ export function AdminStatCard({
         <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
           {label}
         </p>
-        <p className={cn("text-base font-bold sm:text-lg", toneTextClasses[tone])}>
+        <p
+          className={cn(
+            "text-base font-bold sm:text-lg",
+            toneTextClasses[tone],
+          )}
+        >
           {value}
         </p>
       </div>
@@ -591,10 +596,7 @@ export function FinancialTrendChart({ data }: { data: any[] }) {
           stroke="rgba(168,196,224,0.7)"
           style={{ fontSize: "12px" }}
         />
-        <YAxis
-          stroke="rgba(168,196,224,0.7)"
-          style={{ fontSize: "12px" }}
-        />
+        <YAxis stroke="rgba(168,196,224,0.7)" style={{ fontSize: "12px" }} />
         <Tooltip
           contentStyle={{
             background:
@@ -655,10 +657,7 @@ export function DepositWithdrawalChart({
           stroke="rgba(168,196,224,0.62)"
           style={{ fontSize: "11px" }}
         />
-        <YAxis
-          stroke="rgba(168,196,224,0.62)"
-          style={{ fontSize: "11px" }}
-        />
+        <YAxis stroke="rgba(168,196,224,0.62)" style={{ fontSize: "11px" }} />
         <Tooltip
           contentStyle={{
             background:

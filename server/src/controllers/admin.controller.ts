@@ -1567,7 +1567,10 @@ export async function getAllUsers(req: Request, res: Response) {
   const { search = "", status = "", page = 1, limit = 50 } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  const where: any = {};
+  const where: any = {
+    role: "USER",
+    id: { not: req.user.id }, // Exclude the current admin user from results
+  };
 
   if (search) {
     where.OR = [
@@ -1588,7 +1591,7 @@ export async function getAllUsers(req: Request, res: Response) {
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "USER", ...where },
+      where,
       select: {
         id: true,
         fullName: true,
@@ -1610,7 +1613,7 @@ export async function getAllUsers(req: Request, res: Response) {
       take: Number(limit),
       orderBy: { createdAt: "desc" },
     }),
-    prisma.user.count({ where: { role: "USER", ...where } }),
+    prisma.user.count({ where }),
   ]);
 
   const formattedUsers = users.map((user) => ({
@@ -1955,6 +1958,87 @@ export async function unsuspendUser(req: Request, res: Response) {
       accountStatus: updatedUser.accountStatus,
     },
   });
+}
+
+export async function updateUserPassword(req: Request, res: Response) {
+  if (!req.user?.id) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ message: "Admin access required." });
+  }
+
+  const userId = String(req.params.userId);
+  const { password, confirmPassword } = req.body;
+
+  // Validation
+  if (!password || !confirmPassword) {
+    return res
+      .status(400)
+      .json({ message: "Password and confirmation are required" });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  if (password.length < 6) {
+    return res
+      .status(400)
+      .json({ message: "Password must be at least 6 characters" });
+  }
+
+  if (password.length > 128) {
+    return res
+      .status(400)
+      .json({ message: "Password must be at most 128 characters" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, fullName: true },
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  try {
+    // Hash the new password with salt rounds matching auth controller
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Update the user with new password hash
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: hashedPassword,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+      },
+    });
+
+    console.log(
+      `[AdminPasswordUpdate] Password updated for user ${updatedUser.email}`,
+    );
+
+    return res.status(200).json({
+      message: "User password updated successfully",
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+      },
+    });
+  } catch (error: any) {
+    console.error("[AdminPasswordUpdate] Error updating password:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to update password. Please try again." });
+  }
 }
 
 // Get admin payments (deposits and transactions)

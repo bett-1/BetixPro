@@ -14,16 +14,16 @@ import { Input } from "@/components/ui/input";
 import {
   banUserAction,
   createUserAction,
-  suspendUserAction,
-  unbanUserAction,
-  unsuspendUserAction,
+  updateUserPasswordAction,
   updateUserAction,
+  unbanUserAction,
   useGetUserDetail,
   useUsers,
   type User,
 } from "@/hooks/useUsers";
-import { MoreVertical } from "lucide-react";
+import { Eye, EyeOff, MoreVertical } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   AdminButton,
   AdminCard,
@@ -44,14 +44,12 @@ import {
 
 export default function Users() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"active" | "suspended" | "banned" | "">(
-    "",
-  );
+  const [status, setStatus] = useState<"active" | "banned" | "">("");
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [actionDialog, setActionDialog] = useState<{
-    type: "edit" | "ban" | "unban" | "suspend" | "unsuspend" | "create";
+    type: "edit" | "ban" | "unban" | "changePassword" | "create";
     userId?: string;
   } | null>(null);
   const [formData, setFormData] = useState({
@@ -59,8 +57,11 @@ export default function Users() {
     email: "",
     phone: "",
     isVerified: false,
-    accountStatus: "ACTIVE" as "ACTIVE" | "SUSPENDED",
   });
+  const [passwordData, setPasswordData] = useState({
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     fullName: "",
     email: "",
@@ -89,41 +90,37 @@ export default function Users() {
   };
 
   const handleOpenEdit = (user: User) => {
+    setSelectedUserId(null);
     setEditingUserId(user.id);
     setFormData({
       fullName: user.name || "",
       email: user.email,
       phone: user.phone,
       isVerified: user.isVerified,
-      accountStatus:
-        user.status === "suspended"
-          ? "SUSPENDED"
-          : user.status === "banned"
-            ? "ACTIVE"
-            : "ACTIVE",
     });
     setActionDialog({ type: "edit", userId: user.id });
   };
 
   const handleOpenBan = (userId: string) => {
+    setSelectedUserId(null);
     setActionDialog({ type: "ban", userId });
     setActionReason("");
   };
 
   const handleOpenUnban = (userId: string) => {
+    setSelectedUserId(null);
     setActionDialog({ type: "unban", userId });
   };
 
-  const handleOpenSuspend = (userId: string) => {
-    setActionDialog({ type: "suspend", userId });
-    setActionReason("");
-  };
-
-  const handleOpenUnsuspend = (userId: string) => {
-    setActionDialog({ type: "unsuspend", userId });
+  const handleOpenChangePassword = (userId: string) => {
+    setSelectedUserId(null);
+    setPasswordData({ password: "" });
+    setShowPassword(false);
+    setActionDialog({ type: "changePassword", userId });
   };
 
   const handleOpenCreate = () => {
+    setSelectedUserId(null);
     setCreateFormData({
       fullName: "",
       email: "",
@@ -140,12 +137,56 @@ export default function Users() {
     if (!editingUserId) return;
     setIsSubmitting(true);
     try {
-      await updateUserAction(editingUserId, formData);
+      const payload: any = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        isVerified: formData.isVerified,
+      };
+      await updateUserAction(editingUserId, payload);
       void refetch();
       setActionDialog(null);
       setEditingUserId(null);
-    } catch {
-      alert("Failed to update user");
+      toast.success("User updated successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordData.password || !actionDialog?.userId) return;
+
+    if (passwordData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await updateUserPasswordAction(actionDialog.userId, {
+        password: passwordData.password,
+        confirmPassword: passwordData.password,
+      });
+
+      // Verify the response indicates success
+      if (!response || !response.user) {
+        throw new Error("Invalid response from server");
+      }
+
+      void refetch();
+      setPasswordData({ password: "" });
+      setShowPassword(false);
+      setActionDialog(null);
+      toast.success("Password updated successfully for " + response.user.email);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to change password";
+      toast.error(message);
+      console.error("Password change error:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -159,8 +200,9 @@ export default function Users() {
       void refetch();
       setSelectedUserId(null);
       setActionDialog(null);
-    } catch {
-      alert("Failed to ban user");
+      toast.success("User banned successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to ban user");
     } finally {
       setIsSubmitting(false);
     }
@@ -174,38 +216,9 @@ export default function Users() {
       void refetch();
       setSelectedUserId(null);
       setActionDialog(null);
-    } catch {
-      alert("Failed to unban user");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSuspendUser = async () => {
-    if (!actionDialog?.userId) return;
-    setIsSubmitting(true);
-    try {
-      await suspendUserAction(actionDialog.userId, actionReason);
-      void refetch();
-      setSelectedUserId(null);
-      setActionDialog(null);
-    } catch {
-      alert("Failed to suspend user");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUnsuspendUser = async () => {
-    if (!actionDialog?.userId) return;
-    setIsSubmitting(true);
-    try {
-      await unsuspendUserAction(actionDialog.userId);
-      void refetch();
-      setSelectedUserId(null);
-      setActionDialog(null);
-    } catch {
-      alert("Failed to unsuspend user");
+      toast.success("User unbanned successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to unban user");
     } finally {
       setIsSubmitting(false);
     }
@@ -217,8 +230,9 @@ export default function Users() {
       await createUserAction(createFormData);
       void refetch();
       setActionDialog(null);
-    } catch {
-      alert("Failed to create user");
+      toast.success("User created successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to create user");
     } finally {
       setIsSubmitting(false);
     }
@@ -229,9 +243,6 @@ export default function Users() {
   // Calculate stats
   const totalUsers = total || 0;
   const activeUsers = visibleUsers.filter((u) => u.status === "active").length;
-  const suspendedUsers = visibleUsers.filter(
-    (u) => u.status === "suspended",
-  ).length;
   const bannedUsers = visibleUsers.filter((u) => u.status === "banned").length;
 
   return (
@@ -262,7 +273,7 @@ export default function Users() {
       />
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-3">
         {[
           {
             label: "Total Users",
@@ -273,11 +284,6 @@ export default function Users() {
             label: "Active Users",
             value: activeUsers.toString(),
             tone: "accent" as const,
-          },
-          {
-            label: "Suspended Users",
-            value: suspendedUsers.toString(),
-            tone: "gold" as const,
           },
           {
             label: "Banned Users",
@@ -313,7 +319,7 @@ export default function Users() {
         />
 
         <div className="flex gap-2 flex-wrap">
-          {(["", "active", "suspended", "banned"] as const).map((s) => (
+          {(["", "active", "banned"] as const).map((s) => (
             <AdminButton
               key={s}
               variant={status === s ? "solid" : "ghost"}
@@ -416,7 +422,7 @@ export default function Users() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className={`${adminDropdownContentClassName} w-40`}
+                            className={`${adminDropdownContentClassName} w-44`}
                           >
                             <DropdownMenuItem
                               className={adminDropdownItemClassName}
@@ -424,42 +430,25 @@ export default function Users() {
                             >
                               Edit
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className={adminDropdownItemClassName}
+                              onClick={() => handleOpenChangePassword(user.id)}
+                            >
+                              Change Password
+                            </DropdownMenuItem>
                             {user.status === "active" ? (
-                              <>
-                                <DropdownMenuItem
-                                  className={adminDropdownItemClassName}
-                                  onClick={() => handleOpenSuspend(user.id)}
-                                >
-                                  Suspend
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleOpenBan(user.id)}
-                                  className={`${adminDropdownItemClassName} text-admin-red focus:bg-admin-red/12 focus:text-admin-red`}
-                                >
-                                  Ban
-                                </DropdownMenuItem>
-                              </>
-                            ) : user.status === "suspended" ? (
-                              <>
-                                <DropdownMenuItem
-                                  className={adminDropdownItemClassName}
-                                  onClick={() => handleOpenUnsuspend(user.id)}
-                                >
-                                  Unsuspend
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleOpenBan(user.id)}
-                                  className={`${adminDropdownItemClassName} text-admin-red focus:bg-admin-red/12 focus:text-admin-red`}
-                                >
-                                  Ban
-                                </DropdownMenuItem>
-                              </>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenBan(user.id)}
+                                className={`${adminDropdownItemClassName} text-admin-red focus:bg-admin-red/12 focus:text-admin-red`}
+                              >
+                                Ban User
+                              </DropdownMenuItem>
                             ) : user.status === "banned" ? (
                               <DropdownMenuItem
                                 className={adminDropdownItemClassName}
                                 onClick={() => handleOpenUnban(user.id)}
                               >
-                                Unban
+                                Unban User
                               </DropdownMenuItem>
                             ) : null}
                           </DropdownMenuContent>
@@ -475,7 +464,7 @@ export default function Users() {
       )}
 
       <Dialog
-        open={!!selectedUserId && !actionDialog}
+        open={!!selectedUserId && actionDialog === null}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedUserId(null);
@@ -484,7 +473,9 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-2xl p-0">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-lg text-white">User Details</DialogTitle>
+            <DialogTitle className="text-lg text-white">
+              User Details
+            </DialogTitle>
             <DialogDescription className="text-sm text-admin-text-secondary">
               Account profile, wallet status, and admin actions.
             </DialogDescription>
@@ -582,40 +573,22 @@ export default function Users() {
                   >
                     Edit User
                   </AdminButton>
+                  <AdminButton
+                    onClick={() => handleOpenChangePassword(selectedUser.id)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    Change Password
+                  </AdminButton>
                   {selectedUser.status === "active" ? (
-                    <>
-                      <AdminButton
-                        onClick={() => handleOpenSuspend(selectedUser.id)}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        Suspend
-                      </AdminButton>
-                      <AdminButton
-                        onClick={() => handleOpenBan(selectedUser.id)}
-                        tone="red"
-                        size="sm"
-                      >
-                        Ban User
-                      </AdminButton>
-                    </>
-                  ) : selectedUser.status === "suspended" ? (
-                    <>
-                      <AdminButton
-                        onClick={() => handleOpenUnsuspend(selectedUser.id)}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        Unsuspend
-                      </AdminButton>
-                      <AdminButton
-                        onClick={() => handleOpenBan(selectedUser.id)}
-                        tone="red"
-                        size="sm"
-                      >
-                        Ban User
-                      </AdminButton>
-                    </>
+                    <AdminButton
+                      onClick={() => handleOpenBan(selectedUser.id)}
+                      tone="red"
+                      size="sm"
+                      className="col-span-2"
+                    >
+                      Ban User
+                    </AdminButton>
                   ) : selectedUser.status === "banned" ? (
                     <AdminButton
                       onClick={() => handleOpenUnban(selectedUser.id)}
@@ -646,11 +619,11 @@ export default function Users() {
         }}
       >
         <AdminDialogContent className="max-w-lg">
-          <DialogHeader>
+          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Update user information</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 py-5">
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
                 Full Name
@@ -661,7 +634,7 @@ export default function Users() {
                   setFormData({ ...formData, fullName: e.target.value })
                 }
                 placeholder="John Doe"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
@@ -675,7 +648,7 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 disabled
-                className={`mt-1 ${adminInputClassName} opacity-50`}
+                className={`mt-2 ${adminInputClassName} opacity-50`}
               />
             </div>
             <div>
@@ -689,10 +662,10 @@ export default function Users() {
                 }
                 placeholder="+254712345678"
                 disabled
-                className={`mt-1 ${adminInputClassName} opacity-50`}
+                className={`mt-2 ${adminInputClassName} opacity-50`}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
               <input
                 type="checkbox"
                 id="verified"
@@ -700,18 +673,19 @@ export default function Users() {
                 onChange={(e) =>
                   setFormData({ ...formData, isVerified: e.target.checked })
                 }
+                className="cursor-pointer"
               />
               <label
                 htmlFor="verified"
-                className="text-sm text-admin-text-primary"
+                className="text-sm text-admin-text-primary cursor-pointer flex-1"
               >
-                Verified
+                Mark as verified
               </label>
             </div>
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-2 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1"
+                className="flex-1 mt-4"
                 onClick={() => {
                   setActionDialog(null);
                   setEditingUserId(null);
@@ -720,7 +694,7 @@ export default function Users() {
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1"
+                className="flex-1 mt-4"
                 onClick={handleSaveEdit}
                 disabled={isSubmitting}
               >
@@ -741,42 +715,54 @@ export default function Users() {
         }}
       >
         <AdminDialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Ban User</DialogTitle>
+          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
+            <DialogTitle className="text-red-400">Ban User</DialogTitle>
             <DialogDescription>
-              This will permanently ban the user from the platform
+              This action is permanent and will prevent the user from accessing
+              the platform.
             </DialogDescription>
           </DialogHeader>
-          <div>
-            <label className="text-sm font-semibold text-admin-text-primary">
-              Reason (optional)
-            </label>
-            <Input
-              value={actionReason}
-              onChange={(e) => setActionReason(e.target.value)}
-              placeholder="E.g., Fraudulent activity"
-              className={`mt-2 ${adminInputClassName}`}
-            />
-          </div>
-          <div className="flex gap-2 pt-4">
-            <AdminButton
-              variant="ghost"
-              className="flex-1"
-              onClick={() => {
-                setActionDialog(null);
-                setActionReason("");
-              }}
-            >
-              Cancel
-            </AdminButton>
-            <AdminButton
-              tone="red"
-              className="flex-1"
-              onClick={handleBanUser}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Banning..." : "Ban User"}
-            </AdminButton>
+          <div className="space-y-4 px-6 py-5">
+            <div className="rounded-lg border border-admin-red/30 bg-admin-red/10 p-3">
+              <p className="text-xs font-semibold text-admin-red uppercase">
+                Warning
+              </p>
+              <p className="text-sm text-admin-red/80 mt-1">
+                Banning this user cannot be undone. Ensure you have a valid
+                reason.
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-admin-text-primary">
+                Reason for ban (optional)
+              </label>
+              <Input
+                value={actionReason}
+                onChange={(e) => setActionReason(e.target.value)}
+                placeholder="E.g., Fraudulent activity, Terms violation"
+                className={`mt-2 ${adminInputClassName}`}
+              />
+            </div>
+            <div className="flex gap-2 pt-2 border-t border-white/10">
+              <AdminButton
+                variant="ghost"
+                className="flex-1 mt-4"
+                onClick={() => {
+                  setActionDialog(null);
+                  setActionReason("");
+                }}
+              >
+                Cancel
+              </AdminButton>
+              <AdminButton
+                tone="red"
+                className="flex-1 mt-4"
+                onClick={handleBanUser}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Banning..." : "Ban User"}
+              </AdminButton>
+            </div>
           </div>
         </AdminDialogContent>
       </Dialog>
@@ -790,111 +776,154 @@ export default function Users() {
         }}
       >
         <AdminDialogContent className="max-w-lg">
-          <DialogHeader>
+          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
             <DialogTitle>Unban User</DialogTitle>
             <DialogDescription>
-              This will restore the user's access to the platform
+              Lift the ban and restore the user's access to the platform.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2 pt-4">
-            <AdminButton
-              variant="ghost"
-              className="flex-1"
-              onClick={() => setActionDialog(null)}
-            >
-              Cancel
-            </AdminButton>
-            <AdminButton
-              className="flex-1"
-              onClick={handleUnbanUser}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Unbanning..." : "Unban User"}
-            </AdminButton>
+          <div className="space-y-4 px-6 py-5">
+            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/10 p-3">
+              <p className="text-xs font-semibold text-admin-accent uppercase">
+                Confirm Action
+              </p>
+              <p className="text-sm text-admin-accent/80 mt-1">
+                This will restore the user's full access to the platform.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2 border-t border-white/10">
+              <AdminButton
+                variant="ghost"
+                className="flex-1 mt-4"
+                onClick={() => setActionDialog(null)}
+              >
+                Cancel
+              </AdminButton>
+              <AdminButton
+                className="flex-1 mt-4"
+                onClick={handleUnbanUser}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Unbanning..." : "Unban User"}
+              </AdminButton>
+            </div>
           </div>
         </AdminDialogContent>
       </Dialog>
 
       <Dialog
-        open={actionDialog?.type === "suspend"}
+        open={actionDialog?.type === "changePassword"}
         onOpenChange={(open) => {
           if (!open) {
             setActionDialog(null);
-            setActionReason("");
+            setPasswordData({ password: "" });
+            setShowPassword(false);
           }
         }}
       >
         <AdminDialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Suspend User</DialogTitle>
+          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
+            <DialogTitle className="text-admin-accent">
+              Change User Password
+            </DialogTitle>
             <DialogDescription>
-              Suspended users cannot access the platform until unsuspended
+              Set a new password for this user account. They will need to use
+              this password to log in.
             </DialogDescription>
           </DialogHeader>
-          <div>
-            <label className="text-sm font-semibold text-admin-text-primary">
-              Reason (optional)
-            </label>
-            <Input
-              value={actionReason}
-              onChange={(e) => setActionReason(e.target.value)}
-              placeholder="E.g., Suspicious activity"
-              className={`mt-2 ${adminInputClassName}`}
-            />
-          </div>
-          <div className="flex gap-2 pt-4">
-            <AdminButton
-              variant="ghost"
-              className="flex-1"
-              onClick={() => {
-                setActionDialog(null);
-                setActionReason("");
-              }}
-            >
-              Cancel
-            </AdminButton>
-            <AdminButton
-              tone="gold"
-              className="flex-1"
-              onClick={handleSuspendUser}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Suspending..." : "Suspend User"}
-            </AdminButton>
-          </div>
-        </AdminDialogContent>
-      </Dialog>
-
-      <Dialog
-        open={actionDialog?.type === "unsuspend"}
-        onOpenChange={(open) => {
-          if (!open) {
-            setActionDialog(null);
-          }
-        }}
-      >
-        <AdminDialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Unsuspend User</DialogTitle>
-            <DialogDescription>
-              This will restore the user's access to the platform
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2 pt-4">
-            <AdminButton
-              variant="ghost"
-              className="flex-1"
-              onClick={() => setActionDialog(null)}
-            >
-              Cancel
-            </AdminButton>
-            <AdminButton
-              className="flex-1"
-              onClick={handleUnsuspendUser}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Unsuspending..." : "Unsuspend User"}
-            </AdminButton>
+          <div className="space-y-4 px-6 py-5">
+            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/8 p-4">
+              <p className="text-xs font-semibold text-admin-accent uppercase tracking-wider">
+                Important
+              </p>
+              <ul className="text-sm text-admin-accent/80 mt-2.5 space-y-1.5 list-disc list-inside">
+                <li>Password must be at least 6 characters long</li>
+                <li>User will need this new password to log in</li>
+                <li>Current password cannot be displayed for security</li>
+              </ul>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-admin-text-primary block mb-2">
+                New Password <span className="text-admin-red">*</span>
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={passwordData.password}
+                  onChange={(e) =>
+                    setPasswordData({
+                      password: e.target.value,
+                    })
+                  }
+                  placeholder="Enter new password (min 6 characters)"
+                  className={`${adminInputClassName} pr-10`}
+                  disabled={isSubmitting}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 bg-admin-border/30 rounded-full h-1 overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${
+                      passwordData.password.length === 0
+                        ? "w-0"
+                        : passwordData.password.length < 6
+                          ? "w-1/3 bg-admin-red"
+                          : passwordData.password.length < 8
+                            ? "w-1/2 bg-admin-gold"
+                            : passwordData.password.length < 12
+                              ? "w-2/3 bg-admin-blue"
+                              : "w-full bg-admin-accent"
+                    }`}
+                  />
+                </div>
+                <p className="text-xs text-admin-text-muted whitespace-nowrap">
+                  {passwordData.password.length === 0
+                    ? "—"
+                    : passwordData.password.length < 6
+                      ? "Too short"
+                      : passwordData.password.length < 8
+                        ? "Weak"
+                        : passwordData.password.length < 12
+                          ? "Medium"
+                          : "Strong"}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2 border-t border-white/10">
+              <AdminButton
+                variant="ghost"
+                className="flex-1"
+                onClick={() => {
+                  setActionDialog(null);
+                  setPasswordData({ password: "" });
+                  setShowPassword(false);
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </AdminButton>
+              <AdminButton
+                className="flex-1 bg-admin-accent hover:bg-admin-accent/90"
+                onClick={handleChangePassword}
+                disabled={
+                  !passwordData.password ||
+                  passwordData.password.length < 6 ||
+                  isSubmitting
+                }
+              >
+                {isSubmitting ? "Updating..." : "Update Password"}
+              </AdminButton>
+            </div>
           </div>
         </AdminDialogContent>
       </Dialog>
@@ -907,14 +936,14 @@ export default function Users() {
           }
         }}
       >
-        <AdminDialogContent className="max-w-md">
-          <DialogHeader>
+        <AdminDialogContent className="max-w-lg">
+          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
             <DialogTitle>Create New User</DialogTitle>
             <DialogDescription>
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
                 Full Name (optional)
@@ -928,12 +957,12 @@ export default function Users() {
                   })
                 }
                 placeholder="John Doe"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Email *
+                Email <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.email}
@@ -945,12 +974,12 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 type="email"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Phone (Kenyan) *
+                Phone (Kenyan) <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.phone}
@@ -961,12 +990,12 @@ export default function Users() {
                   })
                 }
                 placeholder="+254712345678 or 0712345678"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Password *
+                Password <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.password}
@@ -977,13 +1006,13 @@ export default function Users() {
                   })
                 }
                 type="password"
-                placeholder="Minimum 8 characters"
-                className={`mt-1 ${adminInputClassName}`}
+                placeholder="Minimum 6 characters"
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Confirm Password *
+                Confirm Password <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.confirmPassword}
@@ -995,10 +1024,10 @@ export default function Users() {
                 }
                 type="password"
                 placeholder="Confirm password"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
               <input
                 type="checkbox"
                 id="createVerified"
@@ -1009,24 +1038,25 @@ export default function Users() {
                     isVerified: e.target.checked,
                   })
                 }
+                className="cursor-pointer"
               />
               <label
                 htmlFor="createVerified"
-                className="text-sm text-admin-text-primary"
+                className="text-sm text-admin-text-primary cursor-pointer flex-1"
               >
                 Mark as verified
               </label>
             </div>
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-2 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1"
+                className="flex-1 mt-4"
                 onClick={() => setActionDialog(null)}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1"
+                className="flex-1 mt-4"
                 onClick={handleCreateUser}
                 disabled={isSubmitting}
               >
