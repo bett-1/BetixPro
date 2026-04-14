@@ -112,6 +112,7 @@ model User {
   isVerified    Boolean              @default(false) @map("is_verified")
   accountStatus AccountStatus        @default(ACTIVE) @map("account_status")
   bannedAt      DateTime?            @map("banned_at")
+  banReason     String?              @map("ban_reason")
   role          UserRole             @default(USER)
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
