@@ -72,16 +72,12 @@ export function createAccessToken(payload: AccessTokenPayload) {
 }
 
 export function createBanAppealToken(payload: BanAppealTokenPayload) {
-  return jwt.sign(
-    payload,
-    getAccessTokenSecret(),
-    {
-      expiresIn: BAN_APPEAL_TOKEN_TTL_SECONDS,
-      issuer: ACCESS_TOKEN_ISSUER,
-      algorithm: "HS256",
-      audience: "betwise-ban-appeal",
-    },
-  );
+  return jwt.sign(payload, getAccessTokenSecret(), {
+    expiresIn: BAN_APPEAL_TOKEN_TTL_SECONDS,
+    issuer: ACCESS_TOKEN_ISSUER,
+    algorithm: "HS256",
+    audience: "betwise-ban-appeal",
+  });
 }
 
 export function verifyBanAppealToken(token: string) {

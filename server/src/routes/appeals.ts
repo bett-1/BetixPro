@@ -1,21 +1,15 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
-import { requireAdmin } from "../middleware/requireAdmin";
 import { prisma } from "../lib/prisma";
+import { verifyBanAppealToken } from "../utils/tokenUtils";
 
 const appealsRouter = Router();
 
-// User endpoints
-appealsRouter.use(authenticate);
-
 // Create a ban appeal (user)
-appealsRouter.post("/appeals", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
+appealsRouter.post("/appeals/public", async (req: Request, res: Response) => {
   const appealSchema = z.object({
+    appealToken: z.string().trim().min(1),
     appealText: z.string().trim().min(10).max(1000),
   });
 
@@ -27,8 +21,17 @@ appealsRouter.post("/appeals", async (req: Request, res: Response) => {
     });
   }
 
+  let tokenData: { userId: string };
+  try {
+    tokenData = verifyBanAppealToken(parsed.data.appealToken);
+  } catch {
+    return res.status(400).json({
+      message: "Invalid or expired appeal token. Please sign in again.",
+    });
+  }
+
   const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
+    where: { id: tokenData.userId },
     select: { id: true, bannedAt: true },
   });
 
@@ -41,7 +44,7 @@ appealsRouter.post("/appeals", async (req: Request, res: Response) => {
   // Check if user already has a pending appeal
   const existingPending = await prisma.banAppeal.findFirst({
     where: {
-      userId: req.user.id,
+      userId: tokenData.userId,
       status: "PENDING",
     },
   });
@@ -54,7 +57,7 @@ appealsRouter.post("/appeals", async (req: Request, res: Response) => {
 
   const appeal = await prisma.banAppeal.create({
     data: {
-      userId: req.user.id,
+      userId: tokenData.userId,
       appealText: parsed.data.appealText,
       status: "PENDING",
     },
@@ -71,7 +74,10 @@ appealsRouter.post("/appeals", async (req: Request, res: Response) => {
 });
 
 // Get user's appeals
-appealsRouter.get("/appeals/my", async (req: Request, res: Response) => {
+appealsRouter.get(
+  "/appeals/my",
+  authenticate,
+  async (req: Request, res: Response) => {
   if (!req.user?.id) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -92,13 +98,17 @@ appealsRouter.get("/appeals/my", async (req: Request, res: Response) => {
       reviewedAt: appeal.reviewedAt?.toISOString() || null,
     })),
   });
-});
+  },
+);
 
 // Get specific appeal for user
-appealsRouter.get("/appeals/:appealId", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+appealsRouter.get(
+  "/appeals/:appealId",
+  authenticate,
+  async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
   const appealId = String(req.params.appealId);
 
@@ -123,11 +133,13 @@ appealsRouter.get("/appeals/:appealId", async (req: Request, res: Response) => {
     updatedAt: appeal.updatedAt.toISOString(),
     reviewedAt: appeal.reviewedAt?.toISOString() || null,
   });
-});
+  },
+);
 
 // Withdraw appeal
 appealsRouter.post(
   "/appeals/:appealId/withdraw",
+  authenticate,
   async (req: Request, res: Response) => {
     if (!req.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
