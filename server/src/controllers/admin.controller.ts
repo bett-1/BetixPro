@@ -1804,12 +1804,14 @@ export async function banUser(req: Request, res: Response) {
     where: { id: userId },
     data: {
       bannedAt: new Date(),
+      banReason: reason || "Account violation",
       accountStatus: "SUSPENDED",
     },
     select: {
       id: true,
       email: true,
       bannedAt: true,
+      banReason: true,
     },
   });
 
@@ -1819,6 +1821,7 @@ export async function banUser(req: Request, res: Response) {
       id: updatedUser.id,
       email: updatedUser.email,
       bannedAt: updatedUser.bannedAt?.toISOString(),
+      banReason: updatedUser.banReason,
     },
   });
 }
@@ -1850,6 +1853,7 @@ export async function unbanUser(req: Request, res: Response) {
     where: { id: userId },
     data: {
       bannedAt: null,
+      banReason: null,
       accountStatus: "ACTIVE",
     },
     select: {
