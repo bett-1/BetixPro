@@ -15,6 +15,7 @@ import {
   banUserAction,
   createUserAction,
   updateUserPasswordAction,
+  updateUserAction,
   unbanUserAction,
   useGetUserDetail,
   useUsers,
@@ -22,6 +23,7 @@ import {
 } from "@/hooks/useUsers";
 import { MoreVertical } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   AdminButton,
   AdminCard,
@@ -139,8 +141,9 @@ export default function Users() {
       void refetch();
       setActionDialog(null);
       setEditingUserId(null);
-    } catch {
-      alert("Failed to update user");
+      toast.success("User updated successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update user");
     } finally {
       setIsSubmitting(false);
     }
@@ -156,8 +159,9 @@ export default function Users() {
       });
       setPasswordData({ password: "", confirmPassword: "" });
       setActionDialog(null);
-    } catch {
-      alert("Failed to change password");
+      toast.success("Password updated successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to change password");
     } finally {
       setIsSubmitting(false);
     }
@@ -797,7 +801,9 @@ export default function Users() {
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
             <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/10 p-3">
-              <p className="text-xs font-semibold text-admin-accent uppercase">Note</p>
+              <p className="text-xs font-semibold text-admin-accent uppercase">
+                Note
+              </p>
               <p className="text-sm text-admin-accent/80 mt-1">
                 The user will need to use this new password to log in.
               </p>
@@ -824,7 +830,10 @@ export default function Users() {
                 type="password"
                 value={passwordData.confirmPassword}
                 onChange={(e) =>
-                  setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
                 }
                 placeholder="Confirm password"
                 className={`mt-2 ${adminInputClassName}`}
@@ -844,7 +853,11 @@ export default function Users() {
               <AdminButton
                 className="flex-1 mt-4"
                 onClick={handleChangePassword}
-                disabled={isSubmitting || !passwordData.password || !passwordData.confirmPassword}
+                disabled={
+                  isSubmitting ||
+                  !passwordData.password ||
+                  !passwordData.confirmPassword
+                }
               >
                 {isSubmitting ? "Updating..." : "Update Password"}
               </AdminButton>
@@ -861,14 +874,14 @@ export default function Users() {
           }
         }}
       >
-        <AdminDialogContent className="max-w-md">
-          <DialogHeader>
+        <AdminDialogContent className="max-w-lg">
+          <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
             <DialogTitle>Create New User</DialogTitle>
             <DialogDescription>
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
                 Full Name (optional)
@@ -882,12 +895,12 @@ export default function Users() {
                   })
                 }
                 placeholder="John Doe"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Email *
+                Email <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.email}
@@ -899,12 +912,12 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 type="email"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Phone (Kenyan) *
+                Phone (Kenyan) <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.phone}
@@ -915,12 +928,12 @@ export default function Users() {
                   })
                 }
                 placeholder="+254712345678 or 0712345678"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Password *
+                Password <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.password}
@@ -931,13 +944,13 @@ export default function Users() {
                   })
                 }
                 type="password"
-                placeholder="Minimum 8 characters"
-                className={`mt-1 ${adminInputClassName}`}
+                placeholder="Minimum 6 characters"
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Confirm Password *
+                Confirm Password <span className="text-admin-red">*</span>
               </label>
               <Input
                 value={createFormData.confirmPassword}
@@ -949,10 +962,10 @@ export default function Users() {
                 }
                 type="password"
                 placeholder="Confirm password"
-                className={`mt-1 ${adminInputClassName}`}
+                className={`mt-2 ${adminInputClassName}`}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
               <input
                 type="checkbox"
                 id="createVerified"
@@ -963,24 +976,25 @@ export default function Users() {
                     isVerified: e.target.checked,
                   })
                 }
+                className="cursor-pointer"
               />
               <label
                 htmlFor="createVerified"
-                className="text-sm text-admin-text-primary"
+                className="text-sm text-admin-text-primary cursor-pointer flex-1"
               >
                 Mark as verified
               </label>
             </div>
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-2 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1"
+                className="flex-1 mt-4"
                 onClick={() => setActionDialog(null)}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1"
+                className="flex-1 mt-4"
                 onClick={handleCreateUser}
                 disabled={isSubmitting}
               >
