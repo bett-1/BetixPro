@@ -23,7 +23,12 @@ function getLoginErrorMessage(error: unknown) {
     const banReason = error.response?.data?.banReason;
 
     if (isBanned && banReason) {
-      return `${message}\n\nReason: ${banReason}`;
+      const bannedMessage =
+        typeof message === "string" && message.trim().length > 0
+          ? message
+          : "Your account has been banned.";
+
+      return `${bannedMessage}\n\nReason: ${banReason}`;
     }
 
     if (typeof message === "string" && message.trim().length > 0) {
