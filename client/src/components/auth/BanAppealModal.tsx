@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog } from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { createBanAppealAction } from "@/hooks/useBanAppeals";
 import { toast } from "sonner";
 
