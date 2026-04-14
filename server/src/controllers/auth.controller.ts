@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { Prisma } from "@prisma/client";
 import { verifySync } from "otplib";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -36,6 +35,15 @@ type AdminMfaTokenPayload = {
   purpose: "totp_setup" | "totp_verify";
   secret?: string;
 };
+
+function isPrismaKnownRequestError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+  );
+}
 
 const registerSchema = z.object({
   email: z.string().trim().email("Provide a valid email address."),
@@ -110,10 +118,7 @@ async function isAdminTwoFactorRequired() {
 }
 
 function getAdminMfaFailureResponse(error: unknown) {
-  if (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2021"
-  ) {
+  if (isPrismaKnownRequestError(error) && error.code === "P2021") {
     return {
       status: 503,
       message:

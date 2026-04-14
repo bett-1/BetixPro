@@ -1,10 +1,9 @@
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
-import type { UserRole } from "@prisma/client";
 
 type AccessTokenPayload = {
   id: string;
-  role: UserRole;
+  role: "USER" | "ADMIN";
 };
 
 type BanAppealTokenPayload = {
