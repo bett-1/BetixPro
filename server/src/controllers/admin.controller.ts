@@ -1994,6 +1994,7 @@ export async function updateUserPassword(req: Request, res: Response) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: { id: true, email: true, fullName: true },
   });
 
   if (!user) {
@@ -2001,8 +2002,10 @@ export async function updateUserPassword(req: Request, res: Response) {
   }
 
   try {
+    // Hash the new password with salt rounds matching auth controller
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Update the user with new password hash
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -2015,6 +2018,8 @@ export async function updateUserPassword(req: Request, res: Response) {
       },
     });
 
+    console.log(`[AdminPasswordUpdate] Password updated for user ${updatedUser.email}`);
+
     return res.status(200).json({
       message: "User password updated successfully",
       user: {
@@ -2024,7 +2029,7 @@ export async function updateUserPassword(req: Request, res: Response) {
       },
     });
   } catch (error: any) {
-    console.error("Password update error:", error);
+    console.error("[AdminPasswordUpdate] Error updating password:", error);
     return res
       .status(500)
       .json({ message: "Failed to update password. Please try again." });

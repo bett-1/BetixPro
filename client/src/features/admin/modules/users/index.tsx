@@ -157,19 +157,33 @@ export default function Users() {
 
   const handleChangePassword = async () => {
     if (!passwordData.password || !actionDialog?.userId) return;
+    
+    if (passwordData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      await updateUserPasswordAction(actionDialog.userId, {
+      const response = await updateUserPasswordAction(actionDialog.userId, {
         password: passwordData.password,
         confirmPassword: passwordData.password,
       });
+      
+      // Verify the response indicates success
+      if (!response || !response.user) {
+        throw new Error("Invalid response from server");
+      }
+      
       void refetch();
       setPasswordData({ password: "" });
       setShowPassword(false);
       setActionDialog(null);
-      toast.success("Password updated successfully");
+      toast.success("Password updated successfully for " + response.user.email);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to change password");
+      const message = err?.response?.data?.message || err?.message || "Failed to change password";
+      toast.error(message);
+      console.error("Password change error:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -806,25 +820,27 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Change User Password</DialogTitle>
+            <DialogTitle className="text-admin-accent">Change User Password</DialogTitle>
             <DialogDescription>
-              Set a new password for this user account.
+              Set a new password for this user account. They will need to use this password to log in.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/10 p-3">
-              <p className="text-xs font-semibold text-admin-accent uppercase">
-                Note
+            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/8 p-4">
+              <p className="text-xs font-semibold text-admin-accent uppercase tracking-wider">
+                Important
               </p>
-              <p className="text-sm text-admin-accent/80 mt-1">
-                The user will need to use this new password to log in.
-              </p>
+              <ul className="text-sm text-admin-accent/80 mt-2.5 space-y-1.5 list-disc list-inside">
+                <li>Password must be at least 6 characters long</li>
+                <li>User will need this new password to log in</li>
+                <li>Current password cannot be displayed for security</li>
+              </ul>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
-                New Password
+              <label className="text-sm font-semibold text-admin-text-primary block mb-2">
+                New Password <span className="text-admin-red">*</span>
               </label>
-              <div className="relative mt-2">
+              <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
                   value={passwordData.password}
@@ -833,34 +849,59 @@ export default function Users() {
                       password: e.target.value,
                     })
                   }
-                  placeholder="Minimum 6 characters"
+                  placeholder="Enter new password (min 6 characters)"
                   className={`${adminInputClassName} pr-10`}
+                  disabled={isSubmitting}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                  tabIndex={-1}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 bg-admin-border/30 rounded-full h-1 overflow-hidden">
+                  <div 
+                    className={`h-full transition-all ${
+                      passwordData.password.length === 0 ? 'w-0' :
+                      passwordData.password.length < 6 ? 'w-1/3 bg-admin-red' :
+                      passwordData.password.length < 8 ? 'w-1/2 bg-admin-gold' :
+                      passwordData.password.length < 12 ? 'w-2/3 bg-admin-blue' :
+                      'w-full bg-admin-accent'
+                    }`}
+                  />
+                </div>
+                <p className="text-xs text-admin-text-muted whitespace-nowrap">
+                  {passwordData.password.length === 0 ? '—' :
+                   passwordData.password.length < 6 ? 'Too short' :
+                   passwordData.password.length < 8 ? 'Weak' :
+                   passwordData.password.length < 12 ? 'Medium' :
+                   'Strong'}
+                </p>
               </div>
             </div>
             <div className="flex gap-2 pt-2 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => {
                   setActionDialog(null);
                   setPasswordData({ password: "" });
                   setShowPassword(false);
                 }}
+                disabled={isSubmitting}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1 bg-admin-accent hover:bg-admin-accent/90"
                 onClick={handleChangePassword}
-                disabled={!passwordData.password || isSubmitting}
+                disabled={!passwordData.password || passwordData.password.length < 6 || isSubmitting}
               >
                 {isSubmitting ? "Updating..." : "Update Password"}
               </AdminButton>
