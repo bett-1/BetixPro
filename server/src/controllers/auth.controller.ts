@@ -36,7 +36,7 @@ type AdminMfaTokenPayload = {
   secret?: string;
 };
 
-function isPrismaKnownRequestError(error: unknown) {
+function isPrismaKnownRequestError(error: unknown): error is { code: string } {
   return (
     typeof error === "object" &&
     error !== null &&
