@@ -46,7 +46,9 @@ export default function BanAppealModal({
     }
 
     if (appealText.trim().length < 10) {
-      setErrorMessage("Please provide at least 10 characters explaining your appeal.");
+      setErrorMessage(
+        "Please provide at least 10 characters explaining your appeal.",
+      );
       return;
     }
 
@@ -94,7 +96,8 @@ export default function BanAppealModal({
                 </p>
                 <h2 className="mt-1 text-2xl font-bold">Submit an Appeal</h2>
                 <p className="mt-2 max-w-2xl text-sm text-slate-300">
-                  Your account is currently banned. You can submit one appeal for review below.
+                  Your account is currently banned. You can submit one appeal
+                  for review below.
                 </p>
               </div>
             </div>
@@ -131,7 +134,8 @@ export default function BanAppealModal({
                 />
               </div>
               <p className="mt-2 text-xs text-slate-400">
-                Be concise and factual. Appeals that provide context are reviewed faster.
+                Be concise and factual. Appeals that provide context are
+                reviewed faster.
               </p>
             </div>
 
@@ -178,7 +182,8 @@ export default function BanAppealModal({
                     What happens next
                   </p>
                   <p className="mt-1 leading-6">
-                    Your appeal is queued for admin review. You will regain access automatically if it is approved.
+                    Your appeal is queued for admin review. You will regain
+                    access automatically if it is approved.
                   </p>
                 </div>
                 {appealToken ? (
