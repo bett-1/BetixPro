@@ -781,9 +781,8 @@ export default function LoginModal() {
                   />
                   <button
                     type="button"
-                  </form>
-                )}
                     className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-300 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
