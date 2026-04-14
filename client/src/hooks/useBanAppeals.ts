@@ -21,11 +21,7 @@ export interface BanAppeal {
 }
 
 // Admin hook to get all ban appeals
-export function useAdminBanAppeals(
-  page = 1,
-  limit = 20,
-  status?: string,
-) {
+export function useAdminBanAppeals(page = 1, limit = 20, status?: string) {
   const [appeals, setAppeals] = useState<BanAppeal[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(0);
@@ -105,9 +101,7 @@ export function useMyBanAppeals() {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get<{ appeals: BanAppeal[] }>(
-        "/appeals/my",
-      );
+      const response = await api.get<{ appeals: BanAppeal[] }>("/appeals/my");
       setAppeals(response.data.appeals);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch appeals");
