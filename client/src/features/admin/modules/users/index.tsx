@@ -14,10 +14,8 @@ import { Input } from "@/components/ui/input";
 import {
   banUserAction,
   createUserAction,
-  suspendUserAction,
+  updateUserPasswordAction,
   unbanUserAction,
-  unsuspendUserAction,
-  updateUserAction,
   useGetUserDetail,
   useUsers,
   type User,

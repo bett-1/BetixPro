@@ -199,3 +199,18 @@ export async function createUserAction(payload: {
     throw err instanceof Error ? err : new Error("Failed to create user");
   }
 }
+
+export async function updateUserPasswordAction(
+  userId: string,
+  payload: {
+    password: string;
+    confirmPassword: string;
+  },
+) {
+  try {
+    const response = await api.patch(`/admin/users/${userId}/password`, payload);
+    return response.data;
+  } catch (err) {
+    throw err instanceof Error ? err : new Error("Failed to update password");
+  }
+}

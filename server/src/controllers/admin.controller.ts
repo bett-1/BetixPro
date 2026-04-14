@@ -1957,6 +1957,64 @@ export async function unsuspendUser(req: Request, res: Response) {
   });
 }
 
+export async function updateUserPassword(req: Request, res: Response) {
+  if (!req.user?.id) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ message: "Admin access required." });
+  }
+
+  const userId = String(req.params.userId);
+  const { password, confirmPassword } = req.body;
+
+  // Validation
+  if (!password || !confirmPassword) {
+    return res.status(400).json({ message: "Password and confirmation are required" });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ message: "Password must be at least 6 characters" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const bcrypt = require("bcrypt");
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password: hashedPassword,
+    },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+    },
+  });
+
+  return res.status(200).json({
+    message: "User password updated successfully",
+    user: {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+    },
+  });
+}
+
 // Get admin payments (deposits and transactions)
 export async function getAdminPayments(req: Request, res: Response) {
   if (!req.user?.id) {

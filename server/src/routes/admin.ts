@@ -11,6 +11,7 @@ import {
   unbanUser,
   suspendUser,
   unsuspendUser,
+  updateUserPassword,
   getAdminPayments,
   getAdminPaymentsStats,
   getAdminSettings,
@@ -47,6 +48,12 @@ adminRouter.get(
   getUserDetails,
 );
 adminRouter.put("/admin/users/:userId", authenticate, requireAdmin, updateUser);
+adminRouter.patch(
+  "/admin/users/:userId/password",
+  authenticate,
+  requireAdmin,
+  updateUserPassword,
+);
 adminRouter.post(
   "/admin/users/:userId/ban",
   authenticate,
