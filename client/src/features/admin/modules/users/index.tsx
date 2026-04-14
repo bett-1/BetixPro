@@ -686,14 +686,18 @@ export default function Users() {
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
             <DialogTitle className="text-red-400">Ban User</DialogTitle>
             <DialogDescription>
-              This action is permanent and will prevent the user from accessing the platform.
+              This action is permanent and will prevent the user from accessing
+              the platform.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
             <div className="rounded-lg border border-admin-red/30 bg-admin-red/10 p-3">
-              <p className="text-xs font-semibold text-admin-red uppercase">Warning</p>
+              <p className="text-xs font-semibold text-admin-red uppercase">
+                Warning
+              </p>
               <p className="text-sm text-admin-red/80 mt-1">
-                Banning this user cannot be undone. Ensure you have a valid reason.
+                Banning this user cannot be undone. Ensure you have a valid
+                reason.
               </p>
             </div>
             <div>
