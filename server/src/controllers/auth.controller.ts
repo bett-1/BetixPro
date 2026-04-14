@@ -13,6 +13,7 @@ import { sendPasswordResetEmail } from "../utils/emailUtils";
 import {
   getAccessTokenSecret,
   createAccessToken,
+  createBanAppealToken,
   createRefreshToken,
   createResetToken,
   getRefreshExpiryDate,
@@ -231,6 +232,7 @@ function sanitizeUser(user: {
   role: "USER" | "ADMIN";
   isVerified: boolean;
   createdAt: Date;
+  bannedAt?: Date | null;
 }) {
   return {
     id: user.id,
@@ -239,6 +241,7 @@ function sanitizeUser(user: {
     role: user.role,
     isVerified: user.isVerified,
     createdAt: user.createdAt,
+    bannedAt: user.bannedAt?.toISOString() ?? null,
   };
 }
 
@@ -421,11 +424,18 @@ export async function login(req: Request, res: Response) {
   }
 
   if (user.bannedAt) {
+    const appealToken = createBanAppealToken({
+      userId: user.id,
+      reason: user.banReason || "No reason provided",
+      bannedAt: user.bannedAt.toISOString(),
+    });
+
     return res.status(403).json({
       message: "Your account has been banned and is no longer active.",
       isBanned: true,
       banReason: user.banReason || "No reason provided",
       bannedAt: user.bannedAt?.toISOString(),
+      appealToken,
     });
   }
 
@@ -857,6 +867,7 @@ export async function me(req: Request, res: Response) {
       role: true,
       isVerified: true,
       createdAt: true,
+      bannedAt: true,
     },
   });
 
