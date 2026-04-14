@@ -1,9 +1,19 @@
-import { useState, useMemo, useCallback, type FormEvent } from "react";
+import { useState, useMemo, useCallback, useEffect, type FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
-import { Eye, EyeOff, Loader2, Lock, Phone, ArrowRight } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Phone,
+  ShieldAlert,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/api/axiosConfig";
 
 const KENYAN_PHONE_REGEX = /^(\+?254|0)(7|1)\d{8}$/;
 
@@ -11,16 +21,24 @@ function normalizePhoneInput(value: string) {
   return value.replace(/[\s-]/g, "");
 }
 
-function getLoginErrorMessage(error: unknown) {
+type BanErrorPayload = {
+  message?: string;
+  isBanned?: boolean;
+  banReason?: string;
+  bannedAt?: string;
+  appealToken?: string;
+};
+
+function getBanErrorPayload(error: unknown) {
   if (
-    isAxiosError<{ message?: string; isBanned?: boolean; banReason?: string }>(
-      error,
-    )
+    isAxiosError<BanErrorPayload>(error)
   ) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
     const isBanned = error.response?.data?.isBanned;
     const banReason = error.response?.data?.banReason;
+    const bannedAt = error.response?.data?.bannedAt;
+    const appealToken = error.response?.data?.appealToken;
 
     if (isBanned && banReason) {
       const bannedMessage =
@@ -28,7 +46,11 @@ function getLoginErrorMessage(error: unknown) {
           ? message
           : "Your account has been banned.";
 
-      return `${bannedMessage}\n\nReason: ${banReason}`;
+      return {
+        message: `${bannedMessage}\n\nReason: ${banReason}`,
+        appealToken: typeof appealToken === "string" ? appealToken : "",
+        bannedAt: typeof bannedAt === "string" ? bannedAt : "",
+      };
     }
 
     if (typeof message === "string" && message.trim().length > 0) {
@@ -40,7 +62,7 @@ function getLoginErrorMessage(error: unknown) {
     }
   }
 
-  return "Invalid phone number or password.";
+  return { message: "Invalid phone number or password." };
 }
 
 export default function LoginModal() {
@@ -62,10 +84,24 @@ export default function LoginModal() {
   const [mfaManualEntryKey, setMfaManualEntryKey] = useState<string | null>(
     null,
   );
+  const [banAppealToken, setBanAppealToken] = useState<string | null>(null);
+  const [banAppealText, setBanAppealText] = useState("");
+  const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
+  const [appealSubmitted, setAppealSubmitted] = useState(false);
 
   const formValid = useMemo(() => {
     return KENYAN_PHONE_REGEX.test(phone.trim()) && password.length > 0;
   }, [password.length, phone]);
+
+  const isBanAppealMode = authModal === "login" && Boolean(banAppealToken);
+
+  useEffect(() => {
+    if (authModal !== "login") {
+      setBanAppealToken(null);
+      setBanAppealText("");
+      setAppealSubmitted(false);
+    }
+  }, [authModal]);
 
   const handlePhoneChange = useCallback(
     (value: string) => {
@@ -151,13 +187,51 @@ export default function LoginModal() {
       setMfaQrCodeDataUrl(null);
       setMfaManualEntryKey(null);
     } catch (error: unknown) {
-      const message = getLoginErrorMessage(error);
+      const banError = getBanErrorPayload(error);
+      if ((banError as any).appealToken) {
+        setBanAppealToken((banError as any).appealToken);
+        setBanAppealText("");
+        setErrorMessage((banError as any).message);
+        toast.error((banError as any).message);
+        return;
+      }
+
+      const message = (banError as any).message || "Invalid phone number or password.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const handleSubmitAppeal = async () => {
+    if (!banAppealToken || banAppealText.trim().length < 10) {
+      setErrorMessage("Please provide at least 10 characters for your appeal.");
+      return;
+    }
+
+    setIsSubmittingAppeal(true);
+    setErrorMessage("");
+    try {
+      await api.post("/appeals/public", {
+        appealToken: banAppealToken,
+        appealText: banAppealText.trim(),
+      });
+
+      setAppealSubmitted(true);
+      toast.success("Appeal submitted successfully.");
+    } catch (error: unknown) {
+      const message =
+        isAxiosError<{ message?: string }>(error) &&
+        typeof error.response?.data?.message === "string"
+          ? error.response.data.message
+          : "Failed to submit appeal.";
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsSubmittingAppeal(false);
+    }
+  };
 
   const handleClose = () => {
     closeAuthModal();
@@ -169,6 +243,9 @@ export default function LoginModal() {
     setMfaQrCodeDataUrl(null);
     setMfaManualEntryKey(null);
     setErrorMessage("");
+    setBanAppealToken(null);
+    setBanAppealText("");
+    setAppealSubmitted(false);
   };
 
   if (authModal !== "login") return null;
@@ -214,7 +291,77 @@ export default function LoginModal() {
             </div>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          {isBanAppealMode ? (
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="mt-0.5 h-5 w-5 text-amber-300" />
+                  <div>
+                    <p className="font-semibold">Account banned</p>
+                    <p className="mt-1 text-sm text-amber-100/80 whitespace-pre-wrap">
+                      {errorMessage || "Your account is currently banned."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {appealSubmitted ? (
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-100">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 text-emerald-300" />
+                    <div>
+                      <p className="font-semibold">Appeal submitted</p>
+                      <p className="mt-1 text-sm text-emerald-100/80">
+                        An admin will review your appeal and respond from the
+                        users dashboard.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label
+                      className="text-sm font-semibold text-white"
+                      htmlFor="ban-appeal"
+                    >
+                      Appeal message
+                    </label>
+                    <textarea
+                      id="ban-appeal"
+                      value={banAppealText}
+                      onChange={(e) => setBanAppealText(e.target.value)}
+                      placeholder="Explain why you believe the ban should be reviewed."
+                      className="min-h-32 w-full rounded-xl border border-[#3d6ba3]/40 bg-[#1a3a6b]/60 px-4 py-3 text-sm text-white placeholder-[#a8c4e0] outline-none transition-all duration-200 hover:border-[#3d6ba3]/60 focus:border-[#f5c518]/70 focus:bg-[#1a3a6b] focus:ring-2 focus:ring-[#f5c518]/30"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBanAppealToken(null);
+                        setBanAppealText("");
+                        setErrorMessage("");
+                      }}
+                      className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmitAppeal}
+                      disabled={isSubmittingAppeal}
+                      className="flex-1 rounded-xl bg-gradient-to-r from-[#f5c518] to-[#e6b800] px-4 py-3 text-sm font-semibold text-[#0d2137] transition hover:brightness-105 disabled:opacity-60"
+                    >
+                      {isSubmittingAppeal ? "Submitting..." : "Submit Appeal"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <form className="space-y-5" onSubmit={handleSubmit}>
             {/* Error Message */}
             {errorMessage && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/15 px-4 py-3 text-sm text-red-300 font-medium animate-in fade-in whitespace-pre-wrap">
@@ -281,7 +428,8 @@ export default function LoginModal() {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                  </form>
+                )}
                     className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-300 transition-colors"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
