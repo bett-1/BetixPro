@@ -21,9 +21,10 @@ import {
   useUsers,
   type User,
 } from "@/hooks/useUsers";
-import { MoreVertical } from "lucide-react";
+import { Eye, EyeOff, MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AdminButton,
   AdminCard,
@@ -60,8 +61,9 @@ export default function Users() {
   });
   const [passwordData, setPasswordData] = useState({
     password: "",
-    confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPasswordDialog, setConfirmPasswordDialog] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     fullName: "",
     email: "",
