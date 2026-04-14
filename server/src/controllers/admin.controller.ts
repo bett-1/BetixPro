@@ -1794,7 +1794,7 @@ export async function banUser(req: Request, res: Response) {
   const parsedBody = banBodySchema.safeParse(req.body);
   if (!parsedBody.success) {
     return res.status(400).json({
-      message: "Invalid request body",
+      message: "Invalid ban reason format",
       errors: parsedBody.error.flatten().fieldErrors,
     });
   }
