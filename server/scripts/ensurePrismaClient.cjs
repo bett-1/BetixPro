@@ -53,7 +53,10 @@ function ensurePrismaLink() {
         fs.rmSync(linkPath, { recursive: true, force: true });
         console.log("[prisma-link] removed existing broken link");
       } catch (rmErr) {
-        console.error("[prisma-link] failed to remove existing link:", rmErr.message);
+        console.error(
+          "[prisma-link] failed to remove existing link:",
+          rmErr.message,
+        );
       }
     }
   }
