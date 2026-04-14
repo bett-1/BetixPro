@@ -1986,6 +1986,12 @@ export async function updateUserPassword(req: Request, res: Response) {
       .json({ message: "Password must be at least 6 characters" });
   }
 
+  if (password.length > 128) {
+    return res
+      .status(400)
+      .json({ message: "Password must be at most 128 characters" });
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
@@ -1994,28 +2000,35 @@ export async function updateUserPassword(req: Request, res: Response) {
     return res.status(404).json({ message: "User not found" });
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  try {
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      passwordHash: hashedPassword,
-    },
-    select: {
-      id: true,
-      email: true,
-      fullName: true,
-    },
-  });
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: hashedPassword,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+      },
+    });
 
-  return res.status(200).json({
-    message: "User password updated successfully",
-    user: {
-      id: updatedUser.id,
-      email: updatedUser.email,
-      fullName: updatedUser.fullName,
-    },
-  });
+    return res.status(200).json({
+      message: "User password updated successfully",
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+      },
+    });
+  } catch (error: any) {
+    console.error("Password update error:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to update password. Please try again." });
+  }
 }
 
 // Get admin payments (deposits and transactions)

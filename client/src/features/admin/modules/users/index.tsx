@@ -24,7 +24,6 @@ import {
 import { Eye, EyeOff, MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AdminButton,
   AdminCard,
@@ -60,12 +59,9 @@ export default function Users() {
     isVerified: false,
   });
   const [passwordData, setPasswordData] = useState({
-    oldPassword: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [confirmPasswordDialog, setConfirmPasswordDialog] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     fullName: "",
     email: "",
@@ -94,6 +90,7 @@ export default function Users() {
   };
 
   const handleOpenEdit = (user: User) => {
+    setSelectedUserId(null);
     setEditingUserId(user.id);
     setFormData({
       fullName: user.name || "",
@@ -105,22 +102,25 @@ export default function Users() {
   };
 
   const handleOpenBan = (userId: string) => {
+    setSelectedUserId(null);
     setActionDialog({ type: "ban", userId });
     setActionReason("");
   };
 
   const handleOpenUnban = (userId: string) => {
+    setSelectedUserId(null);
     setActionDialog({ type: "unban", userId });
   };
 
   const handleOpenChangePassword = (userId: string) => {
-    setPasswordData({ oldPassword: "", password: "" });
+    setSelectedUserId(null);
+    setPasswordData({ password: "" });
     setShowPassword(false);
-    setShowOldPassword(false);
     setActionDialog({ type: "changePassword", userId });
   };
 
   const handleOpenCreate = () => {
+    setSelectedUserId(null);
     setCreateFormData({
       fullName: "",
       email: "",
@@ -155,22 +155,17 @@ export default function Users() {
     }
   };
 
-  const handleChangePassword = () => {
-    if (!passwordData.password) return;
-    setConfirmPasswordDialog(true);
-  };
-
-  const handleConfirmPasswordChange = async () => {
-    if (!actionDialog?.userId) return;
+  const handleChangePassword = async () => {
+    if (!passwordData.password || !actionDialog?.userId) return;
     setIsSubmitting(true);
     try {
       await updateUserPasswordAction(actionDialog.userId, {
         password: passwordData.password,
         confirmPassword: passwordData.password,
       });
+      void refetch();
       setPasswordData({ password: "" });
       setShowPassword(false);
-      setConfirmPasswordDialog(false);
       setActionDialog(null);
       toast.success("Password updated successfully");
     } catch (err: any) {
@@ -452,7 +447,7 @@ export default function Users() {
       )}
 
       <Dialog
-        open={!!selectedUserId && !actionDialog}
+        open={!!selectedUserId && actionDialog === null}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedUserId(null);
@@ -804,9 +799,8 @@ export default function Users() {
         onOpenChange={(open) => {
           if (!open) {
             setActionDialog(null);
-            setPasswordData({ oldPassword: "", password: "" });
+            setPasswordData({ password: "" });
             setShowPassword(false);
-            setShowOldPassword(false);
           }
         }}
       >
@@ -828,32 +822,6 @@ export default function Users() {
             </div>
             <div>
               <label className="text-sm font-semibold text-admin-text-primary">
-                Old Password
-              </label>
-              <div className="relative mt-2">
-                <Input
-                  type={showOldPassword ? "text" : "password"}
-                  value={passwordData.oldPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      oldPassword: e.target.value,
-                    })
-                  }
-                  placeholder="Current password"
-                  className={`${adminInputClassName} pr-10`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOldPassword(!showOldPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary transition-colors"
-                >
-                  {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
                 New Password
               </label>
               <div className="relative mt-2">
@@ -862,7 +830,6 @@ export default function Users() {
                   value={passwordData.password}
                   onChange={(e) =>
                     setPasswordData({
-                      ...passwordData,
                       password: e.target.value,
                     })
                   }
@@ -884,9 +851,8 @@ export default function Users() {
                 className="flex-1 mt-4"
                 onClick={() => {
                   setActionDialog(null);
-                  setPasswordData({ oldPassword: "", password: "" });
+                  setPasswordData({ password: "" });
                   setShowPassword(false);
-                  setShowOldPassword(false);
                 }}
               >
                 Cancel
@@ -894,25 +860,14 @@ export default function Users() {
               <AdminButton
                 className="flex-1 mt-4"
                 onClick={handleChangePassword}
-                disabled={!passwordData.oldPassword || !passwordData.password}
+                disabled={!passwordData.password || isSubmitting}
               >
-                Update Password
+                {isSubmitting ? "Updating..." : "Update Password"}
               </AdminButton>
             </div>
           </div>
         </AdminDialogContent>
       </Dialog>
-
-      <ConfirmDialog
-        open={confirmPasswordDialog}
-        onOpenChange={setConfirmPasswordDialog}
-        title="Confirm Password Change"
-        description={`Old Password: ${passwordData.oldPassword}\n\nNew Password: ${passwordData.password}`}
-        confirmText="Change Password"
-        cancelText="Cancel"
-        onConfirm={handleConfirmPasswordChange}
-        isLoading={isSubmitting}
-      />
 
       <Dialog
         open={actionDialog?.type === "create"}
