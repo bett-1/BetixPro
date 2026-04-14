@@ -2018,7 +2018,9 @@ export async function updateUserPassword(req: Request, res: Response) {
       },
     });
 
-    console.log(`[AdminPasswordUpdate] Password updated for user ${updatedUser.email}`);
+    console.log(
+      `[AdminPasswordUpdate] Password updated for user ${updatedUser.email}`,
+    );
 
     return res.status(200).json({
       message: "User password updated successfully",

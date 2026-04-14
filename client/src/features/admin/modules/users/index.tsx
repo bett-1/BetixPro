@@ -157,31 +157,34 @@ export default function Users() {
 
   const handleChangePassword = async () => {
     if (!passwordData.password || !actionDialog?.userId) return;
-    
+
     if (passwordData.password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const response = await updateUserPasswordAction(actionDialog.userId, {
         password: passwordData.password,
         confirmPassword: passwordData.password,
       });
-      
+
       // Verify the response indicates success
       if (!response || !response.user) {
         throw new Error("Invalid response from server");
       }
-      
+
       void refetch();
       setPasswordData({ password: "" });
       setShowPassword(false);
       setActionDialog(null);
       toast.success("Password updated successfully for " + response.user.email);
     } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || "Failed to change password";
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to change password";
       toast.error(message);
       console.error("Password change error:", err);
     } finally {
@@ -820,9 +823,12 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-admin-accent">Change User Password</DialogTitle>
+            <DialogTitle className="text-admin-accent">
+              Change User Password
+            </DialogTitle>
             <DialogDescription>
-              Set a new password for this user account. They will need to use this password to log in.
+              Set a new password for this user account. They will need to use
+              this password to log in.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
@@ -866,22 +872,30 @@ export default function Users() {
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex-1 bg-admin-border/30 rounded-full h-1 overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full transition-all ${
-                      passwordData.password.length === 0 ? 'w-0' :
-                      passwordData.password.length < 6 ? 'w-1/3 bg-admin-red' :
-                      passwordData.password.length < 8 ? 'w-1/2 bg-admin-gold' :
-                      passwordData.password.length < 12 ? 'w-2/3 bg-admin-blue' :
-                      'w-full bg-admin-accent'
+                      passwordData.password.length === 0
+                        ? "w-0"
+                        : passwordData.password.length < 6
+                          ? "w-1/3 bg-admin-red"
+                          : passwordData.password.length < 8
+                            ? "w-1/2 bg-admin-gold"
+                            : passwordData.password.length < 12
+                              ? "w-2/3 bg-admin-blue"
+                              : "w-full bg-admin-accent"
                     }`}
                   />
                 </div>
                 <p className="text-xs text-admin-text-muted whitespace-nowrap">
-                  {passwordData.password.length === 0 ? '—' :
-                   passwordData.password.length < 6 ? 'Too short' :
-                   passwordData.password.length < 8 ? 'Weak' :
-                   passwordData.password.length < 12 ? 'Medium' :
-                   'Strong'}
+                  {passwordData.password.length === 0
+                    ? "—"
+                    : passwordData.password.length < 6
+                      ? "Too short"
+                      : passwordData.password.length < 8
+                        ? "Weak"
+                        : passwordData.password.length < 12
+                          ? "Medium"
+                          : "Strong"}
                 </p>
               </div>
             </div>
@@ -901,7 +915,11 @@ export default function Users() {
               <AdminButton
                 className="flex-1 bg-admin-accent hover:bg-admin-accent/90"
                 onClick={handleChangePassword}
-                disabled={!passwordData.password || passwordData.password.length < 6 || isSubmitting}
+                disabled={
+                  !passwordData.password ||
+                  passwordData.password.length < 6 ||
+                  isSubmitting
+                }
               >
                 {isSubmitting ? "Updating..." : "Update Password"}
               </AdminButton>

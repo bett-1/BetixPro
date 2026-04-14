@@ -364,7 +364,12 @@ export function AdminStatCard({
         <p className="text-[8px] font-semibold uppercase tracking-[0.08em] text-admin-text-muted sm:text-[9px]">
           {label}
         </p>
-        <p className={cn("text-base font-bold sm:text-lg", toneTextClasses[tone])}>
+        <p
+          className={cn(
+            "text-base font-bold sm:text-lg",
+            toneTextClasses[tone],
+          )}
+        >
           {value}
         </p>
       </div>
@@ -591,10 +596,7 @@ export function FinancialTrendChart({ data }: { data: any[] }) {
           stroke="rgba(168,196,224,0.7)"
           style={{ fontSize: "12px" }}
         />
-        <YAxis
-          stroke="rgba(168,196,224,0.7)"
-          style={{ fontSize: "12px" }}
-        />
+        <YAxis stroke="rgba(168,196,224,0.7)" style={{ fontSize: "12px" }} />
         <Tooltip
           contentStyle={{
             background:
@@ -655,10 +657,7 @@ export function DepositWithdrawalChart({
           stroke="rgba(168,196,224,0.62)"
           style={{ fontSize: "11px" }}
         />
-        <YAxis
-          stroke="rgba(168,196,224,0.62)"
-          style={{ fontSize: "11px" }}
-        />
+        <YAxis stroke="rgba(168,196,224,0.62)" style={{ fontSize: "11px" }} />
         <Tooltip
           contentStyle={{
             background:
