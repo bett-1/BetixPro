@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
+import { emitNotificationUpdate } from "../lib/socket";
 import {
   adminSettingsSchema,
   type AdminSettingsConfig,
@@ -1742,6 +1743,20 @@ export async function getUserDetails(req: Request, res: Response) {
       role: true,
       createdAt: true,
       updatedAt: true,
+      banAppeals: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          appealText: true,
+          status: true,
+          responseText: true,
+          createdAt: true,
+          updatedAt: true,
+          reviewedAt: true,
+          reviewedBy: true,
+        },
+      },
       wallet: {
         select: { balance: true },
       },
@@ -1773,6 +1788,18 @@ export async function getUserDetails(req: Request, res: Response) {
     updatedAt: user.updatedAt.toISOString(),
     totalBets: user.transactions.length,
     bannedAt: user.bannedAt?.toISOString() || null,
+    banAppeal: user.banAppeals[0]
+      ? {
+          id: user.banAppeals[0].id,
+          appealText: user.banAppeals[0].appealText,
+          status: user.banAppeals[0].status,
+          responseText: user.banAppeals[0].responseText,
+          createdAt: user.banAppeals[0].createdAt.toISOString(),
+          updatedAt: user.banAppeals[0].updatedAt.toISOString(),
+          reviewedAt: user.banAppeals[0].reviewedAt?.toISOString() || null,
+          reviewedBy: user.banAppeals[0].reviewedBy || null,
+        }
+      : null,
   });
 }
 
@@ -2736,6 +2763,37 @@ export async function respondToBanAppeal(req: Request, res: Response) {
         },
       },
     },
+  });
+
+  const userNotificationTitle =
+    newStatus === "APPROVED" ? "Ban Appeal Approved" : "Ban Appeal Rejected";
+  const userNotificationMessage =
+    newStatus === "APPROVED"
+      ? `Your ban appeal was approved. Your account has been restored. Admin response: ${responseText.trim()}`
+      : `Your ban appeal was rejected. Admin response: ${responseText.trim()}`;
+  const userNotificationCreatedAt = new Date().toISOString();
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: appeal.userId,
+        audience: "USER" as const,
+        type: "SYSTEM" as const,
+        title: userNotificationTitle,
+        message: userNotificationMessage,
+        transactionId: appeal.id,
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  emitNotificationUpdate(appeal.userId, {
+    audience: "USER",
+    type: "SYSTEM",
+    title: userNotificationTitle,
+    message: userNotificationMessage,
+    transactionId: appeal.id,
+    createdAt: userNotificationCreatedAt,
   });
 
   return res.status(200).json({

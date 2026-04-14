@@ -18,6 +18,16 @@ export interface UserDetail extends User {
   role: string;
   bannedAt: string | null;
   banReason?: string | null;
+  banAppeal?: {
+    id: string;
+    appealText: string;
+    status: "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
+    responseText: string | null;
+    createdAt: string;
+    updatedAt: string;
+    reviewedAt: string | null;
+    reviewedBy: string | null;
+  } | null;
 }
 
 export interface GetUsersResponse {
