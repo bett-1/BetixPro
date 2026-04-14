@@ -574,11 +574,7 @@ export default function Users() {
                         {selectedUser.banAppeal.status}
                       </p>
                     </div>
-                    <AdminButton
-                      size="sm"
-                      variant="ghost"
-                      className="px-0"
-                    >
+                    <AdminButton size="sm" variant="ghost" className="px-0">
                       <Link
                         className="inline-flex h-full w-full items-center justify-center px-3"
                         to="/admin/appeals/$appealId"

@@ -5,6 +5,6 @@ export const adminAppealsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: "/appeals",
   component: lazyRouteComponent(
-    () => import("@/features/admin/modules/appeals"),
+    () => import("@/features/admin/modules/appeals/overview"),
   ),
 });

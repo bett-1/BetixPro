@@ -82,7 +82,15 @@ export default function BanAppealReviewPage() {
                   Appeal Status
                 </p>
                 <div className="mt-2">
-                  <StatusBadge status={latestStatus === "PENDING" ? "pending" : latestStatus === "APPROVED" ? "active" : "banned"} />
+                  <StatusBadge
+                    status={
+                      latestStatus === "PENDING"
+                        ? "pending"
+                        : latestStatus === "APPROVED"
+                          ? "active"
+                          : "banned"
+                    }
+                  />
                 </div>
               </div>
               <div className="text-right">
@@ -180,17 +188,17 @@ export default function BanAppealReviewPage() {
               </div>
 
               <div className="flex gap-2">
-                <AdminButton
-                  variant="ghost"
-                  className="flex-1"
-                  asChild
-                >
+                <AdminButton variant="ghost" className="flex-1" asChild>
                   <Link to="/admin/users">Cancel</Link>
                 </AdminButton>
                 <AdminButton
                   className="flex-1 bg-admin-accent hover:bg-admin-accent/90"
                   onClick={() => void handleSubmit()}
-                  disabled={!canRespond || isSubmitting || responseText.trim().length < 10}
+                  disabled={
+                    !canRespond ||
+                    isSubmitting ||
+                    responseText.trim().length < 10
+                  }
                 >
                   {isSubmitting ? "Submitting..." : "Send Response"}
                 </AdminButton>

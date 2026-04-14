@@ -498,6 +498,16 @@ export default function AdminShell() {
                               type="button"
                               onClick={() => {
                                 setNotificationsOpen(false);
+                                if (isBanAppealNotification(notification)) {
+                                  void navigate({
+                                    to: "/admin/appeals/$appealId",
+                                    params: {
+                                      appealId:
+                                        notification.transactionId ?? "",
+                                    },
+                                  });
+                                  return;
+                                }
                                 if (isWithdrawalNotification(notification)) {
                                   void navigate({
                                     to: "/admin/withdrawals",
