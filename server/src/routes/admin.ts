@@ -138,12 +138,7 @@ adminRouter.put(
 );
 
 // Ban Appeals Management
-adminRouter.get(
-  "/admin/appeals",
-  authenticate,
-  requireAdmin,
-  getBanAppeals,
-);
+adminRouter.get("/admin/appeals", authenticate, requireAdmin, getBanAppeals);
 adminRouter.get(
   "/admin/appeals/:appealId",
   authenticate,
