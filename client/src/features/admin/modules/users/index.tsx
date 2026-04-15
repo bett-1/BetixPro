@@ -347,9 +347,6 @@ export default function Users() {
                           </span>
                         </div>
                       </div>
-                    </Link>
-                  ))}
-              </div>
             </div>
           </div>
         </AdminCard>
@@ -609,8 +606,6 @@ export default function Users() {
                   </div>
                 </div>
               </div>
-
-
 
               {/* Action Buttons */}
               <div className="border-t border-white/10 pt-4">

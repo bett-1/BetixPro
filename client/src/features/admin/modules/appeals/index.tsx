@@ -57,9 +57,12 @@ export default function BanAppealReviewPage() {
         title="Ban Appeal Review"
         subtitle="Review the ban appeal, respond to the user, and lift the ban if approved."
         actions={
-          <AdminButton variant="ghost" asChild>
-            <Link to="/admin/users">Back to Users</Link>
-          </AdminButton>
+          <Link
+            to="/admin/users"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-admin-border/70 bg-admin-surface/45 text-admin-text-secondary hover:border-admin-border-strong hover:bg-admin-hover hover:text-admin-text-primary h-8 px-2.5 text-[11px] font-medium transition duration-200"
+          >
+            Back to Users
+          </Link>
         }
       />
 
@@ -188,9 +191,12 @@ export default function BanAppealReviewPage() {
               </div>
 
               <div className="flex gap-2">
-                <AdminButton variant="ghost" className="flex-1" asChild>
-                  <Link to="/admin/users">Cancel</Link>
-                </AdminButton>
+                <Link
+                  to="/admin/users"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-admin-border/70 bg-admin-surface/45 text-admin-text-secondary hover:border-admin-border-strong hover:bg-admin-hover hover:text-admin-text-primary h-9 px-3.5 text-sm font-medium transition duration-200 flex-1"
+                >
+                  Cancel
+                </Link>
                 <AdminButton
                   className="flex-1 bg-admin-accent hover:bg-admin-accent/90"
                   onClick={() => void handleSubmit()}
