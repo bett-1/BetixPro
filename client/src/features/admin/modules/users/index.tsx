@@ -308,6 +308,50 @@ export default function Users() {
         </AdminCard>
       )}
 
+      {/* Pending Appeals Section */}
+      {users.some((u) => u.banAppeal?.status === "PENDING") && (
+        <AdminCard className="border-admin-accent/30 bg-gradient-to-br from-[rgba(15,118,110,0.12)] to-[rgba(15,118,110,0.04)] p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-admin-accent mb-2">
+                ⚡ Pending Appeals
+              </p>
+              <p className="text-sm text-admin-text-primary mb-4">
+                Users with pending ban appeals awaiting your review
+              </p>
+              <div className="space-y-2">
+                {users
+                  .filter((u) => u.banAppeal?.status === "PENDING")
+                  .map((user) => (
+                    <Link
+                      key={user.id}
+                      to="/admin/appeals/$appealId"
+                      params={{ appealId: user.banAppeal!.id }}
+                      className="flex items-center justify-between rounded-lg border border-admin-accent/20 bg-admin-accent/8 p-3 hover:bg-admin-accent/12 transition-colors group"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-admin-text-primary truncate">
+                          {user.email}
+                        </p>
+                        <p className="text-xs text-admin-text-muted truncate">
+                          {user.banAppeal?.appealText.slice(0, 60)}...
+                        </p>
+                      </div>
+                      <div className="ml-4 flex-shrink-0">
+                        <div className="inline-flex items-center justify-center rounded-full bg-admin-accent/20 px-3 py-1 group-hover:bg-admin-accent/30 transition-colors">
+                          <span className="text-xs font-semibold text-admin-accent">
+                            Review →
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </AdminCard>
+      )}
+
       <div className="space-y-4">
         <Input
           placeholder="Search by email, name, or phone..."
@@ -414,16 +458,7 @@ export default function Users() {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className={adminTableCellClassName}>
-                      <div className={`${adminCompactActionsClassName} gap-1.5`}>
-                        {user.banAppeal?.status === "PENDING" && (
-                          <Link
-                            to="/admin/appeals/$appealId"
-                            params={{ appealId: user.banAppeal.id }}
-                            className="inline-flex h-8 items-center justify-center rounded-lg bg-admin-accent/10 px-2 text-xs font-medium text-admin-accent hover:bg-admin-accent/20 transition-colors"
-                          >
-                            Appeal
-                          </Link>
-                        )}
+                      <div className={adminCompactActionsClassName}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <AdminButton size="sm" variant="ghost">
@@ -681,12 +716,12 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update user information</DialogDescription>
+            <DialogTitle className="text-base">✏️ Edit User</DialogTitle>
+            <DialogDescription>Update user account information</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
+          <div className="space-y-5 px-6 py-6">
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
                 Full Name
               </label>
               <Input
@@ -695,11 +730,11 @@ export default function Users() {
                   setFormData({ ...formData, fullName: e.target.value })
                 }
                 placeholder="John Doe"
-                className={`mt-2 ${adminInputClassName}`}
+                className={`${adminInputClassName}`}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
                 Email
               </label>
               <Input
@@ -709,11 +744,14 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 disabled
-                className={`mt-2 ${adminInputClassName} opacity-50`}
+                className={`${adminInputClassName} opacity-50 cursor-not-allowed`}
               />
+              <p className="mt-1.5 text-xs text-admin-text-muted">
+                Email cannot be changed
+              </p>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
                 Phone
               </label>
               <Input
@@ -723,30 +761,31 @@ export default function Users() {
                 }
                 placeholder="+254712345678"
                 disabled
-                className={`mt-2 ${adminInputClassName} opacity-50`}
+                className={`${adminInputClassName} opacity-50 cursor-not-allowed`}
               />
+              <p className="mt-1.5 text-xs text-admin-text-muted">
+                Phone cannot be changed
+              </p>
             </div>
-            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
-              <input
-                type="checkbox"
-                id="verified"
-                checked={formData.isVerified}
-                onChange={(e) =>
-                  setFormData({ ...formData, isVerified: e.target.checked })
-                }
-                className="cursor-pointer"
-              />
-              <label
-                htmlFor="verified"
-                className="text-sm text-admin-text-primary cursor-pointer flex-1"
-              >
-                Mark as verified
+            <div className="rounded-xl border border-admin-accent/20 bg-admin-accent/8 p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isVerified}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isVerified: e.target.checked })
+                  }
+                  className="w-4 h-4 accent-admin-accent"
+                />
+                <span className="text-sm font-medium text-admin-text-primary">
+                  Mark as verified
+                </span>
               </label>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => {
                   setActionDialog(null);
                   setEditingUserId(null);
@@ -755,11 +794,11 @@ export default function Users() {
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleSaveEdit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </AdminButton>
             </div>
           </div>
@@ -777,37 +816,46 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-red-400">Ban User</DialogTitle>
+            <DialogTitle className="text-base text-admin-red">🚫 Ban User</DialogTitle>
             <DialogDescription>
-              This action is permanent and will prevent the user from accessing
-              the platform.
+              This will restrict the user from accessing the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-red/30 bg-admin-red/10 p-3">
-              <p className="text-xs font-semibold text-admin-red uppercase">
-                Warning
+          <div className="space-y-5 px-6 py-6">
+            <div className="rounded-xl border border-admin-red/30 bg-admin-red/8 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-admin-red mb-2">
+                ⚠️ Warning
               </p>
-              <p className="text-sm text-admin-red/80 mt-1">
-                Banning this user cannot be undone. Ensure you have a valid
-                reason.
-              </p>
+              <ul className="text-sm text-admin-red/80 space-y-1.5">
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>User will be locked out immediately</span>
+                </li>
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>All active sessions will be terminated</span>
+                </li>
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>They can appeal the ban</span>
+                </li>
+              </ul>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
-                Reason for ban (optional)
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
+                Reason (optional)
               </label>
               <Input
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
-                placeholder="E.g., Fraudulent activity, Terms violation"
-                className={`mt-2 ${adminInputClassName}`}
+                placeholder="E.g., Fraudulent activity, Terms violation..."
+                className={`${adminInputClassName}`}
               />
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => {
                   setActionDialog(null);
                   setActionReason("");
@@ -817,7 +865,7 @@ export default function Users() {
               </AdminButton>
               <AdminButton
                 tone="red"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleBanUser}
                 disabled={isSubmitting}
               >
@@ -838,30 +886,30 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Unban User</DialogTitle>
+            <DialogTitle className="text-base">✅ Unban User</DialogTitle>
             <DialogDescription>
-              Lift the ban and restore the user's access to the platform.
+              Restore the user's access to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/10 p-3">
-              <p className="text-xs font-semibold text-admin-accent uppercase">
-                Confirm Action
+          <div className="space-y-5 px-6 py-6">
+            <div className="rounded-xl border border-admin-accent/30 bg-admin-accent/8 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-admin-accent mb-2">
+                ✓ Confirm Action
               </p>
-              <p className="text-sm text-admin-accent/80 mt-1">
-                This will restore the user's full access to the platform.
+              <p className="text-sm text-admin-accent/80">
+                This will immediately restore the user's access and remove any ban restrictions.
               </p>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => setActionDialog(null)}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleUnbanUser}
                 disabled={isSubmitting}
               >
