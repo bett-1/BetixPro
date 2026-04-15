@@ -144,12 +144,7 @@ export default function WithdrawalsAdmin() {
 
   // Optimized stats calculation (Single pass instead of 4 filter/reduce loops)
   const stats = useMemo(() => {
-    const {
-      pendingCount,
-      pendingAmount,
-      processingCount,
-      completedCount,
-    } =
+    const { pendingCount, pendingAmount, processingCount, completedCount } =
       withdrawals.reduce(
         (acc, w) => {
           if (w.status === "pending") {
