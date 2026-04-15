@@ -8,8 +8,10 @@ const prisma = new PrismaClient();
 
 const demoDomain = "betwise.demo";
 const demoSeed = process.env.SEED?.trim() || "betwise-demo";
-const demoAdminPassword = process.env.DEMO_ADMIN_PASSWORD?.trim() || "DemoAdmin@123";
-const demoUserPassword = process.env.DEMO_USER_PASSWORD?.trim() || "DemoUser@123";
+const demoAdminPassword =
+  process.env.DEMO_ADMIN_PASSWORD?.trim() || "DemoAdmin@123";
+const demoUserPassword =
+  process.env.DEMO_USER_PASSWORD?.trim() || "DemoUser@123";
 
 type DemoOptions = {
   reset: boolean;
@@ -112,7 +114,10 @@ const lastNames = [
 ];
 
 const sports = [
-  { sportKey: "soccer", leagues: ["Premier League", "La Liga", "Serie A", "UCL"] },
+  {
+    sportKey: "soccer",
+    leagues: ["Premier League", "La Liga", "Serie A", "UCL"],
+  },
   { sportKey: "basketball", leagues: ["NBA", "EuroLeague", "AfroBasket"] },
   { sportKey: "tennis", leagues: ["ATP Tour", "WTA Tour", "Challenger"] },
   { sportKey: "rugby", leagues: ["Six Nations", "Premiership Rugby", "URC"] },
@@ -272,7 +277,9 @@ function buildMarketSelections() {
     for (const marketType of markets) {
       for (const side of marketSides[marketType]) {
         const rawOdds = Number((1.1 + rng() * 3.2).toFixed(2));
-        const displayOdds = Number((rawOdds * (0.96 + rng() * 0.08)).toFixed(2));
+        const displayOdds = Number(
+          (rawOdds * (0.96 + rng() * 0.08)).toFixed(2),
+        );
 
         selections.push({
           bookmakerId: bookmaker.bookmakerId,
@@ -354,9 +361,13 @@ async function seedUsers(options: DemoOptions) {
   for (let index = 1; index <= options.adminCount; index += 1) {
     admins.push({
       id: randomUUID(),
-      email: index === 1 ? `admin@${demoDomain}` : `ops.${pad(index - 1, 2)}@${demoDomain}`,
+      email:
+        index === 1
+          ? `admin@${demoDomain}`
+          : `ops.${pad(index - 1, 2)}@${demoDomain}`,
       phone: index === 1 ? "+254700000001" : makePhone(100 + index),
-      fullName: index === 1 ? "Demo Admin" : `Operations Admin ${pad(index, 2)}`,
+      fullName:
+        index === 1 ? "Demo Admin" : `Operations Admin ${pad(index, 2)}`,
       role: "ADMIN",
       accountStatus: "ACTIVE",
       bannedAt: null,
@@ -365,7 +376,8 @@ async function seedUsers(options: DemoOptions) {
   }
 
   for (let index = 1; index <= options.userCount; index += 1) {
-    const isBanned = index === options.userCount - 1 || index === options.userCount;
+    const isBanned =
+      index === options.userCount - 1 || index === options.userCount;
     regularUsers.push({
       id: randomUUID(),
       email: makeEmail("demo.user", index),
@@ -374,7 +386,9 @@ async function seedUsers(options: DemoOptions) {
       role: "USER",
       accountStatus: index % 11 === 0 ? "SUSPENDED" : "ACTIVE",
       bannedAt: isBanned ? new Date(Date.now() - index * 60 * 60 * 1000) : null,
-      banReason: isBanned ? "Repeated suspicious betting patterns in demo data" : null,
+      banReason: isBanned
+        ? "Repeated suspicious betting patterns in demo data"
+        : null,
     });
   }
 
@@ -423,7 +437,10 @@ async function seedNewsletterSubscriptions(count: number) {
   const records = Array.from({ length: count }, (_, index) => ({
     email: `newsletter.${pad(index + 1, 2)}@${demoDomain}`,
     isActive: index % 5 !== 0,
-    unsubscribedAt: index % 5 === 0 ? new Date(Date.now() - index * 24 * 60 * 60 * 1000) : null,
+    unsubscribedAt:
+      index % 5 === 0
+        ? new Date(Date.now() - index * 24 * 60 * 60 * 1000)
+        : null,
   }));
 
   await prisma.newsletterSubscription.createMany({ data: records });
@@ -452,8 +469,10 @@ async function seedEvents(count: number) {
         awayTeam: away,
         commenceTime,
         status,
-        homeScore: status === "FINISHED" || status === "LIVE" ? randomInt(0, 5) : null,
-        awayScore: status === "FINISHED" || status === "LIVE" ? randomInt(0, 5) : null,
+        homeScore:
+          status === "FINISHED" || status === "LIVE" ? randomInt(0, 5) : null,
+        awayScore:
+          status === "FINISHED" || status === "LIVE" ? randomInt(0, 5) : null,
         rawData: {
           source: "demo-seed",
           sportKey: sport.sportKey,
@@ -530,8 +549,13 @@ async function seedTransactionsAndBets(
   oddsByEvent: Map<string, OddsSelection[]>,
   betCount: number,
 ) {
-  const activeUsers = users.filter((user) => user.role === "USER" && user.accountStatus === "ACTIVE" && !user.bannedAt);
-  const walletByUserId = new Map(wallets.map((wallet) => [wallet.userId, wallet]));
+  const activeUsers = users.filter(
+    (user) =>
+      user.role === "USER" && user.accountStatus === "ACTIVE" && !user.bannedAt,
+  );
+  const walletByUserId = new Map(
+    wallets.map((wallet) => [wallet.userId, wallet]),
+  );
   const walletBalance = new Map(wallets.map((wallet) => [wallet.walletId, 0]));
 
   for (const user of activeUsers) {
@@ -541,7 +565,10 @@ async function seedTransactionsAndBets(
     }
 
     const openingDeposit = randomInt(15000, 60000);
-    walletBalance.set(wallet.walletId, (walletBalance.get(wallet.walletId) || 0) + openingDeposit);
+    walletBalance.set(
+      wallet.walletId,
+      (walletBalance.get(wallet.walletId) || 0) + openingDeposit,
+    );
 
     await prisma.walletTransaction.create({
       data: {
@@ -566,7 +593,10 @@ async function seedTransactionsAndBets(
 
     if (rng() > 0.4) {
       const bonusAmount = randomInt(500, 5000);
-      walletBalance.set(wallet.walletId, (walletBalance.get(wallet.walletId) || 0) + bonusAmount);
+      walletBalance.set(
+        wallet.walletId,
+        (walletBalance.get(wallet.walletId) || 0) + bonusAmount,
+      );
 
       await prisma.walletTransaction.create({
         data: {
@@ -582,19 +612,25 @@ async function seedTransactionsAndBets(
           description: "Demo welcome bonus",
           providerResponseCode: "0",
           providerResponseDescription: "Credited",
-          processedAt: new Date(Date.now() - randomInt(1, 10) * 24 * 60 * 60 * 1000),
+          processedAt: new Date(
+            Date.now() - randomInt(1, 10) * 24 * 60 * 60 * 1000,
+          ),
         },
       });
     }
   }
 
-  const availableEvents = events.filter((event) => oddsByEvent.get(event.eventId)?.some((selection) => selection.isVisible));
+  const availableEvents = events.filter((event) =>
+    oddsByEvent.get(event.eventId)?.some((selection) => selection.isVisible),
+  );
 
   for (let index = 0; index < betCount; index += 1) {
     const user = pick(activeUsers);
     const wallet = walletByUserId.get(user.id);
     const event = availableEvents[index % availableEvents.length];
-    const oddsSelections = (oddsByEvent.get(event.eventId) || []).filter((selection) => selection.isVisible);
+    const oddsSelections = (oddsByEvent.get(event.eventId) || []).filter(
+      (selection) => selection.isVisible,
+    );
 
     if (!wallet || oddsSelections.length === 0) {
       continue;
@@ -608,7 +644,10 @@ async function seedTransactionsAndBets(
     const potentialPayout = Number((stake * selection.displayOdds).toFixed(2));
     const betCode = `DEMO-BET-${pad(index + 1, 4)}-${randomUUID().slice(0, 6)}`;
 
-    walletBalance.set(wallet.walletId, (walletBalance.get(wallet.walletId) || 0) - stake);
+    walletBalance.set(
+      wallet.walletId,
+      (walletBalance.get(wallet.walletId) || 0) - stake,
+    );
 
     await prisma.walletTransaction.create({
       data: {
@@ -629,7 +668,10 @@ async function seedTransactionsAndBets(
     });
 
     if (status === "WON") {
-      walletBalance.set(wallet.walletId, (walletBalance.get(wallet.walletId) || 0) + potentialPayout);
+      walletBalance.set(
+        wallet.walletId,
+        (walletBalance.get(wallet.walletId) || 0) + potentialPayout,
+      );
       await prisma.walletTransaction.create({
         data: {
           id: randomUUID(),
@@ -650,7 +692,10 @@ async function seedTransactionsAndBets(
     }
 
     if (status === "VOID") {
-      walletBalance.set(wallet.walletId, (walletBalance.get(wallet.walletId) || 0) + stake);
+      walletBalance.set(
+        wallet.walletId,
+        (walletBalance.get(wallet.walletId) || 0) + stake,
+      );
       await prisma.walletTransaction.create({
         data: {
           id: randomUUID(),
@@ -696,7 +741,9 @@ async function seedTransactionsAndBets(
         potentialPayout,
         status,
         placedAt,
-        settledAt: settled ? new Date(placedAt.getTime() + 2 * 60 * 60 * 1000) : null,
+        settledAt: settled
+          ? new Date(placedAt.getTime() + 2 * 60 * 60 * 1000)
+          : null,
         lastStatusChangeAt: new Date(),
       },
     });
@@ -736,13 +783,21 @@ async function seedTransactionsAndBets(
   for (const wallet of wallets) {
     await prisma.wallet.update({
       where: { id: wallet.walletId },
-      data: { balance: Math.max(0, Math.round(walletBalance.get(wallet.walletId) || 0)) },
+      data: {
+        balance: Math.max(
+          0,
+          Math.round(walletBalance.get(wallet.walletId) || 0),
+        ),
+      },
     });
   }
 }
 
 async function seedContacts(users: DemoUser[], count: number) {
-  const activeUsers = users.filter((user) => user.role === "USER" && !user.bannedAt && user.accountStatus === "ACTIVE");
+  const activeUsers = users.filter(
+    (user) =>
+      user.role === "USER" && !user.bannedAt && user.accountStatus === "ACTIVE",
+  );
 
   for (let index = 0; index < count; index += 1) {
     const user = index % 2 === 0 ? pick(activeUsers) : null;
@@ -761,7 +816,11 @@ async function seedContacts(users: DemoUser[], count: number) {
   }
 }
 
-async function seedBanAppeals(users: DemoUser[], admins: DemoUser[], count: number) {
+async function seedBanAppeals(
+  users: DemoUser[],
+  admins: DemoUser[],
+  count: number,
+) {
   const bannedUsers = users.filter((user) => user.bannedAt);
   const appealUsers = bannedUsers.slice(0, Math.min(count, bannedUsers.length));
 
@@ -775,9 +834,12 @@ async function seedBanAppeals(users: DemoUser[], admins: DemoUser[], count: numb
         userId: user.id,
         appealText,
         status: index === 0 ? "PENDING" : "REJECTED",
-        responseText: index === 0 ? null : "After review, the ban remains in place for demo moderation coverage.",
+        responseText:
+          index === 0
+            ? null
+            : "After review, the ban remains in place for demo moderation coverage.",
         reviewedAt: index === 0 ? null : new Date(),
-        reviewedBy: index === 0 ? null : admins[0]?.id ?? null,
+        reviewedBy: index === 0 ? null : (admins[0]?.id ?? null),
       },
     });
 
@@ -798,8 +860,15 @@ async function seedBanAppeals(users: DemoUser[], admins: DemoUser[], count: numb
   }
 }
 
-async function seedRiskAlerts(users: DemoUser[], events: DemoEvent[], count: number) {
-  const activeUsers = users.filter((user) => user.role === "USER" && !user.bannedAt && user.accountStatus === "ACTIVE");
+async function seedRiskAlerts(
+  users: DemoUser[],
+  events: DemoEvent[],
+  count: number,
+) {
+  const activeUsers = users.filter(
+    (user) =>
+      user.role === "USER" && !user.bannedAt && user.accountStatus === "ACTIVE",
+  );
   const alertTypes = [
     "HIGH_RISK_BET",
     "EXPOSURE_LIMIT_EXCEEDED",
@@ -813,7 +882,13 @@ async function seedRiskAlerts(users: DemoUser[], events: DemoEvent[], count: num
     "CUSTOM_RULE_VIOLATION",
   ] as const;
   const severities = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
-  const statuses = ["OPEN", "IN_REVIEW", "ESCALATED", "RESOLVED", "DISMISSED"] as const;
+  const statuses = [
+    "OPEN",
+    "IN_REVIEW",
+    "ESCALATED",
+    "RESOLVED",
+    "DISMISSED",
+  ] as const;
 
   for (let index = 0; index < count; index += 1) {
     const user = activeUsers.length > 0 ? pick(activeUsers) : null;
@@ -837,9 +912,16 @@ async function seedRiskAlerts(users: DemoUser[], events: DemoEvent[], count: num
           source: "demo-seed",
           riskBand: severity.toLowerCase(),
         },
-        actionTaken: status === "RESOLVED" ? "Reviewed and cleared" : status === "DISMISSED" ? "Dismissed as false positive" : "Queued for analyst review",
-        resolvedAt: status === "RESOLVED" || status === "DISMISSED" ? new Date() : null,
-        resolvedBy: status === "RESOLVED" || status === "DISMISSED" ? "demo-seed" : null,
+        actionTaken:
+          status === "RESOLVED"
+            ? "Reviewed and cleared"
+            : status === "DISMISSED"
+              ? "Dismissed as false positive"
+              : "Queued for analyst review",
+        resolvedAt:
+          status === "RESOLVED" || status === "DISMISSED" ? new Date() : null,
+        resolvedBy:
+          status === "RESOLVED" || status === "DISMISSED" ? "demo-seed" : null,
       },
     });
   }
@@ -854,7 +936,8 @@ async function seedAdminNotifications(admins: DemoUser[]) {
         audience: "ADMIN",
         type: "SYSTEM",
         title: "Demo admin overview",
-        message: "Your demo workspace contains seeded users, events, bets, and moderation items.",
+        message:
+          "Your demo workspace contains seeded users, events, bets, and moderation items.",
       },
     });
   }
@@ -877,16 +960,28 @@ async function main() {
   await seedNewsletterSubscriptions(options.newsletterCount);
   const events = await seedEvents(options.eventCount);
   const oddsByEvent = await seedOdds(events);
-  await seedTransactionsAndBets(allUsers, wallets, events, oddsByEvent, options.betCount);
+  await seedTransactionsAndBets(
+    allUsers,
+    wallets,
+    events,
+    oddsByEvent,
+    options.betCount,
+  );
   await seedContacts(allUsers, options.contactCount);
   await seedBanAppeals(allUsers, admins, options.appealCount);
   await seedRiskAlerts(allUsers, events, options.riskCount);
   await seedAdminNotifications(admins);
 
   console.log("Demo seed complete.");
-  console.log(`Admin login: ${admins[0]?.phone || "n/a"} / ${demoAdminPassword}`);
-  console.log(`User login: ${regularUsers[0]?.phone || "n/a"} / ${demoUserPassword}`);
-  console.log(`Created ${allUsers.length} users, ${events.length} events, and ${options.betCount} bets.`);
+  console.log(
+    `Admin login: ${admins[0]?.phone || "n/a"} / ${demoAdminPassword}`,
+  );
+  console.log(
+    `User login: ${regularUsers[0]?.phone || "n/a"} / ${demoUserPassword}`,
+  );
+  console.log(
+    `Created ${allUsers.length} users, ${events.length} events, and ${options.betCount} bets.`,
+  );
 }
 
 main()
