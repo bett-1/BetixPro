@@ -937,27 +937,27 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-admin-accent">
-              Change User Password
+            <DialogTitle className="text-base text-admin-text-primary">
+              🔐 Change User Password
             </DialogTitle>
             <DialogDescription>
               Set a new password for this user account. They will need to use
               this password to log in.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/8 p-4">
-              <p className="text-xs font-semibold text-admin-accent uppercase tracking-wider">
+          <div className="space-y-5 px-6 py-6">
+            <div className="rounded-xl border border-admin-accent/30 bg-admin-accent/8 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-admin-accent mb-2">
                 Important
               </p>
-              <ul className="text-sm text-admin-accent/80 mt-2.5 space-y-1.5 list-disc list-inside">
+              <ul className="text-sm text-admin-accent/80 space-y-1.5 list-disc list-inside">
                 <li>Password must be at least 6 characters long</li>
                 <li>User will need this new password to log in</li>
                 <li>Current password cannot be displayed for security</li>
               </ul>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary block mb-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 New Password <span className="text-admin-red">*</span>
               </label>
               <div className="relative">
@@ -984,7 +984,7 @@ export default function Users() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-3">
                 <div className="flex-1 bg-admin-border/30 rounded-full h-1 overflow-hidden">
                   <div
                     className={`h-full transition-all ${
@@ -1013,7 +1013,7 @@ export default function Users() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
                 className="flex-1"
