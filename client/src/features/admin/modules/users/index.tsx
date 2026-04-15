@@ -531,7 +531,7 @@ export default function Users() {
           ) : selectedUser ? (
             <div className="space-y-4 px-6 py-5">
               {/* Info Grid */}
-              <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-[rgba(13,33,55,0.16)] p-4">
+              <div className="space-y-3 rounded-2xl border border-white/10 bg-[rgba(13,33,55,0.16)] p-4">
                 <div className="space-y-1">
                   <p className="text-xs text-admin-text-muted font-semibold">
                     Email

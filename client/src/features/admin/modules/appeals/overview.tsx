@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import {
   AdminButton,
   AdminCard,
+  AdminStatCard,
   AdminSectionHeader,
   StatusBadge,
 } from "../../components/ui";
@@ -10,12 +11,24 @@ import { useAdminBanAppeals } from "@/hooks/useBanAppeals";
 export default function BanAppealsOverviewPage() {
   const { appeals, loading, error } = useAdminBanAppeals(20, 0, "all");
 
+  const pendingCount = appeals.filter((a) => a.status === "PENDING").length;
+  const approvedCount = appeals.filter((a) => a.status === "APPROVED").length;
+  const rejectedCount = appeals.filter((a) => a.status === "REJECTED").length;
+  const totalCount = appeals.length;
+
   return (
     <div className="space-y-6">
       <AdminSectionHeader
         title="Ban Appeals"
         subtitle="Monitor incoming appeals and open any case for review."
       />
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <AdminStatCard label="Total Appeals" value={totalCount} />
+        <AdminStatCard label="Pending" value={pendingCount} />
+        <AdminStatCard label="Approved" value={approvedCount} />
+        <AdminStatCard label="Rejected" value={rejectedCount} />
+      </div>
 
       {error && (
         <AdminCard className="border-admin-red/40 bg-admin-red-dim/20 text-admin-red">
