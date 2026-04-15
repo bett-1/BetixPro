@@ -168,7 +168,8 @@ export default function RegisterModal() {
             className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none"
             style={{ width: "100vw", height: "100vh", zIndex: 99999 }}
           >
-            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/50 bg-linear-to-br from-[#0d2137] via-[#1a3a6b] to-[#0d2137] p-8 shadow-2xl shadow-black/80 animate-in fade-in slide-in-from-bottom-4 duration-300"
+            <div
+              className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#3d6ba3]/50 bg-linear-to-br from-[#0d2137] via-[#1a3a6b] to-[#0d2137] p-8 shadow-2xl shadow-black/80 animate-in fade-in slide-in-from-bottom-4 duration-300"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

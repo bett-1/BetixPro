@@ -107,10 +107,11 @@ export default function LoginModal() {
     setBanReason(null);
   }, []);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
     closeAuthModal();
     resetAuthState();
-  }, [closeAuthModal, resetAuthState]);
+    await navigate({ to: "/" });
+  }, [closeAuthModal, resetAuthState, navigate]);
 
   const handleSubmitAppeal = async () => {
     if (!banAppealToken || banAppealText.trim().length < 10) {
