@@ -261,7 +261,7 @@ export default function Users() {
               <RefreshCw size={13} />
               Refresh
             </AdminButton> */}
-            <AdminButton variant="ghost" size="sm" asChild>
+            <AdminButton variant="ghost" size="sm">
               <Link to="/admin/appeals">View Appeals</Link>
             </AdminButton>
             <AdminButton
@@ -311,46 +311,6 @@ export default function Users() {
         </AdminCard>
       )}
 
-      {/* Pending Appeals Section */}
-      {users.some((u) => u.banAppeal?.status === "PENDING") && (
-        <AdminCard className="border-admin-accent/30 bg-gradient-to-br from-[rgba(15,118,110,0.12)] to-[rgba(15,118,110,0.04)] p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-admin-accent mb-2">
-                ⚡ Pending Appeals
-              </p>
-              <p className="text-sm text-admin-text-primary mb-4">
-                Users with pending ban appeals awaiting your review
-              </p>
-              <div className="space-y-2">
-                {users
-                  .filter((u) => u.banAppeal?.status === "PENDING")
-                  .map((user) => (
-                    <Link
-                      key={user.id}
-                      to="/admin/appeals/$appealId"
-                      params={{ appealId: user.banAppeal!.id }}
-                      className="flex items-center justify-between rounded-lg border border-admin-accent/20 bg-admin-accent/8 p-3 hover:bg-admin-accent/12 transition-colors group"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-admin-text-primary truncate">
-                          {user.email}
-                        </p>
-                        <p className="text-xs text-admin-text-muted truncate">
-                          {user.banAppeal?.appealText.slice(0, 60)}...
-                        </p>
-                      </div>
-                      <div className="ml-4 flex-shrink-0">
-                        <div className="inline-flex items-center justify-center rounded-full bg-admin-accent/20 px-3 py-1 group-hover:bg-admin-accent/30 transition-colors">
-                          <span className="text-xs font-semibold text-admin-accent">
-                            Review →
-                          </span>
-                        </div>
-                      </div>
-            </div>
-          </div>
-        </AdminCard>
-      )}
 
       <div className="space-y-4">
         <Input

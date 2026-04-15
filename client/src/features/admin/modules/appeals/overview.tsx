@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import {
-  AdminButton,
   AdminCard,
   AdminStatCard,
   AdminSectionHeader,
@@ -24,10 +23,10 @@ export default function BanAppealsOverviewPage() {
       />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <AdminStatCard label="Total Appeals" value={totalCount.toString()} />
-        <AdminStatCard label="Pending" value={pendingCount.toString()} />
-        <AdminStatCard label="Approved" value={approvedCount.toString()} />
-        <AdminStatCard label="Rejected" value={rejectedCount.toString()} />
+        <AdminStatCard label="Total Appeals" value={totalCount.toString()} tone="blue" />
+        <AdminStatCard label="Pending" value={pendingCount.toString()} tone="accent" />
+        <AdminStatCard label="Approved" value={approvedCount.toString()} tone="accent" />
+        <AdminStatCard label="Rejected" value={rejectedCount.toString()} tone="red" />
       </div>
 
       {error && (
