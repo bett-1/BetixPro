@@ -262,6 +262,15 @@ export default function Users() {
               Refresh
             </AdminButton> */}
             <AdminButton
+              variant="ghost"
+              size="sm"
+              asChild
+            >
+              <Link to="/admin/appeals">
+                View Appeals
+              </Link>
+            </AdminButton>
+            <AdminButton
               variant="solid"
               size="sm"
               onClick={handleOpenCreate}
