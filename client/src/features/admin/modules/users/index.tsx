@@ -43,7 +43,7 @@ import {
   AdminStatCard,
   adminDropdownContentClassName,
   adminDropdownItemClassName,
-  adminInputClassName
+  adminInputClassName,
 } from "../../components/ui";
 
 // ============ HELPER COMPONENTS ============
@@ -274,10 +274,7 @@ export default function Users() {
   };
 
   const handleCreateUser = async () => {
-    if (
-      !createFormData.phone ||
-      !createFormData.password
-    ) {
+    if (!createFormData.phone || !createFormData.password) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -313,8 +310,6 @@ export default function Users() {
   const totalUsers = total || 0;
   const activeUsers = visibleUsers.filter((u) => u.status === "active").length;
   const bannedUsers = visibleUsers.filter((u) => u.status === "banned").length;
-
-
 
   return (
     <div className="space-y-5">
@@ -585,7 +580,6 @@ export default function Users() {
             <div className="px-5 pb-5">
               {/* Grid layout for user info - saves space */}
               <div className="grid grid-cols-2 gap-3 pt-3">
-      
                 <div className="space-y-0.5">
                   <p className="text-xs text-admin-text-muted font-medium">
                     Phone
@@ -727,8 +721,6 @@ export default function Users() {
                 className={`${adminInputClassName} h-9`}
               />
             </FormField>
-
-
 
             <FormField label="Phone">
               <Input
@@ -1010,8 +1002,6 @@ export default function Users() {
                 className={`${adminInputClassName} h-9`}
               />
             </FormField>
-
-
 
             <FormField
               label="Phone (Kenyan)"
