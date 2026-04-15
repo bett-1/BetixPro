@@ -21,9 +21,6 @@ import {
   adminDropdownContentClassName,
   adminDropdownItemClassName,
   adminInputClassName,
-  adminTableCellClassName,
-  adminTableClassName,
-  adminTableHeadCellClassName,
 } from "../../components/ui";
 import {
   Dialog,
@@ -72,9 +69,6 @@ export default function WithdrawalsAdmin() {
   const [selectedWithdrawal, setSelectedWithdrawal] =
     useState<Withdrawal | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [highlightedWithdrawalId, setHighlightedWithdrawalId] = useState<
-    string | null
-  >(null);
   const [rejectReason, setRejectReason] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("PENDING");
 

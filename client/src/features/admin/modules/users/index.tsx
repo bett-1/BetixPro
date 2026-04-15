@@ -67,8 +67,8 @@ const FormField = ({ label, required, children, error, helper }: any) => (
 
 const Divider = () => <div className="border-t border-white/10 my-4" />;
 
-const WarningBox = ({ title, children, tone = "red" }: any) => {
-  const colors = {
+const WarningBox = ({ title, children, tone = "red" }: { title?: string; children: React.ReactNode; tone?: "red" | "yellow" | "blue" }) => {
+  const colors: Record<string, string> = {
     red: "border-admin-red/20 bg-admin-red/5 text-admin-red/80",
     yellow: "border-admin-gold/20 bg-admin-gold/5 text-admin-gold/80",
     blue: "border-admin-blue/20 bg-admin-blue/5 text-admin-blue/80",
@@ -111,6 +111,7 @@ export default function Users() {
 
   const [createFormData, setCreateFormData] = useState({
     fullName: "",
+    email: "",
     phone: "",
     password: "",
     confirmPassword: "",
@@ -178,6 +179,7 @@ export default function Users() {
     setSelectedUserId(null);
     setCreateFormData({
       fullName: "",
+      email: "",
       phone: "",
       password: "",
       confirmPassword: "",
@@ -274,7 +276,7 @@ export default function Users() {
   };
 
   const handleCreateUser = async () => {
-    if (!createFormData.phone || !createFormData.password) {
+    if (!createFormData.email || !createFormData.phone || !createFormData.password) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -999,6 +1001,21 @@ export default function Users() {
                   })
                 }
                 placeholder="Enter full name"
+                className={`${adminInputClassName} h-9`}
+              />
+            </FormField>
+
+            <FormField label="Email" required>
+              <Input
+                value={createFormData.email}
+                onChange={(e) =>
+                  setCreateFormData({
+                    ...createFormData,
+                    email: e.target.value,
+                  })
+                }
+                type="email"
+                placeholder="user@example.com"
                 className={`${adminInputClassName} h-9`}
               />
             </FormField>
