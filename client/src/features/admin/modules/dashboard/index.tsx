@@ -325,7 +325,10 @@ export default function Dashboard() {
             subtitle="New user signups over last 7 days"
           />
           <div className="w-full overflow-x-auto">
-            <UserRegistrationChart data={data?.charts.registrationTrend ?? []} compact />
+            <UserRegistrationChart
+              data={data?.charts.registrationTrend ?? []}
+              compact
+            />
           </div>
         </AdminCard>
 
