@@ -729,7 +729,7 @@ export function UserRegistrationChart({
           contentStyle={{
             background:
               "linear-gradient(180deg, rgba(20,35,58,0.97), rgba(13,26,44,0.94))",
-            border: "1px solid rgba(102,187,106,0.18)",
+            border: "1px solid rgba(59,130,246,0.18)",
             borderRadius: "14px",
             boxShadow: "0 20px 48px rgba(0,0,0,0.4)",
           }}
@@ -738,9 +738,10 @@ export function UserRegistrationChart({
         />
         <Bar
           dataKey="registrations"
-          fill="#66bb6a"
-          radius={[8, 8, 0, 0]}
-          fillOpacity={0.85}
+          fill="#3b82f6"
+          radius={[3, 3, 0, 0]}
+          fillOpacity={0.9}
+          maxBarSize={32}
           isAnimationActive={true}
           animationDuration={500}
           name="New Users"
