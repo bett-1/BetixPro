@@ -8,7 +8,7 @@ import {
 import { useAdminBanAppeals } from "@/hooks/useBanAppeals";
 
 export default function BanAppealsOverviewPage() {
-  const { appeals, loading, error } = useAdminBanAppeals(20, 0, "all");
+  const { appeals, loading, error } = useAdminBanAppeals(1, 20, "all");
 
   const pendingCount = appeals.filter((a) => a.status === "PENDING").length;
   const approvedCount = appeals.filter((a) => a.status === "APPROVED").length;
