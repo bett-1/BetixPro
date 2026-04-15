@@ -684,7 +684,7 @@ export function DepositWithdrawalChart({
         <Line
           type="monotone"
           dataKey="deposits"
-          stroke="#f5c518"
+          stroke="#10b981"
           strokeWidth={2}
           dot={{ r: 2 }}
           activeDot={{ r: 4 }}
@@ -693,7 +693,7 @@ export function DepositWithdrawalChart({
         <Line
           type="monotone"
           dataKey="withdrawals"
-          stroke="#a8c4e0"
+          stroke="#f97316"
           strokeWidth={2}
           dot={{ r: 2 }}
           activeDot={{ r: 4 }}
