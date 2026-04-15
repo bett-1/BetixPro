@@ -19,6 +19,7 @@ type DemoOptions = {
   userCount: number;
   eventCount: number;
   betCount: number;
+  withdrawalCount: number;
   contactCount: number;
   appealCount: number;
   newsletterCount: number;
@@ -62,6 +63,13 @@ type WalletState = {
   walletId: string;
   balance: number;
 };
+
+type WithdrawalSeedStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED"
+  | "REVERSED";
 
 const firstNames = [
   "Amina",
@@ -151,6 +159,7 @@ function parseOptions(argv: string[]): DemoOptions {
     userCount: 18,
     eventCount: 16,
     betCount: 54,
+    withdrawalCount: 12,
     contactCount: 12,
     appealCount: 3,
     newsletterCount: 16,
@@ -172,6 +181,7 @@ function parseOptions(argv: string[]): DemoOptions {
     if (rawKey === "users") options.userCount = Math.max(1, value);
     if (rawKey === "events") options.eventCount = Math.max(1, value);
     if (rawKey === "bets") options.betCount = Math.max(1, value);
+    if (rawKey === "withdrawals") options.withdrawalCount = Math.max(1, value);
     if (rawKey === "contacts") options.contactCount = Math.max(1, value);
     if (rawKey === "appeals") options.appealCount = Math.max(1, value);
     if (rawKey === "newsletter") options.newsletterCount = Math.max(1, value);
@@ -542,6 +552,107 @@ async function seedOdds(events: DemoEvent[]) {
   return selectionsByEvent;
 }
 
+async function createWithdrawalNotifications(args: {
+  userId: string;
+  transactionId: string;
+  amount: number;
+  fee: number;
+  balance: number;
+  phone: string;
+  status: WithdrawalSeedStatus;
+  failureReason?: string;
+}) {
+  const [userProfile, adminUsers] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: args.userId },
+      select: { phone: true, email: true },
+    }),
+    prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    }),
+  ]);
+
+  const userIdentifier =
+    userProfile?.phone ?? userProfile?.email ?? args.userId;
+  const netAmount = args.amount - args.fee;
+
+  let userTitle = "";
+  let userMessage = "";
+  let adminTitle = "";
+  let adminMessage = "";
+  let notificationType: "WITHDRAWAL_SUCCESS" | "WITHDRAWAL_FAILED" | "SYSTEM" =
+    "SYSTEM";
+
+  if (args.status === "PENDING") {
+    userTitle = "Withdrawal Request Submitted";
+    userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} (KES ${args.fee.toLocaleString()} fee) is pending admin approval. You'll receive KES ${netAmount.toLocaleString()}.`;
+    adminTitle = "New Withdrawal Request";
+    adminMessage = `${userIdentifier} requested a withdrawal of KES ${args.amount.toLocaleString()} to ${args.phone} (Fee: KES ${args.fee.toLocaleString()}).`;
+    notificationType = "SYSTEM";
+  } else if (args.status === "PROCESSING") {
+    userTitle = "Withdrawal Processing";
+    userMessage = `Your withdrawal of KES ${args.amount.toLocaleString()} is being processed for ${args.phone}. Fee charged: KES ${args.fee.toLocaleString()}. Current balance: KES ${args.balance.toLocaleString()}.`;
+    adminTitle = "Withdrawal Processing";
+    adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} for ${userIdentifier} is being processed for ${args.phone}.`;
+    notificationType = "SYSTEM";
+  } else if (args.status === "COMPLETED") {
+    userTitle = "Withdrawal Successful";
+    userMessage = `Your withdrawal of KES ${args.amount.toLocaleString()} has been processed to ${args.phone}. Fee charged: KES ${args.fee.toLocaleString()}. New balance: KES ${args.balance.toLocaleString()}.`;
+    adminTitle = "Withdrawal Completed";
+    adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} to ${userIdentifier} (${args.phone}) completed successfully.`;
+    notificationType = "WITHDRAWAL_SUCCESS";
+  } else if (args.status === "FAILED") {
+    userTitle = "Withdrawal Failed";
+    userMessage = `Your withdrawal request for KES ${args.amount.toLocaleString()} failed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""} Your balance remains unchanged at KES ${args.balance.toLocaleString()}.`;
+    adminTitle = "Withdrawal Failed";
+    adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} for ${userIdentifier} to ${args.phone} failed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""}`;
+    notificationType = "WITHDRAWAL_FAILED";
+  } else if (args.status === "REVERSED") {
+    userTitle = "Withdrawal Reversed";
+    userMessage = `Your withdrawal of KES ${args.amount.toLocaleString()} was reversed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""} Your balance is KES ${args.balance.toLocaleString()}.`;
+    adminTitle = "Withdrawal Reversed";
+    adminMessage = `Withdrawal of KES ${args.amount.toLocaleString()} for ${userIdentifier} to ${args.phone} was reversed.${args.failureReason ? ` Reason: ${args.failureReason}.` : ""}`;
+    notificationType = "WITHDRAWAL_FAILED";
+  }
+
+  const createPayload = [
+    {
+      id: randomUUID(),
+      userId: args.userId,
+      audience: "USER" as const,
+      type: notificationType,
+      title: userTitle,
+      message: userMessage,
+      transactionId: args.transactionId,
+      amount: args.amount,
+      balance: args.balance,
+      isRead: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    ...adminUsers.map((admin) => ({
+      id: randomUUID(),
+      userId: admin.id,
+      audience: "ADMIN" as const,
+      type: notificationType,
+      title: adminTitle,
+      message: adminMessage,
+      transactionId: args.transactionId,
+      amount: args.amount,
+      balance: args.balance,
+      isRead: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+  ];
+
+  await prisma.notification.createMany({
+    data: createPayload,
+    skipDuplicates: true,
+  });
+}
+
 async function seedTransactionsAndBets(
   users: DemoUser[],
   wallets: WalletState[],
@@ -781,14 +892,169 @@ async function seedTransactionsAndBets(
   }
 
   for (const wallet of wallets) {
+    const balance = Math.max(
+      0,
+      Math.round(walletBalance.get(wallet.walletId) || 0),
+    );
     await prisma.wallet.update({
       where: { id: wallet.walletId },
       data: {
-        balance: Math.max(
-          0,
-          Math.round(walletBalance.get(wallet.walletId) || 0),
-        ),
+        balance,
       },
+    });
+
+    wallet.balance = balance;
+  }
+}
+
+async function seedWithdrawals(
+  users: DemoUser[],
+  wallets: WalletState[],
+  count: number,
+) {
+  const activeUsers = users.filter(
+    (user) =>
+      user.role === "USER" && !user.bannedAt && user.accountStatus === "ACTIVE",
+  );
+  const walletByUserId = new Map(
+    wallets.map((wallet) => [wallet.userId, wallet]),
+  );
+  const withdrawalStatuses: WithdrawalSeedStatus[] = [
+    "PENDING",
+    "PROCESSING",
+    "COMPLETED",
+    "FAILED",
+    "REVERSED",
+  ];
+  const feePercent = 5;
+
+  for (let index = 0; index < count; index += 1) {
+    const eligibleUsers = activeUsers.filter((user) => {
+      const wallet = walletByUserId.get(user.id);
+      return Boolean(wallet && wallet.balance >= 500);
+    });
+
+    if (eligibleUsers.length === 0) {
+      break;
+    }
+
+    const user = pick(eligibleUsers);
+    const wallet = walletByUserId.get(user.id);
+
+    if (!wallet) {
+      continue;
+    }
+
+    const maxAffordableAmount = Math.max(
+      500,
+      Math.min(60000, Math.floor(wallet.balance / 1.05)),
+    );
+    let withdrawalAmount = randomInt(500, maxAffordableAmount);
+    let feeAmount = Math.ceil((withdrawalAmount * feePercent) / 100);
+
+    while (
+      withdrawalAmount + feeAmount > wallet.balance &&
+      withdrawalAmount > 500
+    ) {
+      withdrawalAmount -= 1;
+      feeAmount = Math.ceil((withdrawalAmount * feePercent) / 100);
+    }
+
+    if (withdrawalAmount + feeAmount > wallet.balance) {
+      continue;
+    }
+
+    const totalDebit = withdrawalAmount + feeAmount;
+    const status = withdrawalStatuses[index % withdrawalStatuses.length];
+    const requestedAt = new Date(
+      Date.now() - randomInt(1, 20) * 60 * 60 * 1000,
+    );
+    const finalizedAt = new Date(
+      requestedAt.getTime() + randomInt(20, 180) * 60 * 1000,
+    );
+    const phone = user.phone;
+
+    wallet.balance -= totalDebit;
+
+    const transaction = await prisma.walletTransaction.create({
+      data: {
+        id: randomUUID(),
+        userId: user.id,
+        walletId: wallet.walletId,
+        type: "WITHDRAWAL",
+        status,
+        amount: withdrawalAmount,
+        currency: "KES",
+        channel: "M-Pesa",
+        reference: makeReference("DEMO-TXN-WITHDRAWAL", index + 1),
+        phone,
+        accountReference: "BET-WITHDRAWAL",
+        description: `Withdrawal to M-Pesa (${phone})`,
+        providerReceiptNumber:
+          status === "COMPLETED"
+            ? makeReference("MPESA", index + 1)
+            : null,
+        providerResponseCode:
+          status === "COMPLETED"
+            ? "0"
+            : status === "FAILED"
+              ? "1"
+              : status === "REVERSED"
+                ? "2"
+                : null,
+        providerResponseDescription:
+          status === "COMPLETED"
+            ? "Withdrawal processed successfully"
+            : status === "PROCESSING"
+              ? "Withdrawal request accepted for processing"
+              : status === "REVERSED"
+                ? "Withdrawal reversed and funds returned"
+                : status === "FAILED"
+                  ? "Withdrawal failed during processing"
+                  : "Withdrawal request submitted",
+        providerCallback: {
+          fee: feeAmount,
+          totalDebit,
+          requestedAt: requestedAt.toISOString(),
+          disbursementState:
+            status === "PENDING"
+              ? "PENDING_APPROVAL"
+              : status === "PROCESSING"
+                ? "PROCESSING"
+                : status === "COMPLETED"
+                  ? "COMPLETED"
+                  : status === "FAILED"
+                    ? "FAILED"
+                    : "REVERSED",
+          finalizedAt: status === "PENDING" ? null : finalizedAt.toISOString(),
+        } as never,
+        processedAt: status === "PENDING" ? null : finalizedAt,
+      },
+    });
+
+    if (status === "FAILED" || status === "REVERSED") {
+      wallet.balance += totalDebit;
+    }
+
+    await prisma.wallet.update({
+      where: { id: wallet.walletId },
+      data: { balance: wallet.balance },
+    });
+
+    await createWithdrawalNotifications({
+      userId: user.id,
+      transactionId: transaction.id,
+      amount: withdrawalAmount,
+      fee: feeAmount,
+      balance: wallet.balance,
+      phone,
+      status,
+      failureReason:
+        status === "FAILED"
+          ? "M-Pesa disbursement was rejected"
+          : status === "REVERSED"
+            ? "Provider reversed the payout"
+            : undefined,
     });
   }
 }
@@ -967,6 +1233,7 @@ async function main() {
     oddsByEvent,
     options.betCount,
   );
+  await seedWithdrawals(allUsers, wallets, options.withdrawalCount);
   await seedContacts(allUsers, options.contactCount);
   await seedBanAppeals(allUsers, admins, options.appealCount);
   await seedRiskAlerts(allUsers, events, options.riskCount);
@@ -980,7 +1247,7 @@ async function main() {
     `User login: ${regularUsers[0]?.phone || "n/a"} / ${demoUserPassword}`,
   );
   console.log(
-    `Created ${allUsers.length} users, ${events.length} events, and ${options.betCount} bets.`,
+    `Created ${allUsers.length} users, ${events.length} events, ${options.betCount} bets, and ${options.withdrawalCount} withdrawals.`,
   );
 }
 
