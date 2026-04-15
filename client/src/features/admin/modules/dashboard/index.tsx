@@ -318,6 +318,17 @@ export default function Dashboard() {
           </AdminCard>
         </div>
 
+        {/* User Registration Chart */}
+        <AdminCard className="p-3 sm:p-4 overflow-hidden w-full">
+          <AdminCardHeader
+            title="User Registration Trend"
+            subtitle="New user signups over last 7 days"
+          />
+          <div className="w-full overflow-x-auto">
+            <UserRegistrationChart data={data?.charts.registrationTrend ?? []} compact />
+          </div>
+        </AdminCard>
+
         {/* Recent Activity + Quick Links */}
         <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
           {/* Recent Activity */}
