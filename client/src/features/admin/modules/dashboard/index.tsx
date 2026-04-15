@@ -39,6 +39,8 @@ import {
   TableShell,
   adminDropdownContentClassName,
   adminDropdownItemClassName,
+  adminTableCellClassName,
+  adminTableClassName,
 } from "../../components/ui";
 
 type DashboardMetric = {
