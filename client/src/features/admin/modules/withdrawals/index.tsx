@@ -69,9 +69,6 @@ export default function WithdrawalsAdmin() {
   const [selectedWithdrawal, setSelectedWithdrawal] =
     useState<Withdrawal | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [highlightedWithdrawalId, setHighlightedWithdrawalId] = useState<
-    string | null
-  >(null);
   const [rejectReason, setRejectReason] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("PENDING");
 
@@ -263,7 +260,6 @@ export default function WithdrawalsAdmin() {
 
     if (!targetWithdrawal) return;
 
-    setHighlightedWithdrawalId(targetWithdrawal.id);
     const targetElement = document.querySelector(
       `[data-withdrawal-id="${targetWithdrawal.id}"]`,
     );
@@ -271,14 +267,6 @@ export default function WithdrawalsAdmin() {
     if (targetElement instanceof HTMLElement) {
       targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-
-    const timeoutId = window.setTimeout(() => {
-      setHighlightedWithdrawalId((current) =>
-        current === targetWithdrawal.id ? null : current,
-      );
-    }, 3500);
-
-    return () => window.clearTimeout(timeoutId);
   }, [locationHash, withdrawals]);
 
   // --- Render ---
