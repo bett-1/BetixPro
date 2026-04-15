@@ -529,7 +529,7 @@ export default function Users() {
               Loading...
             </div>
           ) : selectedUser ? (
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto px-6 py-5">
+            <div className="space-y-4 px-6 py-5">
               {/* Info Grid */}
               <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-[rgba(13,33,55,0.16)] p-4">
                 <div className="space-y-1">
@@ -685,15 +685,6 @@ export default function Users() {
                       Unban User
                     </AdminButton>
                   ) : null}
-                  {selectedUser.banAppeal?.status === "PENDING" && (
-                    <Link
-                      to="/admin/appeals/$appealId"
-                      params={{ appealId: selectedUser.banAppeal.id }}
-                      className="col-span-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-admin-accent px-3.5 text-sm font-medium text-black shadow-[0_6px_16px_rgba(0,0,0,0.1)] transition duration-200 hover:opacity-95"
-                    >
-                      Review Appeal
-                    </Link>
-                  )}
                 </div>
               </div>
             </div>
@@ -1059,7 +1050,7 @@ export default function Users() {
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-5 px-6 py-6 max-h-[70vh] overflow-y-auto">
+          <div className="space-y-5 px-6 py-6">
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Full Name (optional)
