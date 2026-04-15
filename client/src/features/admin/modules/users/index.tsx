@@ -1052,14 +1052,16 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Create New User</DialogTitle>
+            <DialogTitle className="text-base text-admin-text-primary">
+              ➕ Create New User
+            </DialogTitle>
             <DialogDescription>
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
+          <div className="space-y-5 px-6 py-6 max-h-[70vh] overflow-y-auto">
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Full Name (optional)
               </label>
               <Input
@@ -1071,11 +1073,11 @@ export default function Users() {
                   })
                 }
                 placeholder="John Doe"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Email <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -1088,11 +1090,11 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 type="email"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Phone (Kenyan) <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -1104,11 +1106,11 @@ export default function Users() {
                   })
                 }
                 placeholder="+254712345678 or 0712345678"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Password <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -1121,11 +1123,11 @@ export default function Users() {
                 }
                 type="password"
                 placeholder="Minimum 6 characters"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Confirm Password <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -1138,10 +1140,10 @@ export default function Users() {
                 }
                 type="password"
                 placeholder="Confirm password"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
-            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
+            <div className="flex items-center gap-3 rounded-xl border border-admin-accent/30 bg-admin-accent/8 p-3">
               <input
                 type="checkbox"
                 id="createVerified"
@@ -1161,16 +1163,16 @@ export default function Users() {
                 Mark as verified
               </label>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => setActionDialog(null)}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleCreateUser}
                 disabled={isSubmitting}
               >
