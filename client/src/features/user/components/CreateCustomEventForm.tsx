@@ -1,6 +1,12 @@
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -23,7 +29,9 @@ export function CreateCustomEventForm({
   const [awayTeam, setAwayTeam] = useState("");
   const [league, setLeague] = useState("");
   const [datetime, setDatetime] = useState("");
-  const [activeMarket, setActiveMarket] = useState<"h2h" | "spreads" | "totals">("h2h");
+  const [activeMarket, setActiveMarket] = useState<
+    "h2h" | "spreads" | "totals"
+  >("h2h");
   const [submitting, setSubmitting] = useState(false);
 
   // H2H odds
@@ -100,7 +108,7 @@ export function CreateCustomEventForm({
       }
 
       await onSubmit(data);
-      
+
       // Reset form
       setHomeTeam("");
       setAwayTeam("");
@@ -143,7 +151,9 @@ export function CreateCustomEventForm({
             </p>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs font-medium text-slate-300">Home Team *</label>
+                <label className="text-xs font-medium text-slate-300">
+                  Home Team *
+                </label>
                 <Input
                   value={homeTeam}
                   onChange={(e) => setHomeTeam(e.target.value)}
@@ -153,7 +163,9 @@ export function CreateCustomEventForm({
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-300">Away Team *</label>
+                <label className="text-xs font-medium text-slate-300">
+                  Away Team *
+                </label>
                 <Input
                   value={awayTeam}
                   onChange={(e) => setAwayTeam(e.target.value)}
@@ -171,7 +183,9 @@ export function CreateCustomEventForm({
               Additional Info
             </p>
             <div>
-              <label className="text-xs font-medium text-slate-300">League (Optional)</label>
+              <label className="text-xs font-medium text-slate-300">
+                League (Optional)
+              </label>
               <Input
                 value={league}
                 onChange={(e) => setLeague(e.target.value)}
@@ -181,7 +195,9 @@ export function CreateCustomEventForm({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-300">Kick-off Time *</label>
+              <label className="text-xs font-medium text-slate-300">
+                Kick-off Time *
+              </label>
               <Input
                 type="datetime-local"
                 value={datetime}
@@ -222,10 +238,14 @@ export function CreateCustomEventForm({
           <div className="space-y-3 rounded-lg border border-slate-600/30 bg-slate-800/20 p-4">
             {activeMarket === "h2h" && (
               <>
-                <p className="text-xs font-medium text-slate-300">Head to Head Odds</p>
+                <p className="text-xs font-medium text-slate-300">
+                  Head to Head Odds
+                </p>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="text-xs text-slate-400">{homeTeam || "Home"}</label>
+                    <label className="text-xs text-slate-400">
+                      {homeTeam || "Home"}
+                    </label>
                     <Input
                       type="number"
                       step="0.01"
@@ -251,7 +271,9 @@ export function CreateCustomEventForm({
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400">{awayTeam || "Away"}</label>
+                    <label className="text-xs text-slate-400">
+                      {awayTeam || "Away"}
+                    </label>
                     <Input
                       type="number"
                       step="0.01"
@@ -269,7 +291,9 @@ export function CreateCustomEventForm({
 
             {activeMarket === "spreads" && (
               <>
-                <p className="text-xs font-medium text-slate-300">Spread Odds</p>
+                <p className="text-xs font-medium text-slate-300">
+                  Spread Odds
+                </p>
                 <div className="space-y-2">
                   <Input
                     type="number"
@@ -308,7 +332,9 @@ export function CreateCustomEventForm({
 
             {activeMarket === "totals" && (
               <>
-                <p className="text-xs font-medium text-slate-300">Totals Odds</p>
+                <p className="text-xs font-medium text-slate-300">
+                  Totals Odds
+                </p>
                 <div className="space-y-2">
                   <Input
                     type="number"
