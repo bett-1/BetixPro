@@ -133,15 +133,6 @@ export default function RegisterModal() {
     }
   }
 
-  const handleClose = () => {
-    closeAuthModal();
-    setEmail("");
-    setPhone("");
-    setPassword("");
-    setConfirmPassword("");
-    setErrors({});
-  };
-
   return (
     <>
       {authModal === "register" && (

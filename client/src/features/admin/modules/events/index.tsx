@@ -40,6 +40,7 @@ import {
   Loader2,
   MoreHorizontal,
   PencilLine,
+  Plus,
   Power,
   RefreshCw,
   Search,
