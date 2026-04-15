@@ -157,15 +157,9 @@ userCustomEventsRouter.post("/user/custom-events", async (req, res, next) => {
         sport: parsed.data.sport,
         league: parsed.data.league,
         commenceTime: new Date(parsed.data.commenceTime),
-        h2hOdds: parsed.data.h2hOdds
-          ? JSON.stringify(parsed.data.h2hOdds)
-          : null,
-        spreadsOdds: parsed.data.spreadsOdds
-          ? JSON.stringify(parsed.data.spreadsOdds)
-          : null,
-        totalsOdds: parsed.data.totalsOdds
-          ? JSON.stringify(parsed.data.totalsOdds)
-          : null,
+        h2hOdds: parsed.data.h2hOdds || null,
+        spreadsOdds: parsed.data.spreadsOdds || null,
+        totalsOdds: parsed.data.totalsOdds || null,
       },
     });
 
@@ -217,11 +211,11 @@ userCustomEventsRouter.patch(
       if (parsed.data.awayScore !== undefined)
         updateData.awayScore = parsed.data.awayScore;
       if (parsed.data.h2hOdds)
-        updateData.h2hOdds = JSON.stringify(parsed.data.h2hOdds);
+        updateData.h2hOdds = parsed.data.h2hOdds;
       if (parsed.data.spreadsOdds)
-        updateData.spreadsOdds = JSON.stringify(parsed.data.spreadsOdds);
+        updateData.spreadsOdds = parsed.data.spreadsOdds;
       if (parsed.data.totalsOdds)
-        updateData.totalsOdds = JSON.stringify(parsed.data.totalsOdds);
+        updateData.totalsOdds = parsed.data.totalsOdds;
 
       const updated = await prisma.customEvent.update({
         where: { eventId: event.eventId },
