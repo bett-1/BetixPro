@@ -284,7 +284,7 @@ export default function Dashboard() {
         ) : null}
 
         {/* Charts */}
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-4">
+        <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
           <AdminCard className="p-3 sm:p-4 overflow-hidden w-full">
             <AdminCardHeader
               title="Deposit vs Withdrawal Trend"
@@ -295,42 +295,19 @@ export default function Dashboard() {
             </div>
           </AdminCard>
 
-          <AdminCard className="hidden w-full p-3 sm:p-4 lg:block">
-            <AdminCardHeader title="7 Day Totals" subtitle="Liquidity" />
-            <div className="space-y-2.5 pt-2">
-              <div className="rounded-lg border border-admin-border bg-admin-surface/60 p-2.5">
-                <p className="text-[9px] uppercase tracking-[0.08em] text-admin-text-muted">
-                  Deposits
-                </p>
-                <p className="mt-1 text-base font-bold text-admin-accent sm:text-lg">
-                  {formatCurrency(data?.charts.totals.deposits7d ?? 0)}
-                </p>
-              </div>
-              <div className="rounded-lg border border-admin-border bg-admin-surface/60 p-2.5">
-                <p className="text-[9px] uppercase tracking-[0.08em] text-admin-text-muted">
-                  Withdrawals
-                </p>
-                <p className="mt-1 text-base font-bold text-admin-gold sm:text-lg">
-                  {formatCurrency(data?.charts.totals.withdrawals7d ?? 0)}
-                </p>
-              </div>
+          <AdminCard className="p-3 sm:p-4 overflow-hidden w-full">
+            <AdminCardHeader
+              title="User Registration Trend"
+              subtitle="New user signups over last 7 days"
+            />
+            <div className="w-full overflow-x-auto">
+              <UserRegistrationChart
+                data={data?.charts.registrationTrend ?? []}
+                compact
+              />
             </div>
           </AdminCard>
         </div>
-
-        {/* User Registration Chart */}
-        <AdminCard className="p-3 sm:p-4 overflow-hidden w-full">
-          <AdminCardHeader
-            title="User Registration Trend"
-            subtitle="New user signups over last 7 days"
-          />
-          <div className="w-full overflow-x-auto">
-            <UserRegistrationChart
-              data={data?.charts.registrationTrend ?? []}
-              compact
-            />
-          </div>
-        </AdminCard>
 
         {/* Recent Activity + Quick Links */}
         <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
