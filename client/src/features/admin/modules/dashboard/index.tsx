@@ -348,7 +348,11 @@ export default function Dashboard() {
               </DropdownMenu>
             </div>
             <div className="w-full">
-              <DepositWithdrawalChart data={chartData} compact period={financePeriod} />
+              <DepositWithdrawalChart
+                data={chartData}
+                compact
+                period={financePeriod}
+              />
             </div>
           </AdminCard>
 
