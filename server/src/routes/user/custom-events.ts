@@ -210,8 +210,7 @@ userCustomEventsRouter.patch(
         updateData.homeScore = parsed.data.homeScore;
       if (parsed.data.awayScore !== undefined)
         updateData.awayScore = parsed.data.awayScore;
-      if (parsed.data.h2hOdds)
-        updateData.h2hOdds = parsed.data.h2hOdds;
+      if (parsed.data.h2hOdds) updateData.h2hOdds = parsed.data.h2hOdds;
       if (parsed.data.spreadsOdds)
         updateData.spreadsOdds = parsed.data.spreadsOdds;
       if (parsed.data.totalsOdds)
