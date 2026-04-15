@@ -355,6 +355,7 @@ const quickLinks: Item[] = [
     warn: true,
   },
   { label: "My Bets", to: "/user/bets", icon: "B" },
+  { label: "My Matches", to: "/user/events", icon: "M" },
   { label: "Analytics", to: "/user/payments/history", icon: "A" },
   { label: "How It Works", to: "/user/how-it-works", icon: "?" },
   { label: "FAQs", to: "/user/faqs", icon: "!" },
