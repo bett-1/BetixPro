@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { prisma } from "../lib/prisma";
+import { emitNotificationUpdate } from "../lib/socket";
 import { verifyBanAppealToken } from "../utils/tokenUtils";
 
 const appealsRouter = Router();
@@ -62,6 +63,42 @@ appealsRouter.post("/appeals/public", async (req: Request, res: Response) => {
       status: "PENDING",
     },
   });
+
+  const adminUsers = await prisma.user.findMany({
+    where: { role: "ADMIN" },
+    select: { id: true },
+  });
+
+  const appealText = parsed.data.appealText.trim();
+  const appealSnippet = appealText.slice(0, 120);
+  const adminTitle = "New Ban Appeal";
+  const adminMessage = `A user submitted a ban appeal${appealSnippet ? `: ${appealSnippet}${appealText.length > 120 ? "..." : ""}` : "."}`;
+  const createdAtIso = new Date().toISOString();
+
+  if (adminUsers.length > 0) {
+    await prisma.notification.createMany({
+      data: adminUsers.map((admin) => ({
+        userId: admin.id,
+        audience: "ADMIN" as const,
+        type: "SYSTEM" as const,
+        title: adminTitle,
+        message: adminMessage,
+        transactionId: appeal.id,
+      })),
+      skipDuplicates: true,
+    });
+
+    for (const admin of adminUsers) {
+      emitNotificationUpdate(admin.id, {
+        audience: "ADMIN",
+        type: "SYSTEM",
+        title: adminTitle,
+        message: adminMessage,
+        transactionId: appeal.id,
+        createdAt: createdAtIso,
+      });
+    }
+  }
 
   return res.status(201).json({
     message: "Ban appeal submitted successfully",

@@ -2,6 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { adminBetsRoute } from "./routes/admin/bets";
 import { adminAnalyticsRoute } from "./routes/admin/analytics";
+import { adminAppealsRoute } from "./routes/admin/appeals";
+import { adminAppealDetailRoute } from "./routes/admin/appeals.$appealId";
 import { adminContactsRoute } from "./routes/admin/contacts";
 import { adminDashboardRoute } from "./routes/admin/dashboard";
 import { adminEventsRoute } from "./routes/admin/events";
@@ -69,6 +71,7 @@ const routeTree = rootRoute.addChildren([
     adminAnalyticsRoute,
     adminUsersRoute,
     adminBetsRoute,
+    adminAppealsRoute.addChildren([adminAppealDetailRoute]),
     adminContactsRoute,
     adminEventsRoute,
     adminOddsRoute,

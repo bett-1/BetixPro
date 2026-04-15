@@ -4,6 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -260,6 +261,9 @@ export default function Users() {
               <RefreshCw size={13} />
               Refresh
             </AdminButton> */}
+            <AdminButton variant="ghost" size="sm">
+              <Link to="/admin/appeals">View Appeals</Link>
+            </AdminButton>
             <AdminButton
               variant="solid"
               size="sm"
@@ -306,6 +310,7 @@ export default function Users() {
           {error}
         </AdminCard>
       )}
+
 
       <div className="space-y-4">
         <Input
@@ -369,7 +374,7 @@ export default function Users() {
                 {visibleUsers.map((user, index) => (
                   <tr
                     key={user.id}
-                    className="even:bg-[var(--color-bg-elevated)] cursor-pointer hover:bg-admin-surface/40"
+                    className="cursor-pointer even:bg-(--color-bg-elevated) hover:bg-admin-surface/40"
                     onClick={() => handleUserClick(user.id)}
                   >
                     <td
@@ -381,7 +386,7 @@ export default function Users() {
                       className={`${adminTableCellClassName} font-semibold text-admin-text-primary`}
                     >
                       <span
-                        className="max-w-[120px] truncate block"
+                        className="max-w-30 block truncate"
                         title={user.email}
                       >
                         {truncateEmailForTable(user.email)}
@@ -471,12 +476,10 @@ export default function Users() {
           }
         }}
       >
-        <AdminDialogContent className="max-w-2xl p-0">
+        <AdminDialogContent className="max-w-2xl p-0 max-h-none overflow-y-visible">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-lg text-white">
-              User Details
-            </DialogTitle>
-            <DialogDescription className="text-sm text-admin-text-secondary">
+            <DialogTitle className="text-white">User Details</DialogTitle>
+            <DialogDescription className="text-admin-text-secondary">
               Account profile, wallet status, and admin actions.
             </DialogDescription>
           </DialogHeader>
@@ -486,9 +489,9 @@ export default function Users() {
               Loading...
             </div>
           ) : selectedUser ? (
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto px-6 py-5">
+            <div className="space-y-4 px-6 py-5">
               {/* Info Grid */}
-              <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-[rgba(13,33,55,0.16)] p-4">
+              <div className="space-y-3 rounded-2xl border border-white/10 bg-[rgba(13,33,55,0.16)] p-4">
                 <div className="space-y-1">
                   <p className="text-xs text-admin-text-muted font-semibold">
                     Email
@@ -535,11 +538,11 @@ export default function Users() {
                   <p className="text-xs text-admin-text-muted font-semibold">
                     Created
                   </p>
-                  <p className="text-sm text-admin-text-primary text-xs">
+                  <time className="font-medium text-admin-text-primary">
                     {new Date(selectedUser.createdAt).toLocaleDateString(
                       "en-KE",
                     )}
-                  </p>
+                  </time>
                 </div>
               </div>
 
@@ -620,12 +623,14 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update user information</DialogDescription>
+            <DialogTitle className="text-base">✏️ Edit User</DialogTitle>
+            <DialogDescription>
+              Update user account information
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
+          <div className="space-y-5 px-6 py-6">
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
                 Full Name
               </label>
               <Input
@@ -634,11 +639,11 @@ export default function Users() {
                   setFormData({ ...formData, fullName: e.target.value })
                 }
                 placeholder="John Doe"
-                className={`mt-2 ${adminInputClassName}`}
+                className={`${adminInputClassName}`}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
                 Email
               </label>
               <Input
@@ -648,11 +653,14 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 disabled
-                className={`mt-2 ${adminInputClassName} opacity-50`}
+                className={`${adminInputClassName} opacity-50 cursor-not-allowed`}
               />
+              <p className="mt-1.5 text-xs text-admin-text-muted">
+                Email cannot be changed
+              </p>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
                 Phone
               </label>
               <Input
@@ -662,30 +670,31 @@ export default function Users() {
                 }
                 placeholder="+254712345678"
                 disabled
-                className={`mt-2 ${adminInputClassName} opacity-50`}
+                className={`${adminInputClassName} opacity-50 cursor-not-allowed`}
               />
+              <p className="mt-1.5 text-xs text-admin-text-muted">
+                Phone cannot be changed
+              </p>
             </div>
-            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
-              <input
-                type="checkbox"
-                id="verified"
-                checked={formData.isVerified}
-                onChange={(e) =>
-                  setFormData({ ...formData, isVerified: e.target.checked })
-                }
-                className="cursor-pointer"
-              />
-              <label
-                htmlFor="verified"
-                className="text-sm text-admin-text-primary cursor-pointer flex-1"
-              >
-                Mark as verified
+            <div className="rounded-xl border border-admin-accent/20 bg-admin-accent/8 p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isVerified}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isVerified: e.target.checked })
+                  }
+                  className="w-4 h-4 accent-admin-accent"
+                />
+                <span className="text-sm font-medium text-admin-text-primary">
+                  Mark as verified
+                </span>
               </label>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => {
                   setActionDialog(null);
                   setEditingUserId(null);
@@ -694,11 +703,11 @@ export default function Users() {
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleSaveEdit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </AdminButton>
             </div>
           </div>
@@ -716,37 +725,48 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-red-400">Ban User</DialogTitle>
+            <DialogTitle className="text-base text-admin-red">
+              🚫 Ban User
+            </DialogTitle>
             <DialogDescription>
-              This action is permanent and will prevent the user from accessing
-              the platform.
+              This will restrict the user from accessing the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-red/30 bg-admin-red/10 p-3">
-              <p className="text-xs font-semibold text-admin-red uppercase">
-                Warning
+          <div className="space-y-5 px-6 py-6">
+            <div className="rounded-xl border border-admin-red/30 bg-admin-red/8 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-admin-red mb-2">
+                ⚠️ Warning
               </p>
-              <p className="text-sm text-admin-red/80 mt-1">
-                Banning this user cannot be undone. Ensure you have a valid
-                reason.
-              </p>
+              <ul className="text-sm text-admin-red/80 space-y-1.5">
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>User will be locked out immediately</span>
+                </li>
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>All active sessions will be terminated</span>
+                </li>
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>They can appeal the ban</span>
+                </li>
+              </ul>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
-                Reason for ban (optional)
+              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2">
+                Reason (optional)
               </label>
               <Input
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
-                placeholder="E.g., Fraudulent activity, Terms violation"
-                className={`mt-2 ${adminInputClassName}`}
+                placeholder="E.g., Fraudulent activity, Terms violation..."
+                className={`${adminInputClassName}`}
               />
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => {
                   setActionDialog(null);
                   setActionReason("");
@@ -756,7 +776,7 @@ export default function Users() {
               </AdminButton>
               <AdminButton
                 tone="red"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleBanUser}
                 disabled={isSubmitting}
               >
@@ -777,30 +797,31 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Unban User</DialogTitle>
+            <DialogTitle className="text-base">✅ Unban User</DialogTitle>
             <DialogDescription>
-              Lift the ban and restore the user's access to the platform.
+              Restore the user's access to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/10 p-3">
-              <p className="text-xs font-semibold text-admin-accent uppercase">
-                Confirm Action
+          <div className="space-y-5 px-6 py-6">
+            <div className="rounded-xl border border-admin-accent/30 bg-admin-accent/8 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-admin-accent mb-2">
+                ✓ Confirm Action
               </p>
-              <p className="text-sm text-admin-accent/80 mt-1">
-                This will restore the user's full access to the platform.
+              <p className="text-sm text-admin-accent/80">
+                This will immediately restore the user's access and remove any
+                ban restrictions.
               </p>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => setActionDialog(null)}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleUnbanUser}
                 disabled={isSubmitting}
               >
@@ -823,27 +844,27 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-admin-accent">
-              Change User Password
+            <DialogTitle className="text-base text-admin-text-primary">
+              🔐 Change User Password
             </DialogTitle>
             <DialogDescription>
               Set a new password for this user account. They will need to use
               this password to log in.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5">
-            <div className="rounded-lg border border-admin-accent/30 bg-admin-accent/8 p-4">
-              <p className="text-xs font-semibold text-admin-accent uppercase tracking-wider">
+          <div className="space-y-5 px-6 py-6">
+            <div className="rounded-xl border border-admin-accent/30 bg-admin-accent/8 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-admin-accent mb-2">
                 Important
               </p>
-              <ul className="text-sm text-admin-accent/80 mt-2.5 space-y-1.5 list-disc list-inside">
+              <ul className="text-sm text-admin-accent/80 space-y-1.5 list-disc list-inside">
                 <li>Password must be at least 6 characters long</li>
                 <li>User will need this new password to log in</li>
                 <li>Current password cannot be displayed for security</li>
               </ul>
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary block mb-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 New Password <span className="text-admin-red">*</span>
               </label>
               <div className="relative">
@@ -870,7 +891,7 @@ export default function Users() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-3">
                 <div className="flex-1 bg-admin-border/30 rounded-full h-1 overflow-hidden">
                   <div
                     className={`h-full transition-all ${
@@ -899,7 +920,7 @@ export default function Users() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
                 className="flex-1"
@@ -938,14 +959,16 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle>Create New User</DialogTitle>
+            <DialogTitle className="text-base text-admin-text-primary">
+              ➕ Create New User
+            </DialogTitle>
             <DialogDescription>
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
+          <div className="space-y-5 px-6 py-6">
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Full Name (optional)
               </label>
               <Input
@@ -957,11 +980,11 @@ export default function Users() {
                   })
                 }
                 placeholder="John Doe"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Email <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -974,11 +997,11 @@ export default function Users() {
                 }
                 placeholder="user@example.com"
                 type="email"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Phone (Kenyan) <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -990,11 +1013,11 @@ export default function Users() {
                   })
                 }
                 placeholder="+254712345678 or 0712345678"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Password <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -1007,11 +1030,11 @@ export default function Users() {
                 }
                 type="password"
                 placeholder="Minimum 6 characters"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-admin-text-primary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-admin-text-muted mb-2 block">
                 Confirm Password <span className="text-admin-red">*</span>
               </label>
               <Input
@@ -1024,10 +1047,10 @@ export default function Users() {
                 }
                 type="password"
                 placeholder="Confirm password"
-                className={`mt-2 ${adminInputClassName}`}
+                className={adminInputClassName}
               />
             </div>
-            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[rgba(13,33,55,0.16)] p-3">
+            <div className="flex items-center gap-3 rounded-xl border border-admin-accent/30 bg-admin-accent/8 p-3">
               <input
                 type="checkbox"
                 id="createVerified"
@@ -1047,16 +1070,16 @@ export default function Users() {
                 Mark as verified
               </label>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-white/10">
+            <div className="flex gap-2 pt-4 border-t border-white/10">
               <AdminButton
                 variant="ghost"
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={() => setActionDialog(null)}
               >
                 Cancel
               </AdminButton>
               <AdminButton
-                className="flex-1 mt-4"
+                className="flex-1"
                 onClick={handleCreateUser}
                 disabled={isSubmitting}
               >
