@@ -682,6 +682,16 @@ export async function getAdminDashboardSummary(req: Request, res: Response) {
       },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.user.findMany({
+      where: {
+        role: "USER",
+        createdAt: { gte: trendStart },
+      },
+      select: {
+        createdAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+    }),
     prisma.walletTransaction.findMany({
       where: {
         type: { in: ["DEPOSIT", "WITHDRAWAL"] },
