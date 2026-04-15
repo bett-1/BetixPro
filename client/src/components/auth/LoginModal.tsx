@@ -12,9 +12,24 @@ function normalizePhoneInput(value: string) {
 }
 
 function getLoginErrorMessage(error: unknown) {
-  if (isAxiosError<{ message?: string }>(error)) {
+  if (
+    isAxiosError<{ message?: string; isBanned?: boolean; banReason?: string }>(
+      error,
+    )
+  ) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
+    const isBanned = error.response?.data?.isBanned;
+    const banReason = error.response?.data?.banReason;
+
+    if (isBanned && banReason) {
+      const bannedMessage =
+        typeof message === "string" && message.trim().length > 0
+          ? message
+          : "Your account has been banned.";
+
+      return `${bannedMessage}\n\nReason: ${banReason}`;
+    }
 
     if (typeof message === "string" && message.trim().length > 0) {
       return message;
@@ -202,7 +217,7 @@ export default function LoginModal() {
           <form className="space-y-5" onSubmit={handleSubmit}>
             {/* Error Message */}
             {errorMessage && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/15 px-4 py-3 text-sm text-red-300 font-medium animate-in fade-in">
+              <div className="rounded-lg border border-red-500/30 bg-red-500/15 px-4 py-3 text-sm text-red-300 font-medium animate-in fade-in whitespace-pre-wrap">
                 ⚠️ {errorMessage}
               </div>
             )}

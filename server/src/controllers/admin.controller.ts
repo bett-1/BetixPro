@@ -1786,7 +1786,20 @@ export async function banUser(req: Request, res: Response) {
   }
 
   const userId = String(req.params.userId);
-  const { reason } = req.body;
+
+  const banBodySchema = z.object({
+    reason: z.string().trim().max(500).optional(),
+  });
+
+  const parsedBody = banBodySchema.safeParse(req.body);
+  if (!parsedBody.success) {
+    return res.status(400).json({
+      message: "Invalid ban reason format",
+      errors: parsedBody.error.flatten().fieldErrors,
+    });
+  }
+
+  const reason = parsedBody.data.reason;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -1804,12 +1817,14 @@ export async function banUser(req: Request, res: Response) {
     where: { id: userId },
     data: {
       bannedAt: new Date(),
+      banReason: reason || "Account violation",
       accountStatus: "SUSPENDED",
     },
     select: {
       id: true,
       email: true,
       bannedAt: true,
+      banReason: true,
     },
   });
 
@@ -1819,6 +1834,7 @@ export async function banUser(req: Request, res: Response) {
       id: updatedUser.id,
       email: updatedUser.email,
       bannedAt: updatedUser.bannedAt?.toISOString(),
+      banReason: updatedUser.banReason,
     },
   });
 }
@@ -1850,6 +1866,7 @@ export async function unbanUser(req: Request, res: Response) {
     where: { id: userId },
     data: {
       bannedAt: null,
+      banReason: null,
       accountStatus: "ACTIVE",
     },
     select: {
