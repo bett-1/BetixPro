@@ -28,7 +28,9 @@ import {
 } from "../data/mock-data";
 import {
   LineChart,
+  BarChart,
   Line,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -698,6 +700,55 @@ export function DepositWithdrawalChart({
           name="Withdrawals"
         />
       </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function UserRegistrationChart({
+  data,
+  compact = false,
+}: {
+  data: any[];
+  compact?: boolean;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={compact ? 230 : 320}>
+      <BarChart
+        data={data}
+        margin={{ top: 8, right: 8, left: -24, bottom: 2 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+        <XAxis
+          dataKey="period"
+          stroke="rgba(168,196,224,0.62)"
+          style={{ fontSize: "11px" }}
+        />
+        <YAxis 
+          stroke="rgba(168,196,224,0.62)" 
+          style={{ fontSize: "11px" }}
+          tickFormatter={(value) => formatLargeNumber(value)}
+        />
+        <Tooltip
+          contentStyle={{
+            background:
+              "linear-gradient(180deg, rgba(20,35,58,0.97), rgba(13,26,44,0.94))",
+            border: "1px solid rgba(102,187,106,0.18)",
+            borderRadius: "14px",
+            boxShadow: "0 20px 48px rgba(0,0,0,0.4)",
+          }}
+          labelStyle={{ color: "#ffffff", fontSize: "11px" }}
+          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+        />
+        <Bar
+          dataKey="registrations"
+          fill="#66bb6a"
+          radius={[8, 8, 0, 0]}
+          fillOpacity={0.85}
+          isAnimationActive={true}
+          animationDuration={500}
+          name="New Users"
+        />
+      </BarChart>
     </ResponsiveContainer>
   );
 }
