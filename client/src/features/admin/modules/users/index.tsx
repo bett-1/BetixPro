@@ -207,7 +207,6 @@ export default function Users() {
     try {
       await updateUserAction(editingUserId, {
         fullName: formData.fullName,
-        email: formData.email,
         phone: formData.phone,
         isVerified: formData.isVerified,
       });
@@ -276,7 +275,6 @@ export default function Users() {
 
   const handleCreateUser = async () => {
     if (
-      !createFormData.email ||
       !createFormData.phone ||
       !createFormData.password
     ) {
@@ -316,14 +314,7 @@ export default function Users() {
   const activeUsers = visibleUsers.filter((u) => u.status === "active").length;
   const bannedUsers = visibleUsers.filter((u) => u.status === "banned").length;
 
-  // Helper to truncate email for display
-  const truncateEmail = (email: string) => {
-    const [localPart, domain] = email.split("@");
-    if (localPart.length > 8) {
-      return `${localPart.slice(0, 6)}...@${domain}`;
-    }
-    return email;
-  };
+
 
   return (
     <div className="space-y-5">
@@ -390,7 +381,7 @@ export default function Users() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-text-muted" />
           <Input
-            placeholder="Search by email, name, or phone..."
+            placeholder="Search by name or phone..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -459,7 +450,6 @@ export default function Users() {
                 <tr>
                   {[
                     "#",
-                    "Email",
                     "Phone",
                     "Status",
                     "Balance",
@@ -485,9 +475,6 @@ export default function Users() {
                   >
                     <td className="px-3 py-3 text-sm text-admin-text-muted font-mono">
                       {(page - 1) * 50 + index + 1}
-                    </td>
-                    <td className="px-3 py-3 text-sm text-admin-text-primary">
-                      {truncateEmail(user.email)}
                     </td>
                     <td className="px-3 py-3 text-sm font-mono text-admin-text-primary">
                       {user.phone}
@@ -741,16 +728,7 @@ export default function Users() {
               />
             </FormField>
 
-            <FormField label="Email" required>
-              <Input
-                value={formData.email}
-                disabled
-                className={`${adminInputClassName} opacity-60 h-9`}
-              />
-              <p className="text-xs text-admin-text-muted">
-                Email cannot be changed
-              </p>
-            </FormField>
+
 
             <FormField label="Phone">
               <Input
@@ -1033,20 +1011,7 @@ export default function Users() {
               />
             </FormField>
 
-            <FormField label="Email" required>
-              <Input
-                value={createFormData.email}
-                onChange={(e) =>
-                  setCreateFormData({
-                    ...createFormData,
-                    email: e.target.value,
-                  })
-                }
-                placeholder="user@example.com"
-                type="email"
-                className={`${adminInputClassName} h-9`}
-              />
-            </FormField>
+
 
             <FormField
               label="Phone (Kenyan)"

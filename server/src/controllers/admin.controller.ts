@@ -820,7 +820,7 @@ export async function getAdminDashboardSummary(req: Request, res: Response) {
 
   const sevenDayDepositTotal = sevenDayDeposits._sum.amount ?? 0;
   const sevenDayWithdrawalTotal = sevenDayWithdrawals._sum.amount ?? 0;
-  
+
   const allTimeDepositTotal = allTimeDeposits._sum.amount ?? 0;
   const allTimeWithdrawalTotal = allTimeWithdrawals._sum.amount ?? 0;
   const allTimeNetFlow = allTimeDepositTotal - allTimeWithdrawalTotal;
