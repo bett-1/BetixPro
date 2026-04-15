@@ -159,11 +159,19 @@ export default function Analytics() {
                   <defs>
                     <linearGradient id="stakeGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#00e5a0" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#00e5a0" stopOpacity={0.05} />
+                      <stop
+                        offset="100%"
+                        stopColor="#00e5a0"
+                        stopOpacity={0.05}
+                      />
                     </linearGradient>
                     <linearGradient id="payoutGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#4aa3ff" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#4aa3ff" stopOpacity={0.02} />
+                      <stop
+                        offset="100%"
+                        stopColor="#4aa3ff"
+                        stopOpacity={0.02}
+                      />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -601,9 +609,7 @@ export default function Analytics() {
 
       {isLoading && !data ? (
         <AdminCard className="p-3">
-          <p className="text-xs text-admin-text-muted">
-            Loading analytics...
-          </p>
+          <p className="text-xs text-admin-text-muted">Loading analytics...</p>
         </AdminCard>
       ) : null}
     </div>
