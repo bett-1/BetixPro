@@ -717,7 +717,9 @@ export default function Users() {
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
             <DialogTitle className="text-base">✏️ Edit User</DialogTitle>
-            <DialogDescription>Update user account information</DialogDescription>
+            <DialogDescription>
+              Update user account information
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 px-6 py-6">
             <div>
@@ -816,7 +818,9 @@ export default function Users() {
       >
         <AdminDialogContent className="max-w-lg">
           <DialogHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-5">
-            <DialogTitle className="text-base text-admin-red">🚫 Ban User</DialogTitle>
+            <DialogTitle className="text-base text-admin-red">
+              🚫 Ban User
+            </DialogTitle>
             <DialogDescription>
               This will restrict the user from accessing the platform
             </DialogDescription>
@@ -897,7 +901,8 @@ export default function Users() {
                 ✓ Confirm Action
               </p>
               <p className="text-sm text-admin-accent/80">
-                This will immediately restore the user's access and remove any ban restrictions.
+                This will immediately restore the user's access and remove any
+                ban restrictions.
               </p>
             </div>
             <div className="flex gap-2 pt-4 border-t border-white/10">
