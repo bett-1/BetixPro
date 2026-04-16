@@ -120,7 +120,11 @@ const payments: Item[] = [
     to: "/user/payments/history",
     icon: <History size={18} />,
   },
-  { label: "Deposit", to: "/user/payments/deposit", icon: <ArrowDownToLine size={18} /> },
+  {
+    label: "Deposit",
+    to: "/user/payments/deposit",
+    icon: <ArrowDownToLine size={18} />,
+  },
   {
     label: "Withdrawal",
     to: "/user/payments/withdrawal",
@@ -137,9 +141,17 @@ const topLeagues: Item[] = [];
 const sportsGroups: Group[] = [];
 
 const helpLinks: Item[] = [
-  { label: "How It Works", to: "/user/how-it-works", icon: <HelpCircle size={18} /> },
+  {
+    label: "How It Works",
+    to: "/user/how-it-works",
+    icon: <HelpCircle size={18} />,
+  },
   { label: "FAQs", to: "/user/faqs", icon: <FileText size={18} /> },
-  { label: "Contact Us", to: "/user/contact", icon: <MessageCircle size={18} /> },
+  {
+    label: "Contact Us",
+    to: "/user/contact",
+    icon: <MessageCircle size={18} />,
+  },
 ];
 
 function ItemLink({ item, onClick }: { item: Item; onClick: () => void }) {
