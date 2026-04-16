@@ -95,9 +95,15 @@ function OddsPreviewButton({
             : "border-[#1e3350]/50 bg-[#0f1a2d] text-white hover:border-[#ffd500]/30 hover:bg-[#ffd500]/[0.05]"
       }`}
     >
-      <span className={`text-[8px] font-medium uppercase tracking-wider sm:text-[9px] ${
-        disabled ? "text-[#3d5478]" : isSelected ? "text-[#ffd500]/70" : "text-[#637fa0]"
-      }`}>
+      <span
+        className={`text-[8px] font-medium uppercase tracking-wider sm:text-[9px] ${
+          disabled
+            ? "text-[#3d5478]"
+            : isSelected
+              ? "text-[#ffd500]/70"
+              : "text-[#637fa0]"
+        }`}
+      >
         {entry.label}
       </span>
       <span className="text-xs font-bold sm:text-sm">
@@ -191,8 +197,8 @@ export default function EventCard({
               onClick={() => setShowMarkets(true)}
               className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-[#ffd500]/15 bg-[#ffd500]/[0.06] px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-wider text-[#ffd500] transition hover:border-[#ffd500]/30 hover:bg-[#ffd500]/10 sm:text-[8px] md:text-[9px]"
             >
-              <TrendingUp size={8} className="sm:h-[9px] sm:w-[9px]" />
-              +{marketCount}
+              <TrendingUp size={8} className="sm:h-[9px] sm:w-[9px]" />+
+              {marketCount}
             </button>
           </div>
 
