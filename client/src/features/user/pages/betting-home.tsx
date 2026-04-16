@@ -130,7 +130,7 @@ export default function BettingHome() {
             HERO CAROUSEL — compact, professional banner
           ═══════════════════════════════════════════════════ */}
         <section className="hero-section relative overflow-hidden rounded-xl border border-[#1e3350]/60 shadow-[0_4px_20px_rgba(0,0,0,0.35)] sm:rounded-2xl">
-          <div className="relative h-[110px] w-full sm:h-[120px] md:h-[140px] lg:h-[160px]">
+          <div className="relative h-[70px] w-full sm:h-[80px] md:h-[95px] lg:h-[110px]">
             {heroImages.map((image, index) => (
               <article
                 key={`hero-image-${index}`}
