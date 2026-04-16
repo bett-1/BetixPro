@@ -98,10 +98,16 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
 });
 
-const loginSchema = z.object({
-  phone: z.string().trim(),
-  password: z.string(),
-});
+const loginSchema = z
+  .object({
+    email: z.string().trim().email("Provide a valid email address.").optional(),
+    phone: z.string().trim().optional(),
+    password: z.string(),
+  })
+  .refine((data) => Boolean(data.email || data.phone), {
+    message: "Provide either email or phone.",
+    path: ["email"],
+  });
 
 const verifyAdminMfaSchema = z.object({
   mfaToken: z.string().trim().min(1),
@@ -265,6 +271,72 @@ async function findLoginUserByPhone(
 
     const legacyUser = await prisma.user.findUnique({
       where: { phone: normalizedPhone },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        passwordHash: true,
+      },
+    });
+
+    if (!legacyUser) {
+      return null;
+    }
+
+    return {
+      ...legacyUser,
+      accountStatus: "ACTIVE",
+      bannedAt: null,
+      banReason: null,
+      adminTotpEnabled: false,
+      adminTotpSecret: null,
+      mustChangePassword: false,
+    };
+  }
+}
+
+async function findLoginUserByEmail(
+  normalizedEmail: string,
+): Promise<LoginUserRecord | null> {
+  try {
+    return await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: normalizedEmail,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        passwordHash: true,
+        accountStatus: true,
+        bannedAt: true,
+        banReason: true,
+        adminTotpEnabled: true,
+        adminTotpSecret: true,
+        mustChangePassword: true,
+      },
+    });
+  } catch (error) {
+    if (!isMissingUsersColumnError(error)) {
+      throw error;
+    }
+
+    const legacyUser = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: normalizedEmail,
+          mode: "insensitive",
+        },
+      },
       select: {
         id: true,
         email: true,
@@ -573,108 +645,170 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  const parsed = loginSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ message: "Invalid credentials" });
-  }
+  const rawEmail =
+    typeof req.body?.email === "string"
+      ? req.body.email.trim().toLowerCase()
+      : null;
+  const rawPhone =
+    typeof req.body?.phone === "string" ? req.body.phone.trim() : null;
+  console.log("LOGIN DEBUG: request received", {
+    email: rawEmail,
+    phoneProvided: Boolean(rawPhone),
+    passwordProvided: typeof req.body?.password === "string",
+  });
 
-  const normalizedPhone = normalizeKenyanPhone(parsed.data.phone);
-  if (!normalizedPhone) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
+  try {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-  const user = await findLoginUserByPhone(normalizedPhone);
+    if (
+      typeof parsed.data.password !== "string" ||
+      !parsed.data.password.trim()
+    ) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-  if (!user) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
+    const normalizedEmail = parsed.data.email?.trim().toLowerCase();
+    const normalizedPhone = parsed.data.phone
+      ? normalizeKenyanPhone(parsed.data.phone)
+      : null;
 
-  if (user.bannedAt) {
-    const appealToken = createBanAppealToken({
+    if (!normalizedEmail && parsed.data.phone && !normalizedPhone) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const user = normalizedEmail
+      ? await findLoginUserByEmail(normalizedEmail)
+      : await findLoginUserByPhone(normalizedPhone!);
+
+    console.log("LOGIN DEBUG: user found", {
+      found: Boolean(user),
+      lookup: normalizedEmail ? "email" : "phone",
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const passwordFieldExists =
+      typeof user.passwordHash === "string" &&
+      user.passwordHash.trim().length > 0;
+    console.log("LOGIN DEBUG: password field exists", {
+      exists: passwordFieldExists,
       userId: user.id,
-      reason: user.banReason || "No reason provided",
-      bannedAt: user.bannedAt.toISOString(),
     });
 
-    return res.status(403).json({
-      message: "Your account has been banned and is no longer active.",
-      isBanned: true,
-      banReason: user.banReason || "No reason provided",
-      bannedAt: user.bannedAt?.toISOString(),
-      appealToken,
-    });
-  }
-
-  if (user.accountStatus === "SUSPENDED") {
-    return res
-      .status(403)
-      .json({ message: "This account has been suspended." });
-  }
-
-  const isValidPassword = await bcrypt.compare(
-    parsed.data.password,
-    user.passwordHash,
-  );
-  if (!isValidPassword) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-  if (user.role === "ADMIN" && user.mustChangePassword) {
-    return res.status(403).json({
-      message: "Password change is required before admin access is granted.",
-      mustChangePassword: true,
-      changePasswordToken: createForcePasswordChangeToken(user.id),
-      expiresInSeconds: Math.floor(PASSWORD_CHANGE_TOKEN_TTL_MS / 1000),
-    });
-  }
-
-  let requireAdminMfa = false;
-  if (user.role === "ADMIN") {
-    try {
-      requireAdminMfa =
-        (await isAdminTwoFactorRequired()) &&
-        user.adminTotpEnabled &&
-        Boolean(user.adminTotpSecret);
-    } catch (error) {
-      console.error("Admin MFA policy lookup failed:", error);
-      const failure = getAdminMfaFailureResponse(error);
-      return res.status(failure.status).json({ message: failure.message });
+    if (!passwordFieldExists) {
+      console.error("LOGIN DEBUG: password missing", {
+        userId: user.id,
+        email: user.email,
+      });
+      throw new Error("User password hash is missing.");
     }
-  }
 
-  if (requireAdminMfa) {
-    try {
-      const mfaToken = createAdminMfaToken({
-        sub: user.id,
-        role: "ADMIN",
-        purpose: "totp_verify",
+    if (user.bannedAt) {
+      const appealToken = createBanAppealToken({
+        userId: user.id,
+        reason: user.banReason || "No reason provided",
+        bannedAt: user.bannedAt.toISOString(),
       });
 
-      return res.status(202).json({
-        mfaRequired: true,
-        mfaMode: "totp_verify",
-        mfaToken,
-        expiresInSeconds: Math.floor(ADMIN_MFA_TTL_MS / 1000),
-        message:
-          "Enter the verification code from Microsoft Authenticator to continue.",
+      return res.status(403).json({
+        message: "Your account has been banned and is no longer active.",
+        isBanned: true,
+        banReason: user.banReason || "No reason provided",
+        bannedAt: user.bannedAt?.toISOString(),
+        appealToken,
       });
-    } catch (error) {
-      console.error("Admin MFA login setup failed:", error);
-      const failure = getAdminMfaFailureResponse(error);
-      return res.status(failure.status).json({ message: failure.message });
     }
+
+    if (user.accountStatus === "SUSPENDED") {
+      return res
+        .status(403)
+        .json({ message: "This account has been suspended." });
+    }
+
+    const isValidPassword = await bcrypt.compare(
+      parsed.data.password,
+      user.passwordHash,
+    );
+    if (!isValidPassword) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (user.role === "ADMIN" && user.mustChangePassword) {
+      return res.status(403).json({
+        message: "Password change is required before admin access is granted.",
+        mustChangePassword: true,
+        changePasswordToken: createForcePasswordChangeToken(user.id),
+        expiresInSeconds: Math.floor(PASSWORD_CHANGE_TOKEN_TTL_MS / 1000),
+      });
+    }
+
+    let requireAdminMfa = false;
+    if (user.role === "ADMIN") {
+      try {
+        requireAdminMfa =
+          (await isAdminTwoFactorRequired()) &&
+          user.adminTotpEnabled &&
+          Boolean(user.adminTotpSecret);
+      } catch (error) {
+        console.error("Admin MFA policy lookup failed:", error);
+        const failure = getAdminMfaFailureResponse(error);
+        return res.status(failure.status).json({ message: failure.message });
+      }
+    }
+
+    if (requireAdminMfa) {
+      try {
+        const mfaToken = createAdminMfaToken({
+          sub: user.id,
+          role: "ADMIN",
+          purpose: "totp_verify",
+        });
+
+        return res.status(202).json({
+          mfaRequired: true,
+          mfaMode: "totp_verify",
+          mfaToken,
+          expiresInSeconds: Math.floor(ADMIN_MFA_TTL_MS / 1000),
+          message:
+            "Enter the verification code from Microsoft Authenticator to continue.",
+        });
+      } catch (error) {
+        console.error("Admin MFA login setup failed:", error);
+        const failure = getAdminMfaFailureResponse(error);
+        return res.status(failure.status).json({ message: failure.message });
+      }
+    }
+
+    const session = await createAuthenticatedSession({
+      req,
+      res,
+      user,
+    });
+
+    return res.status(200).json({
+      accessToken: session.accessToken,
+      user: session.user,
+    });
+  } catch (error) {
+    const safeBody = {
+      email: rawEmail,
+      phoneProvided: Boolean(rawPhone),
+      passwordProvided: typeof req.body?.password === "string",
+    };
+
+    console.error("LOGIN ERROR", {
+      message: error instanceof Error ? error.message : "Unknown login error",
+      stack: error instanceof Error ? error.stack : undefined,
+      requestBody: safeBody,
+    });
+
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  const session = await createAuthenticatedSession({
-    req,
-    res,
-    user,
-  });
-
-  return res.status(200).json({
-    accessToken: session.accessToken,
-    user: session.user,
-  });
 }
 
 export async function verifyAdminMfaLogin(req: Request, res: Response) {
@@ -1103,12 +1237,15 @@ export async function changePassword(req: Request, res: Response) {
 
   if (isForcedAdminPasswordChange && !user.mustChangePassword) {
     return res.status(403).json({
-      message: "Password change challenge is no longer required for this account.",
+      message:
+        "Password change challenge is no longer required for this account.",
     });
   }
 
   if (user.accountStatus === "SUSPENDED") {
-    return res.status(403).json({ message: "This account has been suspended." });
+    return res
+      .status(403)
+      .json({ message: "This account has been suspended." });
   }
 
   const isCurrentPasswordValid = await bcrypt.compare(

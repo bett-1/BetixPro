@@ -22,10 +22,14 @@ function normalizeKenyanPhone(rawPhone: string) {
   return null;
 }
 
-function getRequiredAdminEnv(name: "ADMIN_EMAIL" | "ADMIN_PHONE" | "ADMIN_PASSWORD") {
+function getRequiredAdminEnv(
+  name: "ADMIN_EMAIL" | "ADMIN_PHONE" | "ADMIN_PASSWORD",
+) {
   const value = process.env[name]?.trim();
   if (!value) {
-    throw new Error(`${name} is required to initialize the production admin account.`);
+    throw new Error(
+      `${name} is required to initialize the production admin account.`,
+    );
   }
 
   return value;

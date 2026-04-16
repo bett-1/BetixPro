@@ -42,7 +42,16 @@ function normalizeLoginIdentifier(value: unknown) {
 
 function loginKeyGenerator(req: Request) {
   const rawPhone = normalizeLoginIdentifier(req.body?.phone);
-  return rawPhone ? `phone:${rawPhone}` : ipKeyGenerator(req);
+  if (rawPhone) {
+    return `phone:${rawPhone}`;
+  }
+
+  const rawEmail = normalizeLoginIdentifier(req.body?.email);
+  if (rawEmail) {
+    return `email:${rawEmail}`;
+  }
+
+  return ipKeyGenerator(req);
 }
 
 function mfaKeyGenerator(req: Request) {
