@@ -1,6 +1,21 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ChevronDown, Zap } from "lucide-react";
+import {
+  ChevronDown,
+  Zap,
+  Home,
+  Flame,
+  User,
+  Wallet,
+  TrendingUp,
+  History,
+  BarChart3,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  HelpCircle,
+  MessageCircle,
+  FileText,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
@@ -13,15 +28,16 @@ type SidebarProps = {
 type Item = {
   label: string;
   to: string;
-  icon: string;
+  icon: React.ReactNode;
   liveBadge?: string;
   warn?: boolean;
+  notificationBadge?: boolean;
 };
 
 type Group = {
   key: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   children: Item[];
 };
 
@@ -58,54 +74,72 @@ function toSidebarSportName(raw: string) {
 function sportIcon(name: string) {
   switch (name) {
     case "Soccer":
-      return "SO";
+      return "⚽";
     case "Basketball":
-      return "BK";
+      return "🏀";
     case "Tennis":
-      return "TN";
+      return "🎾";
     case "Ice Hockey":
-      return "IH";
+      return "🏒";
     case "Volleyball":
-      return "VB";
+      return "🏐";
     case "Cricket":
-      return "CK";
+      return "🏏";
     case "Handball":
-      return "HB";
+      return "🤾";
     case "Table Tennis":
-      return "TT";
+      return "🏓";
     default:
-      return "SP";
+      return "🎯";
   }
 }
 
-const sectionOne: Item[] = [
-  { label: "Homepage", to: "/user", icon: "H" },
-  { label: "Live", to: "/user/live", icon: "L", liveBadge: "LIVE" },
-  { label: "Profile", to: "/user/profile", icon: "U" },
+const navigationLinks: Item[] = [
+  { label: "Homepage", to: "/user", icon: <Home size={18} /> },
+  {
+    label: "Live Betting",
+    to: "/user/live",
+    icon: <Flame size={18} />,
+    liveBadge: "LIVE",
+  },
 ];
 
 const myAccount: Item[] = [
   {
     label: "My Profile",
     to: "/user/profile",
-    icon: "U",
+    icon: <User size={18} />,
   },
-  { label: "My Wallet", to: "/user/payments", icon: "W" },
-  { label: "My Bets", to: "/my-bets", icon: "B" },
-  { label: "Transaction History", to: "/user/payments/history", icon: "T" },
-  { label: "Reports", to: "/user/reports", icon: "📊" },
-  { label: "Deposit", to: "/user/payments/deposit", icon: "+" },
-  { label: "Withdrawal", to: "/user/payments/withdrawal", icon: "^" },
+  { label: "My Wallet", to: "/user/payments", icon: <Wallet size={18} /> },
+  { label: "My Bets", to: "/my-bets", icon: <TrendingUp size={18} /> },
+];
+
+const payments: Item[] = [
+  {
+    label: "Transaction History",
+    to: "/user/payments/history",
+    icon: <History size={18} />,
+  },
+  { label: "Deposit", to: "/user/payments/deposit", icon: <ArrowDownToLine size={18} /> },
+  {
+    label: "Withdrawal",
+    to: "/user/payments/withdrawal",
+    icon: <ArrowUpFromLine size={18} />,
+  },
+];
+
+const analytics: Item[] = [
+  { label: "Reports", to: "/user/reports", icon: <BarChart3 size={18} /> },
 ];
 
 const topLeagues: Item[] = [];
 
 const sportsGroups: Group[] = [];
 
-const quickLinks: Item[] = [
-  { label: "How It Works", to: "/user/how-it-works", icon: "?" },
-  { label: "FAQs", to: "/user/faqs", icon: "!" },
-  { label: "Contact Us", to: "/user/contact", icon: "✉" },
+const helpLinks: Item[] = [
+  { label: "How It Works", to: "/user/how-it-works", icon: <HelpCircle size={18} /> },
+  { label: "FAQs", to: "/user/faqs", icon: <FileText size={18} /> },
+  { label: "Contact Us", to: "/user/contact", icon: <MessageCircle size={18} /> },
 ];
 
 function ItemLink({ item, onClick }: { item: Item; onClick: () => void }) {
@@ -222,6 +256,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       <aside className={`bc-sidebar ${isOpen ? "is-open" : ""}`}>
         <div className="bc-side-scroll">
+          {/* LIVE SPORTS SECTION */}
           <div className="bc-side-section max-md:mt-12">
             <button
               type="button"
@@ -262,16 +297,46 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           </div>
 
+          {/* MAIN NAVIGATION */}
           <div className="bc-side-section">
-            {sectionOne.map((item) => (
+            {navigationLinks.map((item) => (
               <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
             ))}
           </div>
 
+          {/* MY ACCOUNT SECTION */}
           {accountSection.length > 0 ? (
             <div className="bc-side-section">
               <p className="bc-side-heading">My Account</p>
-              {accountSection.map((item) => (
+              {myAccount.map((item) => (
+                <ItemLink
+                  key={item.label}
+                  item={item}
+                  onClick={closeIfMobile}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {/* PAYMENTS & TRANSACTIONS SECTION */}
+          {accountSection.length > 0 ? (
+            <div className="bc-side-section">
+              <p className="bc-side-heading">Transactions & Payments</p>
+              {payments.map((item) => (
+                <ItemLink
+                  key={item.label}
+                  item={item}
+                  onClick={closeIfMobile}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {/* ANALYTICS & REPORTS SECTION */}
+          {accountSection.length > 0 ? (
+            <div className="bc-side-section">
+              <p className="bc-side-heading">Analytics</p>
+              {analytics.map((item) => (
                 <ItemLink
                   key={item.label}
                   item={item}
@@ -337,9 +402,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           ) : null}
 
+          {/* HELP & SUPPORT SECTION */}
           <div className="bc-side-section">
-            <p className="bc-side-heading">Quick Access</p>
-            {quickLinks.map((item) => (
+            <p className="bc-side-heading">Help & Support</p>
+            {helpLinks.map((item) => (
               <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
             ))}
           </div>
