@@ -1,18 +1,14 @@
 import { useState, useMemo, useCallback } from "react";
-import { Clock, Zap, Filter, Loader2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Zap, Loader2 } from "lucide-react";
 import { useCustomEvents } from "../hooks/useCustomEvents";
 import { CustomEventCard } from "../components/CustomEventCard";
 import { useBetSlip, type BetSelection } from "../hooks/useBetSlip";
-import { walletSummaryQueryKey } from "../payments/wallet";
-import { myBetsNavbarCountQueryKey } from "../hooks/useMyBets";
 
 type StatusFilter = "ALL" | "LIVE" | "UPCOMING";
 
 export default function CustomEventsPage() {
-  const { events, loading, error, loadEvents, placeBet } = useCustomEvents();
+  const { events, loading, error, loadEvents } = useCustomEvents();
   const betSlip = useBetSlip();
-  const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("ALL");
 
   const filteredEvents = useMemo(() => {
@@ -103,9 +99,7 @@ export default function CustomEventsPage() {
             {tab.label}
             <span
               className={`ml-1.5 rounded-md px-1.5 py-0.5 text-[10px] ${
-                activeFilter === tab.value
-                  ? "bg-amber-400/20"
-                  : "bg-white/5"
+                activeFilter === tab.value ? "bg-amber-400/20" : "bg-white/5"
               }`}
             >
               {tab.count}

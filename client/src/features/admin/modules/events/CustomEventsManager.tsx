@@ -7,17 +7,13 @@ import {
   Eye,
   Loader2,
   MoreHorizontal,
-  PencilLine,
   Plus,
   Power,
   RefreshCw,
   Search,
   Trash2,
   Trophy,
-  TrendingUp,
-  Users,
   Zap,
-  AlertTriangle,
   Check,
   X,
 } from "lucide-react";
@@ -56,7 +52,6 @@ import {
   useAdminCustomEvents,
   type AdminCustomEvent,
   type CreateCustomEventData,
-  type CustomMarket,
 } from "../../hooks/useAdminCustomEvents";
 
 // ── Status helpers ──
@@ -189,10 +184,7 @@ function CreateEventModal({
         i === marketIndex
           ? {
               ...m,
-              selections: [
-                ...m.selections,
-                { label: "", name: "", odds: "" },
-              ],
+              selections: [...m.selections, { label: "", name: "", odds: "" }],
             }
           : m,
       ),
@@ -249,9 +241,7 @@ function CreateEventModal({
       }
       for (const sel of market.selections) {
         if (!sel.label.trim() || !sel.name.trim() || !sel.odds) {
-          toast.error(
-            `All selections in "${market.name}" must be filled in`,
-          );
+          toast.error(`All selections in "${market.name}" must be filled in`);
           return;
         }
         if (Number(sel.odds) < 1.01) {
@@ -706,10 +696,7 @@ function SettleMarketDialog({
                           {sel.odds?.toFixed(2)} odds
                         </span>
                         {selectedWinnerId === sel.id && (
-                          <Check
-                            size={16}
-                            className="text-admin-accent"
-                          />
+                          <Check size={16} className="text-admin-accent" />
                         )}
                       </div>
                     </button>
@@ -900,7 +887,6 @@ export default function CustomEventsManager() {
     loading,
     statsLoading,
     total,
-    page,
     totalPages,
     loadStats,
     loadEvents,
@@ -960,7 +946,10 @@ export default function CustomEventsManager() {
     setRefreshing(false);
   }
 
-  async function handleCreate(data: CreateCustomEventData, andPublish: boolean) {
+  async function handleCreate(
+    data: CreateCustomEventData,
+    andPublish: boolean,
+  ) {
     const created = await createEvent(data);
     if (created && andPublish) {
       await publishEvent(created.id);
@@ -1293,8 +1282,7 @@ export default function CustomEventsManager() {
                                     void publishEvent(event.id).then(() =>
                                       loadEvents({
                                         status: activeFilter,
-                                        search:
-                                          debouncedSearch || undefined,
+                                        search: debouncedSearch || undefined,
                                         page: currentPage,
                                       }),
                                     )
@@ -1308,14 +1296,12 @@ export default function CustomEventsManager() {
                               {event.status === "PUBLISHED" && (
                                 <DropdownMenuItem
                                   onClick={() =>
-                                    void unpublishEvent(event.id).then(
-                                      () =>
-                                        loadEvents({
-                                          status: activeFilter,
-                                          search:
-                                            debouncedSearch || undefined,
-                                          page: currentPage,
-                                        }),
+                                    void unpublishEvent(event.id).then(() =>
+                                      loadEvents({
+                                        status: activeFilter,
+                                        search: debouncedSearch || undefined,
+                                        page: currentPage,
+                                      }),
                                     )
                                   }
                                   className="gap-2 text-sm"
@@ -1329,14 +1315,12 @@ export default function CustomEventsManager() {
                                 event.status === "SUSPENDED") && (
                                 <DropdownMenuItem
                                   onClick={() =>
-                                    void suspendEvent(event.id).then(
-                                      () =>
-                                        loadEvents({
-                                          status: activeFilter,
-                                          search:
-                                            debouncedSearch || undefined,
-                                          page: currentPage,
-                                        }),
+                                    void suspendEvent(event.id).then(() =>
+                                      loadEvents({
+                                        status: activeFilter,
+                                        search: debouncedSearch || undefined,
+                                        page: currentPage,
+                                      }),
                                     )
                                   }
                                   className="gap-2 text-sm"
@@ -1352,9 +1336,7 @@ export default function CustomEventsManager() {
                                 <>
                                   <DropdownMenuSeparator className="bg-admin-border/50" />
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      void handleOpenSettle(event)
-                                    }
+                                    onClick={() => void handleOpenSettle(event)}
                                     className="gap-2 text-sm"
                                   >
                                     <Trophy size={14} />
@@ -1367,14 +1349,12 @@ export default function CustomEventsManager() {
                                   <DropdownMenuSeparator className="bg-admin-border/50" />
                                   <DropdownMenuItem
                                     onClick={() =>
-                                      void deleteEvent(event.id).then(
-                                        () =>
-                                          loadEvents({
-                                            status: activeFilter,
-                                            search:
-                                              debouncedSearch || undefined,
-                                            page: currentPage,
-                                          }),
+                                      void deleteEvent(event.id).then(() =>
+                                        loadEvents({
+                                          status: activeFilter,
+                                          search: debouncedSearch || undefined,
+                                          page: currentPage,
+                                        }),
                                       )
                                     }
                                     className="gap-2 text-sm text-red-400"
