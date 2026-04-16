@@ -90,7 +90,7 @@ export default function ForgotPasswordModal() {
 
       // Step 2: Check response message for validation
       const messageText = data.message || "";
-      const isNotFound = 
+      const isNotFound =
         messageText.toLowerCase().includes("no account found") ||
         messageText.toLowerCase().includes("not found") ||
         messageText.toLowerCase().includes("email does not exist");
@@ -105,8 +105,10 @@ export default function ForgotPasswordModal() {
       }
 
       // Step 3: Check for errors in response
-      if (messageText.toLowerCase().includes("error") || 
-          messageText.toLowerCase().includes("failed")) {
+      if (
+        messageText.toLowerCase().includes("error") ||
+        messageText.toLowerCase().includes("failed")
+      ) {
         setFeedback({
           tone: "error",
           message: "Error processing request. Please try again.",
