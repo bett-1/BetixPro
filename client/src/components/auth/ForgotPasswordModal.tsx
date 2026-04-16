@@ -204,7 +204,7 @@ export default function ForgotPasswordModal() {
               )}
             </button>
           </form>
-          <div className="border-t border-[#3d6ba3]/30 pt-5 mt-6 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div className="border-t border-[#3d6ba3]/30 pt-5 mt-6 text-center">
             <button
               type="button"
               onClick={setBackToLogin}
