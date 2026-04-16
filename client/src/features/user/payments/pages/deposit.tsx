@@ -51,10 +51,20 @@ function isPhoneValid(phone: string) {
   return /^254(7|1)\d{8}$/.test(phone);
 }
 
-const copyToClipboard = async (text: string, label: string) => {
+const copyToClipboard = async (
+  text: string,
+  label: string,
+  businessName?: string,
+) => {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success(`${label} copied!`);
+    if (businessName) {
+      toast.success(
+        `${label} copied! Payment will reflect as "${businessName}".`,
+      );
+    } else {
+      toast.success(`${label} copied!`);
+    }
   } catch {
     toast.error("Failed to copy");
   }
@@ -94,8 +104,12 @@ export default function PaymentsDepositPage() {
     return accountPhoneValid && amountValue >= 1 && amountValue <= 250000;
   }, [accountPhoneValid, amount]);
 
-  const handleCopy = async (text: string, field: string) => {
-    await copyToClipboard(text, field);
+  const handleCopy = async (
+    text: string,
+    field: string,
+    businessName?: string,
+  ) => {
+    await copyToClipboard(text, field, businessName);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
   };
@@ -278,28 +292,30 @@ export default function PaymentsDepositPage() {
 
   return (
     <section className="mx-auto max-w-5xl space-y-5 px-4 py-4 md:px-5">
-      {/* Compact header with Payments Center and M-Pesa logo aligned */}
-      <div className="flex items-center justify-between">
-  
-        <div className="flex items-center gap-2">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
-            alt="M-Pesa"
-            className="h-6 w-auto object-contain"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
-          <span className="text-xs text-gray-400">Safaricom</span>
-        </div>
-      </div>
-
       {/* Two equal-height cards */}
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* Deposit Form Card */}
+        {/* Deposit Form Card with M-Pesa logo inside */}
         <div className="flex flex-col rounded-xl border border-[#23384f] bg-[#111d2e] shadow-md">
           <div className="border-b border-[#23384f] px-4 py-3">
-            <h2 className="text-sm font-semibold text-white">Quick Deposit</h2>
-            <p className="text-[11px] text-gray-400">STK Push to your phone</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-white">
+                  Quick Deposit
+                </h2>
+                <p className="text-[11px] text-gray-400">
+                  STK Push to your phone
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
+                  alt="M-Pesa"
+                  className="h-8 w-auto object-contain"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            </div>
           </div>
 
           <form className="flex flex-1 flex-col p-4" onSubmit={handleSubmit}>
@@ -383,8 +399,11 @@ export default function PaymentsDepositPage() {
                 <p className="text-2xl font-black text-white tracking-tight">
                   9006951
                 </p>
+                <p className="text-[10px] text-gray-400 mt-1">MDC Fixers</p>
                 <button
-                  onClick={() => handleCopy("9006951", "Till number")}
+                  onClick={() =>
+                    handleCopy("9006951", "Till number", "MDC Fixers")
+                  }
                   className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-[#1a2a3a] px-2.5 py-1 text-[10px] text-gray-300 transition hover:bg-[#2a3a4a]"
                 >
                   {copiedField === "Till number" ? (
@@ -410,7 +429,7 @@ export default function PaymentsDepositPage() {
                   {[
                     "Go to M-Pesa → Lipa Na M-Pesa",
                     "Select Buy Goods & Services",
-                    "Enter Till 9006951",
+                    "Enter Till 9006951 (MDC Fixers)",
                     "Enter amount & PIN",
                     "Confirm payment",
                   ].map((step, idx) => (
