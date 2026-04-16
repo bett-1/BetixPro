@@ -103,17 +103,9 @@ const topLeagues: Item[] = [];
 const sportsGroups: Group[] = [];
 
 const quickLinks: Item[] = [
-  {
-    label: "Favorites",
-    to: "/user/coming-soon?feature=favorites",
-    icon: "*",
-    warn: true,
-  },
-  { label: "My Bets", to: "/user/bets", icon: "B" },
-  { label: "Analytics", to: "/user/payments/history", icon: "A" },
   { label: "How It Works", to: "/user/how-it-works", icon: "?" },
   { label: "FAQs", to: "/user/faqs", icon: "!" },
-  { label: "Responsible Gambling", to: "/user/register", icon: "R" },
+  { label: "Contact Us", to: "/user/contact", icon: "✉" },
 ];
 
 function ItemLink({ item, onClick }: { item: Item; onClick: () => void }) {
@@ -289,48 +281,61 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           ) : null}
 
-          <div className="bc-side-section">
-            <p className="bc-side-heading">Top Leagues</p>
-            {topLeagues.map((item) => (
-              <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
-            ))}
-          </div>
+          {topLeagues.length > 0 ? (
+            <div className="bc-side-section">
+              <p className="bc-side-heading">Top Leagues</p>
+              {topLeagues.map((item) => (
+                <ItemLink
+                  key={item.label}
+                  item={item}
+                  onClick={closeIfMobile}
+                />
+              ))}
+            </div>
+          ) : null}
 
-          <div className="bc-side-section">
-            <p className="bc-side-heading">All Sports</p>
-            {sportsGroups.map((group) => {
-              const open = openSports[group.key] ?? false;
-              return (
-                <div key={group.key} className="bc-side-group">
-                  <button
-                    type="button"
-                    className="bc-side-toggle"
-                    onClick={() =>
-                      setOpenSports((prev) => ({ ...prev, [group.key]: !open }))
-                    }
-                  >
-                    <span className="bc-side-icon" aria-hidden="true">
-                      {group.icon}
-                    </span>
-                    <span>{group.label}</span>
-                    <ChevronDown
-                      className={`bc-side-chevron ${open ? "is-open" : ""}`}
-                      size={14}
-                    />
-                  </button>
-                  <div className={`bc-side-children ${open ? "is-open" : ""}`}>
-                    {group.children.map((child) => (
-                      <ItemLink
-                        key={child.label}
-                        item={child}
-                        onClick={closeIfMobile}
+          {sportsGroups.length > 0 ? (
+            <div className="bc-side-section">
+              <p className="bc-side-heading">All Sports</p>
+              {sportsGroups.map((group) => {
+                const open = openSports[group.key] ?? false;
+                return (
+                  <div key={group.key} className="bc-side-group">
+                    <button
+                      type="button"
+                      className="bc-side-toggle"
+                      onClick={() =>
+                        setOpenSports((prev) => ({
+                          ...prev,
+                          [group.key]: !open,
+                        }))
+                      }
+                    >
+                      <span className="bc-side-icon" aria-hidden="true">
+                        {group.icon}
+                      </span>
+                      <span>{group.label}</span>
+                      <ChevronDown
+                        className={`bc-side-chevron ${open ? "is-open" : ""}`}
+                        size={14}
                       />
-                    ))}
+                    </button>
+                    <div
+                      className={`bc-side-children ${open ? "is-open" : ""}`}
+                    >
+                      {group.children.map((child) => (
+                        <ItemLink
+                          key={child.label}
+                          item={child}
+                          onClick={closeIfMobile}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : null}
 
           <div className="bc-side-section">
             <p className="bc-side-heading">Quick Access</p>
