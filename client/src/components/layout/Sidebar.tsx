@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  BarChart3,
   ChevronDown,
   FileText,
   Flame,
@@ -116,11 +115,6 @@ const myAccount: Item[] = [
 
 const payments: Item[] = [
   {
-    label: "Transaction History",
-    to: "/user/payments/history",
-    icon: <History size={18} />,
-  },
-  {
     label: "Deposit",
     to: "/user/payments/deposit",
     icon: <ArrowDownToLine size={18} />,
@@ -130,11 +124,16 @@ const payments: Item[] = [
     to: "/user/payments/withdrawal",
     icon: <ArrowUpFromLine size={18} />,
   },
+  {
+    label: "Transaction History",
+    to: "/user/payments/history",
+    icon: <History size={18} />,
+  },
 ];
 
-const analytics: Item[] = [
-  { label: "Reports", to: "/user/reports", icon: <BarChart3 size={18} /> },
-];
+// const analytics: Item[] = [
+//   { label: "Reports", to: "/user/reports", icon: <BarChart3 size={18} /> },
+// ];
 
 const topLeagues: Item[] = [];
 
@@ -359,7 +358,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           ) : null}
 
           {/* ANALYTICS & REPORTS SECTION */}
-          {accountSection.length > 0 ? (
+          {/* {accountSection.length > 0 ? (
             <div className="bc-side-section">
               <p className="bc-side-heading">Analytics</p>
               {analytics.map((item) => (
@@ -370,7 +369,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 />
               ))}
             </div>
-          ) : null}
+          ) : null} */}
 
           {topLeagues.length > 0 ? (
             <div className="bc-side-section">
