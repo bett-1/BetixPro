@@ -27,7 +27,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { api } from "@/api/axiosConfig";
+import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -82,6 +84,11 @@ type AdminTwoFactorSetupResponse = {
 
 type GenericMessageResponse = {
   message: string;
+};
+
+type ChangePasswordResponse = {
+  message: string;
+  mustChangePassword: boolean;
 };
 
 const inputClassName =
@@ -722,7 +729,13 @@ const sectionDefinitions: SectionDefinition[] = [
 ];
 
 export default function Settings() {
-  const { data, isLoading, isError, error } = useAdminSettings();
+  const { user, refreshSession } = useAuth();
+  const navigate = useNavigate();
+  const mustChangePassword = user?.mustChangePassword === true;
+
+  const { data, isLoading, isError, error } = useAdminSettings({
+    enabled: !mustChangePassword,
+  });
   const updateSettings = useUpdateAdminSettings();
   const queryClient = useQueryClient();
 
@@ -739,6 +752,10 @@ export default function Settings() {
   const [setupStep, setSetupStep] = useState<1 | 2 | 3>(1);
   const [stepOneCompleted, setStepOneCompleted] = useState(false);
   const [stepOneSkipped, setStepOneSkipped] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const openAuthenticatorInstallLink = () => {
     const userAgent = navigator.userAgent.toLowerCase();
@@ -768,6 +785,7 @@ export default function Settings() {
 
   const adminTwoFactorStatusQuery = useQuery({
     queryKey: ["admin-2fa-status"],
+    enabled: !mustChangePassword,
     queryFn: async () => {
       const response = await api.get<AdminTwoFactorStatusResponse>(
         "/profile/admin-2fa/status",
@@ -1017,6 +1035,140 @@ export default function Settings() {
       toast.error(message);
     }
   };
+
+  const handleForcePasswordChange = async () => {
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      toast.error("Current password and new password are required.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New password and confirm password must match.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await api.post<ChangePasswordResponse>(
+        "/auth/change-password",
+        {
+          currentPassword,
+          newPassword,
+        },
+      );
+
+      toast.success(response.data.message || "Password changed successfully.");
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+
+      await refreshSession();
+      await queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      await navigate({ to: "/admin" });
+    } catch (mutationError: unknown) {
+      const message =
+        typeof mutationError === "object" &&
+        mutationError !== null &&
+        "response" in mutationError &&
+        typeof (mutationError as { response?: unknown }).response === "object"
+          ? ((mutationError as { response?: { data?: { message?: string } } })
+              .response?.data?.message ?? "Failed to change password.")
+          : "Failed to change password.";
+      toast.error(message);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  if (mustChangePassword) {
+    return (
+      <div className="space-y-6">
+        <AdminSectionHeader
+          title="Settings"
+          subtitle="Complete your first-time password update to unlock admin tools"
+        />
+
+        <AdminCard className="border-amber-500/30 bg-amber-500/5 p-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="mt-0.5 text-amber-300" />
+            <div>
+              <p className="text-sm font-semibold text-amber-200">
+                Password change required
+              </p>
+              <p className="mt-1 text-xs text-admin-text-muted">
+                This account uses a temporary password. Update it now to unlock
+                all admin resources.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <label className="space-y-1.5 md:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                Current password
+              </p>
+              <input
+                type="password"
+                className={inputClassName}
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+
+            <label className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                New password
+              </p>
+              <input
+                type="password"
+                className={inputClassName}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                autoComplete="new-password"
+              />
+            </label>
+
+            <label className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-admin-text-muted">
+                Confirm new password
+              </p>
+              <input
+                type="password"
+                className={inputClassName}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+              />
+            </label>
+          </div>
+
+          <div className="mt-5 flex justify-end">
+            <Button
+              onClick={() => void handleForcePasswordChange()}
+              disabled={
+                isChangingPassword ||
+                !currentPassword.trim() ||
+                !newPassword.trim() ||
+                !confirmPassword.trim()
+              }
+            >
+              {isChangingPassword ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Updating password...
+                </>
+              ) : (
+                "Update password"
+              )}
+            </Button>
+          </div>
+        </AdminCard>
+      </div>
+    );
+  }
 
   if (isLoading || !draft) {
     return (
