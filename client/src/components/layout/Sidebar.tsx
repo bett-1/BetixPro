@@ -186,7 +186,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     football: true,
     basketball: true,
   });
-  const [liveSportsOpen, setLiveSportsOpen] = useState(true);
+  const [liveSportsOpen, setLiveSportsOpen] = useState(!isAuthenticated);
   const [liveCounts, setLiveCounts] = useState<Record<string, number>>(() => ({
     Soccer: 0,
     Basketball: 0,
@@ -201,6 +201,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const accountSection = useMemo(() => {
     if (!isAuthenticated) return [];
     return myAccount;
+  }, [isAuthenticated]);
+
+  // Update Live Sports section visibility based on auth state
+  useEffect(() => {
+    setLiveSportsOpen(!isAuthenticated);
   }, [isAuthenticated]);
 
   function closeIfMobile() {

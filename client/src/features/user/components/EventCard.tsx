@@ -178,7 +178,7 @@ export default function EventCard({
       {/* Subtle top accent line */}
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#ffd500]/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
-      <div className="relative flex h-full flex-col justify-between gap-1.5 p-2.5 sm:gap-2 sm:p-3">
+      <div className="relative flex h-full flex-col justify-between gap-2 p-3 sm:gap-2.5 sm:p-4">
         {/* League + Markets badge row */}
         <div className="min-w-0">
           <div className="flex items-center justify-between gap-1">
