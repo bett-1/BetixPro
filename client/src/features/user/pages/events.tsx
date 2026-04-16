@@ -1,23 +1,13 @@
-import { useEffect, useState } from "react";
-import { Plus, Calendar, Users, Zap, Edit2, Trash2, Clock } from "lucide-react";
+import { useEffect } from "react";
+import { Calendar, Users, Zap, Clock } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CreateCustomEventForm } from "../components/CreateCustomEventForm";
 import { useCustomEvents } from "../hooks/useCustomEvents";
-import type { CustomEvent } from "../hooks/useCustomEvents";
+import type { CustomEventData } from "../hooks/useCustomEvents";
 
-function CustomEventCard({
-  event,
-  onEdit,
-  onDelete,
-}: {
-  event: CustomEvent;
-  onEdit: (event: CustomEvent) => void;
-  onDelete: (eventId: string) => void;
-}) {
-  const commenceTime = new Date(event.commenceTime);
-  const isUpcoming = event.status === "UPCOMING" && new Date() < commenceTime;
+function CustomEventCard({ event }: { event: CustomEventData }) {
+  const commenceTime = new Date(event.startTime);
+  const isUpcoming = event.status === "PUBLISHED" && new Date() < commenceTime;
   const isLive = event.status === "LIVE";
   const isFinished = event.status === "FINISHED" || new Date() > commenceTime;
 
@@ -37,15 +27,11 @@ function CustomEventCard({
   // Get primary odds to display
   let primaryOdds = "";
   let oddsLabel = "";
-  if (event.h2hOdds) {
-    primaryOdds = `${event.h2hOdds.home} / ${event.h2hOdds.away}`;
-    oddsLabel = "H2H";
-  } else if (event.spreadsOdds) {
-    primaryOdds = `${event.spreadsOdds.odds.team1} / ${event.spreadsOdds.odds.team2}`;
-    oddsLabel = "Spread";
-  } else if (event.totalsOdds) {
-    primaryOdds = `${event.totalsOdds.odds.over} / ${event.totalsOdds.odds.under}`;
-    oddsLabel = "Totals";
+  const firstMarket = event.markets[0];
+  const firstTwoSelections = firstMarket?.selections?.slice(0, 2);
+  if (firstMarket && firstTwoSelections?.length === 2) {
+    primaryOdds = `${firstTwoSelections[0].odds} / ${firstTwoSelections[1].odds}`;
+    oddsLabel = firstMarket.name;
   }
 
   return (
@@ -55,7 +41,7 @@ function CustomEventCard({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="font-bold text-white text-sm truncate">
-              {event.homeTeam} vs {event.awayTeam}
+              {event.teamHome} vs {event.teamAway}
             </h3>
             {isLive && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs font-medium animate-pulse">
@@ -78,22 +64,6 @@ function CustomEventCard({
           <p className="text-xs text-[#90a2bb]">
             {event.league || "Custom Match"}
           </p>
-        </div>
-        <div className="flex gap-1">
-          <button
-            onClick={() => onEdit(event)}
-            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#31455f]/50 text-[#90a2bb] hover:text-[#f5c518]"
-            title="Edit"
-          >
-            <Edit2 size={14} />
-          </button>
-          <button
-            onClick={() => onDelete(event.eventId)}
-            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900/20 text-[#90a2bb] hover:text-red-400"
-            title="Delete"
-          >
-            <Trash2 size={14} />
-          </button>
         </div>
       </div>
 
@@ -135,56 +105,26 @@ function CustomEventCard({
               {primaryOdds}
             </div>
             <div className="text-[11px] text-[#8a9bb0]">
-              {event.h2hOdds && `${event.homeTeam} / ${event.awayTeam}`}
-              {event.spreadsOdds && `Spread: ${event.spreadsOdds.spread}`}
-              {event.totalsOdds && `Total: ${event.totalsOdds.total}`}
+              {event.teamHome} / {event.teamAway}
             </div>
           </div>
         </div>
       )}
-
-      {/* Score if finished */}
-      {isFinished &&
-        event.homeScore !== undefined &&
-        event.awayScore !== undefined && (
-          <div className="rounded-lg bg-[#0c1018] px-3 py-2 text-center border border-[#31455f]">
-            <div className="text-sm font-bold text-white">
-              {event.homeScore} - {event.awayScore}
-            </div>
-          </div>
-        )}
     </Card>
   );
 }
 
 function EventsContent() {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const { events, loading, error, loadEvents, createEvent, deleteEvent } =
-    useCustomEvents();
+  const { events, loading, error, loadEvents } = useCustomEvents();
 
   useEffect(() => {
     void loadEvents();
   }, [loadEvents]);
 
   const upcomingEvents = events.filter(
-    (e) => e.status === "UPCOMING" || e.status === "LIVE",
+    (e) => e.status === "PUBLISHED" || e.status === "LIVE",
   );
   const finishedEvents = events.filter((e) => e.status === "FINISHED");
-
-  const handleDelete = async (eventId: string) => {
-    if (confirm("Are you sure you want to delete this event?")) {
-      try {
-        await deleteEvent(eventId);
-      } catch {
-        // Error handled in hook
-      }
-    }
-  };
-
-  const handleEdit = (event: CustomEvent) => {
-    console.log("Edit event:", event);
-    // Edit functionality can be added later
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b1120] to-[#0f172a] px-4 py-6">
@@ -198,15 +138,6 @@ function EventsContent() {
                 Create custom matches and set your own odds
               </p>
             </div>
-            <Button
-              onClick={() => {
-                setShowCreateForm(true);
-              }}
-              className="bg-gradient-to-r from-[#f5c518] to-[#d4a500] text-[#0b1120] hover:from-[#ffdb4a] hover:to-[#e0b500] font-semibold gap-2"
-            >
-              <Plus size={18} />
-              New Match
-            </Button>
           </div>
         </div>
 
@@ -242,14 +173,6 @@ function EventsContent() {
               <p className="text-sm text-[#90a2bb]">
                 Create your first custom match to get started
               </p>
-              <Button
-                onClick={() => {
-                  setShowCreateForm(true);
-                }}
-                className="mt-2 bg-gradient-to-r from-[#f5c518] to-[#d4a500] text-[#0b1120] hover:from-[#ffdb4a] hover:to-[#e0b500] font-semibold"
-              >
-                Create First Match
-              </Button>
             </div>
           </Card>
         )}
@@ -268,12 +191,7 @@ function EventsContent() {
             </div>
             <div className="grid gap-3">
               {upcomingEvents.map((event) => (
-                <CustomEventCard
-                  key={event.eventId}
-                  event={event}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
+                <CustomEventCard key={event.id} event={event} />
               ))}
             </div>
           </div>
@@ -293,24 +211,12 @@ function EventsContent() {
             </div>
             <div className="grid gap-3">
               {finishedEvents.map((event) => (
-                <CustomEventCard
-                  key={event.eventId}
-                  event={event}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
+                <CustomEventCard key={event.id} event={event} />
               ))}
             </div>
           </div>
         )}
       </div>
-
-      {/* Create/Edit Form Dialog */}
-      <CreateCustomEventForm
-        open={showCreateForm}
-        onOpenChange={setShowCreateForm}
-        onSubmit={createEvent}
-      />
     </div>
   );
 }

@@ -9,6 +9,33 @@ export interface PlaceCustomBetData {
   stake: number;
 }
 
+export interface CreateCustomEventData {
+  homeTeam: string;
+  awayTeam: string;
+  sport: string;
+  league?: string;
+  commenceTime: string;
+  h2hOdds?: {
+    home: number;
+    draw?: number;
+    away: number;
+  };
+  spreadsOdds?: {
+    spread: number;
+    odds: {
+      team1: number;
+      team2: number;
+    };
+  };
+  totalsOdds?: {
+    total: number;
+    odds: {
+      over: number;
+      under: number;
+    };
+  };
+}
+
 export const useCustomEvents = () => {
   const [events, setEvents] = useState<CustomEventData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,29 +66,26 @@ export const useCustomEvents = () => {
     }
   }, []);
 
-  const placeBet = useCallback(
-    async (data: PlaceCustomBetData) => {
-      try {
-        const res = await api.post<{
-          success: boolean;
-          bet: any;
-          newBalance: number;
-          message: string;
-        }>(`/user/custom-events/${data.eventId}/bet`, {
-          selectionId: data.selectionId,
-          stake: data.stake,
-        });
+  const placeBet = useCallback(async (data: PlaceCustomBetData) => {
+    try {
+      const res = await api.post<{
+        success: boolean;
+        bet: any;
+        newBalance: number;
+        message: string;
+      }>(`/user/custom-events/${data.eventId}/bet`, {
+        selectionId: data.selectionId,
+        stake: data.stake,
+      });
 
-        toast.success(res.data.message || "Bet placed successfully!");
-        return res.data;
-      } catch (err: any) {
-        const msg = err?.response?.data?.error || "Failed to place bet";
-        toast.error(msg);
-        throw err;
-      }
-    },
-    [],
-  );
+      toast.success(res.data.message || "Bet placed successfully!");
+      return res.data;
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to place bet";
+      toast.error(msg);
+      throw err;
+    }
+  }, []);
 
   useEffect(() => {
     void loadEvents();

@@ -10,12 +10,11 @@ import {
   Flame,
   HelpCircle,
   History,
-  Home,
   MessageCircle,
   TrendingUp,
   User,
   Wallet,
-  Zap
+  Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -94,7 +93,7 @@ function sportIcon(name: string): React.ReactNode {
   }
 }
 
-const sectionOne: Item[] = [
+const navigationLinks: Item[] = [
   { label: "Homepage", to: "/user", icon: "H" },
   { label: "Pre-match", to: "/user/payments", icon: "P" },
   { label: "Live", to: "/user/live", icon: "L", liveBadge: "LIVE" },
