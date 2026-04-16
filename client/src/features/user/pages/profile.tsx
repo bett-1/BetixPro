@@ -32,10 +32,8 @@ export default function UserProfilePage() {
     refetch: refetchProfile,
   } = useProfile();
 
-  const {
-    data: transactionsData,
-    isLoading: transactionsLoading,
-  } = useProfileTransactions(true, 100, 1);
+  const { data: transactionsData, isLoading: transactionsLoading } =
+    useProfileTransactions(true, 100, 1);
 
   const { totalDeposits, totalWithdrawals } = useMemo(() => {
     if (!transactionsData?.transactions) {
@@ -274,7 +272,9 @@ export default function UserProfilePage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Member Since</p>
-                      <p className="text-sm font-semibold text-white">{memberSinceYear}</p>
+                      <p className="text-sm font-semibold text-white">
+                        {memberSinceYear}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -287,7 +287,9 @@ export default function UserProfilePage() {
                     <div>
                       <p className="text-xs text-gray-400">Total Deposits</p>
                       <p className="text-sm font-semibold text-white">
-                        {transactionsLoading ? "Loading..." : formatMoney(totalDeposits)}
+                        {transactionsLoading
+                          ? "Loading..."
+                          : formatMoney(totalDeposits)}
                       </p>
                     </div>
                   </div>
@@ -301,7 +303,9 @@ export default function UserProfilePage() {
                     <div>
                       <p className="text-xs text-gray-400">Total Withdrawals</p>
                       <p className="text-sm font-semibold text-white">
-                        {transactionsLoading ? "Loading..." : formatMoney(totalWithdrawals)}
+                        {transactionsLoading
+                          ? "Loading..."
+                          : formatMoney(totalWithdrawals)}
                       </p>
                     </div>
                   </div>
@@ -316,7 +320,6 @@ export default function UserProfilePage() {
                 <LogOut size={18} />
                 Sign Out
               </button>
-
             </div>
           ) : (
             <div className="flex min-h-96 items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 p-8">
