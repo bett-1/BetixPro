@@ -1,27 +1,24 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
-import {
-  ChevronDown,
-  Zap,
-  Home,
-  Flame,
-  User,
-  Wallet,
-  TrendingUp,
-  History,
-  BarChart3,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  HelpCircle,
-  MessageCircle,
-  FileText,
-  Goal,
-  Dumbbell,
-  Trophy,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
 import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  BarChart3,
+  ChevronDown,
+  FileText,
+  Flame,
+  HelpCircle,
+  History,
+  Home,
+  MessageCircle,
+  TrendingUp,
+  User,
+  Wallet,
+  Zap
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 type SidebarProps = {
   isOpen: boolean;
