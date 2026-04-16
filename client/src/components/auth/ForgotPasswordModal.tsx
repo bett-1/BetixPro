@@ -75,12 +75,14 @@ export default function ForgotPasswordModal() {
     if (!isValid) return;
 
     setLoading(true);
-    setFeedback({
-      tone: "info",
-      message: "Checking email...",
-    });
 
     try {
+      // Step 1: Check if email exists in database
+      setFeedback({
+        tone: "info",
+        message: "Validating email...",
+      });
+
       const { data } = await api.post<{ message: string }>(
         "/auth/forgot-password",
         { email },
@@ -99,16 +101,20 @@ export default function ForgotPasswordModal() {
         return;
       }
 
-      // Email EXISTS and reset link was sent successfully
+      // Step 2: Email EXISTS - show verification message
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setFeedback({
+        tone: "success",
+        message: "✓ Email verified! Reset link sent.",
+      });
+
+      // Step 3: Show success state and transition
       setSentEmail(email);
       setStep("success");
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setStep("instructions");
       setFeedback(null);
       setLoading(false);
-
-      // Auto-transition to instructions after 2 seconds
-      setTimeout(() => {
-        setStep("instructions");
-      }, 2000);
     } catch (error) {
       setFeedback({
         tone: "error",
@@ -180,7 +186,7 @@ export default function ForgotPasswordModal() {
           {loading ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 size={14} className="animate-spin" />
-              Validating...
+              Processing...
             </span>
           ) : (
             "Send reset link"
