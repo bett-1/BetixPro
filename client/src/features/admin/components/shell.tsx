@@ -213,6 +213,19 @@ export default function AdminShell() {
   }, [pathname]);
 
   useEffect(() => {
+    if (!user?.mustChangePassword) {
+      return;
+    }
+
+    if (pathname.startsWith("/admin/settings")) {
+      return;
+    }
+
+    toast.error("Please change your password before accessing other pages.");
+    void navigate({ to: "/admin/settings" });
+  }, [navigate, pathname, user?.mustChangePassword]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         notificationsRef.current &&

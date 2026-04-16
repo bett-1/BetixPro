@@ -161,13 +161,25 @@ export default function LoginModal() {
 
     try {
       if (mfaToken) {
-        await verifyAdminMfa({
+        const verificationResult = await verifyAdminMfa({
           mfaToken,
           otpCode: mfaCode.trim(),
         });
 
+        if (verificationResult.status === "password_change_required") {
+          toast.success(
+            verificationResult.message ||
+              "Password change required before continuing.",
+          );
+          closeAuthModal();
+          resetAuthState();
+          await navigate({ to: "/admin/settings" });
+          return;
+        }
+
         toast.success("Admin verification successful.");
-        handleClose();
+        closeAuthModal();
+        resetAuthState();
         await navigate({ to: "/admin" });
         return;
       }
@@ -181,6 +193,16 @@ export default function LoginModal() {
         setMfaManualEntryKey(result.manualEntryKey ?? null);
         setErrorMessage("");
         toast.success(result.message);
+        return;
+      }
+
+      if (result.status === "password_change_required") {
+        toast.success(
+          result.message || "Password change required before continuing.",
+        );
+        closeAuthModal();
+        resetAuthState();
+        await navigate({ to: "/admin/settings" });
         return;
       }
 

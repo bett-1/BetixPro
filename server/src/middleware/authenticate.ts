@@ -40,8 +40,7 @@ export async function authenticate(
     const isChangePasswordRoute =
       requestPath === "/auth/change-password" ||
       requestOriginalPath.endsWith("/auth/change-password");
-    const mustChangePassword =
-      payload.mustChangePassword === true || user.mustChangePassword === true;
+    const mustChangePassword = user.mustChangePassword === true;
 
     if (mustChangePassword && !isChangePasswordRoute) {
       return res.status(403).json({

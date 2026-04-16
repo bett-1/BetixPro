@@ -422,6 +422,7 @@ function sanitizeUser(user: {
   isVerified: boolean;
   createdAt: Date;
   bannedAt?: Date | null;
+  mustChangePassword?: boolean;
 }) {
   return {
     id: user.id,
@@ -431,6 +432,7 @@ function sanitizeUser(user: {
     isVerified: user.isVerified,
     createdAt: user.createdAt,
     bannedAt: user.bannedAt?.toISOString() ?? null,
+    mustChangePassword: user.mustChangePassword === true,
   };
 }
 
@@ -1224,7 +1226,7 @@ export async function changePassword(req: Request, res: Response) {
   res.clearCookie("refreshToken", getRefreshTokenCookieOptions());
 
   return res.status(200).json({
-    message: "Password changed successfully. Please log in again.",
+    message: "Password changed successfully.",
     mustChangePassword: false,
   });
 }
@@ -1246,6 +1248,7 @@ export async function me(req: Request, res: Response) {
       isVerified: true,
       createdAt: true,
       bannedAt: true,
+      mustChangePassword: true,
     },
   });
 
