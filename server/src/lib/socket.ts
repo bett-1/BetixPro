@@ -273,3 +273,46 @@ export function emitLiveMatchRemoved(payload: unknown) {
 
   liveNamespaceInstance.emit("live:match:removed", payload);
 }
+
+// ── Custom Events Real-Time ──
+
+export function emitCustomEventPublished(payload: unknown) {
+  if (!liveNamespaceInstance) {
+    return;
+  }
+
+  liveNamespaceInstance.emit("custom_event:published", payload);
+}
+
+export function emitCustomEventLive(payload: unknown) {
+  if (!liveNamespaceInstance) {
+    return;
+  }
+
+  liveNamespaceInstance.emit("custom_event:live", payload);
+}
+
+export function emitCustomEventFinished(payload: unknown) {
+  if (!liveNamespaceInstance) {
+    return;
+  }
+
+  liveNamespaceInstance.emit("custom_event:finished", payload);
+}
+
+export function emitCustomEventSuspended(payload: unknown) {
+  if (!liveNamespaceInstance) {
+    return;
+  }
+
+  liveNamespaceInstance.emit("custom_event:suspended", payload);
+}
+
+export function emitCustomEventOddsUpdated(payload: unknown) {
+  if (!liveNamespaceInstance) {
+    return;
+  }
+
+  liveNamespaceInstance.emit("custom_event:odds_updated", payload);
+}
+

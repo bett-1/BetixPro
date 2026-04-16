@@ -94,8 +94,18 @@ function sportIcon(name: string): React.ReactNode {
   }
 }
 
-const navigationLinks: Item[] = [
-  { label: "Homepage", to: "/user", icon: <Home size={18} /> },
+const sectionOne: Item[] = [
+  { label: "Homepage", to: "/user", icon: "H" },
+  { label: "Pre-match", to: "/user/payments", icon: "P" },
+  { label: "Live", to: "/user/live", icon: "L", liveBadge: "LIVE" },
+  { label: "Custom Events", to: "/user/custom-events", icon: "⚡" },
+  {
+    label: "Sports",
+    to: "/user/coming-soon?feature=sports",
+    icon: "S",
+    warn: true,
+  },
+  { label: "Profile", to: "/user/profile", icon: "U" },
   {
     label: "Live Betting",
     to: "/user/live",

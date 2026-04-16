@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
@@ -7,94 +6,31 @@ import { authenticate } from "../../middleware/authenticate";
 
 const userCustomEventsRouter = Router();
 
-const createCustomEventSchema = z.object({
-  homeTeam: z.string().trim().min(1, "Home team is required"),
-  awayTeam: z.string().trim().min(1, "Away team is required"),
-  sport: z.string().trim().default("custom"),
-  league: z.string().trim().optional(),
-  commenceTime: z.string().datetime(),
-  h2hOdds: z
-    .object({
-      home: z.number().positive(),
-      draw: z.number().positive().optional(),
-      away: z.number().positive(),
-    })
-    .optional(),
-  spreadsOdds: z
-    .object({
-      spread: z.number(),
-      odds: z.object({
-        team1: z.number().positive(),
-        team2: z.number().positive(),
-      }),
-    })
-    .optional(),
-  totalsOdds: z
-    .object({
-      total: z.number().positive(),
-      odds: z.object({
-        over: z.number().positive(),
-        under: z.number().positive(),
-      }),
-    })
-    .optional(),
-});
+// Public endpoint - no auth needed to browse custom events
+// Auth required only for placing bets
 
-const updateCustomEventSchema = z.object({
-  homeTeam: z.string().trim().min(1).optional(),
-  awayTeam: z.string().trim().min(1).optional(),
-  league: z.string().trim().optional(),
-  commenceTime: z.string().datetime().optional(),
-  status: z.enum(["UPCOMING", "LIVE", "FINISHED", "CANCELLED"]).optional(),
-  homeScore: z.number().int().optional(),
-  awayScore: z.number().int().optional(),
-  h2hOdds: z
-    .object({
-      home: z.number().positive(),
-      draw: z.number().positive().optional(),
-      away: z.number().positive(),
-    })
-    .optional(),
-  spreadsOdds: z
-    .object({
-      spread: z.number(),
-      odds: z.object({
-        team1: z.number().positive(),
-        team2: z.number().positive(),
-      }),
-    })
-    .optional(),
-  totalsOdds: z
-    .object({
-      total: z.number().positive(),
-      odds: z.object({
-        over: z.number().positive(),
-        under: z.number().positive(),
-      }),
-    })
-    .optional(),
-});
+// ── GET /user/custom-events ──
 
-userCustomEventsRouter.use("/user/custom-events", authenticate);
-
-// Get user's custom events
-userCustomEventsRouter.get("/user/custom-events", async (req, res, next) => {
+userCustomEventsRouter.get("/user/custom-events", async (_req, res, next) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const status = req.query.status as string | undefined;
-    const where: any = { userId };
-
-    if (status) {
-      where.status = status;
-    }
-
     const events = await prisma.customEvent.findMany({
-      where,
-      orderBy: [{ status: "asc" }, { commenceTime: "asc" }],
+      where: {
+        status: { in: ["PUBLISHED", "LIVE"] },
+      },
+      include: {
+        markets: {
+          where: { status: { in: ["OPEN", "SUSPENDED"] } },
+          include: {
+            selections: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { status: "asc" }, // LIVE first
+        { startTime: "asc" },
+      ],
     });
 
     return res.status(200).json({ events });
@@ -103,20 +39,26 @@ userCustomEventsRouter.get("/user/custom-events", async (req, res, next) => {
   }
 });
 
-// Get single custom event
+// ── GET /user/custom-events/:id ──
+
 userCustomEventsRouter.get(
-  "/user/custom-events/:eventId",
+  "/user/custom-events/:id",
   async (req, res, next) => {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
       const event = await prisma.customEvent.findFirst({
         where: {
-          eventId: req.params.eventId,
-          userId,
+          id: req.params.id,
+          status: { in: ["PUBLISHED", "LIVE"] },
+        },
+        include: {
+          markets: {
+            where: { status: { in: ["OPEN", "SUSPENDED"] } },
+            include: {
+              selections: {
+                orderBy: { createdAt: "asc" },
+              },
+            },
+          },
         },
       });
 
@@ -131,48 +73,16 @@ userCustomEventsRouter.get(
   },
 );
 
-// Create custom event
-userCustomEventsRouter.post("/user/custom-events", async (req, res, next) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+// ── POST /user/custom-events/:id/bet ──
 
-    const parsed = createCustomEventSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({
-        error: "Invalid event data",
-        issues: parsed.error.issues,
-      });
-    }
-
-    const eventId = `custom-${Date.now()}-${randomUUID().substring(0, 8)}`;
-
-    const customEvent = await prisma.customEvent.create({
-      data: {
-        eventId,
-        userId,
-        homeTeam: parsed.data.homeTeam,
-        awayTeam: parsed.data.awayTeam,
-        sport: parsed.data.sport,
-        league: parsed.data.league,
-        commenceTime: new Date(parsed.data.commenceTime),
-        h2hOdds: parsed.data.h2hOdds ?? Prisma.DbNull,
-        spreadsOdds: parsed.data.spreadsOdds ?? Prisma.DbNull,
-        totalsOdds: parsed.data.totalsOdds ?? Prisma.DbNull,
-      },
-    });
-
-    return res.status(201).json(customEvent);
-  } catch (error) {
-    next(error);
-  }
+const placeBetSchema = z.object({
+  selectionId: z.string().uuid(),
+  stake: z.number().positive().min(10, "Minimum stake is 10"),
 });
 
-// Update custom event
-userCustomEventsRouter.patch(
-  "/user/custom-events/:eventId",
+userCustomEventsRouter.post(
+  "/user/custom-events/:id/bet",
+  authenticate,
   async (req, res, next) => {
     try {
       const userId = req.user?.id;
@@ -180,82 +90,123 @@ userCustomEventsRouter.patch(
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const event = await prisma.customEvent.findFirst({
-        where: {
-          eventId: req.params.eventId,
-          userId,
-        },
-      });
-
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-
-      const parsed = updateCustomEventSchema.safeParse(req.body);
+      const parsed = placeBetSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({
-          error: "Invalid event data",
+          error: "Invalid bet data",
           issues: parsed.error.issues,
         });
       }
 
-      const updateData: any = {};
-      if (parsed.data.homeTeam) updateData.homeTeam = parsed.data.homeTeam;
-      if (parsed.data.awayTeam) updateData.awayTeam = parsed.data.awayTeam;
-      if (parsed.data.league !== undefined)
-        updateData.league = parsed.data.league;
-      if (parsed.data.commenceTime)
-        updateData.commenceTime = new Date(parsed.data.commenceTime);
-      if (parsed.data.status) updateData.status = parsed.data.status;
-      if (parsed.data.homeScore !== undefined)
-        updateData.homeScore = parsed.data.homeScore;
-      if (parsed.data.awayScore !== undefined)
-        updateData.awayScore = parsed.data.awayScore;
-      if (parsed.data.h2hOdds) updateData.h2hOdds = parsed.data.h2hOdds;
-      if (parsed.data.spreadsOdds)
-        updateData.spreadsOdds = parsed.data.spreadsOdds;
-      if (parsed.data.totalsOdds)
-        updateData.totalsOdds = parsed.data.totalsOdds;
+      const { selectionId, stake } = parsed.data;
 
-      const updated = await prisma.customEvent.update({
-        where: { eventId: event.eventId },
-        data: updateData,
-      });
+      // Use a transaction to prevent race conditions on balance
+      const result = await prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // 1. Fetch and validate the selection + market + event
+          const selection = await tx.customSelection.findUnique({
+            where: { id: selectionId },
+            include: {
+              market: {
+                include: {
+                  event: true,
+                },
+              },
+            },
+          });
 
-      return res.status(200).json(updated);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
+          if (!selection) {
+            throw new Error("Selection not found");
+          }
 
-// Delete custom event
-userCustomEventsRouter.delete(
-  "/user/custom-events/:eventId",
-  async (req, res, next) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+          if (selection.market.event.id !== req.params.id) {
+            throw new Error("Selection does not belong to this event");
+          }
 
-      const event = await prisma.customEvent.findFirst({
-        where: {
-          eventId: req.params.eventId,
-          userId,
+          const event = selection.market.event;
+
+          // Validate event status
+          if (event.status !== "PUBLISHED" && event.status !== "LIVE") {
+            throw new Error(
+              `Betting is not available for this event (status: ${event.status})`,
+            );
+          }
+
+          // Validate market is open
+          if (selection.market.status !== "OPEN") {
+            throw new Error(
+              `This market is ${selection.market.status.toLowerCase()}`,
+            );
+          }
+
+          // For pre-match betting, ensure startTime hasn't passed
+          if (
+            event.status === "PUBLISHED" &&
+            new Date(event.startTime) <= new Date()
+          ) {
+            throw new Error("Pre-match betting has closed for this event");
+          }
+
+          // 2. Check user balance
+          const wallet = await tx.wallet.findUnique({
+            where: { userId },
+          });
+
+          if (!wallet) {
+            throw new Error("Wallet not found. Please set up your wallet.");
+          }
+
+          if (wallet.balance < Math.round(stake)) {
+            throw new Error(
+              `Insufficient balance. You have KES ${wallet.balance} but need KES ${Math.round(stake)}`,
+            );
+          }
+
+          // 3. Calculate potential win
+          const potentialWin = stake * selection.odds;
+
+          // 4. Deduct stake from wallet
+          await tx.wallet.update({
+            where: { userId },
+            data: { balance: { decrement: Math.round(stake) } },
+          });
+
+          // 5. Create the bet
+          const bet = await tx.customBet.create({
+            data: {
+              userId,
+              eventId: event.id,
+              selectionId,
+              stake,
+              odds: selection.odds,
+              potentialWin,
+            },
+          });
+
+          // 6. Get updated balance
+          const updatedWallet = await tx.wallet.findUnique({
+            where: { userId },
+          });
+
+          return {
+            bet,
+            newBalance: updatedWallet?.balance ?? 0,
+            eventTitle: event.title,
+            selectionName: selection.name,
+          };
         },
+      );
+
+      return res.status(201).json({
+        success: true,
+        bet: result.bet,
+        newBalance: result.newBalance,
+        message: `Bet placed on ${result.selectionName} for ${result.eventTitle}`,
       });
-
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-
-      await prisma.customEvent.delete({
-        where: { eventId: event.eventId },
-      });
-
-      return res.status(200).json({ message: "Event deleted" });
     } catch (error) {
+      if (error instanceof Error) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   },
