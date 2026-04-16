@@ -1,11 +1,37 @@
 import type { NextFunction, Request, Response } from "express";
 
+function buildSafeRequestBody(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return undefined;
+  }
+
+  const source = body as Record<string, unknown>;
+  return {
+    email:
+      typeof source.email === "string"
+        ? source.email.trim().toLowerCase()
+        : undefined,
+    phoneProvided:
+      typeof source.phone === "string" && source.phone.trim().length > 0,
+    passwordProvided:
+      typeof source.password === "string" && source.password.length > 0,
+  };
+}
+
 export function errorHandler(
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ) {
+  console.error("GLOBAL ERROR", {
+    message: err instanceof Error ? err.message : "Unknown error",
+    stack: err instanceof Error ? err.stack : undefined,
+    method: req.method,
+    path: req.originalUrl,
+    requestBody: buildSafeRequestBody(req.body),
+  });
+
   const message =
     process.env.NODE_ENV === "production"
       ? "Internal server error"
