@@ -6,6 +6,11 @@ import {
   LoaderCircle,
   Check,
   Smartphone,
+  ChevronDown,
+  Info,
+  Clock,
+  Zap,
+  AlertCircle,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -69,6 +74,8 @@ export default function PaymentsDepositPage() {
   const [depositConfirmed, setDepositConfirmed] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
+  const [expandedDetails, setExpandedDetails] = useState(false);
+  const [expandedTutorial, setExpandedTutorial] = useState(false);
 
   // Kept under the hood for optimistic UI updates, but removed from the visible layout
   const queryClient = useQueryClient();
@@ -270,7 +277,8 @@ export default function PaymentsDepositPage() {
 
   return (
     // Restricted max-width to make it a neat, compact widget instead of a massive spanning grid
-    <section className="mx-auto max-w-xl">
+    <section className="mx-auto max-w-4xl space-y-4">
+      {/* Main Deposit Form */}
       <article className="rounded-3xl border border-[#23384f] bg-[#111d2e] p-5 shadow-sm sm:p-6">
         <div className="mb-6 flex items-center justify-between border-b border-[#23384f] pb-5">
           <div>
