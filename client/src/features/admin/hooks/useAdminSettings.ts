@@ -149,7 +149,7 @@ export interface UpdateAdminSettingsResponse extends AdminSettingsResponse {
   message: string;
 }
 
-export function useAdminSettings() {
+export function useAdminSettings(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["admin-settings"],
     queryFn: async () => {
@@ -157,6 +157,7 @@ export function useAdminSettings() {
       return response.data;
     },
     staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   });
 }
 

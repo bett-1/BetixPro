@@ -21,6 +21,7 @@ type AuthUser = {
   isVerified: boolean;
   createdAt: string;
   bannedAt?: string | null;
+  mustChangePassword?: boolean;
 };
 
 type AuthResponse = {
@@ -38,10 +39,23 @@ type AdminMfaRequiredResponse = {
   manualEntryKey?: string;
 };
 
+type PasswordChangeRequiredResponse = {
+  message: string;
+  requirePasswordChange: true;
+  userId: string;
+  accessToken: string;
+  user: AuthUser;
+};
+
 type LoginResult =
   | {
       status: "authenticated";
       user: AuthUser;
+    }
+  | {
+      status: "password_change_required";
+      user: AuthUser;
+      message: string;
     }
   | {
       status: "mfa_required";
@@ -77,10 +91,14 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<LoginResult>;
-  verifyAdminMfa: (payload: {
-    mfaToken: string;
-    otpCode: string;
-  }) => Promise<AuthUser>;
+  verifyAdminMfa: (payload: { mfaToken: string; otpCode: string }) => Promise<
+    | { status: "authenticated"; user: AuthUser }
+    | {
+        status: "password_change_required";
+        user: AuthUser;
+        message: string;
+      }
+  >;
   register: (payload: RegisterPayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<string | null>;
@@ -134,11 +152,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(me.data.user);
       return data.accessToken;
     } catch {
-      // Don't clear auth state on refresh failure - the user may still have a valid access token.
-      // The access token will be invalidated when it expires and a 401 is received from the API.
-      return null;
+      // A valid access token may still exist in memory even when refresh fails.
+      // This happens after forced password change where refresh tokens are revoked.
+      try {
+        const me = await api.get<MeResponse>("/auth/me");
+        setUser(me.data.user);
+        return accessTokenState;
+      } catch {
+        return null;
+      }
     }
-  }, [updateSession]);
+  }, [accessTokenState, updateSession]);
 
   const logout = useCallback(async () => {
     try {
@@ -153,13 +177,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (payload: LoginPayload): Promise<LoginResult> => {
-      const response = await api.post<AuthResponse | AdminMfaRequiredResponse>(
-        "/auth/login",
-        payload,
-        {
-          validateStatus: (status) => status === 200 || status === 202,
-        },
-      );
+      const response = await api.post<
+        AuthResponse | AdminMfaRequiredResponse | PasswordChangeRequiredResponse
+      >("/auth/login", payload, {
+        validateStatus: (status) => status === 200 || status === 202,
+      });
 
       if (response.status === 202 && "mfaRequired" in response.data) {
         return {
@@ -170,6 +192,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           message: response.data.message,
           qrCodeDataUrl: response.data.qrCodeDataUrl,
           manualEntryKey: response.data.manualEntryKey,
+        };
+      }
+
+      if (
+        "requirePasswordChange" in response.data &&
+        response.data.requirePasswordChange
+      ) {
+        const data = response.data as PasswordChangeRequiredResponse;
+        updateSession(data);
+
+        return {
+          status: "password_change_required" as const,
+          user: data.user,
+          message: data.message,
         };
       }
 
@@ -185,13 +221,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyAdminMfa = useCallback(
     async (payload: { mfaToken: string; otpCode: string }) => {
-      const { data } = await api.post<AuthResponse>(
-        "/auth/login/verify-admin-mfa",
-        payload,
-      );
+      const { data } = await api.post<
+        AuthResponse | PasswordChangeRequiredResponse
+      >("/auth/login/verify-admin-mfa", payload);
+
+      if ("requirePasswordChange" in data && data.requirePasswordChange) {
+        updateSession(data);
+        return {
+          status: "password_change_required" as const,
+          user: data.user,
+          message: data.message,
+        };
+      }
 
       updateSession(data);
-      return data.user;
+      return {
+        status: "authenticated" as const,
+        user: data.user,
+      };
     },
     [updateSession],
   );
