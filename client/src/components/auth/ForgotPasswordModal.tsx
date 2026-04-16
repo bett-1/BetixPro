@@ -88,27 +88,41 @@ export default function ForgotPasswordModal() {
         { email },
       );
 
-      // Check if email was NOT found in database
-      if (
-        data.message.includes("No account found") ||
-        data.message.toLowerCase().includes("not found")
-      ) {
+      // Step 2: Check response message for validation
+      const messageText = data.message || "";
+      const isNotFound = 
+        messageText.toLowerCase().includes("no account found") ||
+        messageText.toLowerCase().includes("not found") ||
+        messageText.toLowerCase().includes("email does not exist");
+
+      if (isNotFound) {
         setFeedback({
           tone: "error",
-          message: "Email does not exist in our system.",
+          message: "❌ Email does not exist in our system.",
         });
         setLoading(false);
         return;
       }
 
-      // Step 2: Email EXISTS - show verification message
+      // Step 3: Check for errors in response
+      if (messageText.toLowerCase().includes("error") || 
+          messageText.toLowerCase().includes("failed")) {
+        setFeedback({
+          tone: "error",
+          message: "Error processing request. Please try again.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Step 4: Email EXISTS - show verification message
       await new Promise((resolve) => setTimeout(resolve, 800));
       setFeedback({
         tone: "success",
-        message: "✓ Email verified! Reset link sent.",
+        message: "✓ Email verified! Reset link sent successfully.",
       });
 
-      // Step 3: Show success state and transition
+      // Step 5: Show success state and transition
       setSentEmail(email);
       setStep("success");
       await new Promise((resolve) => setTimeout(resolve, 1500));

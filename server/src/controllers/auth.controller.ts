@@ -1054,23 +1054,31 @@ export async function forgotPassword(req: Request, res: Response) {
     return res.status(200).json(notFoundMessage);
   }
 
-  const user = await prisma.user.findFirst({
-    where: {
-      email: {
-        equals: parsed.data.email,
-        mode: "insensitive",
+  try {
+    // STEP 1: First, verify the user exists in the database
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: parsed.data.email,
+          mode: "insensitive",
+        },
       },
-    },
-    select: {
-      id: true,
-      email: true,
-    },
-  });
+      select: {
+        id: true,
+        email: true,
+      },
+    });
 
-  if (user) {
+    // STEP 2: If user NOT found, return error and STOP (no email sending)
+    if (!user) {
+      return res.status(200).json(notFoundMessage);
+    }
+
+    // STEP 3: Only if user exists, create reset token and send email
     const rawResetToken = createResetToken();
     const hashedResetToken = hashToken(rawResetToken, getResetTokenSecret());
 
+    // STEP 4: Save token to database
     await prisma.$transaction([
       prisma.passwordResetToken.updateMany({
         where: {
@@ -1090,14 +1098,26 @@ export async function forgotPassword(req: Request, res: Response) {
       }),
     ]);
 
-    await sendPasswordResetEmail(user.email, rawResetToken);
+    // STEP 5: Send email ONLY after user is verified and token is saved
+    try {
+      await sendPasswordResetEmail(user.email, rawResetToken);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      return res.status(500).json({
+        message: "User found, but failed to send reset email. Try again.",
+      });
+    }
 
+    // STEP 6: Success response
     return res.status(200).json({
       message: "Account found. Reset link sent.",
     });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({
+      message: "An error occurred. Please try again.",
+    });
   }
-
-  return res.status(200).json(notFoundMessage);
 }
 
 export async function resetPassword(req: Request, res: Response) {
