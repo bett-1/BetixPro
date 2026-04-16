@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       // Email exists and reset link was sent
       setSentEmail(email);
       setStep("success");
-      
+
       // Auto-transition to instructions after 2 seconds
       setTimeout(() => {
         setStep("instructions");
@@ -119,11 +119,15 @@ export default function ForgotPasswordPage() {
             <ol className="space-y-2 text-xs text-admin-text-muted">
               <li className="flex gap-2">
                 <span className="font-semibold text-admin-accent">1.</span>
-                <span>Check your inbox at <strong>{sentEmail}</strong></span>
+                <span>
+                  Check your inbox at <strong>{sentEmail}</strong>
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-semibold text-admin-accent">2.</span>
-                <span>Click the reset link in the email (valid for 15 minutes)</span>
+                <span>
+                  Click the reset link in the email (valid for 15 minutes)
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-semibold text-admin-accent">3.</span>
@@ -138,7 +142,8 @@ export default function ForgotPasswordPage() {
 
           <div className="rounded-lg border border-admin-border-warning bg-admin-bg-warning/10 p-3">
             <p className="text-xs text-admin-text-muted">
-              <strong>⚠ Link expires in 15 minutes.</strong> If you don't see the email, check your spam folder or request a new link.
+              <strong>⚠ Link expires in 15 minutes.</strong> If you don't see
+              the email, check your spam folder or request a new link.
             </p>
           </div>
 

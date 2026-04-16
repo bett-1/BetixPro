@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/axiosConfig";
 import {
@@ -8,7 +8,10 @@ import {
   Loader2,
   Mail,
   ShieldAlert,
+  AlertCircle,
 } from "lucide-react";
+
+type Step = "email" | "success" | "instructions";
 
 type FeedbackTone = "info" | "success" | "error";
 
@@ -17,22 +20,32 @@ type FeedbackState = {
   message: string;
 };
 
+const KENYAN_PHONE_REGEX = /^(\+?254|0)(7|1)\d{8}$/;
+
 export default function ForgotPasswordModal() {
   const { authModal, closeAuthModal, openAuthModal } = useAuth();
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>({
-    tone: "info",
-    message: "Enter your email.",
-  });
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [step, setStep] = useState<Step>("email");
+  const [sentEmail, setSentEmail] = useState("");
 
   if (authModal !== "forgot-password") return null;
 
-  const isValid = email.length > 4;
+  const isValid = email.length > 4 && KENYAN_PHONE_REGEX.test(phone.trim());
 
   function setBackToLogin() {
     closeAuthModal();
     openAuthModal("login");
+  }
+
+  function handleReset() {
+    setEmail("");
+    setPhone("");
+    setFeedback(null);
+    setStep("email");
+    setSentEmail("");
   }
 
   function handleEmailChange(value: string) {
@@ -42,10 +55,7 @@ export default function ForgotPasswordModal() {
     if (loading) return;
 
     if (!nextValue) {
-      setFeedback({
-        tone: "info",
-        message: "Enter your email.",
-      });
+      setFeedback(null);
       return;
     }
 
@@ -59,36 +69,233 @@ export default function ForgotPasswordModal() {
 
     setFeedback({
       tone: "error",
-      message: "Enter a valid email address to continue.",
+      message: "Enter a valid email address.",
     });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isValid) return;
+
     setLoading(true);
     setFeedback({
       tone: "info",
-      message: "Checking email...",
+      message: "Validating email...",
     });
+
     try {
       const { data } = await api.post<{ message: string }>(
         "/auth/forgot-password",
-        { email },
+        { email, phone },
       );
-      setFeedback({
-        tone: "success",
-        message: data.message,
-      });
+
+      // Check if email was not found
+      if (data.message.includes("No account found")) {
+        setFeedback({
+          tone: "error",
+          message: "Email does not exist in our system.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Email exists and reset link was sent
+      setSentEmail(email);
+      setStep("success");
+      setFeedback(null);
+
+      // Auto-transition to instructions after 2 seconds
+      setTimeout(() => {
+        setStep("instructions");
+      }, 2000);
     } catch {
       setFeedback({
         tone: "error",
-        message: "Try again.",
+        message: "An error occurred. Please try again.",
       });
     } finally {
       setLoading(false);
     }
   }
+
+  // Step 1: Email & Phone Input
+  const renderEmailStep = () => (
+    <>
+      {feedback ? (
+        <div
+          className={`mb-5 rounded-xl border px-4 py-3 text-sm ${
+            feedback.tone === "success"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+              : feedback.tone === "error"
+                ? "border-red-500/30 bg-red-500/10 text-red-100"
+                : "border-[#3d6ba3]/35 bg-[#1a3a6b]/35 text-[#d7e5f7]"
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            {feedback.tone === "success" ? (
+              <CheckCircle2
+                size={16}
+                className="mt-0.5 shrink-0 text-emerald-300"
+              />
+            ) : feedback.tone === "error" ? (
+              <CircleAlert
+                size={16}
+                className="mt-0.5 shrink-0 text-red-300"
+              />
+            ) : (
+              <ShieldAlert
+                size={16}
+                className="mt-0.5 shrink-0 text-sky-300"
+              />
+            )}
+            <p className="leading-5">{feedback.message}</p>
+          </div>
+        </div>
+      ) : null}
+
+      <form className="grid gap-3.5" onSubmit={handleSubmit}>
+        <div className="grid gap-1.5">
+          <label
+            className="text-sm font-medium text-admin-text-primary"
+            htmlFor="forgot-email"
+          >
+            Email
+          </label>
+          <div className="relative">
+            <Mail
+              size={16}
+              className="absolute left-3.5 top-3.5 text-slate-400 pointer-events-none"
+            />
+            <input
+              id="forgot-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              disabled={loading}
+              className="h-11 w-full rounded-xl border border-admin-border bg-(--color-bg-elevated) pl-11 pr-3 text-sm text-admin-text-primary outline-none disabled:opacity-60"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <label
+            className="text-sm font-medium text-admin-text-primary"
+            htmlFor="forgot-phone"
+          >
+            Phone
+          </label>
+          <input
+            id="forgot-phone"
+            type="tel"
+            required
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="07XXXXXXXX or +2547XXXXXXXX"
+            disabled={loading}
+            className="h-11 w-full rounded-xl border border-admin-border bg-(--color-bg-elevated) px-3 text-sm text-admin-text-primary outline-none disabled:opacity-60"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!isValid || loading}
+          className="h-10 rounded-lg bg-admin-accent text-sm font-semibold text-(--color-text-dark) disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin" />
+              Validating...
+            </span>
+          ) : (
+            "Send reset link"
+          )}
+        </button>
+      </form>
+
+      <div className="border-t border-[#3d6ba3]/30 pt-5 mt-6 text-center">
+        <button
+          type="button"
+          onClick={setBackToLogin}
+          className="inline-flex items-center gap-2 rounded-lg border border-[#3d6ba3]/40 px-4 py-2 text-sm font-semibold text-[#a8c4e0] transition-colors hover:border-[#f5c518]/50 hover:text-white"
+        >
+          <ArrowLeft size={15} />
+          Back to login
+        </button>
+      </div>
+    </>
+  );
+
+  // Step 2: Success Confirmation
+  const renderSuccessStep = () => (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20">
+          <CheckCircle2 size={24} className="text-emerald-300" />
+        </div>
+        <p className="text-sm font-medium text-emerald-100">✓ Email Verified</p>
+        <p className="mt-2 text-xs text-emerald-200/80">
+          Reset link sent to <strong>{sentEmail}</strong>
+        </p>
+      </div>
+
+      <p className="text-center text-xs text-[#a8c4e0]">
+        Redirecting to instructions...
+      </p>
+    </div>
+  );
+
+  // Step 3: Instructions Modal
+  const renderInstructionsStep = () => (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-[#3d6ba3]/20 bg-[#1a3a6b]/40 p-5">
+        <h3 className="mb-4 text-sm font-semibold text-white">What to do next:</h3>
+        <ol className="space-y-3 text-xs text-[#a8c4e0]">
+          <li className="flex gap-3 items-start">
+            <span className="font-semibold text-[#f5c518] mt-0.5">1.</span>
+            <span>Check your inbox at <strong className="text-white">{sentEmail}</strong></span>
+          </li>
+          <li className="flex gap-3 items-start">
+            <span className="font-semibold text-[#f5c518] mt-0.5">2.</span>
+            <span>Click the reset link in the email (valid for 15 minutes)</span>
+          </li>
+          <li className="flex gap-3 items-start">
+            <span className="font-semibold text-[#f5c518] mt-0.5">3.</span>
+            <span>Create a new password</span>
+          </li>
+          <li className="flex gap-3 items-start">
+            <span className="font-semibold text-[#f5c518] mt-0.5">4.</span>
+            <span>Log in with your new password</span>
+          </li>
+        </ol>
+      </div>
+
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex gap-3">
+        <AlertCircle size={16} className="text-amber-300 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-100">
+          <strong>Link expires in 15 minutes.</strong> Check spam folder or request a new link if needed.
+        </p>
+      </div>
+
+      <button
+        onClick={handleReset}
+        className="h-10 w-full rounded-lg border border-[#3d6ba3]/40 bg-[var(--color-bg-elevated)] text-sm font-semibold text-[#a8c4e0] hover:border-[#f5c518]/50 hover:text-white transition-colors"
+      >
+        Request another link
+      </button>
+
+      <div className="border-t border-[#3d6ba3]/30 pt-5 text-center">
+        <button
+          type="button"
+          onClick={setBackToLogin}
+          className="inline-flex items-center gap-2 rounded-lg border border-[#3d6ba3]/40 px-4 py-2 text-sm font-semibold text-[#a8c4e0] transition-colors hover:border-[#f5c518]/50 hover:text-white"
+        >
+          <ArrowLeft size={15} />
+          Back to login
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -123,97 +330,27 @@ export default function ForgotPasswordModal() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  Forgot password
+                  {step === "email"
+                    ? "Forgot password"
+                    : step === "success"
+                      ? "Success!"
+                      : "Check your email"}
                 </h1>
-              </div>
-            </div>
-          </div>
-
-          {feedback ? (
-            <div
-              className={`mb-5 rounded-xl border px-4 py-3 text-sm ${
-                feedback.tone === "success"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-                  : feedback.tone === "error"
-                    ? "border-red-500/30 bg-red-500/10 text-red-100"
-                    : "border-[#3d6ba3]/35 bg-[#1a3a6b]/35 text-[#d7e5f7]"
-              }`}
-            >
-              <div className="flex items-start gap-2">
-                {feedback.tone === "success" ? (
-                  <CheckCircle2
-                    size={16}
-                    className="mt-0.5 shrink-0 text-emerald-300"
-                  />
-                ) : feedback.tone === "error" ? (
-                  <CircleAlert
-                    size={16}
-                    className="mt-0.5 shrink-0 text-red-300"
-                  />
-                ) : (
-                  <ShieldAlert
-                    size={16}
-                    className="mt-0.5 shrink-0 text-sky-300"
-                  />
+                {step !== "email" && (
+                  <p className="text-xs text-[#a8c4e0] mt-1">
+                    {step === "success"
+                      ? "Reset link sent"
+                      : "Password reset instructions"}
+                  </p>
                 )}
-                <p className="leading-5">{feedback.message}</p>
               </div>
             </div>
-          ) : null}
-
-          <form className="grid gap-3.5" onSubmit={handleSubmit}>
-            <div className="grid gap-1.5">
-              <label
-                className="text-sm font-medium text-admin-text-primary"
-                htmlFor="forgot-email"
-              >
-                Email
-              </label>
-              <div className="relative">
-                <Mail
-                  size={16}
-                  className="absolute left-3.5 top-3.5 text-slate-400 pointer-events-none"
-                />
-                <input
-                  id="forgot-email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-admin-border bg-(--color-bg-elevated) pl-11 pr-3 text-sm text-admin-text-primary outline-none"
-                />
-              </div>
-              {!isValid && email.length > 0 ? (
-                <p className="text-xs text-amber-400 font-medium">
-                  Enter a valid email address.
-                </p>
-              ) : null}
-            </div>
-            <button
-              type="submit"
-              disabled={!isValid || loading}
-              className="h-10 rounded-lg bg-admin-accent text-sm font-semibold text-(--color-text-dark) disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 size={14} className="animate-spin" />
-                  Sending...
-                </span>
-              ) : (
-                "Send reset link"
-              )}
-            </button>
-          </form>
-          <div className="border-t border-[#3d6ba3]/30 pt-5 mt-6 text-center">
-            <button
-              type="button"
-              onClick={setBackToLogin}
-              className="inline-flex items-center gap-2 rounded-lg border border-[#3d6ba3]/40 px-4 py-2 text-sm font-semibold text-[#a8c4e0] transition-colors hover:border-[#f5c518]/50 hover:text-white"
-            >
-              <ArrowLeft size={15} />
-              Back to login
-            </button>
           </div>
+
+          {/* Content based on step */}
+          {step === "email" && renderEmailStep()}
+          {step === "success" && renderSuccessStep()}
+          {step === "instructions" && renderInstructionsStep()}
         </div>
       </div>
     </>
