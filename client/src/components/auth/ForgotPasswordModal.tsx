@@ -1,4 +1,4 @@
-import { useState, type FormEvent, useEffect } from "react";
+import { useState, type FormEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/axiosConfig";
 import {
@@ -138,15 +138,9 @@ export default function ForgotPasswordModal() {
                 className="mt-0.5 shrink-0 text-emerald-300"
               />
             ) : feedback.tone === "error" ? (
-              <CircleAlert
-                size={16}
-                className="mt-0.5 shrink-0 text-red-300"
-              />
+              <CircleAlert size={16} className="mt-0.5 shrink-0 text-red-300" />
             ) : (
-              <ShieldAlert
-                size={16}
-                className="mt-0.5 shrink-0 text-sky-300"
-              />
+              <ShieldAlert size={16} className="mt-0.5 shrink-0 text-sky-300" />
             )}
             <p className="leading-5">{feedback.message}</p>
           </div>
@@ -249,15 +243,22 @@ export default function ForgotPasswordModal() {
   const renderInstructionsStep = () => (
     <div className="space-y-5">
       <div className="rounded-xl border border-[#3d6ba3]/20 bg-[#1a3a6b]/40 p-5">
-        <h3 className="mb-4 text-sm font-semibold text-white">What to do next:</h3>
+        <h3 className="mb-4 text-sm font-semibold text-white">
+          What to do next:
+        </h3>
         <ol className="space-y-3 text-xs text-[#a8c4e0]">
           <li className="flex gap-3 items-start">
             <span className="font-semibold text-[#f5c518] mt-0.5">1.</span>
-            <span>Check your inbox at <strong className="text-white">{sentEmail}</strong></span>
+            <span>
+              Check your inbox at{" "}
+              <strong className="text-white">{sentEmail}</strong>
+            </span>
           </li>
           <li className="flex gap-3 items-start">
             <span className="font-semibold text-[#f5c518] mt-0.5">2.</span>
-            <span>Click the reset link in the email (valid for 15 minutes)</span>
+            <span>
+              Click the reset link in the email (valid for 15 minutes)
+            </span>
           </li>
           <li className="flex gap-3 items-start">
             <span className="font-semibold text-[#f5c518] mt-0.5">3.</span>
@@ -273,7 +274,8 @@ export default function ForgotPasswordModal() {
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex gap-3">
         <AlertCircle size={16} className="text-amber-300 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-100">
-          <strong>Link expires in 15 minutes.</strong> Check spam folder or request a new link if needed.
+          <strong>Link expires in 15 minutes.</strong> Check spam folder or
+          request a new link if needed.
         </p>
       </div>
 

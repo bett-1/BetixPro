@@ -51,7 +51,6 @@ const routeTree = rootRoute.addChildren([
     userComingSoonRoute,
     userContactRoute,
     userProfileRoute,
-    userForgotPasswordRoute,
     userResetPasswordRoute,
     userPaymentsRoute.addChildren([
       userPaymentsDepositRoute,
