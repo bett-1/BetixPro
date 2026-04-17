@@ -53,9 +53,37 @@ type WalletSummaryCache = {
 };
 
 const pendingSlipStorageKey = "betixpro.pending-bet-slip";
+const activeSlipStorageKey = "betixpro.active-bet-slip.v1";
 export const betSlipCountStorageKey = "betixpro.bet-slip-count";
 export const betSlipCountEventName = "betixpro:slip-count-changed";
 export const betSlipToggleEventName = "betixpro:toggle-betslip";
+
+function isValidStoredSelection(value: unknown): value is BetSelection {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<BetSelection>;
+  return (
+    typeof candidate.eventId === "string" &&
+    candidate.eventId.length > 0 &&
+    typeof candidate.eventName === "string" &&
+    typeof candidate.marketType === "string" &&
+    typeof candidate.side === "string" &&
+    typeof candidate.odds === "number" &&
+    Number.isFinite(candidate.odds) &&
+    typeof candidate.commenceTime === "string"
+  );
+}
+
+export function isSelectionExpired(selection: BetSelection) {
+  const commenceTimeMs = new Date(selection.commenceTime).getTime();
+  if (!Number.isFinite(commenceTimeMs)) {
+    return false;
+  }
+
+  return commenceTimeMs <= Date.now();
+}
 
 function getErrorMessage(error: unknown) {
   if (isAxiosError<{ error?: string; message?: string }>(error)) {
@@ -85,6 +113,22 @@ function persistPendingSlip(payload: StoredSlip) {
   window.sessionStorage.setItem(pendingSlipStorageKey, JSON.stringify(payload));
 }
 
+function persistActiveSlip(payload: StoredSlip) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(activeSlipStorageKey, JSON.stringify(payload));
+}
+
+function clearActiveSlip() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(activeSlipStorageKey);
+}
+
 function clearPendingSlip() {
   if (typeof window === "undefined") {
     return;
@@ -103,6 +147,7 @@ export function useBetSlip() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
+  const [hasHydratedSlip, setHasHydratedSlip] = useState(false);
 
   const setStake = useCallback((nextStake: number) => {
     setSuccess(false);
@@ -111,6 +156,13 @@ export function useBetSlip() {
   }, []);
 
   const addSelection = useCallback((selection: BetSelection) => {
+    if (isSelectionExpired(selection)) {
+      setError("This selection has expired. Remove it or pick another event.");
+      setSuccess(false);
+      setIsOpen(true);
+      return;
+    }
+
     setSelections((current) => {
       const existingForEvent = current.find(
         (item) => item.eventId === selection.eventId,
@@ -148,6 +200,7 @@ export function useBetSlip() {
     setSelections([]);
     setStakeState(50);
     setError(null);
+    clearActiveSlip();
     clearPendingSlip();
   }, []);
 
@@ -179,6 +232,17 @@ export function useBetSlip() {
       return;
     }
 
+    const expiredSelections = selections.filter(isSelectionExpired);
+    if (expiredSelections.length > 0) {
+      const firstExpired = expiredSelections[0];
+      setError(
+        `Expired selection: ${firstExpired.eventName}. Remove expired selections before placing your bet.`,
+      );
+      setSuccess(false);
+      setIsOpen(true);
+      return;
+    }
+
     setPlacing(true);
     setError(null);
     setSuccess(false);
@@ -200,17 +264,14 @@ export function useBetSlip() {
                   stake,
                 },
               )
-            : await api.post<PlaceBetResponse>(
-                "/user/bets/place",
-                {
-                  eventId: selection.eventId,
-                  marketType: selection.marketType,
-                  side: selection.side,
-                  stake,
-                  odds: selection.odds,
-                  confirmOddsChange: false,
-                },
-              );
+            : await api.post<PlaceBetResponse>("/user/bets/place", {
+                eventId: selection.eventId,
+                marketType: selection.marketType,
+                side: selection.side,
+                stake,
+                odds: selection.odds,
+                confirmOddsChange: false,
+              });
 
           latestBalance = data.newBalance;
         } catch (attemptError) {
@@ -335,6 +396,24 @@ export function useBetSlip() {
       return;
     }
 
+    if (!hasHydratedSlip) {
+      return;
+    }
+
+    if (selections.length === 0) {
+      clearActiveSlip();
+      return;
+    }
+
+    persistActiveSlip({ selections, stake });
+  }, [hasHydratedSlip, selections, stake]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setHasHydratedSlip(true);
+      return;
+    }
+
     window.sessionStorage.setItem(
       betSlipCountStorageKey,
       String(selections.length),
@@ -352,26 +431,55 @@ export function useBetSlip() {
       return;
     }
 
-    const storedValue = window.sessionStorage.getItem(pendingSlipStorageKey);
-    if (!storedValue) {
+    const hydrateFromStorage = (storedValue: string | null) => {
+      if (!storedValue) {
+        return false;
+      }
+
+      try {
+        const parsed = JSON.parse(storedValue) as Partial<StoredSlip>;
+        if (Array.isArray(parsed.selections)) {
+          const safeSelections = parsed.selections.filter(
+            isValidStoredSelection,
+          );
+          if (safeSelections.length > 0) {
+            setSelections(safeSelections);
+          }
+        }
+
+        if (typeof parsed.stake === "number" && Number.isFinite(parsed.stake)) {
+          setStakeState(Math.max(0, parsed.stake));
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const hasActiveSlip = hydrateFromStorage(
+      window.localStorage.getItem(activeSlipStorageKey),
+    );
+
+    if (hasActiveSlip) {
       return;
     }
 
-    try {
-      const parsed = JSON.parse(storedValue) as StoredSlip;
-      if (Array.isArray(parsed.selections) && parsed.selections.length > 0) {
-        setSelections(parsed.selections);
-      }
+    const hadPendingSlip = hydrateFromStorage(
+      window.sessionStorage.getItem(pendingSlipStorageKey),
+    );
 
-      if (typeof parsed.stake === "number" && Number.isFinite(parsed.stake)) {
-        setStakeState(parsed.stake);
-      }
-    } catch {
-      // Ignore invalid persisted state.
-    } finally {
+    if (hadPendingSlip) {
       clearPendingSlip();
     }
+
+    setHasHydratedSlip(true);
   }, []);
+
+  const expiredSelections = useMemo(
+    () => selections.filter(isSelectionExpired),
+    [selections],
+  );
 
   const potentialPayout = useMemo(() => {
     return (
@@ -400,6 +508,8 @@ export function useBetSlip() {
     success,
     newBalance,
     isAuthenticated,
+    expiredSelections,
+    hasExpiredSelections: expiredSelections.length > 0,
   };
 }
 

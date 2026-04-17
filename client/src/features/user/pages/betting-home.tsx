@@ -98,10 +98,21 @@ export default function BettingHome() {
     ];
   }, [sports]);
 
-  const upcomingEvents = events.filter((event) => event.status !== "LIVE");
+  const nowMs = Date.now();
+  const upcomingEvents = events.filter((event) => {
+    const commenceMs = new Date(event.commenceTime).getTime();
+    return Number.isFinite(commenceMs) && commenceMs > nowMs;
+  });
   const featuredLiveEvents = liveEvents.slice(0, 6);
   const liveCustomEvents = customEvents.filter((e) => e.status === "LIVE");
-  const upcomingCustomEvents = customEvents.filter((e) => e.status === "PUBLISHED");
+  const upcomingCustomEvents = customEvents.filter((e) => {
+    if (e.status !== "PUBLISHED") {
+      return false;
+    }
+
+    const startMs = new Date(e.startTime).getTime();
+    return Number.isFinite(startMs) && startMs > nowMs;
+  });
   const heroImages = [heroOne, heroTwo, heroThree, heroFour, heroFive];
   const hasSelections = betSlip.selections.length > 0;
 
@@ -354,7 +365,8 @@ export default function BettingHome() {
             ) : null}
 
             {/* CUSTOM EVENTS section */}
-            {(liveCustomEvents.length > 0 || upcomingCustomEvents.length > 0) && (
+            {(liveCustomEvents.length > 0 ||
+              upcomingCustomEvents.length > 0) && (
               <section className="mobile-home-panel mb-3 overflow-hidden rounded-xl border border-amber-400/10 bg-gradient-to-b from-[#0f1a2d] to-[#0b1525] shadow-[0_8px_24px_rgba(0,0,0,0.25)] sm:mb-4 sm:rounded-2xl">
                 <div className="flex items-center justify-between border-b border-[#1e3350]/40 px-3 py-2 sm:px-4 sm:py-2.5">
                   <div className="flex items-center gap-2">
@@ -375,14 +387,16 @@ export default function BettingHome() {
                 </div>
 
                 <div className="grid gap-1.5 p-1.5 sm:grid-cols-2 sm:gap-3 sm:p-3">
-                  {[...liveCustomEvents, ...upcomingCustomEvents].slice(0, 4).map((event) => (
-                    <CustomEventCard
-                      key={event.id}
-                      event={event}
-                      onSelectOutcome={handleCustomSelect}
-                      activeSelections={customActiveSelections}
-                    />
-                  ))}
+                  {[...liveCustomEvents, ...upcomingCustomEvents]
+                    .slice(0, 4)
+                    .map((event) => (
+                      <CustomEventCard
+                        key={event.id}
+                        event={event}
+                        onSelectOutcome={handleCustomSelect}
+                        activeSelections={customActiveSelections}
+                      />
+                    ))}
                 </div>
               </section>
             )}
