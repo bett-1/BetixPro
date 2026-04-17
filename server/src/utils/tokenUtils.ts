@@ -23,6 +23,10 @@ const ACCESS_TOKEN_AUDIENCE = process.env.ACCESS_TOKEN_AUDIENCE?.trim();
 function normalizeSameSiteValue(value: string | undefined) {
   const normalized = value?.trim().toLowerCase();
 
+  if (normalized === "strict") {
+    return "strict" as const;
+  }
+
   if (normalized === "lax") {
     return "lax" as const;
   }
@@ -31,7 +35,24 @@ function normalizeSameSiteValue(value: string | undefined) {
     return "none" as const;
   }
 
-  return "strict" as const;
+  return null;
+}
+
+function parseBooleanEnv(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1") {
+    return true;
+  }
+
+  if (normalized === "false" || normalized === "0") {
+    return false;
+  }
+
+  return null;
 }
 
 function getRequiredSecret(
@@ -151,10 +172,11 @@ export function getRefreshTokenCookieOptions() {
     process.env.REFRESH_COOKIE_SAMESITE,
   );
   const sameSite =
-    configuredSameSite === "strict" && isProduction
-      ? ("none" as const)
-      : configuredSameSite;
-  const secure = isProduction || sameSite === "none";
+    configuredSameSite ?? (isProduction ? ("none" as const) : ("lax" as const));
+  const configuredSecure = parseBooleanEnv(process.env.REFRESH_COOKIE_SECURE);
+  const secure =
+    sameSite === "none" ? true : (configuredSecure ?? isProduction);
+  const domain = process.env.REFRESH_COOKIE_DOMAIN?.trim() || undefined;
 
   return {
     httpOnly: true,
@@ -162,6 +184,7 @@ export function getRefreshTokenCookieOptions() {
     sameSite,
     maxAge: REFRESH_TOKEN_TTL_MS,
     path: "/",
+    ...(domain ? { domain } : {}),
   };
 }
 

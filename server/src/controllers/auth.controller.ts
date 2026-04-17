@@ -419,20 +419,6 @@ function sanitizeUser(user: {
   };
 }
 
-function getIpAddress(req: Request) {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
-    return forwardedFor.split(",")[0]?.trim() ?? null;
-  }
-
-  return req.ip ?? null;
-}
-
-function getDeviceInfo(req: Request) {
-  const value = req.headers["user-agent"];
-  return typeof value === "string" && value.trim().length > 0 ? value : null;
-}
-
 function getRefreshCookie(req: Request) {
   const value = req.cookies.refreshToken;
   return typeof value === "string" && value.length > 0 ? value : undefined;
@@ -449,7 +435,7 @@ function getBearerToken(req: Request) {
 }
 
 async function setRefreshTokenCookieAndPersist(
-  req: Request,
+  _req: Request,
   res: Response,
   userId: string,
 ) {
@@ -460,8 +446,6 @@ async function setRefreshTokenCookieAndPersist(
     data: {
       userId,
       tokenHash: refreshTokenHash,
-      deviceInfo: getDeviceInfo(req),
-      ipAddress: getIpAddress(req),
       expiresAt: getRefreshExpiryDate(),
     },
   });
@@ -885,32 +869,6 @@ export async function refresh(req: Request, res: Response) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const requestDeviceInfo = getDeviceInfo(req);
-    const requestIpAddress = getIpAddress(req);
-    if (
-      tokenRecord.deviceInfo &&
-      requestDeviceInfo &&
-      tokenRecord.deviceInfo !== requestDeviceInfo
-    ) {
-      await prisma.refreshToken.deleteMany({
-        where: { id: tokenRecord.id },
-      });
-      res.clearCookie("refreshToken", getRefreshTokenCookieOptions());
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    if (
-      tokenRecord.ipAddress &&
-      requestIpAddress &&
-      tokenRecord.ipAddress !== requestIpAddress
-    ) {
-      await prisma.refreshToken.deleteMany({
-        where: { id: tokenRecord.id },
-      });
-      res.clearCookie("refreshToken", getRefreshTokenCookieOptions());
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     if (tokenRecord.user.accountStatus === "SUSPENDED") {
       await prisma.refreshToken.deleteMany({
         where: { userId: tokenRecord.user.id },
@@ -933,8 +891,6 @@ export async function refresh(req: Request, res: Response) {
         data: {
           userId: tokenRecord.userId,
           tokenHash: newRefreshHash,
-          deviceInfo: getDeviceInfo(req),
-          ipAddress: requestIpAddress,
           expiresAt: getRefreshExpiryDate(),
         },
       }),

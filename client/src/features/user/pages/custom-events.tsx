@@ -10,23 +10,49 @@ export default function CustomEventsPage() {
   const { events, loading, error, loadEvents } = useCustomEvents();
   const betSlip = useBetSlip();
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("ALL");
+  const nowMs = Date.now();
+
+  const upcomingEvents = useMemo(
+    () =>
+      events.filter((e) => {
+        if (e.status !== "PUBLISHED") {
+          return false;
+        }
+
+        const startMs = new Date(e.startTime).getTime();
+        return Number.isFinite(startMs) && startMs > nowMs;
+      }),
+    [events, nowMs],
+  );
+
+  const visibleEvents = useMemo(
+    () =>
+      events.filter((e) => {
+        if (e.status === "PUBLISHED") {
+          const startMs = new Date(e.startTime).getTime();
+          return Number.isFinite(startMs) && startMs > nowMs;
+        }
+
+        return true;
+      }),
+    [events, nowMs],
+  );
 
   const filteredEvents = useMemo(() => {
-    if (activeFilter === "ALL") return events;
-    if (activeFilter === "LIVE")
-      return events.filter((e) => e.status === "LIVE");
-    return events.filter((e) => e.status === "PUBLISHED");
-  }, [events, activeFilter]);
+    if (activeFilter === "ALL") return visibleEvents;
+    if (activeFilter === "LIVE") {
+      return visibleEvents.filter((e) => e.status === "LIVE");
+    }
+
+    return upcomingEvents;
+  }, [activeFilter, upcomingEvents, visibleEvents]);
 
   const liveCount = useMemo(
     () => events.filter((e) => e.status === "LIVE").length,
     [events],
   );
 
-  const upcomingCount = useMemo(
-    () => events.filter((e) => e.status === "PUBLISHED").length,
-    [events],
-  );
+  const upcomingCount = upcomingEvents.length;
 
   const handleSelectOutcome = useCallback(
     (params: {
@@ -63,9 +89,19 @@ export default function CustomEventsPage() {
     [betSlip.selections],
   );
 
-  const filterTabs: { label: string; value: StatusFilter; count: number; icon?: React.ReactNode }[] = [
-    { label: "All", value: "ALL", count: events.length },
-    { label: "Live", value: "LIVE", count: liveCount, icon: <Radio size={10} className="text-emerald-400" /> },
+  const filterTabs: {
+    label: string;
+    value: StatusFilter;
+    count: number;
+    icon?: React.ReactNode;
+  }[] = [
+    { label: "All", value: "ALL", count: visibleEvents.length },
+    {
+      label: "Live",
+      value: "LIVE",
+      count: liveCount,
+      icon: <Radio size={10} className="text-emerald-400" />,
+    },
     { label: "Upcoming", value: "UPCOMING", count: upcomingCount },
   ];
 
