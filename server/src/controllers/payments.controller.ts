@@ -39,7 +39,8 @@ const WITHDRAWAL_DEFAULTS = {
     defaultAdminSettings.userDefaultsAndRestrictions.dailyTransactionLimit,
   APPROVAL_THRESHOLD:
     defaultAdminSettings.paymentsConfig.mpesa.withdrawalApprovalThreshold,
-  KYC_REQUIRED: defaultAdminSettings.kycAndComplianceConfig.withdrawalRequiresKyc,
+  KYC_REQUIRED:
+    defaultAdminSettings.kycAndComplianceConfig.withdrawalRequiresKyc,
   MPESA_ENABLED: defaultAdminSettings.paymentsConfig.methods.mpesa,
 };
 
@@ -75,7 +76,11 @@ type WithdrawalProviderMeta = {
   approvedBy?: string;
   requestedPayoutAt?: string;
   finalizedAt?: string;
-  disbursementState?: "PENDING_APPROVAL" | "PROCESSING" | "COMPLETED" | "FAILED";
+  disbursementState?:
+    | "PENDING_APPROVAL"
+    | "PROCESSING"
+    | "COMPLETED"
+    | "FAILED";
   failureStage?: "APPROVAL" | "B2C_REQUEST" | "B2C_TIMEOUT" | "B2C_RESULT";
   mpesa?: Record<string, unknown>;
 };
@@ -218,8 +223,9 @@ function extractB2CReceipt(body: unknown) {
     return null;
   }
 
-  const parameters = (result as { ResultParameters?: { ResultParameter?: unknown } })
-    .ResultParameters?.ResultParameter;
+  const parameters = (
+    result as { ResultParameters?: { ResultParameter?: unknown } }
+  ).ResultParameters?.ResultParameter;
   if (!Array.isArray(parameters)) {
     return null;
   }
@@ -325,7 +331,8 @@ async function settleFailedWithdrawal(args: {
     return null;
   }
 
-  const feeAmount = getWithdrawalProviderMeta(result.transaction.providerCallback).fee ?? 0;
+  const feeAmount =
+    getWithdrawalProviderMeta(result.transaction.providerCallback).fee ?? 0;
 
   emitWalletEvent({
     userId: result.transaction.userId,
@@ -393,7 +400,9 @@ async function finalizeSuccessfulWithdrawal(args: {
           args.mpesaCode ?? transaction.providerReceiptNumber ?? undefined,
         providerResponseCode: args.providerResponseCode ?? undefined,
         providerResponseDescription:
-          args.providerResponseDescription ?? transaction.providerResponseDescription ?? undefined,
+          args.providerResponseDescription ??
+          transaction.providerResponseDescription ??
+          undefined,
         providerCallback: mergeProviderMeta(transaction.providerCallback, {
           finalizedAt: new Date().toISOString(),
           disbursementState: "COMPLETED",
@@ -500,13 +509,16 @@ async function initiateWithdrawalDisbursement(args: {
       where: { id: latestTransaction.id },
       data: {
         status: "PROCESSING",
-        providerCallback: mergeProviderMeta(latestTransaction.providerCallback, {
-          approvedAt: new Date().toISOString(),
-          approvedBy: args.adminUserId,
-          approvalMode: args.approvalMode,
-          requestedPayoutAt: new Date().toISOString(),
-          disbursementState: "PROCESSING",
-        }),
+        providerCallback: mergeProviderMeta(
+          latestTransaction.providerCallback,
+          {
+            approvedAt: new Date().toISOString(),
+            approvedBy: args.adminUserId,
+            approvalMode: args.approvalMode,
+            requestedPayoutAt: new Date().toISOString(),
+            disbursementState: "PROCESSING",
+          },
+        ),
       },
     });
   });
@@ -683,9 +695,7 @@ export async function createWithdrawalRequest(
     const payoutConfig = getMpesaB2CConfig();
     if (!payoutConfig.isConfigured) {
       return res.status(500).json({
-        message: getMpesaWithdrawalConfigErrorMessage(
-          payoutConfig.missingVars,
-        ),
+        message: getMpesaWithdrawalConfigErrorMessage(payoutConfig.missingVars),
       });
     }
 
@@ -724,7 +734,9 @@ export async function createWithdrawalRequest(
       });
     }
 
-    const feeAmount = Math.ceil((requestedAmount * settings.feePercentage) / 100);
+    const feeAmount = Math.ceil(
+      (requestedAmount * settings.feePercentage) / 100,
+    );
     const totalDebit = requestedAmount + feeAmount;
 
     const wallet = await getOrCreateWallet(userId);
@@ -753,7 +765,10 @@ export async function createWithdrawalRequest(
     });
 
     const dailyRequestedAmount = dailyWithdrawalAggregate._sum.amount ?? 0;
-    if (dailyRequestedAmount + requestedAmount > settings.dailyTransactionLimit) {
+    if (
+      dailyRequestedAmount + requestedAmount >
+      settings.dailyTransactionLimit
+    ) {
       return res.status(400).json({
         message: `Daily withdrawal limit exceeded. You can only withdraw up to KES ${settings.dailyTransactionLimit.toLocaleString()} per day.`,
       });
@@ -1004,7 +1019,9 @@ export async function rejectWithdrawal(
         return null;
       }
 
-      const meta = getWithdrawalProviderMeta(latestTransaction.providerCallback);
+      const meta = getWithdrawalProviderMeta(
+        latestTransaction.providerCallback,
+      );
       const totalDebit = meta.totalDebit ?? latestTransaction.amount;
       const wallet = await getOrCreateWallet(latestTransaction.userId, tx);
 
@@ -1025,11 +1042,14 @@ export async function rejectWithdrawal(
           status: "FAILED",
           processedAt: new Date(),
           providerResponseDescription: reason || "Withdrawal rejected by admin",
-          providerCallback: mergeProviderMeta(latestTransaction.providerCallback, {
-            finalizedAt: new Date().toISOString(),
-            failureStage: "APPROVAL",
-            disbursementState: "FAILED",
-          }),
+          providerCallback: mergeProviderMeta(
+            latestTransaction.providerCallback,
+            {
+              finalizedAt: new Date().toISOString(),
+              failureStage: "APPROVAL",
+              disbursementState: "FAILED",
+            },
+          ),
         },
       });
 
@@ -1144,7 +1164,10 @@ export async function initiateStk(
     } catch (authError) {
       console.error("[STK Push] M-Pesa authentication failed:", authError);
       return res.status(502).json({
-        message: authError instanceof Error ? authError.message : "M-Pesa service authentication failed. Please try again later.",
+        message:
+          authError instanceof Error
+            ? authError.message
+            : "M-Pesa service authentication failed. Please try again later.",
       });
     }
 
@@ -1333,7 +1356,10 @@ export async function checkDepositStatus(
     } catch (fetchError) {
       clearTimeout(timeoutId);
       if (fetchError instanceof Error && fetchError.name === "AbortError") {
-        console.error("[M-Pesa Query] Request timeout for transaction:", transaction.id);
+        console.error(
+          "[M-Pesa Query] Request timeout for transaction:",
+          transaction.id,
+        );
         return res.status(200).json({
           transactionId: transaction.id,
           status: "PENDING",
@@ -1537,10 +1563,7 @@ export async function handleMpesaCallback(req: Request, res: Response) {
   return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
 }
 
-export async function handleMpesaWithdrawalResult(
-  req: Request,
-  res: Response,
-) {
+export async function handleMpesaWithdrawalResult(req: Request, res: Response) {
   const result = req.body?.Result;
   if (!result || typeof result !== "object") {
     return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
@@ -1549,13 +1572,16 @@ export async function handleMpesaWithdrawalResult(
   const originatorConversationId =
     typeof (result as { OriginatorConversationID?: unknown })
       .OriginatorConversationID === "string"
-      ? (result as { OriginatorConversationID: string }).OriginatorConversationID
+      ? (result as { OriginatorConversationID: string })
+          .OriginatorConversationID
       : null;
   const responseConversationId =
     typeof (result as { ConversationID?: unknown }).ConversationID === "string"
       ? (result as { ConversationID: string }).ConversationID
       : null;
-  const resultCode = Number((result as { ResultCode?: unknown }).ResultCode ?? NaN);
+  const resultCode = Number(
+    (result as { ResultCode?: unknown }).ResultCode ?? NaN,
+  );
   const resultDesc =
     typeof (result as { ResultDesc?: unknown }).ResultDesc === "string"
       ? (result as { ResultDesc: string }).ResultDesc
@@ -1570,7 +1596,9 @@ export async function handleMpesaWithdrawalResult(
     if (resultCode === 0) {
       await finalizeSuccessfulWithdrawal({
         transactionId: originatorConversationId,
-        providerResponseCode: Number.isNaN(resultCode) ? null : String(resultCode),
+        providerResponseCode: Number.isNaN(resultCode)
+          ? null
+          : String(resultCode),
         providerResponseDescription: resultDesc,
         mpesaCode,
         providerCallback: {
@@ -1585,7 +1613,9 @@ export async function handleMpesaWithdrawalResult(
       transactionId: originatorConversationId,
       failureReason: resultDesc,
       failureStage: "B2C_RESULT",
-      providerResponseCode: Number.isNaN(resultCode) ? null : String(resultCode),
+      providerResponseCode: Number.isNaN(resultCode)
+        ? null
+        : String(resultCode),
       providerResponseDescription: resultDesc,
       providerCallback: {
         result: req.body,
@@ -1593,7 +1623,10 @@ export async function handleMpesaWithdrawalResult(
       } as never,
     });
   })().catch((error) => {
-    console.error("CRITICAL ERROR IN M-PESA WITHDRAWAL RESULT PROCESSING:", error);
+    console.error(
+      "CRITICAL ERROR IN M-PESA WITHDRAWAL RESULT PROCESSING:",
+      error,
+    );
   });
 
   return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
@@ -1625,7 +1658,10 @@ export async function handleMpesaWithdrawalTimeout(
       providerCallback: req.body as never,
     });
   })().catch((error) => {
-    console.error("CRITICAL ERROR IN M-PESA WITHDRAWAL TIMEOUT PROCESSING:", error);
+    console.error(
+      "CRITICAL ERROR IN M-PESA WITHDRAWAL TIMEOUT PROCESSING:",
+      error,
+    );
   });
 
   return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
