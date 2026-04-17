@@ -98,13 +98,7 @@ const navigationLinks: Item[] = [
   { label: "Pre-match", to: "/user/payments", icon: "P" },
   { label: "Live", to: "/user/live", icon: "L", liveBadge: "LIVE" },
   { label: "Custom Events", to: "/user/custom-events", icon: "⚡" },
-  {
-    label: "Sports",
-    to: "/user/coming-soon?feature=sports",
-    icon: "S",
-    warn: true,
-  },
-  { label: "Profile", to: "/user/profile", icon: "U" },
+
   {
     label: "Live Betting",
     to: "/user/live",
