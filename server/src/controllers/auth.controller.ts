@@ -110,7 +110,6 @@ const verifyAdminMfaSchema = z.object({
 
 const forgotPasswordSchema = z.object({
   email: z.string().trim().email("Provide a valid email address."),
-  phone: z.string().trim(),
 });
 
 const resetPasswordSchema = z.object({
@@ -995,34 +994,39 @@ export async function logout(req: Request, res: Response) {
 
 export async function forgotPassword(req: Request, res: Response) {
   const parsed = forgotPasswordSchema.safeParse(req.body);
-  const genericMessage = {
-    message: "If those details match our records, a reset link has been sent",
+  const notFoundMessage = {
+    message: "No account found for that email.",
   };
 
   if (!parsed.success) {
-    return res.status(200).json(genericMessage);
+    return res.status(200).json(notFoundMessage);
   }
 
-  const normalizedPhone = normalizeKenyanPhone(parsed.data.phone);
-  if (!normalizedPhone) {
-    return res.status(200).json(genericMessage);
-  }
+  try {
+    // STEP 1: First, verify the user exists in the database
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: parsed.data.email,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
 
-  const user = await prisma.user.findFirst({
-    where: {
-      email: parsed.data.email,
-      phone: normalizedPhone,
-    },
-    select: {
-      id: true,
-      email: true,
-    },
-  });
+    // STEP 2: If user NOT found, return error and STOP (no email sending)
+    if (!user) {
+      return res.status(200).json(notFoundMessage);
+    }
 
-  if (user) {
+    // STEP 3: Only if user exists, create reset token and send email
     const rawResetToken = createResetToken();
     const hashedResetToken = hashToken(rawResetToken, getResetTokenSecret());
 
+    // STEP 4: Save token to database
     await prisma.$transaction([
       prisma.passwordResetToken.updateMany({
         where: {
@@ -1042,10 +1046,26 @@ export async function forgotPassword(req: Request, res: Response) {
       }),
     ]);
 
-    await sendPasswordResetEmail(user.email, rawResetToken);
-  }
+    // STEP 5: Send email ONLY after user is verified and token is saved
+    try {
+      await sendPasswordResetEmail(user.email, rawResetToken);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      return res.status(500).json({
+        message: "User found, but failed to send reset email. Try again.",
+      });
+    }
 
-  return res.status(200).json(genericMessage);
+    // STEP 6: Success response
+    return res.status(200).json({
+      message: "Account found. Reset link sent.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({
+      message: "An error occurred. Please try again.",
+    });
+  }
 }
 
 export async function resetPassword(req: Request, res: Response) {

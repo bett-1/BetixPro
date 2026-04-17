@@ -18,7 +18,6 @@ import { adminSettingsRoute } from "./routes/admin/settings";
 import { adminTransactionsRoute } from "./routes/admin/transactions";
 import { adminWithdrawalsRoute } from "./routes/admin/withdrawals";
 import { adminUsersRoute } from "./routes/admin/users";
-import { forgotPasswordRoute } from "./routes/forgot-password";
 import { indexRoute } from "./routes";
 import { myBetDetailRoute } from "./routes/my-bets.$betId";
 import { myBetsRoute } from "./routes/my-bets";
@@ -28,7 +27,6 @@ import { rootRoute } from "./routes/root";
 import { userIndexRoute } from "./routes/user";
 import { userComingSoonRoute } from "./routes/user/coming-soon";
 import { userContactRoute } from "./routes/user/contact";
-import { userForgotPasswordRoute } from "./routes/user/forgot-password";
 import { userPaymentsDepositRoute } from "./routes/user/payments-deposit";
 import { userPaymentsHistoryRoute } from "./routes/user/payments-history";
 import { userPaymentsRoute } from "./routes/user/payments";
@@ -46,7 +44,6 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   myBetsRoute.addChildren([myBetDetailRoute]),
   profileRoute,
-  forgotPasswordRoute,
   resetPasswordRoute,
   userRoute.addChildren([
     userIndexRoute,
@@ -54,7 +51,6 @@ const routeTree = rootRoute.addChildren([
     userComingSoonRoute,
     userContactRoute,
     userProfileRoute,
-    userForgotPasswordRoute,
     userResetPasswordRoute,
     userPaymentsRoute.addChildren([
       userPaymentsDepositRoute,

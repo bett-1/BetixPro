@@ -83,7 +83,7 @@ type LoginPayload = {
   password: string;
 };
 
-type AuthModal = "none" | "login" | "register";
+type AuthModal = "none" | "login" | "register" | "forgot-password";
 
 type AuthContextValue = {
   user: AuthUser | null;
