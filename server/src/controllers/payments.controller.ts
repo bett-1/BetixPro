@@ -1339,7 +1339,7 @@ export async function checkDepositStatus(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    let queryResponse: Response;
+    let queryResponse: globalThis.Response;
     try {
       queryResponse = await fetch(
         `${config.baseUrl}/mpesa/stkpushquery/v1/query`,
