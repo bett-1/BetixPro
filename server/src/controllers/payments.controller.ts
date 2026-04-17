@@ -1138,7 +1138,16 @@ export async function initiateStk(
       });
     }
 
-    const tokenData = await getMpesaAccessToken(config);
+    let tokenData;
+    try {
+      tokenData = await getMpesaAccessToken(config);
+    } catch (authError) {
+      console.error("[STK Push] M-Pesa authentication failed:", authError);
+      return res.status(502).json({
+        message: authError instanceof Error ? authError.message : "M-Pesa service authentication failed. Please try again later.",
+      });
+    }
+
     const timestamp = getTimestamp();
     const password = Buffer.from(
       `${config.shortcode}${config.passkey}${timestamp}`,
