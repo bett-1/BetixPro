@@ -216,7 +216,8 @@ export function getMpesaB2CConfig():
 
   const initiatorName = process.env.MPESA_INITIATOR_NAME?.trim();
   const securityCredential = process.env.MPESA_SECURITY_CREDENTIAL?.trim();
-  const commandId = process.env.MPESA_B2C_COMMAND_ID?.trim() || "BusinessPayment";
+  const commandId =
+    process.env.MPESA_B2C_COMMAND_ID?.trim() || "BusinessPayment";
   const resultUrl =
     process.env.MPESA_B2C_RESULT_URL?.trim() ||
     deriveSiblingCallbackUrl(
@@ -281,7 +282,7 @@ export async function getMpesaAccessToken(config: {
 
   try {
     console.log("[M-Pesa Auth] Requesting token from:", config.baseUrl);
-    
+
     const tokenResponse = await fetch(
       `${config.baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
       {
@@ -307,10 +308,15 @@ export async function getMpesaAccessToken(config: {
     }
 
     const data = await tokenResponse.json();
-    
+
     if (!data.access_token) {
-      console.error("[M-Pesa Auth] Invalid response - missing access_token:", data);
-      throw new Error("M-Pesa API returned invalid token response: missing access_token field.");
+      console.error(
+        "[M-Pesa Auth] Invalid response - missing access_token:",
+        data,
+      );
+      throw new Error(
+        "M-Pesa API returned invalid token response: missing access_token field.",
+      );
     }
 
     console.log("[M-Pesa Auth] Token acquired successfully.");
@@ -318,8 +324,12 @@ export async function getMpesaAccessToken(config: {
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === "AbortError") {
-        console.error("[M-Pesa Auth] Request timeout (10s) connecting to M-Pesa API");
-        throw new Error("M-Pesa API connection timeout. Please check network connectivity and firewall rules.");
+        console.error(
+          "[M-Pesa Auth] Request timeout (10s) connecting to M-Pesa API",
+        );
+        throw new Error(
+          "M-Pesa API connection timeout. Please check network connectivity and firewall rules.",
+        );
       }
       throw error;
     }
