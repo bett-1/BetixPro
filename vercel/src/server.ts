@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { callbackRouter } from "./routes/callback";
+import validateEnv from "./utils/env_validator";
 
 dotenv.config();
 
@@ -11,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Validate environment variables
+validateEnv()
 
 // Health check
 app.get("/health", (req: Request, res: Response) => {
@@ -229,8 +233,8 @@ app.use((err: unknown, req: Request, res: Response) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ M-Pesa Callback Server running on http://localhost:${PORT}`);
+  console.log(` M-Pesa Callback Server running on http://localhost:${PORT}`);
   console.log(
-    `📍 Callback endpoint: http://localhost:${PORT}/api/mpesa/callback`,
+    ` Callback endpoint: http://localhost:${PORT}/api/mpesa/callback`,
   );
 });
