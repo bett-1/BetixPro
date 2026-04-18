@@ -18,6 +18,11 @@ export interface Payment {
   processedAt?: string | null;
   fee: number;
   totalDebit: number;
+  providerDetails?: {
+    provider: string;
+    mode: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface PaymentsResponse {

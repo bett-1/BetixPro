@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { Copy, LoaderCircle, Smartphone, Wallet, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Copy,
+  LoaderCircle,
+  Smartphone,
+  Wallet,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +29,9 @@ export default function PaystackDepositPage() {
   const initializeMutation = usePaystackInitialize();
   const [email, setEmail] = useState(user?.email ?? "");
   const [amount, setAmount] = useState("100");
-  const [paymentStatus, setPaymentStatus] = useState<"success" | "failed" | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<
+    "success" | "failed" | null
+  >(null);
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [showPaymentResult, setShowPaymentResult] = useState(false);
 
@@ -39,15 +48,15 @@ export default function PaystackDepositPage() {
     const params = new URLSearchParams(window.location.search);
     const routeReference = params.get("reference");
     const status = params.get("status") as "success" | "failed" | null;
-    
+
     if (routeReference) {
       localStorage.setItem(pendingStorageKey, routeReference);
       setPaymentReference(routeReference);
-      
+
       if (status) {
         setPaymentStatus(status);
         setShowPaymentResult(true);
-        
+
         // Show appropriate toast
         if (status === "success") {
           toast.success("Payment successful! Your wallet has been credited.", {
@@ -58,7 +67,7 @@ export default function PaystackDepositPage() {
             description: `Reference: ${routeReference}`,
           });
         }
-        
+
         // Clear the URL params after 3 seconds
         setTimeout(() => {
           const cleanUrl = window.location.pathname;
@@ -87,7 +96,9 @@ export default function PaystackDepositPage() {
     }
 
     // Show loading toast
-    const loadingToast = toast.loading(`Initializing payment of KES ${formatMoney(amountValue)}...`);
+    const loadingToast = toast.loading(
+      `Initializing payment of KES ${formatMoney(amountValue)}...`,
+    );
 
     try {
       const response = await initializeMutation.mutateAsync({
@@ -100,13 +111,13 @@ export default function PaystackDepositPage() {
       });
 
       localStorage.setItem(pendingStorageKey, response.reference);
-      
+
       // Dismiss loading toast and show redirect notice
       toast.dismiss(loadingToast);
       toast.loading(`Redirecting to Paystack checkout...`, {
         description: `Amount: KES ${formatMoney(amountValue)} • Reference: ${response.reference}`,
       });
-      
+
       // Redirect to Paystack checkout
       setTimeout(() => {
         window.location.assign(response.authorization_url);
@@ -127,11 +138,17 @@ export default function PaystackDepositPage() {
       {showPaymentResult && paymentStatus === "success" && (
         <div className="col-span-full rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-green-200">
           <div className="flex items-start gap-3">
-            <CheckCircle size={20} className="mt-0.5 flex-shrink-0 text-green-400" />
+            <CheckCircle
+              size={20}
+              className="mt-0.5 flex-shrink-0 text-green-400"
+            />
             <div className="flex-1">
-              <p className="font-semibold text-green-100">Payment Successful! ✓</p>
+              <p className="font-semibold text-green-100">
+                Payment Successful! ✓
+              </p>
               <p className="mt-1 text-sm text-green-200">
-                Your wallet has been credited. You can now place bets.</p>
+                Your wallet has been credited. You can now place bets.
+              </p>
               <p className="mt-2 text-xs text-green-300 font-mono">
                 Reference: {paymentReference}
               </p>
@@ -143,11 +160,15 @@ export default function PaystackDepositPage() {
       {showPaymentResult && paymentStatus === "failed" && (
         <div className="col-span-full rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-200">
           <div className="flex items-start gap-3">
-            <AlertCircle size={20} className="mt-0.5 flex-shrink-0 text-red-400" />
+            <AlertCircle
+              size={20}
+              className="mt-0.5 flex-shrink-0 text-red-400"
+            />
             <div className="flex-1">
               <p className="font-semibold text-red-100">Payment Failed</p>
               <p className="mt-1 text-sm text-red-200">
-                Your payment could not be processed. Please try again.</p>
+                Your payment could not be processed. Please try again.
+              </p>
               <p className="mt-2 text-xs text-red-300 font-mono">
                 Reference: {paymentReference}
               </p>
