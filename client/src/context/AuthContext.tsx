@@ -139,30 +139,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    // First, try to get user info to verify session is still valid
+    // Track if we have any valid auth state
+    let hasValidAuth = false;
+
+    // First, try to get current user info to verify session
     try {
       const me = await api.get<MeResponse>("/auth/me");
-      // If we can get user, session is still valid
       setUser(me.data.user);
+      hasValidAuth = true;
       return accessTokenState;
-    } catch {
-      // User endpoint failed, try refreshing the token
+    } catch (meError) {
+      // /auth/me failed, try refreshing token
     }
 
+    // Try refreshing the access token
     try {
       const { data } = await api.post<AuthResponse>("/auth/refresh");
       updateSession(data);
+      hasValidAuth = true;
       return data.accessToken;
-    } catch {
-      // Refresh failed, but don't clear auth state yet
-      // Return current access token if available
-      if (accessTokenState) {
-        return accessTokenState;
-      }
-      // Only clear auth state if we have no token at all
+    } catch (refreshError) {
+      // Refresh failed
+    }
+
+    // If we couldn't verify auth but have an access token, keep it
+    if (accessTokenState && !hasValidAuth) {
+      return accessTokenState;
+    }
+
+    // Only clear auth state if we're certain there's no valid session
+    if (!hasValidAuth && !accessTokenState) {
       clearAuthState(setUser, setAccessTokenState);
       return null;
     }
+
+    return accessTokenState;
   }, [accessTokenState, updateSession]);
 
   const logout = useCallback(async () => {
@@ -266,7 +277,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void (async () => {
       try {
-        await refreshSession();
+        // Check if this is a redirect from external payment provider
+        const params = new URLSearchParams(window.location.search);
+        const hasRedirectParams = params.has("reference") || params.has("status");
+        
+        // Always refresh session, especially after redirects
+        const result = await refreshSession();
+        
+        // If refresh failed but we're returning from payment, try one more time
+        if (!result && hasRedirectParams) {
+          await refreshSession();
+        }
       } catch (_error) {
         // Silently fail - don't log out on initial load if refresh fails
         // This prevents logout when returning from third-party redirects like Paystack

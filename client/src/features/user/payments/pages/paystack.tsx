@@ -5,12 +5,11 @@ import {
   LoaderCircle,
   Smartphone,
   Wallet,
-  CheckCircle,
-  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PaymentFeedbackModal } from "@/components/PaymentFeedbackModal";
 import { useAuth } from "@/context/AuthContext";
 import { formatMoney } from "../data";
 import { usePaystackInitialize } from "../hooks/usePaystackPayment";
@@ -50,22 +49,9 @@ export default function PaystackDepositPage() {
         setPaymentStatus(status);
         setShowPaymentResult(true);
 
-        // Show appropriate toast
-        if (status === "success") {
-          toast.success("Payment successful! Your wallet has been credited.", {
-            description: `Reference: ${routeReference}`,
-          });
-        } else if (status === "failed") {
-          toast.error("Payment failed. Please try again.", {
-            description: `Reference: ${routeReference}`,
-          });
-        }
-
-        // Clear the URL params after 3 seconds
-        setTimeout(() => {
-          const cleanUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
-        }, 3000);
+        // Clear the URL params immediately to prevent state issues
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
       }
     }
   }, []);
@@ -128,47 +114,24 @@ export default function PaystackDepositPage() {
 
   return (
     <section className="mx-auto grid max-w-280 gap-4 lg:grid-cols-2 lg:items-stretch">
-      {showPaymentResult && paymentStatus === "success" && (
-        <div className="col-span-full rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-green-200">
-          <div className="flex items-start gap-3">
-            <CheckCircle
-              size={20}
-              className="mt-0.5 flex-shrink-0 text-green-400"
-            />
-            <div className="flex-1">
-              <p className="font-semibold text-green-100">
-                Payment Successful! ✓
-              </p>
-              <p className="mt-1 text-sm text-green-200">
-                Your wallet has been credited. You can now place bets.
-              </p>
-              <p className="mt-2 text-xs text-green-300 font-mono">
-                Reference: {paymentReference}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Payment Feedback Modal */}
+      <PaymentFeedbackModal
+        isOpen={showPaymentResult && paymentStatus === "success"}
+        status="success"
+        title="Success!"
+        message="Check the results in notifications after finish the match"
+        reference={paymentReference || undefined}
+        onClose={() => setShowPaymentResult(false)}
+      />
 
-      {showPaymentResult && paymentStatus === "failed" && (
-        <div className="col-span-full rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-200">
-          <div className="flex items-start gap-3">
-            <AlertCircle
-              size={20}
-              className="mt-0.5 flex-shrink-0 text-red-400"
-            />
-            <div className="flex-1">
-              <p className="font-semibold text-red-100">Payment Failed</p>
-              <p className="mt-1 text-sm text-red-200">
-                Your payment could not be processed. Please try again.
-              </p>
-              <p className="mt-2 text-xs text-red-300 font-mono">
-                Reference: {paymentReference}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentFeedbackModal
+        isOpen={showPaymentResult && paymentStatus === "failed"}
+        status="failed"
+        title="Payment Failed"
+        message="Your payment could not be processed. Please try again."
+        reference={paymentReference || undefined}
+        onClose={() => setShowPaymentResult(false)}
+      />
 
       <article className="flex h-full min-h-98 flex-col rounded-2xl border border-[#243a53] bg-[#111d2e] p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4 border-b border-[#243a53] pb-3">
