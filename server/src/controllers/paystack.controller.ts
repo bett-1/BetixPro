@@ -73,6 +73,7 @@ async function finalizePaystackDeposit(
   }
 
   if (transaction.status === "COMPLETED") {
+    const completedAt = transaction.processedAt ?? new Date();
     logPaystackContext("finalize:already-completed", {
       reference,
       transactionId: transaction.id,
@@ -85,7 +86,7 @@ async function finalizePaystackDeposit(
       reference,
       transactionId: transaction.id,
       amount: transaction.amount,
-      processedAt: transaction.processedAt,
+      processedAt: completedAt,
     };
   }
 
@@ -151,7 +152,9 @@ async function finalizePaystackDeposit(
     };
   }
 
-  const paidAmountInKes = convertFromSmallestUnit(verificationResult.data.amount);
+  const paidAmountInKes = convertFromSmallestUnit(
+    verificationResult.data.amount,
+  );
   if (paidAmountInKes !== transaction.amount) {
     logPaystackContext("finalize:amount-mismatch", {
       reference,
@@ -224,6 +227,7 @@ async function finalizePaystackDeposit(
   });
 
   if (!updatedWallet) {
+    const completedAt = transaction.processedAt ?? processedAt;
     logPaystackContext("finalize:duplicate-delivery", {
       reference,
       transactionId: transaction.id,
@@ -235,7 +239,7 @@ async function finalizePaystackDeposit(
       reference,
       transactionId: transaction.id,
       amount: transaction.amount,
-      processedAt: transaction.processedAt,
+      processedAt: completedAt,
     };
   }
 
@@ -299,13 +303,14 @@ export async function initializePaystackPayment(
   res: Response,
 ): Promise<void> {
   try {
+    const body = paystackDepositSchema.parse(req.body);
+
     logPaystackContext("initialize:request", {
       email: body.email,
       amountKes: body.amount,
-      callbackUrl: body.callbackUrl ?? process.env.PAYSTACK_CALLBACK_URL?.trim(),
+      callbackUrl:
+        body.callbackUrl ?? process.env.PAYSTACK_CALLBACK_URL?.trim(),
     });
-
-    const body = paystackDepositSchema.parse(req.body);
 
     const authenticatedUser = req.user?.id
       ? await prisma.user.findUnique({
