@@ -6,6 +6,7 @@ import {
 } from "../lib/paystack";
 import {
   initializePaystackPayment,
+  handlePaystackBrowserCallback,
   verifyPaystackPayment,
   checkPaystackPaymentStatus,
   getPaystackTransactions,
@@ -25,6 +26,16 @@ export const paystackRouter = Router();
  * Returns: { reference, authorization_url, access_code }
  */
 paystackRouter.post("/initialize", initializePaystackPayment);
+
+/**
+ * Paystack browser callback
+ * GET /payments/paystack/callback
+ *
+ * Paystack redirects the user here after checkout.
+ * The server verifies the reference, logs the raw query, and redirects
+ * the browser back to the payments page with status information.
+ */
+paystackRouter.get("/callback", handlePaystackBrowserCallback);
 
 /**
  * Verify Paystack payment (MUST CALL AFTER CHECKOUT)
