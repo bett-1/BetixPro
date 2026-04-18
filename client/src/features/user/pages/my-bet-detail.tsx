@@ -2,8 +2,8 @@ import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { BetCardSkeleton } from "@/components/my-bets/BetCardSkeleton";
 import { BetDetailModal } from "@/components/my-bets/BetDetailModal";
-import { useBetDetail } from "@/features/user/hooks/useBetDetail";
-import { useCancelBet } from "@/features/user/hooks/useCancelBet";
+import { useBetDetail } from "@/features/user/components/hooks/useBetDetail";
+import { useCancelBet } from "@/features/user/components/hooks/useCancelBet";
 
 export default function MyBetDetailPage() {
   const navigate = useNavigate();

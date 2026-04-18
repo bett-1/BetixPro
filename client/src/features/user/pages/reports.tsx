@@ -5,7 +5,7 @@ import {
   useUserRecentBets,
   useUserFinancialSummary,
   type ReportPeriod,
-} from "../hooks/useUserReports";
+} from "../components/hooks/useUserReports";
 import { Card } from "@/components/ui/card";
 import {
   Select,

@@ -406,12 +406,18 @@ export async function initializePaystackPayment(
       return;
     }
 
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to initialize Paystack payment";
+    
+    logPaystackContext("initialize:error", {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    
     console.error("Paystack initialize error:", error);
     res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to initialize Paystack payment",
+      error: errorMessage,
+      ...(error instanceof Error && { details: error.message }),
     });
   }
 }

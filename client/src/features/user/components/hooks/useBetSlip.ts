@@ -4,7 +4,7 @@ import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
-import { myBetsNavbarCountQueryKey } from "@/features/user/hooks/useMyBets";
+import { myBetsNavbarCountQueryKey } from "@/features/user/components/hooks/useMyBets";
 import { walletSummaryQueryKey } from "@/features/user/payments/wallet";
 
 export interface BetSelection {
@@ -200,17 +200,14 @@ export function useBetSlip() {
                   stake,
                 },
               )
-            : await api.post<PlaceBetResponse>(
-                "/user/bets/place",
-                {
-                  eventId: selection.eventId,
-                  marketType: selection.marketType,
-                  side: selection.side,
-                  stake,
-                  odds: selection.odds,
-                  confirmOddsChange: false,
-                },
-              );
+            : await api.post<PlaceBetResponse>("/user/bets/place", {
+                eventId: selection.eventId,
+                marketType: selection.marketType,
+                side: selection.side,
+                stake,
+                odds: selection.odds,
+                confirmOddsChange: false,
+              });
 
           latestBalance = data.newBalance;
         } catch (attemptError) {

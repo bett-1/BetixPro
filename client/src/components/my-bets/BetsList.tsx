@@ -1,4 +1,4 @@
-import type { MyBetListItem } from "@/features/user/hooks/useMyBets";
+import type { MyBetListItem } from "@/features/user/components/hooks/useMyBets";
 import { BetCard } from "./BetCard";
 import { BetCardSkeleton } from "./BetCardSkeleton";
 import { EmptyBetsState } from "./EmptyBetsState";

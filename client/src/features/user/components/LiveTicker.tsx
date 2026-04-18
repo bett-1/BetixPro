@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/api/axiosConfig";
-import type { ApiEvent } from "../hooks/useEvents";
+import type { ApiEvent } from "./hooks/useEvents";
 import { Radio } from "lucide-react";
 
 type LiveEventsResponse = {
@@ -56,7 +56,8 @@ export default function LiveTicker() {
     return events.map((event) => {
       const homeOdds = event.markets.h2h?.home ?? 0;
       const awayOdds = event.markets.h2h?.away ?? 0;
-      const homeFavored = homeOdds > 0 && (awayOdds === 0 || homeOdds <= awayOdds);
+      const homeFavored =
+        homeOdds > 0 && (awayOdds === 0 || homeOdds <= awayOdds);
       const odds = homeFavored ? homeOdds : awayOdds;
 
       return {
@@ -103,8 +104,12 @@ export default function LiveTicker() {
             className="flex items-center gap-2 whitespace-nowrap"
           >
             <span className="text-[11px]">{item.icon}</span>
-            <span className="text-[11px] font-medium text-[#c0d1e5]">{item.teams}</span>
-            <span className={`text-[10px] ${item.isUp ? "text-[#22c55e]" : "text-[#ff3b30]"}`}>
+            <span className="text-[11px] font-medium text-[#c0d1e5]">
+              {item.teams}
+            </span>
+            <span
+              className={`text-[10px] ${item.isUp ? "text-[#22c55e]" : "text-[#ff3b30]"}`}
+            >
               {item.arrow}
             </span>
             <span className="text-[11px] font-bold text-[#ffd500]">

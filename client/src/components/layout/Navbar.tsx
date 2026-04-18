@@ -15,7 +15,7 @@ import {
   useAppNotifications,
   useMarkAllNotificationsRead,
 } from "@/features/notifications/notifications";
-import { useMyBetsCount } from "@/features/user/hooks/useMyBets";
+import { useMyBetsCount } from "@/features/user/components/hooks/useMyBets";
 import { formatMoney } from "@/features/user/payments/data";
 import { useWalletSummary } from "@/features/user/payments/wallet";
 

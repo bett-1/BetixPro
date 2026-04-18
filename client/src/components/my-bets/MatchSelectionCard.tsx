@@ -1,4 +1,4 @@
-import type { BetSelectionDetail } from "@/features/user/hooks/useBetDetail";
+import type { BetSelectionDetail } from "@/features/user/components/hooks/useBetDetail";
 
 const statusDotClass: Record<BetSelectionDetail["status"], string> = {
   won: "bg-[#22c55e]",

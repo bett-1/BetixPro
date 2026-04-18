@@ -9,7 +9,7 @@ import {
   type MyBetFilter,
   type MyBetTab,
   useMyBets,
-} from "@/features/user/hooks/useMyBets";
+} from "@/features/user/components/hooks/useMyBets";
 
 const hideLostStorageKey = "my-bets-hide-lost";
 

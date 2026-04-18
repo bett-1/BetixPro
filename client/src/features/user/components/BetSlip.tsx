@@ -1,7 +1,7 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Copy, Loader2, MessageCircle, Share2, X } from "lucide-react";
-import type { UseBetSlipReturn } from "../hooks/useBetSlip";
-import { betSlipToggleEventName } from "../hooks/useBetSlip";
+import type { UseBetSlipReturn } from "./hooks/useBetSlip";
+import { betSlipToggleEventName } from "./hooks/useBetSlip";
 
 function formatCurrency(value?: number) {
   const safeValue = Number(value) || 0;

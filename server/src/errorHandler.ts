@@ -42,13 +42,22 @@ export function errorHandler(
     });
   }
 
-  // Preserve M-Pesa authentication errors for debugging
+  // Preserve payment provider errors for debugging (Paystack, M-Pesa, etc.)
   const errorMessage = err instanceof Error ? err.message : "Internal server error";
-  const isMpesaError = errorMessage.includes("M-Pesa") || errorMessage.includes("M-pesa");
+  const isPaymentError =
+    errorMessage.includes("Paystack") ||
+    errorMessage.includes("paystack") ||
+    errorMessage.includes("M-Pesa") ||
+    errorMessage.includes("M-pesa") ||
+    errorMessage.includes("payment");
 
   const message =
-    process.env.NODE_ENV === "production" && !isMpesaError
+    process.env.NODE_ENV === "production" && !isPaymentError
       ? "Internal server error"
       : errorMessage;
-  res.status(500).json({ message });
+  
+  res.status(500).json({ 
+    message,
+    ...(isPaymentError && { details: errorMessage })
+  });
 }
