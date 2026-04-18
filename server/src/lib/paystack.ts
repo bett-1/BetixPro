@@ -295,3 +295,206 @@ export function formatPaystackError(error: unknown): {
     code: "UNKNOWN_ERROR",
   };
 }
+
+// ============================================================================
+// TRANSFER/PAYOUT TYPES
+// ============================================================================
+
+export interface PaystackTransferRecipient {
+  type: "nuban" | "mobile_money"; // Mobile money for phone numbers
+  account_number?: string; // For bank transfers
+  bank_code?: string; // For bank transfers
+  phone_number?: string; // For mobile money
+  currency?: string; // e.g., "KES" for Kenya
+}
+
+export interface PaystackTransferRequest {
+  source: "balance"; // Always use wallet balance
+  recipient: number; // Recipient ID (created via recipient endpoint)
+  amount: number; // Amount in smallest unit (KES -> kobo)
+  reference?: string;
+  reason?: string;
+}
+
+export interface PaystackTransferResponse {
+  status: boolean;
+  message: string;
+  data?: {
+    reference: string;
+    status: string;
+    amount: number;
+    recipient: number;
+    transfer_code: string;
+    id: number;
+    createdAt: string;
+  };
+}
+
+export interface PaystackRecipientResponse {
+  status: boolean;
+  message: string;
+  data?: {
+    recipient_code: string;
+    active: boolean;
+    id: number;
+    name: string;
+    phone_number: string;
+    type: string;
+  };
+}
+
+// ============================================================================
+// TRANSFER/PAYOUT OPERATIONS
+// ============================================================================
+
+/**
+ * Create a transfer recipient for mobile money payouts
+ * @param phoneNumber Mobile money phone number
+ * @param name Recipient name
+ * @returns Recipient code for use in transfers
+ */
+export async function createPaystackTransferRecipient(
+  phoneNumber: string,
+  name?: string,
+): Promise<PaystackRecipientResponse> {
+  if (!PAYSTACK_SECRET_KEY) {
+    throw new Error("PAYSTACK_SECRET_KEY not configured");
+  }
+
+  const payload = {
+    type: "mobile_money",
+    phone_number: phoneNumber,
+    name: name || `Mobile Money - ${phoneNumber}`,
+  };
+
+  try {
+    const response = await fetch(
+      "https://api.paystack.co/transferrecipient",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+
+    const data = (await response.json()) as PaystackRecipientResponse;
+
+    if (!data.status) {
+      throw new Error(
+        `Failed to create transfer recipient: ${data.message || "Unknown error"}`,
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Paystack create recipient error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Initiate a withdrawal transfer via Paystack
+ * @param phoneNumber Mobile money phone number to withdraw to
+ * @param amount Amount in KES (will be converted to smallest unit)
+ * @param reference Transaction reference
+ * @returns Transfer response with status
+ */
+export async function initiatePaystackWithdrawal(
+  phoneNumber: string,
+  amount: number,
+  reference: string,
+): Promise<PaystackTransferResponse> {
+  if (!PAYSTACK_SECRET_KEY) {
+    throw new Error("PAYSTACK_SECRET_KEY not configured");
+  }
+
+  try {
+    // First, create a transfer recipient for this phone number
+    const recipientResponse = await createPaystackTransferRecipient(
+      phoneNumber,
+      `Withdrawal - ${phoneNumber}`,
+    );
+
+    if (!recipientResponse.data?.id) {
+      throw new Error("Failed to create transfer recipient: No ID returned");
+    }
+
+    // Convert amount to smallest unit (kobo)
+    const amountInSmallestUnit = convertToSmallestUnit(amount);
+
+    // Then initiate the transfer
+    const transferPayload = {
+      source: "balance",
+      recipient: recipientResponse.data.id,
+      amount: amountInSmallestUnit,
+      reference,
+      reason: "BetWise Withdrawal",
+    };
+
+    const response = await fetch(
+      "https://api.paystack.co/transfer",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transferPayload),
+      },
+    );
+
+    const data = (await response.json()) as PaystackTransferResponse;
+
+    if (!data.status) {
+      throw new Error(
+        `Paystack transfer failed: ${data.message || "Unknown error"}`,
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Paystack withdrawal error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get status of a withdrawal transfer
+ * @param transferCode Transfer code from initiated transfer
+ * @returns Transfer status
+ */
+export async function getPaystackTransferStatus(
+  transferCode: string,
+): Promise<PaystackTransferResponse> {
+  if (!PAYSTACK_SECRET_KEY) {
+    throw new Error("PAYSTACK_SECRET_KEY not configured");
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.paystack.co/transfer/${encodeURIComponent(transferCode)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        },
+      },
+    );
+
+    const data = (await response.json()) as PaystackTransferResponse;
+
+    if (!data.status) {
+      throw new Error(
+        `Failed to get transfer status: ${data.message || "Unknown error"}`,
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Paystack get transfer status error:", error);
+    throw error;
+  }
+}

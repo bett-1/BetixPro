@@ -12,8 +12,6 @@ import {
   createWithdrawalRequest,
   getWalletSummary,
   handleMpesaCallback,
-  handleMpesaWithdrawalResult,
-  handleMpesaWithdrawalTimeout,
   initiateStk,
   listAdminWithdrawals,
   listWithdrawals,
@@ -28,16 +26,6 @@ paymentRouter.post(
   "/payments/mpesa/callback",
   verifyMpesaCallback,
   handleMpesaCallback,
-);
-paymentRouter.post(
-  "/payments/mpesa/withdrawals/result",
-  verifyMpesaCallback,
-  handleMpesaWithdrawalResult,
-);
-paymentRouter.post(
-  "/payments/mpesa/withdrawals/timeout",
-  verifyMpesaCallback,
-  handleMpesaWithdrawalTimeout,
 );
 
 // Wallet endpoints

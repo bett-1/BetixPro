@@ -117,7 +117,7 @@ export default function PaymentsWithdrawalPage() {
 
     if (!canWithdraw) {
       if (!isPhoneValid(normalizedPhone)) {
-        toast.error("Your account phone is invalid for M-PESA withdrawals.");
+        toast.error("Your account phone is invalid for mobile money withdrawals.");
       } else if (numAmount < MIN_WITHDRAWAL) {
         toast.error(`Minimum withdrawal is KES ${MIN_WITHDRAWAL}.`);
       } else if (numAmount > MAX_WITHDRAWAL) {
@@ -155,7 +155,7 @@ export default function PaymentsWithdrawalPage() {
               <h2 className="text-lg font-bold text-white">Withdraw</h2>
             </div>
             <p className="mt-0.5 text-xs text-[#8a9bb0]">
-              Quick & secure M-Pesa transfer
+              Quick & secure mobile money transfer
             </p>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function PaymentsWithdrawalPage() {
                 htmlFor="withdraw-phone"
                 className="text-xs font-semibold text-admin-text-primary"
               >
-                M-Pesa Phone Number
+                Mobile Money Phone Number
               </label>
             </div>
             <input
@@ -224,7 +224,7 @@ export default function PaymentsWithdrawalPage() {
 
             {phone && !isPhoneValid(normalizePhone(phone)) && (
               <p className="mt-2 text-xs text-red-400">
-                Invalid phone. Use format: 2547XXXXXXXX.
+                Invalid phone. Use format: 2547XXXXXXXX for mobile money.
               </p>
             )}
           </div>

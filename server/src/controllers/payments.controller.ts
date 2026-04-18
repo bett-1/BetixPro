@@ -27,6 +27,11 @@ import {
   type MpesaB2CResponse,
   type MpesaCallbackItem,
 } from "../lib/mpesa";
+import {
+  initiatePaystackWithdrawal,
+  getPaystackTransferStatus,
+  convertToSmallestUnit,
+} from "../lib/paystack";
 import { defaultAdminSettings } from "../lib/adminSettingsConfig";
 
 const WITHDRAWAL_DEFAULTS = {
@@ -483,15 +488,6 @@ async function initiateWithdrawalDisbursement(args: {
     };
   }
 
-  const config = getMpesaB2CConfig();
-  if (!config.isConfigured) {
-    return {
-      ok: false as const,
-      code: 500,
-      message: getMpesaWithdrawalConfigErrorMessage(config.missingVars),
-    };
-  }
-
   const transaction = await prisma.$transaction(async (tx) => {
     const latestTransaction = await tx.walletTransaction.findUnique({
       where: { id: args.transactionId },
@@ -536,49 +532,24 @@ async function initiateWithdrawalDisbursement(args: {
   }
 
   try {
-    const tokenData = await getMpesaAccessToken(config);
-    const payoutPayload = {
-      OriginatorConversationID: transaction.id,
-      InitiatorName: config.initiatorName,
-      SecurityCredential: config.securityCredential,
-      CommandID: config.commandId,
-      Amount: transaction.amount,
-      PartyA: config.shortcode,
-      PartyB: transaction.phone,
-      Remarks: transaction.description ?? "BetWise withdrawal payout",
-      QueueTimeOutURL: config.timeoutUrl,
-      ResultURL: config.resultUrl,
-      Occasion: transaction.reference,
-    };
-
-    const payoutResponse = await fetch(
-      `${config.baseUrl}/mpesa/b2c/v3/paymentrequest`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payoutPayload),
-      },
+    const transferReference = transaction.reference || `WD-${randomUUID()}`;
+    
+    const payoutResponse = await initiatePaystackWithdrawal(
+      transaction.phone ?? "",
+      transaction.amount,
+      transferReference,
     );
 
-    const payoutData = (await payoutResponse.json()) as MpesaB2CResponse;
-
-    if (!payoutResponse.ok || payoutData.ResponseCode !== "0") {
+    if (!payoutResponse.data?.transfer_code) {
       const failureMessage =
-        payoutData.errorMessage ??
-        payoutData.ResponseDescription ??
-        "M-Pesa rejected the withdrawal payout request.";
+        payoutResponse.message ?? "Paystack transfer request rejected.";
 
       await settleFailedWithdrawal({
         transactionId: transaction.id,
         failureReason: failureMessage,
         failureStage: "B2C_REQUEST",
-        providerResponseCode: payoutData.ResponseCode ?? null,
-        providerResponseDescription:
-          payoutData.ResponseDescription ?? failureMessage,
-        providerCallback: payoutData as never,
+        providerResponseDescription: failureMessage,
+        providerCallback: payoutResponse as never,
       });
 
       return {
@@ -592,12 +563,20 @@ async function initiateWithdrawalDisbursement(args: {
     const updatedTransaction = await prisma.walletTransaction.update({
       where: { id: transaction.id },
       data: {
-        checkoutRequestId:
-          payoutData.ConversationID ?? transaction.checkoutRequestId,
-        merchantRequestId:
-          payoutData.OriginatorConversationID ?? transaction.merchantRequestId,
-        providerResponseCode: payoutData.ResponseCode ?? undefined,
-        providerResponseDescription:
+        checkoutRequestId: payoutResponse.data.transfer_code,
+        providerResponseDescription: "Paystack transfer initiated successfully.",
+        providerCallback: mergeProviderMeta(transaction.providerCallback, {
+          requestedPayoutAt: new Date().toISOString(),
+          disbursementState: "PROCESSING",
+          paystack: {
+            transferCode: payoutResponse.data.transfer_code,
+            reference: payoutResponse.data.reference,
+            status: payoutResponse.data.status,
+            amount: payoutResponse.data.amount,
+          },
+        }),
+      },
+    });
           payoutData.ResponseDescription ??
           "Withdrawal payout accepted by M-Pesa.",
         providerCallback: mergeProviderMeta(transaction.providerCallback, {
@@ -688,14 +667,7 @@ export async function createWithdrawalRequest(
 
     if (!settings.mpesaEnabled) {
       return res.status(403).json({
-        message: "M-Pesa withdrawals are currently disabled.",
-      });
-    }
-
-    const payoutConfig = getMpesaB2CConfig();
-    if (!payoutConfig.isConfigured) {
-      return res.status(500).json({
-        message: getMpesaWithdrawalConfigErrorMessage(payoutConfig.missingVars),
+        message: "Mobile money withdrawals are currently disabled.",
       });
     }
 
@@ -801,11 +773,11 @@ export async function createWithdrawalRequest(
           status: "PENDING",
           amount: requestedAmount,
           currency: "KES",
-          channel: "M-Pesa",
+          channel: "Paystack",
           reference: `WD-${randomUUID()}`,
           phone: normalizedPhone,
           accountReference: "BET-WITHDRAWAL",
-          description: `Withdrawal to M-Pesa (${normalizedPhone})`,
+          description: `Withdrawal via Paystack to mobile money (${normalizedPhone})`,
           providerCallback: {
             fee: feeAmount,
             totalDebit,
