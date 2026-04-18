@@ -59,8 +59,12 @@ export default function PaystackDepositPage() {
   }, []);
 
   async function copyText(text: string) {
-    await navigator.clipboard.writeText(text);
-    toast.success("Copied");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied");
+    } catch {
+      toast.error("Copy failed. Please copy manually.");
+    }
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -155,7 +159,7 @@ export default function PaystackDepositPage() {
         isOpen={showPaymentResult && paymentStatus === "success"}
         status="success"
         title="Success!"
-        message="Check the results in notifications after finish the match"
+        message="Your wallet has been credited successfully. Check your updated balance and recent transactions."
         reference={paymentReference || undefined}
         onClose={() => setShowPaymentResult(false)}
       />

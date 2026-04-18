@@ -533,9 +533,28 @@ async function initiateWithdrawalDisbursement(args: {
 
   try {
     const transferReference = transaction.reference || `WD-${randomUUID()}`;
-    
+    const payoutPhone = transaction.phone?.trim();
+
+    if (!payoutPhone) {
+      const failureMessage =
+        "Missing withdrawal destination phone number for Paystack payout.";
+
+      await settleFailedWithdrawal({
+        transactionId: transaction.id,
+        failureReason: failureMessage,
+        failureStage: "B2C_REQUEST",
+        providerResponseDescription: failureMessage,
+      });
+
+      return {
+        ok: false as const,
+        code: 500,
+        message: failureMessage,
+      };
+    }
+
     const payoutResponse = await initiatePaystackWithdrawal(
-      transaction.phone ?? "",
+      payoutPhone,
       transaction.amount,
       transferReference,
     );
@@ -753,7 +772,7 @@ export async function createWithdrawalRequest(
           status: "PENDING",
           amount: requestedAmount,
           currency: "KES",
-          channel: "Paystack",
+          channel: "paystack",
           reference: `WD-${randomUUID()}`,
           phone: normalizedPhone,
           accountReference: "BET-WITHDRAWAL",

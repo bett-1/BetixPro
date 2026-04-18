@@ -172,7 +172,7 @@ export const defaultAdminSettings: AdminSettingsConfig = {
       phone: true,
       email: true,
     },
-    withdrawalRequiresKyc: false,
+    withdrawalRequiresKyc: true,
     minimumAge: 18,
     allowedCountries: ["KE"],
   },

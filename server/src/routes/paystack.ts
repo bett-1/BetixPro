@@ -25,7 +25,7 @@ export const paystackRouter = Router();
  * Body: { email, amount }
  * Returns: { reference, authorization_url, access_code }
  */
-paystackRouter.post("/initialize", initializePaystackPayment);
+paystackRouter.post("/initialize", authenticate, initializePaystackPayment);
 
 /**
  * Paystack browser callback
@@ -82,8 +82,13 @@ paystackRouter.post("/webhook", (req, res) => {
       return;
     }
 
-    // Verify signature with raw body
-    const rawBody = req.rawBody || JSON.stringify(req.body);
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+      console.error("Paystack webhook: missing raw body for signature verification");
+      res.status(400).json({ error: "Missing raw body" });
+      return;
+    }
+
     const isValid = verifyPaystackWebhookSignature(rawBody, signature);
 
     if (!isValid) {
@@ -100,16 +105,14 @@ paystackRouter.post("/webhook", (req, res) => {
       })
       .catch((error) => {
         console.error("Paystack webhook handler error:", error);
-        // Return 200 to prevent Paystack retry, but log error
-        res.status(200).json({
-          received: true,
+        res.status(500).json({
+          received: false,
           error: error instanceof Error ? error.message : "Unknown error",
         });
       });
   } catch (error) {
     console.error("Paystack webhook error:", error);
-    // Return 200 to prevent Paystack retry
-    res.status(200).json({ error: "Webhook processing error" });
+    res.status(500).json({ error: "Webhook processing error" });
   }
 });
 

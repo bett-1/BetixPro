@@ -54,9 +54,9 @@ export async function handlePaystackWebhook(
       console.warn(
         `Paystack webhook: transaction not found for reference ${reference}`,
       );
-      // This can happen if transaction record wasn't created yet
-      // Log but don't fail - Paystack will retry
-      return;
+      throw new Error(
+        `Transaction not found for Paystack reference ${reference}`,
+      );
     }
 
     // IDEMPOTENCY CHECK: If already processed, skip

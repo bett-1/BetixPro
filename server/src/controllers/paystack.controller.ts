@@ -19,16 +19,11 @@ import {
 // VALIDATION
 // ============================================================================
 
-const paystackDepositSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  amount: z
-    .number()
-    .int()
-    .positive("Amount must be greater than 0")
+const paystackDepositSchema = paystackInitializeSchema.extend({
+  amount: paystackInitializeSchema.shape.amount
     .min(100, "Minimum amount is 100 KES")
     .max(500000, "Maximum amount is 500,000 KES"),
   callbackUrl: z.string().url().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 type FinalizePaystackDepositResult =
