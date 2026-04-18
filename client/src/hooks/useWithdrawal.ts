@@ -6,7 +6,7 @@ import { walletSummaryQueryKey } from "@/features/user/payments/wallet";
 
 const MIN_WITHDRAWAL = 50;
 const MAX_WITHDRAWAL = 500_000;
-const TAX_PERCENT = 5;
+const TAX_PERCENT = 15;
 const VALIDATION_DEBOUNCE_MS = 250;
 
 type WithdrawalPayload = {

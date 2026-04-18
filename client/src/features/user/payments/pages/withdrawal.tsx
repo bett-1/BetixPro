@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 const quickAmounts = [500, 1000, 2500, 5000];
 
 const MAX_WITHDRAWAL = 500000;
-const WITHDRAWAL_FEE_PERCENTAGE = 5;
+const WITHDRAWAL_FEE_PERCENTAGE = 15;
 const MIN_WITHDRAWAL = 50;
 
 type WithdrawalResponse = {
