@@ -361,10 +361,15 @@ export async function createPaystackTransferRecipient(
     throw new Error("PAYSTACK_SECRET_KEY not configured");
   }
 
+  // Normalize phone number to remove + prefix if present (Paystack expects different formats for different regions)
+  const normalizedPhone = phoneNumber.replace(/^\+/, "");
+
   const payload = {
     type: "mobile_money",
-    phone_number: phoneNumber,
+    phone_number: normalizedPhone,
+    account_number: normalizedPhone, // Required by Paystack for mobile money transfers
     name: name || `Mobile Money - ${phoneNumber}`,
+    business_name: name || `Mobile Money - ${phoneNumber}`, // Additional required field for some regions
   };
 
   try {
