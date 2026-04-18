@@ -568,25 +568,6 @@ async function initiateWithdrawalDisbursement(args: {
         providerCallback: mergeProviderMeta(transaction.providerCallback, {
           requestedPayoutAt: new Date().toISOString(),
           disbursementState: "PROCESSING",
-          paystack: {
-            transferCode: payoutResponse.data.transfer_code,
-            reference: payoutResponse.data.reference,
-            status: payoutResponse.data.status,
-            amount: payoutResponse.data.amount,
-          },
-        }),
-      },
-    });
-          payoutData.ResponseDescription ??
-          "Withdrawal payout accepted by M-Pesa.",
-        providerCallback: mergeProviderMeta(transaction.providerCallback, {
-          requestedPayoutAt: new Date().toISOString(),
-          disbursementState: "PROCESSING",
-          mpesa: {
-            ...getNestedObject(currentMeta.mpesa),
-            request: payoutPayload,
-            response: payoutData,
-          },
         }),
       },
     });
@@ -596,9 +577,8 @@ async function initiateWithdrawalDisbursement(args: {
       userId: updatedTransaction.userId,
       transactionId: updatedTransaction.id,
       checkoutRequestId: updatedTransaction.checkoutRequestId,
-      merchantRequestId: updatedTransaction.merchantRequestId,
       status: "PROCESSING",
-      message: "Withdrawal approved and payout request sent to M-Pesa.",
+      message: "Withdrawal approved and payout request sent via Paystack.",
       balance: wallet.balance,
       amount: updatedTransaction.amount,
     });
@@ -613,7 +593,7 @@ async function initiateWithdrawalDisbursement(args: {
     const failureMessage =
       error instanceof Error
         ? error.message
-        : "Failed to initiate the M-Pesa withdrawal payout.";
+        : "Failed to initiate the Paystack withdrawal payout.";
 
     await settleFailedWithdrawal({
       transactionId: transaction.id,

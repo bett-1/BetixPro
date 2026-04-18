@@ -81,7 +81,9 @@ export function useWithdrawal(options?: { sourcePhone?: string | null }) {
 
       const normalizedPhone = normalizePhone(phoneInput);
       if (!isPhoneValid(normalizedPhone)) {
-        setValidationError("Your account phone is invalid for mobile money payouts.");
+        setValidationError(
+          "Your account phone is invalid for mobile money payouts.",
+        );
         return;
       }
 

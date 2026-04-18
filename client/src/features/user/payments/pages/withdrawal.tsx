@@ -117,7 +117,9 @@ export default function PaymentsWithdrawalPage() {
 
     if (!canWithdraw) {
       if (!isPhoneValid(normalizedPhone)) {
-        toast.error("Your account phone is invalid for mobile money withdrawals.");
+        toast.error(
+          "Your account phone is invalid for mobile money withdrawals.",
+        );
       } else if (numAmount < MIN_WITHDRAWAL) {
         toast.error(`Minimum withdrawal is KES ${MIN_WITHDRAWAL}.`);
       } else if (numAmount > MAX_WITHDRAWAL) {
@@ -281,9 +283,9 @@ export default function PaymentsWithdrawalPage() {
                         ? "border-green-500/30 bg-green-500/10 text-green-400"
                         : entry.status === "processing"
                           ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                        : entry.status === "pending"
-                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
-                          : "border-red-500/30 bg-red-500/10 text-red-400"
+                          : entry.status === "pending"
+                            ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
+                            : "border-red-500/30 bg-red-500/10 text-red-400"
                     }`}
                   >
                     {entry.status}

@@ -368,17 +368,14 @@ export async function createPaystackTransferRecipient(
   };
 
   try {
-    const response = await fetch(
-      "https://api.paystack.co/transferrecipient",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+    const response = await fetch("https://api.paystack.co/transferrecipient", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(payload),
+    });
 
     const data = (await response.json()) as PaystackRecipientResponse;
 
@@ -434,17 +431,14 @@ export async function initiatePaystackWithdrawal(
       reason: "BetWise Withdrawal",
     };
 
-    const response = await fetch(
-      "https://api.paystack.co/transfer",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(transferPayload),
+    const response = await fetch("https://api.paystack.co/transfer", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(transferPayload),
+    });
 
     const data = (await response.json()) as PaystackTransferResponse;
 
