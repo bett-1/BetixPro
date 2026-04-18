@@ -29,7 +29,7 @@ export function PaymentFeedbackModal({
     : "bg-red-600 hover:bg-red-700";
 
   return (
-    <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
         className={`relative w-full max-w-sm rounded-3xl bg-gradient-to-b ${bgGradient} border border-[#243a53] p-8 text-center shadow-2xl`}
       >

@@ -42,7 +42,6 @@ export function errorHandler(
     });
   }
 
-  // Preserve payment provider errors for debugging (Paystack, M-Pesa, etc.)
   const errorMessage =
     err instanceof Error ? err.message : "Internal server error";
   const isPaymentError =
@@ -52,13 +51,11 @@ export function errorHandler(
     errorMessage.includes("M-pesa") ||
     errorMessage.includes("payment");
 
-  const message =
-    process.env.NODE_ENV === "production" && !isPaymentError
-      ? "Internal server error"
-      : errorMessage;
+  const isProduction = process.env.NODE_ENV === "production";
+  const message = isProduction ? "Internal server error" : errorMessage;
 
-  res.status(500).json({
+  return res.status(500).json({
     message,
-    ...(isPaymentError && { details: errorMessage }),
+    ...(!isProduction && isPaymentError && { details: errorMessage }),
   });
 }

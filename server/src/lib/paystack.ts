@@ -222,13 +222,27 @@ export function verifyPaystackWebhookSignature(
     return false;
   }
 
-  const payloadStr = typeof payload === "string" ? payload : payload.toString();
+  const payloadBuffer =
+    typeof payload === "string" ? Buffer.from(payload, "utf8") : payload;
   const hash = crypto
     .createHmac("sha512", PAYSTACK_WEBHOOK_SECRET)
-    .update(payloadStr)
+    .update(payloadBuffer)
     .digest("hex");
+  const normalizedSignature = signature.trim().toLowerCase();
 
-  return hash === signature;
+  // Ensure signature is valid hex before Buffer conversion/comparison.
+  if (!/^[a-f0-9]+$/.test(normalizedSignature) || normalizedSignature.length % 2 !== 0) {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(hash, "hex");
+  const receivedBuffer = Buffer.from(normalizedSignature, "hex");
+
+  if (expectedBuffer.length !== receivedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
 /**
@@ -255,7 +269,7 @@ export function parseWebhookEvent(
  * Generate a unique transaction reference
  */
 export function generateReference(): string {
-  return `paystack_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`.toUpperCase();
+  return `PAYSTACK_${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`;
 }
 
 /**
@@ -310,7 +324,7 @@ export interface PaystackTransferRecipient {
 
 export interface PaystackTransferRequest {
   source: "balance"; // Always use wallet balance
-  recipient: number; // Recipient ID (created via recipient endpoint)
+  recipient: string; // Recipient code (created via recipient endpoint)
   amount: number; // Amount in smallest unit (KES -> kobo)
   reference?: string;
   reason?: string;
@@ -323,7 +337,7 @@ export interface PaystackTransferResponse {
     reference: string;
     status: string;
     amount: number;
-    recipient: number;
+    recipient: string;
     transfer_code: string;
     id: number;
     createdAt: string;
@@ -420,8 +434,10 @@ export async function initiatePaystackWithdrawal(
       `Withdrawal - ${phoneNumber}`,
     );
 
-    if (!recipientResponse.data?.id) {
-      throw new Error("Failed to create transfer recipient: No ID returned");
+    if (!recipientResponse.data?.recipient_code) {
+      throw new Error(
+        "Failed to create transfer recipient: No recipient code returned",
+      );
     }
 
     // Convert amount to smallest unit (kobo)
@@ -430,7 +446,7 @@ export async function initiatePaystackWithdrawal(
     // Then initiate the transfer
     const transferPayload = {
       source: "balance",
-      recipient: recipientResponse.data.id,
+      recipient: recipientResponse.data.recipient_code,
       amount: amountInSmallestUnit,
       reference,
       reason: "BetWise Withdrawal",

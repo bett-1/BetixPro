@@ -2232,69 +2232,76 @@ export async function getAdminPayments(req: Request, res: Response) {
     prisma.walletTransaction.count({ where: whereFilters }),
   ]);
 
-  const formattedTransactions = transactions.map((transaction) => ({
-    id: transaction.id,
-    userId: transaction.userId,
-    userEmail: transaction.user.email,
-    userPhone: transaction.user.phone,
-    userName: transaction.user.fullName,
-    type: transaction.type.toLowerCase(),
-    amount: transaction.amount,
-    status: toAdminStatus(transaction.status),
-    reference:
-      transaction.providerReceiptNumber ??
-      transaction.checkoutRequestId ??
-      transaction.reference,
-    channel: transaction.channel,
-    mpesaCode: transaction.providerReceiptNumber,
-    phone: transaction.phone,
-    createdAt: transaction.createdAt.toISOString(),
-    processedAt: transaction.processedAt?.toISOString() ?? null,
-    fee:
-      transaction.type === "WITHDRAWAL"
-        ? ((transaction.providerCallback as { fee?: number } | null)?.fee ?? 0)
-        : 0,
-    totalDebit:
-      transaction.type === "WITHDRAWAL"
-        ? ((transaction.providerCallback as { totalDebit?: number } | null)
-            ?.totalDebit ?? transaction.amount)
-        : transaction.amount,
-    // Include full provider callback for admin visibility into payment details
-    providerDetails:
-      transaction.channel === "paystack"
-        ? {
-            provider: "paystack",
-            mode: "card/bank_transfer",
-            paystackReference: (
-              transaction.providerCallback as {
-                paystackReference?: string;
-              } | null
-            )?.paystackReference,
-            verificationData: (
-              transaction.providerCallback as {
-                verificationData?: unknown;
-              } | null
-            )?.verificationData,
-            verifiedAt: (
-              transaction.providerCallback as { verifiedAt?: string } | null
-            )?.verifiedAt,
-            failureReason: (
-              transaction.providerCallback as { failureReason?: string } | null
-            )?.failureReason,
-          }
-        : transaction.channel === "mpesa"
+  const formattedTransactions = transactions.map((transaction) => {
+    const normalizedChannel = transaction.channel.toLowerCase();
+
+    return {
+      id: transaction.id,
+      userId: transaction.userId,
+      userEmail: transaction.user.email,
+      userPhone: transaction.user.phone,
+      userName: transaction.user.fullName,
+      type: transaction.type.toLowerCase(),
+      amount: transaction.amount,
+      status: toAdminStatus(transaction.status),
+      reference:
+        transaction.providerReceiptNumber ??
+        transaction.checkoutRequestId ??
+        transaction.reference,
+      channel: transaction.channel,
+      mpesaCode: transaction.providerReceiptNumber,
+      phone: transaction.phone,
+      createdAt: transaction.createdAt.toISOString(),
+      processedAt: transaction.processedAt?.toISOString() ?? null,
+      fee:
+        transaction.type === "WITHDRAWAL"
+          ? ((transaction.providerCallback as { fee?: number } | null)?.fee ??
+            0)
+          : 0,
+      totalDebit:
+        transaction.type === "WITHDRAWAL"
+          ? ((transaction.providerCallback as { totalDebit?: number } | null)
+              ?.totalDebit ?? transaction.amount)
+          : transaction.amount,
+      // Include full provider callback for admin visibility into payment details
+      providerDetails:
+        normalizedChannel === "paystack"
           ? {
-              provider: "mpesa",
-              mode: "mobile_money",
-              mpesaCode: transaction.providerReceiptNumber,
+              provider: "paystack",
+              mode: "card/bank_transfer",
+              paystackReference: (
+                transaction.providerCallback as {
+                  paystackReference?: string;
+                } | null
+              )?.paystackReference,
               verificationData: (
                 transaction.providerCallback as {
                   verificationData?: unknown;
                 } | null
               )?.verificationData,
+              verifiedAt: (
+                transaction.providerCallback as { verifiedAt?: string } | null
+              )?.verifiedAt,
+              failureReason: (
+                transaction.providerCallback as {
+                  failureReason?: string;
+                } | null
+              )?.failureReason,
             }
-          : undefined,
-  }));
+          : normalizedChannel === "mpesa"
+            ? {
+                provider: "mpesa",
+                mode: "mobile_money",
+                mpesaCode: transaction.providerReceiptNumber,
+                verificationData: (
+                  transaction.providerCallback as {
+                    verificationData?: unknown;
+                  } | null
+                )?.verificationData,
+              }
+            : undefined,
+    };
+  });
 
   return res.status(200).json({
     transactions: formattedTransactions,

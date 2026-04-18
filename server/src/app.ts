@@ -50,8 +50,9 @@ app.use(
   express.json({
     limit: "100kb",
     verify: (req, _res, buffer) => {
-      (req as express.Request & { rawBody?: string }).rawBody =
-        buffer.toString("utf8");
+      (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(
+        buffer,
+      );
     },
   }),
 );
