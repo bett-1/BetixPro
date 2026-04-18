@@ -230,12 +230,6 @@ export default function PaystackDepositPage() {
             Proceed to Payment
           </Button>
 
-          <div className="rounded-xl border border-[#243a53] bg-[#0f1a2a] px-4 py-3 text-xs text-[#8a9bb0]">
-            Funds are only marked paid after server verification.
-            <span className="ml-2 font-semibold text-white">
-              {formatMoney(amountValue || 0)}
-            </span>
-          </div>
         </form>
       </article>
 

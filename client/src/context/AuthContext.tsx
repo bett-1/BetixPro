@@ -139,36 +139,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
+    // First, try to get user info to verify session is still valid
+    try {
+      const me = await api.get<MeResponse>("/auth/me");
+      // If we can get user, session is still valid
+      setUser(me.data.user);
+      return accessTokenState;
+    } catch {
+      // User endpoint failed, try refreshing the token
+    }
+
     try {
       const { data } = await api.post<AuthResponse>("/auth/refresh");
       updateSession(data);
-
-      // Verify the session is valid
-      try {
-        const me = await api.get<MeResponse>("/auth/me");
-        if (me.data.user.id !== data.user.id) {
-          clearAuthState(setUser, setAccessTokenState);
-          return null;
-        }
-        setUser(me.data.user);
-      } catch {
-        // User retrieval failed, but token refresh succeeded
-        // Keep the session valid
-      }
-
       return data.accessToken;
     } catch {
-      // Refresh token might be invalid or expired
-      // Try to verify current session with GET /auth/me
-      try {
-        const me = await api.get<MeResponse>("/auth/me");
-        setUser(me.data.user);
+      // Refresh failed, but don't clear auth state yet
+      // Return current access token if available
+      if (accessTokenState) {
         return accessTokenState;
-      } catch {
-        // Session is genuinely invalid
-        clearAuthState(setUser, setAccessTokenState);
-        return null;
       }
+      // Only clear auth state if we have no token at all
+      clearAuthState(setUser, setAccessTokenState);
+      return null;
     }
   }, [accessTokenState, updateSession]);
 
