@@ -49,6 +49,10 @@ export function requireTrustedOrigin(
   const refererHeader =
     typeof req.headers.referer === "string" ? req.headers.referer : undefined;
 
+  if (!originHeader && !refererHeader) {
+    return next();
+  }
+
   const requestOrigin = toOrigin(originHeader) ?? toOrigin(refererHeader);
 
   if (!requestOrigin || !allowedOrigins.includes(requestOrigin)) {

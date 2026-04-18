@@ -9,8 +9,42 @@ type RetryableRequestConfig = {
   url?: string;
 };
 
+function resolveApiBaseUrl() {
+  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (!rawBaseUrl) {
+    return "/api";
+  }
+
+  if (typeof window === "undefined") {
+    return rawBaseUrl;
+  }
+
+  const appHost = window.location.hostname;
+  const isLocalAppHost = appHost === "localhost" || appHost === "127.0.0.1";
+  if (!isLocalAppHost) {
+    return rawBaseUrl;
+  }
+
+  try {
+    const baseUrl = new URL(rawBaseUrl, window.location.origin);
+    const isLocalApiHost =
+      baseUrl.hostname === "localhost" || baseUrl.hostname === "127.0.0.1";
+    const isCrossOrigin = baseUrl.origin !== window.location.origin;
+
+    // In local development, cross-origin localhost APIs break refresh-cookie persistence.
+    // Route through Vite's same-origin /api proxy so the browser keeps auth cookies.
+    if (isLocalApiHost && isCrossOrigin) {
+      return "/api";
+    }
+  } catch {
+    // Ignore invalid URL and use raw value.
+  }
+
+  return rawBaseUrl;
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL?.trim() || "/api",
+  baseURL: resolveApiBaseUrl(),
   withCredentials: true,
 });
 

@@ -1,6 +1,6 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Copy, Loader2, MessageCircle, Share2, X } from "lucide-react";
-import type { UseBetSlipReturn } from "./hooks/useBetSlip";
+import type { BetSelection, UseBetSlipReturn } from "./hooks/useBetSlip";
 import { betSlipToggleEventName } from "./hooks/useBetSlip";
 
 function formatCurrency(value?: number) {
@@ -38,6 +38,7 @@ function BetSlipPanel({
   success,
   newBalance,
   isAuthenticated,
+  hasExpiredSelections,
   onClose,
   compactActions = false,
 }: UseBetSlipReturn & { onClose?: () => void; compactActions?: boolean }) {
@@ -110,6 +111,49 @@ function BetSlipPanel({
     );
   }
 
+  function isSelectionExpired(selection: BetSelection) {
+    const item = selection as unknown as Record<string, unknown>;
+
+    if (typeof item.isExpired === "boolean") return item.isExpired;
+    if (typeof item.expired === "boolean") return item.expired;
+
+    const status = String(item.status ?? item.eventStatus ?? "").toLowerCase();
+    if (["closed", "ended", "finished", "settled", "expired"].includes(status)) {
+      return true;
+    }
+
+    const dateCandidates = [
+      item.startTime,
+      item.startsAt,
+      item.kickoff,
+      item.kickoffTime,
+      item.eventTime,
+      item.commenceTime,
+      item.date,
+    ];
+
+    for (const value of dateCandidates) {
+      if (value == null) continue;
+
+      let epochMs: number | null = null;
+
+      if (typeof value === "number" && Number.isFinite(value)) {
+        epochMs = value < 1_000_000_000_000 ? value * 1000 : value;
+      } else if (typeof value === "string") {
+        const parsed = Date.parse(value);
+        if (!Number.isNaN(parsed)) epochMs = parsed;
+      } else if (value instanceof Date) {
+        epochMs = value.getTime();
+      }
+
+      if (epochMs !== null) {
+        return epochMs <= Date.now();
+      }
+    }
+
+    return false;
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#2a3f55] bg-[#0d1820] text-white shadow-2xl">
       {/* Header */}
@@ -141,6 +185,11 @@ function BetSlipPanel({
             className="flex items-center gap-2.5 rounded-lg border border-[#2a3f55] bg-[#1a2634] p-2.5 shadow-sm transition-colors hover:border-[#3a526b] sm:gap-3 sm:p-3"
           >
             <div className="min-w-0 flex-1">
+              {isSelectionExpired(selection) ? (
+                <span className="mb-1 inline-flex items-center rounded-full border border-red-500/40 bg-red-500/10 px-2 py-[2px] text-[9px] font-bold uppercase tracking-[0.08em] text-red-300">
+                  Expired
+                </span>
+              ) : null}
               <p className="mb-0.5 truncate text-[10px] font-semibold text-white sm:text-xs">
                 {selection.eventName}
               </p>
@@ -253,6 +302,14 @@ function BetSlipPanel({
           </div>
         )}
 
+        {hasExpiredSelections && (
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 p-2 text-center">
+            <p className="text-xs text-red-300">
+              Remove expired selections before placing a bet.
+            </p>
+          </div>
+        )}
+
         {success && (
           <div className="rounded-md border border-[#00c853]/30 bg-[#00c853]/10 p-2 text-center">
             <p className="text-xs font-semibold text-[#00c853]">
@@ -279,30 +336,34 @@ function BetSlipPanel({
             <button
               type="button"
               onClick={() => void placeBet()}
-              disabled={placing}
+              disabled={placing || hasExpiredSelections}
               className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#f5a623] text-xs font-bold text-black disabled:opacity-70"
             >
               {placing ? <Loader2 size={14} className="animate-spin" /> : null}
               {placing
                 ? "Processing..."
-                : isAuthenticated
-                  ? `Place Bet`
-                  : "LOGIN TO BET"}
+                : hasExpiredSelections
+                  ? "REMOVE EXPIRED PICKS"
+                  : isAuthenticated
+                    ? `Place Bet`
+                    : "LOGIN TO BET"}
             </button>
           </div>
         ) : (
           <button
             type="button"
             onClick={() => void placeBet()}
-            disabled={placing}
+            disabled={placing || hasExpiredSelections}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#f5a623] text-sm font-bold text-black transition hover:bg-[#e09000] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {placing ? <Loader2 size={16} className="animate-spin" /> : null}
             {placing
               ? "PROCESSING..."
-              : isAuthenticated
-                ? `PLACE ${selections.length} BET${selections.length === 1 ? "" : "S"}`
-                : "LOGIN TO BET"}
+              : hasExpiredSelections
+                ? "REMOVE EXPIRED PICKS"
+                : isAuthenticated
+                  ? `PLACE ${selections.length} BET${selections.length === 1 ? "" : "S"}`
+                  : "LOGIN TO BET"}
           </button>
         )}
 

@@ -98,7 +98,11 @@ export default function BettingHome() {
     ];
   }, [sports]);
 
-  const upcomingEvents = events.filter((event) => event.status !== "LIVE");
+  const nowMs = Date.now();
+  const upcomingEvents = events.filter((event) => {
+    const commenceMs = new Date(event.commenceTime).getTime();
+    return Number.isFinite(commenceMs) && commenceMs > nowMs;
+  });
   const featuredLiveEvents = liveEvents.slice(0, 6);
   const liveCustomEvents = customEvents.filter((e) => e.status === "LIVE");
   const upcomingCustomEvents = customEvents.filter(
