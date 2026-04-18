@@ -448,13 +448,17 @@ export default function Transactions() {
                       </div>
                       {selectedTxn.providerDetails.provider === "paystack" && (
                         <>
-                          {(selectedTxn.providerDetails as any).paystackReference && (
+                          {(selectedTxn.providerDetails as any)
+                            .paystackReference && (
                             <div>
                               <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
                                 Paystack Reference
                               </label>
                               <p className="font-mono text-xs font-semibold break-all">
-                                {(selectedTxn.providerDetails as any).paystackReference}
+                                {
+                                  (selectedTxn.providerDetails as any)
+                                    .paystackReference
+                                }
                               </p>
                             </div>
                           )}
@@ -464,17 +468,24 @@ export default function Transactions() {
                                 Verified At
                               </label>
                               <p className="text-xs font-semibold">
-                                {new Date((selectedTxn.providerDetails as any).verifiedAt).toLocaleString()}
+                                {new Date(
+                                  (selectedTxn.providerDetails as any)
+                                    .verifiedAt,
+                                ).toLocaleString()}
                               </p>
                             </div>
                           )}
-                          {(selectedTxn.providerDetails as any).failureReason && (
+                          {(selectedTxn.providerDetails as any)
+                            .failureReason && (
                             <div>
                               <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
                                 Failure Reason
                               </label>
                               <p className="text-xs font-semibold text-red-400">
-                                {(selectedTxn.providerDetails as any).failureReason}
+                                {
+                                  (selectedTxn.providerDetails as any)
+                                    .failureReason
+                                }
                               </p>
                             </div>
                           )}

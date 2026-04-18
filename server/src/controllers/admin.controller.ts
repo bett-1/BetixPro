@@ -2260,23 +2260,40 @@ export async function getAdminPayments(req: Request, res: Response) {
             ?.totalDebit ?? transaction.amount)
         : transaction.amount,
     // Include full provider callback for admin visibility into payment details
-    providerDetails: transaction.channel === "paystack" 
-      ? {
-          provider: "paystack",
-          mode: "card/bank_transfer",
-          paystackReference: (transaction.providerCallback as { paystackReference?: string } | null)?.paystackReference,
-          verificationData: (transaction.providerCallback as { verificationData?: unknown } | null)?.verificationData,
-          verifiedAt: (transaction.providerCallback as { verifiedAt?: string } | null)?.verifiedAt,
-          failureReason: (transaction.providerCallback as { failureReason?: string } | null)?.failureReason,
-        }
-      : transaction.channel === "mpesa"
-      ? {
-          provider: "mpesa",
-          mode: "mobile_money",
-          mpesaCode: transaction.providerReceiptNumber,
-          verificationData: (transaction.providerCallback as { verificationData?: unknown } | null)?.verificationData,
-        }
-      : undefined,
+    providerDetails:
+      transaction.channel === "paystack"
+        ? {
+            provider: "paystack",
+            mode: "card/bank_transfer",
+            paystackReference: (
+              transaction.providerCallback as {
+                paystackReference?: string;
+              } | null
+            )?.paystackReference,
+            verificationData: (
+              transaction.providerCallback as {
+                verificationData?: unknown;
+              } | null
+            )?.verificationData,
+            verifiedAt: (
+              transaction.providerCallback as { verifiedAt?: string } | null
+            )?.verifiedAt,
+            failureReason: (
+              transaction.providerCallback as { failureReason?: string } | null
+            )?.failureReason,
+          }
+        : transaction.channel === "mpesa"
+          ? {
+              provider: "mpesa",
+              mode: "mobile_money",
+              mpesaCode: transaction.providerReceiptNumber,
+              verificationData: (
+                transaction.providerCallback as {
+                  verificationData?: unknown;
+                } | null
+              )?.verificationData,
+            }
+          : undefined,
   }));
 
   return res.status(200).json({
