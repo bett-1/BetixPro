@@ -43,7 +43,8 @@ export function errorHandler(
   }
 
   // Preserve payment provider errors for debugging (Paystack, M-Pesa, etc.)
-  const errorMessage = err instanceof Error ? err.message : "Internal server error";
+  const errorMessage =
+    err instanceof Error ? err.message : "Internal server error";
   const isPaymentError =
     errorMessage.includes("Paystack") ||
     errorMessage.includes("paystack") ||
@@ -55,9 +56,9 @@ export function errorHandler(
     process.env.NODE_ENV === "production" && !isPaymentError
       ? "Internal server error"
       : errorMessage;
-  
-  res.status(500).json({ 
+
+  res.status(500).json({
     message,
-    ...(isPaymentError && { details: errorMessage })
+    ...(isPaymentError && { details: errorMessage }),
   });
 }
