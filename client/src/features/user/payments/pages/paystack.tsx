@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PaymentFeedbackModal } from "@/components/PaymentFeedbackModal";
+import { PaymentLoadingModal } from "@/components/PaymentLoadingModal";
 import { useAuth } from "@/context/AuthContext";
 import { formatMoney } from "../data";
 import { usePaystackInitialize } from "../hooks/usePaystackPayment";
@@ -27,6 +28,7 @@ export default function PaystackDepositPage() {
   >(null);
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [showPaymentResult, setShowPaymentResult] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const amountValue = useMemo(() => Number(amount) || 0, [amount]);
 
@@ -74,10 +76,8 @@ export default function PaystackDepositPage() {
       return;
     }
 
-    // Show loading toast
-    const loadingToast = toast.loading(
-      `Initializing payment of KES ${formatMoney(amountValue)}...`,
-    );
+    // Show loading modal - this replaces the toast
+    setIsProcessing(true);
 
     try {
       // Enterprise-grade retry logic with exponential backoff
@@ -114,8 +114,7 @@ export default function PaystackDepositPage() {
 
       localStorage.setItem(pendingStorageKey, response.reference);
 
-      // Dismiss loading toast and show redirect notice
-      toast.dismiss(loadingToast);
+      // Update modal message before redirect
       toast.loading(`Redirecting to Paystack checkout...`, {
         description: `Amount: KES ${formatMoney(amountValue)} • Reference: ${response.reference}`,
       });
@@ -129,9 +128,9 @@ export default function PaystackDepositPage() {
       // Redirect to Paystack checkout
       setTimeout(() => {
         window.location.assign(response!.authorization_url);
-      }, 500);
+      }, 800);
     } catch (error: any) {
-      toast.dismiss(loadingToast);
+      setIsProcessing(false);
       const message =
         error?.response?.data?.error ??
         error?.response?.data?.message ??
@@ -144,6 +143,13 @@ export default function PaystackDepositPage() {
 
   return (
     <section className="mx-auto grid max-w-280 gap-4 lg:grid-cols-2 lg:items-stretch">
+      {/* Payment Loading Modal - Highest Z-Index */}
+      <PaymentLoadingModal
+        isOpen={isProcessing}
+        amount={amountValue}
+        message="Processing your payment"
+      />
+
       {/* Payment Feedback Modal */}
       <PaymentFeedbackModal
         isOpen={showPaymentResult && paymentStatus === "success"}
@@ -214,13 +220,13 @@ export default function PaystackDepositPage() {
 
           <Button
             type="submit"
-            disabled={initializeMutation.isPending}
-            className="mt-1 h-11 rounded-xl bg-[#f5c518] px-5 text-sm font-semibold text-black hover:bg-[#e0b90f]"
+            disabled={initializeMutation.isPending || isProcessing}
+            className="mt-1 h-11 rounded-xl bg-[#f5c518] px-5 text-sm font-semibold text-black hover:bg-[#e0b90f] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {initializeMutation.isPending ? (
+            {isProcessing ? (
               <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
-            Proceed to Payment
+            {isProcessing ? "Processing..." : "Proceed to Payment"}
           </Button>
         </form>
       </article>

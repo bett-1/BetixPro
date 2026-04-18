@@ -182,7 +182,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessTokenState, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authModal, setAuthModal] = useState<AuthModal>("none");
-  const [isRecovering, setIsRecovering] = useState(false);
 
   const openAuthModal = useCallback((modal: AuthModal) => {
     setAuthModal(modal);
@@ -363,7 +362,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // If returning from payment provider, immediately set recovery flag
         if (isPaymentRedirect) {
           setRecoveryFlag();
-          setIsRecovering(true);
           console.debug(
             "[Auth] Payment redirect detected, initiating recovery",
           );
@@ -380,7 +378,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         clearRecoveryFlag();
-        setIsRecovering(false);
       } catch (error) {
         // IMPORTANT: Do NOT log out on init if refresh fails
         // This is critical for payment redirects where API might be slow
@@ -389,7 +386,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "[Auth] Session refresh on init failed, keeping existing auth",
         );
         clearRecoveryFlag();
-        setIsRecovering(false);
       } finally {
         setIsLoading(false);
       }
