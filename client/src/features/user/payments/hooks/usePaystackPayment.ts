@@ -67,7 +67,12 @@ export function usePaystackVerification(reference?: string | null) {
       );
       return response.data;
     },
-    refetchInterval: 7000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "success" || status === "failed" || status === "reversed"
+        ? false
+        : 3000;
+    },
     staleTime: 0,
   });
 }
@@ -86,7 +91,12 @@ export function usePaystackStatus(reference?: string | null) {
       );
       return response.data;
     },
-    refetchInterval: 5000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "success" || status === "failed" || status === "reversed"
+        ? false
+        : 5000;
+    },
     staleTime: 0,
   });
 }

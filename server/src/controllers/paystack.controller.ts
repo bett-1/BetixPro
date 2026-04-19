@@ -52,6 +52,10 @@ function toSafeJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
+function normalizePaystackChargeStatus(status: string | undefined) {
+  return (status ?? "").trim().toLowerCase();
+}
+
 async function finalizePaystackDeposit(
   reference: string,
 ): Promise<FinalizePaystackDepositResult> {
@@ -123,19 +127,71 @@ async function finalizePaystackDeposit(
   const isSuccessful =
     verificationResult.status && verificationResult.data.status === "success";
 
+  const normalizedProviderStatus = normalizePaystackChargeStatus(
+    verificationResult.data.status,
+  );
+
+  if (
+    ["pending", "ongoing", "processing", "queued"].includes(
+      normalizedProviderStatus,
+    )
+  ) {
+    await prisma.walletTransaction.update({
+      where: { id: transaction.id },
+      data: {
+        status: "PROCESSING",
+        providerCallback: {
+          provider: "paystack",
+          verifiedAt: new Date().toISOString(),
+          verificationData: toSafeJson(verificationResult.data),
+          paystackReference: verificationResult.data.reference,
+        },
+      },
+    });
+
+    return {
+      status: "pending",
+      message: "Payment is still being confirmed by Paystack",
+      reference,
+      transactionId: transaction.id,
+      amount: transaction.amount,
+      processedAt: transaction.processedAt,
+    };
+  }
+
   if (!isSuccessful) {
+    const processedAt = new Date();
     await prisma.walletTransaction.update({
       where: { id: transaction.id },
       data: {
         status: "FAILED",
-        processedAt: new Date(),
+        processedAt,
         providerCallback: {
           provider: "paystack",
-          verifiedAt: new Date().toISOString(),
+          verifiedAt: processedAt.toISOString(),
           failureReason: `Paystack returned ${verificationResult.data.status}`,
+          paystackReference: verificationResult.data.reference,
           verificationData: toSafeJson(verificationResult.data),
         },
       },
+    });
+
+    emitWalletUpdate(transaction.userId, {
+      transactionId: transaction.id,
+      status: "FAILED",
+      message: "Deposit failed",
+      balance: transaction.wallet.balance,
+      amount: transaction.amount,
+    });
+
+    await createDepositNotifications({
+      userId: transaction.userId,
+      transactionId: transaction.id,
+      amount: transaction.amount,
+      balance: transaction.wallet.balance,
+      paystackReference: verificationResult.data.reference,
+      status: "FAILED",
+      failureReason: `Paystack returned ${verificationResult.data.status}`,
     });
 
     return {
@@ -159,18 +215,38 @@ async function finalizePaystackDeposit(
       providerAmount: verificationResult.data.amount,
     });
 
+    const processedAt = new Date();
     await prisma.walletTransaction.update({
       where: { id: transaction.id },
       data: {
         status: "FAILED",
-        processedAt: new Date(),
+        processedAt,
         providerCallback: {
           provider: "paystack",
-          verifiedAt: new Date().toISOString(),
+          verifiedAt: processedAt.toISOString(),
           failureReason: "Amount mismatch",
+          paystackReference: verificationResult.data.reference,
           verificationData: toSafeJson(verificationResult.data),
         },
       },
+    });
+
+    emitWalletUpdate(transaction.userId, {
+      transactionId: transaction.id,
+      status: "FAILED",
+      message: "Deposit amount mismatch",
+      balance: transaction.wallet.balance,
+      amount: transaction.amount,
+    });
+
+    await createDepositNotifications({
+      userId: transaction.userId,
+      transactionId: transaction.id,
+      amount: transaction.amount,
+      balance: transaction.wallet.balance,
+      paystackReference: verificationResult.data.reference,
+      status: "FAILED",
+      failureReason: "Amount mismatch",
     });
 
     return {
@@ -499,31 +575,21 @@ export async function handlePaystackBrowserCallback(
     return;
   }
 
-  try {
-    const result = await finalizePaystackDeposit(reference);
-    const redirectUrl = new URL(
-      process.env.PAYSTACK_SUCCESS_REDIRECT_URL?.trim() ||
-        process.env.FRONTEND_URL?.trim() ||
-        "http://localhost:5173",
-    );
-    redirectUrl.pathname = "/user/payments/deposit";
-    redirectUrl.searchParams.set("reference", reference);
-    redirectUrl.searchParams.set("status", result.status);
+  const redirectUrl = new URL(
+    process.env.PAYSTACK_SUCCESS_REDIRECT_URL?.trim() ||
+      process.env.FRONTEND_URL?.trim() ||
+      "http://localhost:5173",
+  );
+  redirectUrl.pathname = "/user/payments/deposit";
+  redirectUrl.searchParams.set("reference", reference);
 
-    logPaystackContext("callback:redirect", {
-      reference,
-      status: result.status,
-      target: redirectUrl.toString(),
-    });
+  logPaystackContext("callback:redirect", {
+    reference,
+    status: "pending",
+    target: redirectUrl.toString(),
+  });
 
-    res.redirect(302, redirectUrl.toString());
-  } catch (error) {
-    console.error("Paystack callback error:", error);
-    res.redirect(
-      302,
-      `${process.env.FRONTEND_URL?.trim() || "http://localhost:5173"}/user/payments/deposit?reference=${encodeURIComponent(reference)}&status=failed`,
-    );
-  }
+  res.redirect(302, redirectUrl.toString());
 }
 
 // ============================================================================
