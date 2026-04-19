@@ -259,17 +259,17 @@ export default function SportCategoriesManager() {
       <div className="grid grid-cols-3 gap-2">
         <AdminStatCard
           label="Total Sports"
-          value={categories.length}
+          value={String(categories.length)}
           tone="blue"
         />
         <AdminStatCard
           label="Active"
-          value={totalActive}
+          value={String(totalActive)}
           tone="live"
         />
         <AdminStatCard
           label="Inactive"
-          value={totalInactive}
+          value={String(totalInactive)}
           tone="accent"
         />
       </div>

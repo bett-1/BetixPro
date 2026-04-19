@@ -3,7 +3,7 @@ import { useParams, Link } from "@tanstack/react-router";
 import { api } from "@/api/axiosConfig";
 import EventCard from "../components/EventCard";
 import BetSlip from "../components/BetSlip";
-import useBetSlip, { type BetSelection } from "../components/hooks/useBetSlip";
+import useBetSlip from "../components/hooks/useBetSlip";
 import type { ApiEvent } from "../components/hooks/useEvents";
 import {
   ChevronLeft,
