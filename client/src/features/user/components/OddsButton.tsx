@@ -1,4 +1,4 @@
-import type { BetSelection } from "../hooks/useBetSlip";
+import type { BetSelection } from "./hooks/useBetSlip";
 
 type OddsButtonProps = {
   label: string;

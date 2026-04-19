@@ -964,7 +964,7 @@ async function seedWithdrawals(
     "FAILED",
     "REVERSED",
   ];
-  const feePercent = 5;
+  const feePercent = 15;
 
   for (let index = 0; index < count; index += 1) {
     const eligibleUsers = activeUsers.filter((user) => {

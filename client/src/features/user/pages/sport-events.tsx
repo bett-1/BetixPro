@@ -1,6 +1,6 @@
 import EventCard from "../components/EventCard";
-import type { BetSelection } from "../hooks/useBetSlip";
-import type { ApiEvent } from "../hooks/useEvents";
+import type { BetSelection } from "../components/hooks/useBetSlip";
+import type { ApiEvent } from "../components/hooks/useEvents";
 
 type SportEventsProps = {
   events: ApiEvent[];

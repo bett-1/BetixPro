@@ -187,7 +187,7 @@ export const defaultAdminSettings: AdminSettingsConfig = {
       consumerSecret: "replace-with-consumer-secret",
       passkey: "replace-with-passkey",
       callbackUrl: process.env.MPESA_CALLBACK_URL?.trim() || "",
-      transactionFeePercent: 5,
+      transactionFeePercent: 15,
       autoWithdrawEnabled: false,
       withdrawalApprovalThreshold: 50000,
     },

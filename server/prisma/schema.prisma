@@ -214,7 +214,7 @@ model Notification {
   transactionId String?              @map("transaction_id") @db.Uuid
   amount        Int?
   balance       Int?
-  mpesaCode     String?              @map("mpesa_code")
+  mpesaCode      String?              @map("mpesa_code")
   isRead        Boolean              @default(false) @map("is_read")
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
@@ -420,7 +420,7 @@ model AdminSettings {
   mpesaConsumerSecret             String   @default("replace-with-consumer-secret") @map("mpesa_consumer_secret")
   mpesaPasskey                    String   @default("replace-with-passkey") @map("mpesa_passkey")
   mpesaCallbackUrl                String   @default("") @map("mpesa_callback_url")
-  mpesaTransactionFeePercent      Float    @default(5) @map("mpesa_transaction_fee_percent")
+  mpesaTransactionFeePercent      Float    @default(15) @map("mpesa_transaction_fee_percent")
   mpesaAutoWithdrawEnabled        Boolean  @default(false) @map("mpesa_auto_withdraw_enabled")
   mpesaWithdrawalApprovalThreshold Int     @default(50000) @map("mpesa_withdrawal_approval_threshold")
   minBetAmount                    Int      @default(10) @map("min_bet_amount")

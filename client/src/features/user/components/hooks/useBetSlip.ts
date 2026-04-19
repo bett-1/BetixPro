@@ -4,7 +4,7 @@ import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
-import { myBetsNavbarCountQueryKey } from "@/features/user/hooks/useMyBets";
+import { myBetsNavbarCountQueryKey } from "@/features/user/components/hooks/useMyBets";
 import { walletSummaryQueryKey } from "@/features/user/payments/wallet";
 
 export interface BetSelection {

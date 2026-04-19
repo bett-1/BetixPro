@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cors());
 
 // Validate environment variables
-validateEnv()
+validateEnv();
 
 // Health check
 app.get("/health", (req: Request, res: Response) => {
@@ -215,7 +215,6 @@ app.get("/ui", (req: Request, res: Response) => {
   </html>
   `);
 });
-
 
 // M-Pesa callback routes
 app.use("/api/mpesa", callbackRouter);

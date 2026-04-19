@@ -29,6 +29,64 @@ type AuthResponse = {
   user: AuthUser;
 };
 
+// Storage keys for persistent auth state
+const AUTH_TOKEN_KEY = "betwise-auth-token";
+const AUTH_USER_KEY = "betwise-auth-user";
+const AUTH_RECOVERY_FLAG = "betwise-auth-recovery";
+
+// Utility functions for sessionStorage management
+function getStoredToken(): string | null {
+  try {
+    return sessionStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function getStoredUser(): AuthUser | null {
+  try {
+    const stored = sessionStorage.getItem(AUTH_USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistAuthState(token: string, user: AuthUser): void {
+  try {
+    sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+    sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  } catch {
+    console.warn("[Auth] Failed to persist auth state to sessionStorage");
+  }
+}
+
+function clearStoredAuth(): void {
+  try {
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_USER_KEY);
+    sessionStorage.removeItem(AUTH_RECOVERY_FLAG);
+  } catch {
+    console.warn("[Auth] Failed to clear auth state from sessionStorage");
+  }
+}
+
+function setRecoveryFlag(): void {
+  try {
+    sessionStorage.setItem(AUTH_RECOVERY_FLAG, Date.now().toString());
+  } catch {
+    // Silently fail - not critical
+  }
+}
+
+function clearRecoveryFlag(): void {
+  try {
+    sessionStorage.removeItem(AUTH_RECOVERY_FLAG);
+  } catch {
+    // Silently fail
+  }
+}
+
 type AdminMfaRequiredResponse = {
   mfaRequired: true;
   mfaMode: "totp_setup" | "totp_verify";
@@ -116,6 +174,7 @@ function clearAuthState(
   setUser(null);
   setToken(null);
   setAccessToken(null);
+  clearStoredAuth();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -136,32 +195,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
     setAccessTokenState(data.accessToken);
     setAccessToken(data.accessToken);
+    persistAuthState(data.accessToken, data.user);
+    clearRecoveryFlag();
   }, []);
 
   const refreshSession = useCallback(async () => {
+    let hasValidAuth = false;
+
+    try {
+      const me = await api.get<MeResponse>("/auth/me");
+      setUser(me.data.user);
+      hasValidAuth = true;
+
+      // Keep existing token if /auth/me succeeds
+      if (accessTokenState) {
+        persistAuthState(accessTokenState, me.data.user);
+      }
+      return accessTokenState;
+    } catch (meError) {
+      // /auth/me failed, try refreshing token
+    }
+
     try {
       const { data } = await api.post<AuthResponse>("/auth/refresh");
       updateSession(data);
-
-      const me = await api.get<MeResponse>("/auth/me");
-      if (me.data.user.id !== data.user.id) {
-        clearAuthState(setUser, setAccessTokenState);
-        return null;
-      }
-
-      setUser(me.data.user);
+      hasValidAuth = true;
       return data.accessToken;
-    } catch {
-      // A valid access token may still exist in memory even when refresh fails.
-      // This happens after forced password change where refresh tokens are revoked.
-      try {
-        const me = await api.get<MeResponse>("/auth/me");
-        setUser(me.data.user);
-        return accessTokenState;
-      } catch {
-        return null;
-      }
+    } catch (refreshError) {
+      // Refresh failed
     }
+
+    // If we couldn't verify auth but have an access token, keep it
+    // This is critical for payment redirects where token might still be valid
+    if (accessTokenState && !hasValidAuth) {
+      return accessTokenState;
+    }
+
+    // Only clear auth state if we're certain there's no valid session
+    if (!hasValidAuth && !accessTokenState) {
+      clearAuthState(setUser, setAccessTokenState);
+      return null;
+    }
+
+    return accessTokenState;
   }, [accessTokenState, updateSession]);
 
   const logout = useCallback(async () => {
@@ -262,10 +338,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, [refreshSession]);
 
+  // CRITICAL: Initialize auth state from sessionStorage IMMEDIATELY
+  // This prevents logout during payment redirects
   useEffect(() => {
+    // Restore persisted auth state first (synchronous, fast)
+    const storedToken = getStoredToken();
+    const storedUser = getStoredUser();
+
+    if (storedToken && storedUser) {
+      setAccessTokenState(storedToken);
+      setAccessToken(storedToken);
+      setUser(storedUser);
+      console.debug("[Auth] Restored session from sessionStorage");
+    }
+
+    // Then verify/refresh the session (async)
     void (async () => {
       try {
-        await refreshSession();
+        const params = new URLSearchParams(window.location.search);
+        const isPaymentRedirect =
+          params.has("reference") || params.has("status");
+
+        // If returning from payment provider, immediately set recovery flag
+        if (isPaymentRedirect) {
+          setRecoveryFlag();
+          console.debug(
+            "[Auth] Payment redirect detected, initiating recovery",
+          );
+        }
+
+        // Try to refresh session to ensure token is still valid
+        const result = await refreshSession();
+
+        // If recovery failed, try one more time to be safe
+        if (isPaymentRedirect && !result) {
+          console.debug("[Auth] First recovery attempt failed, retrying...");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          await refreshSession();
+        }
+
+        clearRecoveryFlag();
+      } catch (error) {
+        // IMPORTANT: Do NOT log out on init if refresh fails
+        // This is critical for payment redirects where API might be slow
+        // but token is still valid
+        console.warn(
+          "[Auth] Session refresh on init failed, keeping existing auth",
+        );
+        clearRecoveryFlag();
       } finally {
         setIsLoading(false);
       }

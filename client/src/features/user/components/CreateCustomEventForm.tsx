@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { CreateCustomEventData } from "../hooks/useCustomEvents";
+import type { CreateCustomEventData } from "./hooks/useCustomEvents";
 
 interface CreateCustomEventFormProps {
   open: boolean;

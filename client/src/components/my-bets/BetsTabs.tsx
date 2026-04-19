@@ -1,4 +1,4 @@
-import type { MyBetTab } from "@/features/user/hooks/useMyBets";
+import type { MyBetTab } from "@/features/user/components/hooks/useMyBets";
 
 const tabs: Array<{ label: string; value: MyBetTab }> = [
   { label: "Normal", value: "normal" },

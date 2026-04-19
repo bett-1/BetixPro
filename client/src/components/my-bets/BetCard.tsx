@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarClock } from "lucide-react";
-import type { MyBetListItem } from "@/features/user/hooks/useMyBets";
+import type { MyBetListItem } from "@/features/user/components/hooks/useMyBets";
 import { CancellationTimer } from "./CancellationTimer";
 
 const badgeClassByStatus: Record<MyBetListItem["status"], string> = {

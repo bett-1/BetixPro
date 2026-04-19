@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/axiosConfig";
 import { toast } from "sonner";
-import type { CustomEventData } from "../components/CustomEventCard";
+import type { CustomEventData } from "../CustomEventCard";
 
 export interface PlaceCustomBetData {
   eventId: string;

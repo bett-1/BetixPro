@@ -1,10 +1,7 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Copy, Loader2, MessageCircle, Share2, X } from "lucide-react";
-import type { UseBetSlipReturn } from "../hooks/useBetSlip";
-import {
-  betSlipToggleEventName,
-  isSelectionExpired,
-} from "../hooks/useBetSlip";
+import type { BetSelection, UseBetSlipReturn } from "./hooks/useBetSlip";
+import { betSlipToggleEventName } from "./hooks/useBetSlip";
 
 function formatCurrency(value?: number) {
   const safeValue = Number(value) || 0;
@@ -112,6 +109,49 @@ function BetSlipPanel({
         </div>
       </div>
     );
+  }
+
+  function isSelectionExpired(selection: BetSelection) {
+    const item = selection as unknown as Record<string, unknown>;
+
+    if (typeof item.isExpired === "boolean") return item.isExpired;
+    if (typeof item.expired === "boolean") return item.expired;
+
+    const status = String(item.status ?? item.eventStatus ?? "").toLowerCase();
+    if (["closed", "ended", "finished", "settled", "expired"].includes(status)) {
+      return true;
+    }
+
+    const dateCandidates = [
+      item.startTime,
+      item.startsAt,
+      item.kickoff,
+      item.kickoffTime,
+      item.eventTime,
+      item.commenceTime,
+      item.date,
+    ];
+
+    for (const value of dateCandidates) {
+      if (value == null) continue;
+
+      let epochMs: number | null = null;
+
+      if (typeof value === "number" && Number.isFinite(value)) {
+        epochMs = value < 1_000_000_000_000 ? value * 1000 : value;
+      } else if (typeof value === "string") {
+        const parsed = Date.parse(value);
+        if (!Number.isNaN(parsed)) epochMs = parsed;
+      } else if (value instanceof Date) {
+        epochMs = value.getTime();
+      }
+
+      if (epochMs !== null) {
+        return epochMs <= Date.now();
+      }
+    }
+
+    return false;
   }
 
   return (

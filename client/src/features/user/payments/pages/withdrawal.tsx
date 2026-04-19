@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 const quickAmounts = [500, 1000, 2500, 5000];
 
 const MAX_WITHDRAWAL = 500000;
-const WITHDRAWAL_FEE_PERCENTAGE = 5;
+const WITHDRAWAL_FEE_PERCENTAGE = 15;
 const MIN_WITHDRAWAL = 50;
 
 type WithdrawalResponse = {
@@ -117,7 +117,9 @@ export default function PaymentsWithdrawalPage() {
 
     if (!canWithdraw) {
       if (!isPhoneValid(normalizedPhone)) {
-        toast.error("Your account phone is invalid for M-PESA withdrawals.");
+        toast.error(
+          "Your account phone is invalid for mobile money withdrawals.",
+        );
       } else if (numAmount < MIN_WITHDRAWAL) {
         toast.error(`Minimum withdrawal is KES ${MIN_WITHDRAWAL}.`);
       } else if (numAmount > MAX_WITHDRAWAL) {
@@ -155,7 +157,7 @@ export default function PaymentsWithdrawalPage() {
               <h2 className="text-lg font-bold text-white">Withdraw</h2>
             </div>
             <p className="mt-0.5 text-xs text-[#8a9bb0]">
-              Quick & secure M-Pesa transfer
+              Quick & secure mobile money transfer
             </p>
           </div>
         </div>
@@ -210,7 +212,7 @@ export default function PaymentsWithdrawalPage() {
                 htmlFor="withdraw-phone"
                 className="text-xs font-semibold text-admin-text-primary"
               >
-                M-Pesa Phone Number
+                Mobile Money Phone Number
               </label>
             </div>
             <input
@@ -224,7 +226,7 @@ export default function PaymentsWithdrawalPage() {
 
             {phone && !isPhoneValid(normalizePhone(phone)) && (
               <p className="mt-2 text-xs text-red-400">
-                Invalid phone. Use format: 2547XXXXXXXX.
+                Invalid phone. Use format: 2547XXXXXXXX for mobile money.
               </p>
             )}
           </div>
@@ -281,9 +283,9 @@ export default function PaymentsWithdrawalPage() {
                         ? "border-green-500/30 bg-green-500/10 text-green-400"
                         : entry.status === "processing"
                           ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                        : entry.status === "pending"
-                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
-                          : "border-red-500/30 bg-red-500/10 text-red-400"
+                          : entry.status === "pending"
+                            ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
+                            : "border-red-500/30 bg-red-500/10 text-red-400"
                     }`}
                   >
                     {entry.status}

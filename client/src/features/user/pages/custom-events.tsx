@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { Zap, Loader2, Radio } from "lucide-react";
-import { useCustomEvents } from "../hooks/useCustomEvents";
+import { useCustomEvents } from "../components/hooks/useCustomEvents";
 import { CustomEventCard } from "../components/CustomEventCard";
-import { useBetSlip, type BetSelection } from "../hooks/useBetSlip";
+import { useBetSlip, type BetSelection } from "../components/hooks/useBetSlip";
 
 type StatusFilter = "ALL" | "LIVE" | "UPCOMING";
 
@@ -95,7 +95,7 @@ export default function CustomEventsPage() {
     count: number;
     icon?: React.ReactNode;
   }[] = [
-    { label: "All", value: "ALL", count: visibleEvents.length },
+    { label: "All", value: "ALL", count: events.length },
     {
       label: "Live",
       value: "LIVE",

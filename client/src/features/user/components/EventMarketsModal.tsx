@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, TrendingUp, Clock, ChevronRight } from "lucide-react";
 import { api } from "@/api/axiosConfig";
-import type { ApiEvent } from "../hooks/useEvents";
-import type { BetSelection } from "../hooks/useBetSlip";
+import type { ApiEvent } from "./hooks/useEvents";
+import type { BetSelection } from "./hooks/useBetSlip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,18 +57,18 @@ interface MarketCard {
 const MARKET_CATEGORIES: Record<string, MarketGroup | null> = {
   h2h: "Main",
   "1×2": "Main",
-  "win": "Main",
+  win: "Main",
   "who will win": "Main",
   "double chance": "Main",
   "draw no bet": "Main",
   "both teams to score": "Goals",
-  "btts": "Goals",
+  btts: "Goals",
   "over/under": "Goals",
-  "over": "Goals",
-  "under": "Goals",
+  over: "Goals",
+  under: "Goals",
   "total goals": "Goals",
   "exact goals": "Goals",
-  "spreads": "Handicap",
+  spreads: "Handicap",
   "asian handicap": "Handicap",
   "handicap 1×2": "Handicap",
   "1st half handicap": "Handicap",
@@ -95,7 +95,7 @@ function buildCardsFromDisplayedOdds(
 ): MarketCard[] {
   // Group by market type ONLY
   const byMarketType = new Map<string, DisplayedOdd[]>();
-  
+
   for (const odd of displayedOdds) {
     const key = odd.marketType.trim().toLowerCase();
     const current = byMarketType.get(key) ?? [];
@@ -118,7 +118,9 @@ function buildCardsFromDisplayedOdds(
     const outcomes: OutcomeOdds[] = [];
     for (const sideOdds of bySide.values()) {
       // Sort by odds descending to find best
-      const sorted = [...sideOdds].sort((a, b) => b.displayOdds - a.displayOdds);
+      const sorted = [...sideOdds].sort(
+        (a, b) => b.displayOdds - a.displayOdds,
+      );
       const bestOddsValue = sorted[0]?.displayOdds ?? 0;
 
       const bookmakerOdds: BookmakerOdd[] = sorted.map((odd) => ({
@@ -138,7 +140,8 @@ function buildCardsFromDisplayedOdds(
     const originalOdd = odds[0];
     const marketType = originalOdd?.marketType ?? marketTypeKey;
 
-    const colCount = outcomes.length >= 3 ? 3 : Math.min(Math.max(outcomes.length, 2), 2);
+    const colCount =
+      outcomes.length >= 3 ? 3 : Math.min(Math.max(outcomes.length, 2), 2);
 
     return {
       group: getMarketGroup(marketType),
@@ -271,11 +274,7 @@ export default function EventMarketsModal({
     (selectionKey) => selectionKey.startsWith(`${resolvedEventId}:`),
   ).length;
 
-  const isSelected = (
-    marketType: string,
-    side: string,
-    odds: number,
-  ) => {
+  const isSelected = (marketType: string, side: string, odds: number) => {
     const selectionKey = `${resolvedEventId}:${marketType}:${side}:${odds.toFixed(2)}`;
     return selectedOdds.has(selectionKey);
   };
@@ -492,43 +491,38 @@ export default function EventMarketsModal({
                               onClick={() =>
                                 handleSelect(card.marketType, outcome, bm)
                               }
-                              className={`flex flex-col items-center justify-center rounded-lg px-2 py-2 transition-all duration-150 ${
-                                "hover:-translate-y-[1px]"
-                              }`}
+                              className={`flex flex-col items-center justify-center rounded-lg px-2 py-2 transition-all duration-150 ${"hover:-translate-y-[1px]"}`}
                               style={
                                 bm.isBest
                                   ? selected
                                     ? {
-                                        background:
-                                          "rgba(240,192,64,0.25)",
+                                        background: "rgba(240,192,64,0.25)",
                                         border: "1.5px solid #f0c040",
                                         boxShadow:
                                           "0 0 12px rgba(240,192,64,0.2)",
                                       }
                                     : {
-                                        background:
-                                          "rgba(240,192,64,0.12)",
-                                        border: "1.5px solid rgba(240,192,64,0.5)",
+                                        background: "rgba(240,192,64,0.12)",
+                                        border:
+                                          "1.5px solid rgba(240,192,64,0.5)",
                                       }
                                   : selected
                                     ? {
-                                        background:
-                                          "rgba(139,157,181,0.15)",
-                                        border: "1px solid rgba(139,157,181,0.4)",
+                                        background: "rgba(139,157,181,0.15)",
+                                        border:
+                                          "1px solid rgba(139,157,181,0.4)",
                                       }
                                     : {
-                                        background:
-                                          "rgba(255,255,255,0.04)",
-                                        border: "1px solid rgba(255,255,255,0.07)",
+                                        background: "rgba(255,255,255,0.04)",
+                                        border:
+                                          "1px solid rgba(255,255,255,0.07)",
                                       }
                               }
                             >
                               <span
                                 className="text-base font-black tabular-nums"
                                 style={{
-                                  color: bm.isBest
-                                    ? "#f0c040"
-                                    : "#e8f0f8",
+                                  color: bm.isBest ? "#f0c040" : "#e8f0f8",
                                 }}
                               >
                                 {bm.odds.toFixed(2)}

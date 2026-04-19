@@ -1,4 +1,4 @@
-import type { MyBetFilter } from "@/features/user/hooks/useMyBets";
+import type { MyBetFilter } from "@/features/user/components/hooks/useMyBets";
 
 type BetsFilterBarProps = {
   filter: MyBetFilter;

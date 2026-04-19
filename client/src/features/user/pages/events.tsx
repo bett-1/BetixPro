@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { Calendar, Users, Zap, Clock } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Card } from "@/components/ui/card";
-import { useCustomEvents } from "../hooks/useCustomEvents";
-import type { CustomEventData } from "../hooks/useCustomEvents";
+import { useCustomEvents } from "../components/hooks/useCustomEvents";
+import type { CustomEventData } from "../components/hooks/useCustomEvents";
 
 function CustomEventCard({ event }: { event: CustomEventData }) {
   const commenceTime = new Date(event.startTime);

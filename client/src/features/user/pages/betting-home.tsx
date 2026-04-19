@@ -3,9 +3,9 @@ import BetSlip from "../components/BetSlip";
 import EventCard from "../components/EventCard";
 import { CustomEventCard } from "../components/CustomEventCard";
 import LiveTicker from "../components/LiveTicker";
-import useBetSlip, { type BetSelection } from "../hooks/useBetSlip";
-import useEvents from "../hooks/useEvents";
-import { useCustomEvents } from "../hooks/useCustomEvents";
+import useBetSlip, { type BetSelection } from "../components/hooks/useBetSlip";
+import useEvents from "../components/hooks/useEvents";
+import { useCustomEvents } from "../components/hooks/useCustomEvents";
 import SportEvents from "./sport-events";
 import {
   ChevronLeft,
@@ -105,14 +105,9 @@ export default function BettingHome() {
   });
   const featuredLiveEvents = liveEvents.slice(0, 6);
   const liveCustomEvents = customEvents.filter((e) => e.status === "LIVE");
-  const upcomingCustomEvents = customEvents.filter((e) => {
-    if (e.status !== "PUBLISHED") {
-      return false;
-    }
-
-    const startMs = new Date(e.startTime).getTime();
-    return Number.isFinite(startMs) && startMs > nowMs;
-  });
+  const upcomingCustomEvents = customEvents.filter(
+    (e) => e.status === "PUBLISHED",
+  );
   const heroImages = [heroOne, heroTwo, heroThree, heroFour, heroFive];
   const hasSelections = betSlip.selections.length > 0;
 

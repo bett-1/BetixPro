@@ -14,14 +14,17 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
-import { betSlipToggleEventName, type BetSelection } from "../hooks/useBetSlip";
-import useBetSlip from "../hooks/useBetSlip";
+import {
+  betSlipToggleEventName,
+  type BetSelection,
+} from "../components/hooks/useBetSlip";
+import useBetSlip from "../components/hooks/useBetSlip";
 import {
   type LiveMarket,
   type LiveMarketKey,
   type LiveMatch,
   useLiveMatches,
-} from "../hooks/useLiveMatches";
+} from "../components/hooks/useLiveMatches";
 
 const liveFilterStorageKey = "betixpro.live.filters.v1";
 const expandedMarketTabs = [

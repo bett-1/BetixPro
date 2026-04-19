@@ -56,7 +56,7 @@ export const transactions: Transaction[] = [
     status: "pending",
     amount: 1500,
     currency: "KES",
-    channel: "M-Pesa",
+    channel: "Paystack",
     reference: "WD-20K9M3",
     createdAt: "2026-04-03T16:10:00Z",
   },
@@ -145,7 +145,7 @@ export const transactions: Transaction[] = [
 export const paymentMethods: PaymentMethod[] = [
   {
     id: "PM-01",
-    label: "M-Pesa Safaricom",
+    label: "Mobile Money",
     kind: "mobile-money",
     account: "+254 712 345 678",
     verified: true,
@@ -200,5 +200,3 @@ export const titleCase = (value: string) => {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 };
-
-

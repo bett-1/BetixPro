@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, CircleAlert, Info } from "lucide-react";
 import { MatchSelectionCard } from "./MatchSelectionCard";
-import type { BetDetail } from "@/features/user/hooks/useBetDetail";
+import type { BetDetail } from "@/features/user/components/hooks/useBetDetail";
 
 function formatMoney(value: number) {
   return `KES ${value.toLocaleString(undefined, {

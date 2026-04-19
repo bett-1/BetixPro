@@ -6,7 +6,7 @@ import {
   betSlipCountEventName,
   betSlipCountStorageKey,
   betSlipToggleEventName,
-} from "@/features/user/hooks/useBetSlip";
+} from "@/features/user/components/hooks/useBetSlip";
 
 type LiveEventsResponse = {
   total?: number;

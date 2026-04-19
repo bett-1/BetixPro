@@ -432,10 +432,67 @@ export default function Transactions() {
                     <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
                       Channel
                     </label>
-                    <p className="text-sm font-semibold">
+                    <p className="text-sm font-semibold capitalize">
                       {selectedTxn.channel}
                     </p>
                   </div>
+                  {selectedTxn.providerDetails && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                          Payment Mode
+                        </label>
+                        <p className="text-sm font-semibold capitalize">
+                          {selectedTxn.providerDetails.mode}
+                        </p>
+                      </div>
+                      {selectedTxn.providerDetails.provider === "paystack" && (
+                        <>
+                          {(selectedTxn.providerDetails as any)
+                            .paystackReference && (
+                            <div>
+                              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                Paystack Reference
+                              </label>
+                              <p className="font-mono text-xs font-semibold break-all">
+                                {
+                                  (selectedTxn.providerDetails as any)
+                                    .paystackReference
+                                }
+                              </p>
+                            </div>
+                          )}
+                          {(selectedTxn.providerDetails as any).verifiedAt && (
+                            <div>
+                              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                Verified At
+                              </label>
+                              <p className="text-xs font-semibold">
+                                {new Date(
+                                  (selectedTxn.providerDetails as any)
+                                    .verifiedAt,
+                                ).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {(selectedTxn.providerDetails as any)
+                            .failureReason && (
+                            <div>
+                              <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
+                                Failure Reason
+                              </label>
+                              <p className="text-xs font-semibold text-red-400">
+                                {
+                                  (selectedTxn.providerDetails as any)
+                                    .failureReason
+                                }
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
                       Created At
