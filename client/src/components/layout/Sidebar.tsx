@@ -1,6 +1,5 @@
-import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -16,6 +15,7 @@ import {
   Hexagon,
   House,
   History,
+  Home,
   LogOut,
   MessageCircle,
   Shield,
@@ -24,12 +24,10 @@ import {
   Target,
   TrendingUp,
   Trophy,
-  Triangle,
   User,
-  Wallet,
-  Zap
+  Wallet
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type SidebarProps = {
@@ -122,42 +120,21 @@ function toSidebarSportName(raw: string) {
   return "Soccer";
 }
 
-function sportIcon(name: string): React.ReactNode {
-  switch (name) {
-    case "Soccer":
-      return "⚽";
-    case "Basketball":
-      return "🏀";
-    case "Tennis":
-      return "🎾";
-    case "Ice Hockey":
-      return "🏒";
-    case "Volleyball":
-      return "🏐";
-    case "Cricket":
-      return "🏏";
-    case "Handball":
-      return "🤾";
-    case "Table Tennis":
-      return "🏓";
-    default:
-      return "🎯";
-  }
-}
+const navigationLinks: Item[] = [
+  { label: "Homepage", to: "/user", icon: <Home size={18} /> },
+  {
+    label: "Custom Events",
+    to: "/user/custom-events",
+    icon: <Trophy size={18} />,
+  },
 
-function toEventCountKey(raw: string): keyof EventCounts | null {
-  const value = raw.toLowerCase();
-  if (value.includes("soccer") || value.includes("football")) {
-    if (value.includes("american")) return "americanFootball";
-    return "football";
-  }
-  if (value.includes("basket")) return "basketball";
-  if (value.includes("tennis") && !value.includes("table")) return "tennis";
-  if (value.includes("cricket")) return "cricket";
-  if (value.includes("hockey")) return "iceHockey";
-  if (value.includes("rugby")) return "rugbyUnion";
-  return null;
-}
+  {
+    label: "Live Betting",
+    to: "/user/live",
+    icon: <Flame size={18} />,
+    liveBadge: "LIVE",
+  },
+];
 
 const myAccount: Item[] = [
   {
@@ -242,7 +219,6 @@ function ItemLink({ item, onClick }: { item: Item; onClick: () => void }) {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { isAuthenticated, logout, openAuthModal } = useAuth();
-  const navigate = useNavigate();
   const [openSports, setOpenSports] = useState<Record<string, boolean>>({
     football: true,
     basketball: true,
@@ -267,10 +243,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return myAccount;
   }, [isAuthenticated]);
 
-  // Update Live Sports section visibility based on auth state
-  useEffect(() => {
-    setLiveSportsOpen(!isAuthenticated);
-  }, [isAuthenticated]);
 
   function closeIfMobile() {
     if (typeof window !== "undefined" && window.innerWidth <= 768) {
@@ -382,55 +354,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       <aside className={`bc-sidebar ${isOpen ? "is-open" : ""}`}>
         <div className="bc-side-scroll">
-          {/* LIVE SPORTS SECTION */}
-          <div className="bc-side-section max-md:mt-12 -mb-6">
-            <button
-              type="button"
-              className="bc-live-sports-toggle"
-              onClick={() => setLiveSportsOpen((prev) => !prev)}
-            >
-              <Zap size={16} />
-              <span>Live Sports</span>
-              <ChevronDown
-                size={14}
-                className={`bc-live-sports-chevron ${liveSportsOpen ? "is-open" : ""}`}
-              />
-            </button>
-            <div
-              className={`bc-live-sports-list ${liveSportsOpen ? "is-open" : ""}`}
-            >
-              {liveSportsOrder.map((name) => {
-                const count = liveCounts[name] ?? 0;
-                const sportKey = name.toLowerCase().replace(/\s+/g, "_");
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => {
-                      navigate({
-                        to: "/user/live",
-                        search: { sport: sportKey },
-                      });
-                      closeIfMobile();
-                    }}
-                    disabled={count === 0}
-                    className={`bc-live-sport-item ${count === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    <span className="bc-side-icon" aria-hidden="true">
-                      {sportIcon(name)}
-                    </span>
-                    <span className="bc-live-sport-name">{name}</span>
-                    {count > 0 ? (
-                      <span className="bc-live-sport-count">
-                        {count > 99 ? "99+" : count}
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
+      
           {/* MAIN NAVIGATION */}
           <div className="bc-side-section">
             <p className="bc-side-heading">
