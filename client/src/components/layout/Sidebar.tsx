@@ -70,6 +70,33 @@ type EventCounts = {
   rugbyUnion: number;
 };
 
+type SportCategoryItem = {
+  id: string;
+  sportKey: string;
+  displayName: string;
+  icon: string;
+  sortOrder: number;
+  eventCount: number;
+  lastSyncedAt: string | null;
+};
+
+const SPORT_KEY_TO_SLUG: Record<string, string> = {
+  soccer: "football",
+  basketball: "basketball",
+  tennis: "tennis",
+  americanfootball: "american-football",
+  cricket: "cricket",
+  icehockey: "ice-hockey",
+  rugbyunion: "rugby-union",
+  boxing_mma: "boxing-mma",
+  baseball: "baseball",
+  volleyball: "volleyball",
+  tabletennis: "table-tennis",
+  golf: "golf",
+  snooker: "snooker",
+  darts: "darts",
+};
+
 const liveSportsOrder = [
   "Soccer",
   "Basketball",
@@ -232,6 +259,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     Handball: 0,
     "Table Tennis": 0,
   }));
+  const [dynamicCategories, setDynamicCategories] = useState<SportCategoryItem[]>([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
   const accountSection = useMemo(() => {
     if (!isAuthenticated) return [];
@@ -248,6 +277,37 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       onClose();
     }
   }
+
+  // Fetch dynamic sport categories from the API
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchCategories = async () => {
+      try {
+        const { data } = await api.get<{ categories: SportCategoryItem[] }>(
+          "/user/sport-categories",
+        );
+        if (mounted) {
+          setDynamicCategories(data.categories);
+          setCategoriesLoaded(true);
+        }
+      } catch {
+        if (mounted) {
+          setCategoriesLoaded(true); // Fall back to hardcoded
+        }
+      }
+    };
+
+    void fetchCategories();
+    const timer = window.setInterval(() => {
+      void fetchCategories();
+    }, 60_000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -411,105 +471,134 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             ))}
           </div>
 
-          <div className="bc-side-section">
-            <p className="bc-side-heading">
-              <span className="bc-heading-dot" aria-hidden="true" />
-              Popular Sports
-            </p>
-            {[
-              {
-                label: "Football",
-                to: "/user/sport/football",
-                icon: <Trophy size={18} />,
-                badgeCount: eventCounts?.football ?? 0,
-                badgeGold: true,
-              },
-              {
-                label: "Basketball",
-                to: "/user/sport/basketball",
-                icon: <CircleDot size={18} />,
-                badgeCount: eventCounts?.basketball ?? 0,
-              },
-              {
-                label: "Tennis",
-                to: "/user/sport/tennis",
-                icon: <Circle size={18} />,
-                badgeCount: eventCounts?.tennis ?? 0,
-              },
-              {
-                label: "American Football",
-                to: "/user/sport/american-football",
-                icon: <Shield size={18} />,
-                badgeCount: eventCounts?.americanFootball ?? 0,
-              },
-              {
-                label: "Cricket",
-                to: "/user/sport/cricket",
-                icon: <Triangle size={18} />,
-                badgeCount: eventCounts?.cricket ?? 0,
-              },
-              {
-                label: "Ice Hockey",
-                to: "/user/sport/ice-hockey",
-                icon: <CircleSlash size={18} />,
-                badgeCount: eventCounts?.iceHockey ?? 0,
-              },
-              {
-                label: "Rugby Union",
-                to: "/user/sport/rugby-union",
-                icon: <Hexagon size={18} />,
-                badgeCount: eventCounts?.rugbyUnion ?? 0,
-              },
-            ].map((item) => (
-              <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
-            ))}
-          </div>
+          {/* DYNAMIC SPORT CATEGORIES */}
+          {categoriesLoaded && dynamicCategories.length > 0 ? (
+            <div className="bc-side-section">
+              <p className="bc-side-heading">
+                <span className="bc-heading-dot" aria-hidden="true" />
+                Sports
+              </p>
+              {dynamicCategories.map((cat) => {
+                const slug = SPORT_KEY_TO_SLUG[cat.sportKey] ?? cat.sportKey;
+                return (
+                  <ItemLink
+                    key={cat.id}
+                    item={{
+                      label: cat.displayName,
+                      to: `/user/sport/${slug}`,
+                      icon: <span className="text-base">{cat.icon}</span>,
+                      badgeCount: cat.eventCount > 0 ? cat.eventCount : undefined,
+                      badgeGold: cat.sportKey === "soccer",
+                    }}
+                    onClick={closeIfMobile}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            /* FALLBACK: Hardcoded sports when API hasn't loaded */
+            <>
+              <div className="bc-side-section">
+                <p className="bc-side-heading">
+                  <span className="bc-heading-dot" aria-hidden="true" />
+                  Popular Sports
+                </p>
+                {[
+                  {
+                    label: "Football",
+                    to: "/user/sport/football",
+                    icon: <Trophy size={18} />,
+                    badgeCount: eventCounts?.football ?? 0,
+                    badgeGold: true,
+                  },
+                  {
+                    label: "Basketball",
+                    to: "/user/sport/basketball",
+                    icon: <CircleDot size={18} />,
+                    badgeCount: eventCounts?.basketball ?? 0,
+                  },
+                  {
+                    label: "Tennis",
+                    to: "/user/sport/tennis",
+                    icon: <Circle size={18} />,
+                    badgeCount: eventCounts?.tennis ?? 0,
+                  },
+                  {
+                    label: "American Football",
+                    to: "/user/sport/american-football",
+                    icon: <Shield size={18} />,
+                    badgeCount: eventCounts?.americanFootball ?? 0,
+                  },
+                  {
+                    label: "Cricket",
+                    to: "/user/sport/cricket",
+                    icon: <Triangle size={18} />,
+                    badgeCount: eventCounts?.cricket ?? 0,
+                  },
+                  {
+                    label: "Ice Hockey",
+                    to: "/user/sport/ice-hockey",
+                    icon: <CircleSlash size={18} />,
+                    badgeCount: eventCounts?.iceHockey ?? 0,
+                  },
+                  {
+                    label: "Rugby Union",
+                    to: "/user/sport/rugby-union",
+                    icon: <Hexagon size={18} />,
+                    badgeCount: eventCounts?.rugbyUnion ?? 0,
+                  },
+                ].map((item) => (
+                  <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
+                ))}
+              </div>
 
-          <div className="bc-side-section">
-            <p className="bc-side-heading">
-              <span className="bc-heading-dot" aria-hidden="true" />
-              More Sports
-            </p>
-            {[
-              {
-                label: "Boxing / MMA",
-                to: "/user/sport/boxing-mma",
-                icon: <Swords size={18} />,
-              },
-              {
-                label: "Baseball",
-                to: "/user/sport/baseball",
-                icon: <CircleDot size={18} />,
-              },
-              {
-                label: "Volleyball",
-                to: "/user/sport/volleyball",
-                icon: <Circle size={18} />,
-              },
-              {
-                label: "Table Tennis",
-                to: "/user/sport/table-tennis",
-                icon: <Crosshair size={18} />,
-              },
-              {
-                label: "Golf",
-                to: "/user/sport/golf",
-                icon: <Flag size={18} />,
-              },
-              {
-                label: "Snooker",
-                to: "/user/sport/snooker",
-                icon: <CircleSlash size={18} />,
-              },
-              {
-                label: "Darts",
-                to: "/user/sport/darts",
-                icon: <Target size={18} />,
-              },
-            ].map((item) => (
-              <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
-            ))}
-          </div>
+              <div className="bc-side-section">
+                <p className="bc-side-heading">
+                  <span className="bc-heading-dot" aria-hidden="true" />
+                  More Sports
+                </p>
+                {[
+                  {
+                    label: "Boxing / MMA",
+                    to: "/user/sport/boxing-mma",
+                    icon: <Swords size={18} />,
+                  },
+                  {
+                    label: "Baseball",
+                    to: "/user/sport/baseball",
+                    icon: <CircleDot size={18} />,
+                  },
+                  {
+                    label: "Volleyball",
+                    to: "/user/sport/volleyball",
+                    icon: <Circle size={18} />,
+                  },
+                  {
+                    label: "Table Tennis",
+                    to: "/user/sport/table-tennis",
+                    icon: <Crosshair size={18} />,
+                  },
+                  {
+                    label: "Golf",
+                    to: "/user/sport/golf",
+                    icon: <Flag size={18} />,
+                  },
+                  {
+                    label: "Snooker",
+                    to: "/user/sport/snooker",
+                    icon: <CircleSlash size={18} />,
+                  },
+                  {
+                    label: "Darts",
+                    to: "/user/sport/darts",
+                    icon: <Target size={18} />,
+                  },
+                ].map((item) => (
+                  <ItemLink key={item.label} item={item} onClick={closeIfMobile} />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* MY ACCOUNT SECTION */}
           {accountSection.length > 0 ? (
