@@ -69,9 +69,17 @@ export function usePaystackVerification(reference?: string | null) {
     },
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === "success" || status === "failed" || status === "reversed"
+      // Keep polling until we get a terminal status
+      return status === "success" ||
+        status === "failed" ||
+        status === "reversed"
         ? false
-        : 3000;
+        : 2000; // Poll every 2 seconds
+    },
+    retry: true, // Always retry on any error
+    retryDelay: (attemptIndex) => {
+      // Exponential backoff: 500ms, 1s, 2s, 4s, 8s (max 20 retries = ~33 seconds)
+      return Math.min(500 * Math.pow(2, attemptIndex), 8000);
     },
     staleTime: 0,
   });
@@ -93,7 +101,9 @@ export function usePaystackStatus(reference?: string | null) {
     },
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === "success" || status === "failed" || status === "reversed"
+      return status === "success" ||
+        status === "failed" ||
+        status === "reversed"
         ? false
         : 5000;
     },

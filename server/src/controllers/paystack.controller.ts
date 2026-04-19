@@ -116,13 +116,48 @@ async function finalizePaystackDeposit(
     throw new Error("Invalid transaction state");
   }
 
-  const verificationResult = await verifyPaystackTransaction(reference);
-  logPaystackContext("finalize:verified", {
-    reference,
-    transactionId: transaction.id,
-    paystackStatus: verificationResult.data.status,
-    paystackAmount: verificationResult.data.amount,
-  });
+  let verificationResult;
+  try {
+    verificationResult = await verifyPaystackTransaction(reference);
+    logPaystackContext("finalize:verified", {
+      reference,
+      transactionId: transaction.id,
+      paystackStatus: verificationResult.data.status,
+      paystackAmount: verificationResult.data.amount,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown verification error";
+    const isNetworkError =
+      errorMessage.includes("timeout") ||
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("ENOTFOUND") ||
+      errorMessage.includes("ETIMEDOUT") ||
+      errorMessage.includes("end of file");
+
+    logPaystackContext("finalize:verification-error", {
+      reference,
+      transactionId: transaction.id,
+      error: errorMessage,
+      isNetworkError,
+    });
+
+    // On network errors or timeouts, return pending to allow client retry
+    if (isNetworkError && transaction.status === "PENDING") {
+      return {
+        status: "pending",
+        message:
+          "Payment verification is still in progress. Please try again in a moment.",
+        reference,
+        transactionId: transaction.id,
+        amount: transaction.amount,
+        processedAt: transaction.processedAt,
+      };
+    }
+
+    // If verification fails completely, throw the error
+    throw error;
+  }
 
   const isSuccessful =
     verificationResult.status && verificationResult.data.status === "success";
@@ -206,12 +241,15 @@ async function finalizePaystackDeposit(
   const paidAmountInKes = convertFromSmallestUnit(
     verificationResult.data.amount,
   );
-  if (paidAmountInKes !== transaction.amount) {
+  // Allow 1% tolerance for rounding/currency conversion differences
+  const amountTolerance = transaction.amount * 0.01;
+  if (Math.abs(paidAmountInKes - transaction.amount) > amountTolerance) {
     logPaystackContext("finalize:amount-mismatch", {
       reference,
       transactionId: transaction.id,
       expected: transaction.amount,
       paidAmountInKes,
+      tolerance: amountTolerance,
       providerAmount: verificationResult.data.amount,
     });
 
@@ -543,12 +581,41 @@ export async function verifyPaystackPayment(
       return;
     }
 
-    console.error("Paystack verify error:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to verify Paystack payment";
+    const isNetworkError =
+      errorMessage.includes("timeout") ||
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("ENOTFOUND") ||
+      errorMessage.includes("ETIMEDOUT") ||
+      errorMessage.includes("end of file");
+
+    console.error("Paystack verify error:", {
+      error: errorMessage,
+      isNetworkError,
+      reference: req.params.reference,
+    });
+
+    // Return pending status for network errors so client retries
+    if (isNetworkError) {
+      res.status(200).json({
+        status: "pending",
+        message: "Payment verification is in progress. Please try again.",
+        reference: req.params.reference,
+        data: {
+          reference: req.params.reference,
+          amount: 0,
+          status: "pending",
+          processedAt: null,
+        },
+      });
+      return;
+    }
+
     res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to verify Paystack payment",
+      error: errorMessage,
       status: "error",
     });
   }

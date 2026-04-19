@@ -81,8 +81,34 @@ export default function PaystackDepositPage() {
       return;
     }
 
+    // If pending, keep showing loading
+    if (status === "pending") {
+      setIsProcessing(true);
+      return;
+    }
+
     setIsProcessing(true);
   }, [verificationQuery.data?.status, verificationReference]);
+
+  // Handle verification query errors - show error if it fails after many retries
+  useEffect(() => {
+    if (
+      verificationReference &&
+      verificationQuery.isError &&
+      verificationQuery.failureCount >= 10
+    ) {
+      // After 10+ failed retries, show error
+      localStorage.removeItem(pendingStorageKey);
+      setPaymentStatus("failed");
+      setShowPaymentResult(true);
+      setIsProcessing(false);
+      setVerificationReference(null);
+    }
+  }, [
+    verificationQuery.isError,
+    verificationQuery.failureCount,
+    verificationReference,
+  ]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -247,7 +273,8 @@ export default function PaystackDepositPage() {
               <div>
                 <p className="font-semibold text-white">1. Start payment</p>
                 <p className="mt-1">
-                  Enter your amount and continue to the hosted Paystack checkout.
+                  Enter your amount and continue to the hosted Paystack
+                  checkout.
                 </p>
               </div>
               <div>
@@ -258,7 +285,9 @@ export default function PaystackDepositPage() {
                 </p>
               </div>
               <div>
-                <p className="font-semibold text-white">3. Return and confirm</p>
+                <p className="font-semibold text-white">
+                  3. Return and confirm
+                </p>
                 <p className="mt-1">
                   When you are redirected back, BetWise verifies the transaction
                   and credits your wallet automatically.
