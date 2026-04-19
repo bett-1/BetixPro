@@ -364,7 +364,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accessTokenRef.current = storedToken;
       setAccessToken(storedToken);
       setUser(storedUser);
-      console.debug("[Auth] Restored session from sessionStorage");
+      console.log("[Auth] Restored session from sessionStorage", {
+        hasToken: Boolean(storedToken),
+        userEmail: storedUser.email,
+      });
+    } else {
+      console.log("[Auth] No stored session found");
     }
 
     // Then verify/refresh the session (async)
@@ -399,6 +404,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // but token is still valid
         console.warn(
           "[Auth] Session refresh on init failed, keeping existing auth",
+          error,
         );
         clearRecoveryFlag();
       } finally {
