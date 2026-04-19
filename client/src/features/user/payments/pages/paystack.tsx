@@ -42,18 +42,34 @@ export default function PaystackDepositPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const routeReference = params.get("reference");
+    const routeStatus = params.get("status"); // "success", "failed", or "pending"
 
-    // Only use stored reference if we're coming back from Paystack redirect (URL has reference param)
-    if (routeReference) {
-      localStorage.setItem(pendingStorageKey, routeReference);
+    // Only process if we're coming back from payment (status in URL)
+    if (routeStatus) {
+      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
-      setVerificationReference(routeReference);
-      setPaymentReference(routeReference);
-      setShouldVerify(true);
-      setIsProcessing(true);
+      
+      if (routeStatus === "success") {
+        setPaymentStatus("success");
+        setShowPaymentResult(true);
+        setIsProcessing(false);
+      } else if (routeStatus === "failed") {
+        setPaymentStatus("failed");
+        setShowPaymentResult(true);
+        setIsProcessing(false);
+      } else if (routeStatus === "pending") {
+        // Payment is still pending, show loading modal
+        setIsProcessing(true);
+        // Optional: retrieve stored reference to display in loading message
+        const storedReference = localStorage.getItem(pendingStorageKey);
+        if (storedReference) {
+          setVerificationReference(storedReference);
+          setPaymentReference(storedReference);
+          setShouldVerify(true);
+        }
+      }
     } else {
-      // On fresh page load without URL reference, clear any stale stored reference
+      // On fresh page load without URL status, reset state
       localStorage.removeItem(pendingStorageKey);
       setVerificationReference(null);
       setPaymentReference(null);
@@ -149,7 +165,7 @@ export default function PaystackDepositPage() {
       setPaymentReference(response.reference);
 
       toast.loading("Redirecting to Paystack checkout...", {
-        description: `Amount: KES ${formatMoney(amountValue)} | Reference: ${response.reference}`,
+        description: `Amount: KES ${formatMoney(amountValue)}`,
       });
 
       setTimeout(() => {
@@ -183,7 +199,6 @@ export default function PaystackDepositPage() {
         status="success"
         title="Payment Successful"
         message="Your wallet has been credited successfully."
-        reference={paymentReference || undefined}
         onClose={() => {
           setShowPaymentResult(false);
           setPaymentReference(null);
@@ -196,7 +211,6 @@ export default function PaystackDepositPage() {
         status="failed"
         title="Payment Failed"
         message="Your payment could not be confirmed. Please try again."
-        reference={paymentReference || undefined}
         onClose={() => {
           setShowPaymentResult(false);
           setPaymentReference(null);

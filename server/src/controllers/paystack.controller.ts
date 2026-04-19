@@ -797,17 +797,30 @@ export async function handlePaystackBrowserCallback(
     return;
   }
 
+  // Attempt to finalize and verify the payment
+  let paymentStatus: "success" | "failed" | "pending" = "pending";
+  try {
+    const result = await finalizePaystackDeposit(reference);
+    paymentStatus = result.status;
+  } catch (error) {
+    logPaystackContext("callback:verification_error", {
+      reference,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    paymentStatus = "pending";
+  }
+
   const redirectUrl = new URL(
     process.env.PAYSTACK_SUCCESS_REDIRECT_URL?.trim() ||
       process.env.FRONTEND_URL?.trim() ||
       "http://localhost:5173",
   );
   redirectUrl.pathname = "/user/payments/deposit";
-  redirectUrl.searchParams.set("reference", reference);
+  redirectUrl.searchParams.set("status", paymentStatus);
 
   logPaystackContext("callback:redirect", {
     reference,
-    status: "pending",
+    paymentStatus,
     target: redirectUrl.toString(),
   });
 

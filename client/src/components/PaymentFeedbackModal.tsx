@@ -79,15 +79,6 @@ export function PaymentFeedbackModal({
         <h2 className="text-2xl font-bold text-white mb-3">{title}</h2>
         <p className="text-[#8a9bb0] text-sm leading-relaxed mb-6">{message}</p>
 
-        {reference ? (
-          <div className="mb-6 rounded-lg border border-[#243a53] bg-[#0f1a2a] p-3">
-            <p className="mb-1 text-xs text-[#62738a]">Reference</p>
-            <p className="break-all text-sm font-mono text-[#f5c518]">
-              {reference}
-            </p>
-          </div>
-        ) : null}
-
         <div className="flex gap-3">
           <button
             onClick={onClose}
