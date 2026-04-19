@@ -32,7 +32,6 @@ authRouter.post(
 authRouter.post(
   "/auth/refresh",
   authGeneralRateLimiter,
-  requireTrustedOrigin,
   refresh,
 );
 authRouter.post(
