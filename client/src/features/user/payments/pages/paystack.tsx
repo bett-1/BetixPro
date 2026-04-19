@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { LoaderCircle, Wallet } from "lucide-react";
+import { LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,7 +82,6 @@ export default function MpesaDepositPage() {
 
   useEffect(() => {
     if (!shouldVerify || !verificationReference) return;
-
     const status = verificationQuery.data?.status;
     if (!status) return;
 
@@ -95,7 +94,6 @@ export default function MpesaDepositPage() {
       toast.success("Payment confirmed! Your wallet has been credited.");
       return;
     }
-
     if (status === "failed" || status === "reversed") {
       localStorage.removeItem(pendingStorageKey);
       setPaymentStatus("failed");
@@ -105,7 +103,6 @@ export default function MpesaDepositPage() {
       toast.error("Payment could not be confirmed.");
       return;
     }
-
     if (status === "pending") {
       setIsProcessing(true);
     }
@@ -159,7 +156,6 @@ export default function MpesaDepositPage() {
       toast.error("User email not found.");
       return;
     }
-
     if (amountValue < 100) {
       toast.error("Minimum deposit is KES 100.");
       return;
@@ -171,10 +167,7 @@ export default function MpesaDepositPage() {
       const response = await initializeMutation.mutateAsync({
         email: user.email,
         amount: amountValue,
-        metadata: {
-          userId: user.id,
-          source: "mpesa-deposit-page",
-        },
+        metadata: { userId: user.id, source: "mpesa-deposit-page" },
       });
 
       localStorage.setItem(pendingStorageKey, response.reference);
@@ -200,7 +193,7 @@ export default function MpesaDepositPage() {
   }
 
   return (
-    <section className="mx-auto max-w-sm px-4 py-6">
+    <section className="mx-auto max-w-md px-4 py-8">
       <PaymentLoadingModal
         isOpen={isProcessing}
         amount={amountValue}
@@ -210,7 +203,6 @@ export default function MpesaDepositPage() {
             : "Preparing M-Pesa checkout"
         }
       />
-
       <PaymentFeedbackModal
         isOpen={showPaymentResult && paymentStatus === "success"}
         status="success"
@@ -218,7 +210,6 @@ export default function MpesaDepositPage() {
         message="Your wallet has been credited successfully."
         onClose={onClose}
       />
-
       <PaymentFeedbackModal
         isOpen={showPaymentResult && paymentStatus === "failed"}
         status="failed"
@@ -228,55 +219,52 @@ export default function MpesaDepositPage() {
         onRetry={onRetry}
       />
 
-      <article className="overflow-hidden rounded-2xl border border-[#1e3048] bg-[#0b1421] shadow-2xl">
+      <article className="overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
         {/* ── Header ── */}
-        <div className="relative flex items-center gap-3 border-b border-[#1e3048] bg-[#0d1829] px-5 py-3.5">
-          {/* green left accent bar */}
-          <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00A859]" />
-
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
-            alt="M-Pesa"
-            className="h-6 w-auto object-contain"
-          />
-
-          <div className="h-4 w-px bg-[#243a53]" />
-
-          <div className="flex flex-1 items-baseline justify-between">
-            <span className="text-sm font-semibold text-white">
-              Deposit Funds
-            </span>
-            <span className="flex items-center gap-1 rounded-full bg-[#00A859]/10 px-2 py-0.5 text-[10px] font-medium text-[#00A859]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#00A859]" />
-              Secure
+        <div className="bg-[#0d1829] px-6 pt-4 -b-4 border-b border-[#1a2f45]">
+          <div className="flex items-center justify-between mb-4">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
+              alt="M-Pesa"
+              className="h-8 w-auto object-contain"
+            />
+            <span className="flex items-center gap-1.5 rounded-full border border-[#00A859]/20 bg-[#00A859]/10 px-3 py-1 text-[11px] font-semibold text-[#00A859]">
+              <ShieldCheck className="h-3 w-3" />
+              Secured by Paystack
             </span>
           </div>
+      
         </div>
 
         {/* ── Body ── */}
-        <div className="px-5 py-5">
+        <div className="px-7 py-6 space-y-5">
           {/* Quick amounts — single row */}
-          <div className="mb-4 grid grid-cols-4 gap-2">
-            {quickAmounts.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setAmount(String(value))}
-                className={`rounded-xl border py-2 text-xs font-semibold transition-all ${
-                  amountValue === value
-                    ? "border-[#00A859] bg-[#00A859]/10 text-[#00A859]"
-                    : "border-[#1e3048] bg-[#0f1a2a] text-[#8a9bb0] hover:border-[#00A859]/40 hover:text-white"
-                }`}
-              >
-                {formatMoney(value)}
-              </button>
-            ))}
+          <div>
+            <p className="mb-2.5 text-xs font-medium uppercase tracking-widest text-[#3d5a73]">
+              Quick Select
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {quickAmounts.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setAmount(String(value))}
+                  className={`rounded-xl border py-2.5 text-xs font-semibold transition-all duration-150 ${
+                    amountValue === value
+                      ? "border-[#00A859] bg-[#00A859]/10 text-[#00A859]"
+                      : "border-[#1a2f45] bg-[#0f1d2e] text-[#7a94ad] hover:border-[#00A859]/30 hover:text-white"
+                  }`}
+                >
+                  {formatMoney(value)}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={onSubmit} className="grid gap-3">
-            <label className="grid gap-1.5">
-              <span className="text-xs font-medium text-[#5a7a99] uppercase tracking-wide">
+          {/* Amount input */}
+          <form onSubmit={onSubmit} className="space-y-4">
+            <label className="block space-y-2">
+              <span className="text-xs font-medium uppercase tracking-widest text-[#3d5a73]">
                 Amount (KES)
               </span>
               <Input
@@ -286,20 +274,21 @@ export default function MpesaDepositPage() {
                 }
                 inputMode="numeric"
                 type="text"
-                placeholder="100"
-                className="h-12 rounded-xl border-[#1e3048] bg-[#0f1a2a] text-base text-white placeholder:text-[#3a5068] transition-colors focus:border-[#00A859] focus:ring-1 focus:ring-[#00A859]"
+                placeholder="Enter amount"
+                className="h-14 rounded-2xl border-[#1a2f45] bg-[#0f1d2e] text-lg text-white placeholder:text-[#2e4a63] transition-colors focus:border-[#00A859] focus:ring-1 focus:ring-[#00A859]"
               />
+              <p className="text-xs text-[#3d5a73]">Minimum deposit: KES 100</p>
             </label>
 
             <Button
               type="submit"
               disabled={initializeMutation.isPending || isProcessing}
-              className="h-12 w-full rounded-xl bg-[#00A859] text-sm font-bold text-white transition-colors hover:bg-[#008f4c] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-14 w-full rounded-2xl bg-[#00A859] text-base font-bold text-white transition-colors hover:bg-[#009950] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isProcessing ? (
-                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
               ) : (
-                <Wallet className="mr-2 h-4 w-4" />
+                <Wallet className="mr-2 h-5 w-5" />
               )}
               {isProcessing ? "Processing..." : "Pay with M-Pesa"}
             </Button>
