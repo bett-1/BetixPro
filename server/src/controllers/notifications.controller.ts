@@ -253,7 +253,8 @@ function toClientNotification(notification: {
   isRead: boolean;
   createdAt: Date;
 }) {
-  const paystackReference = notification.paystackReference ?? notification.mpesaCode ?? null;
+  const paystackReference =
+    notification.paystackReference ?? notification.mpesaCode ?? null;
 
   return {
     id: notification.id,
@@ -285,7 +286,8 @@ export async function listNotifications(
     const unreadOnly =
       req.query.unreadOnly === "true" || req.query.unreadOnly === "1";
 
-    const audience: "ADMIN" | "USER" = req.user.role === "ADMIN" ? "ADMIN" : "USER";
+    const audience: "ADMIN" | "USER" =
+      req.user.role === "ADMIN" ? "ADMIN" : "USER";
 
     const where: {
       userId: string;
@@ -331,7 +333,8 @@ export async function markAllNotificationsRead(
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const audience: "ADMIN" | "USER" = req.user.role === "ADMIN" ? "ADMIN" : "USER";
+    const audience: "ADMIN" | "USER" =
+      req.user.role === "ADMIN" ? "ADMIN" : "USER";
 
     await prisma.notification.updateMany({
       where: {
@@ -368,7 +371,8 @@ export async function markNotificationRead(
       return res.status(400).json({ message: "Invalid notification id." });
     }
 
-    const audience: "ADMIN" | "USER" = req.user.role === "ADMIN" ? "ADMIN" : "USER";
+    const audience: "ADMIN" | "USER" =
+      req.user.role === "ADMIN" ? "ADMIN" : "USER";
 
     const result = await prisma.notification.updateMany({
       where: {
