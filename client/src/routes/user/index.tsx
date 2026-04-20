@@ -20,6 +20,17 @@ const userHomePageRoute = createRoute({
 const userBetsPageRoute = createRoute({
   getParentRoute: () => userIndexLayoutRoute,
   path: "/bets",
+  validateSearch: (search: Record<string, unknown>): { 
+    tab?: string; 
+    filter?: string; 
+    page?: string | number;
+  } => {
+    return {
+      tab: (search.tab as string) || undefined,
+      filter: (search.filter as string) || undefined,
+      page: (search.page as string | number) || undefined,
+    };
+  },
   component: lazyRouteComponent(() => import("@/features/user/pages/my-bets")),
 });
 

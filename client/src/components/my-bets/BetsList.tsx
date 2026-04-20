@@ -19,7 +19,6 @@ type BetsListProps = {
 export function BetsList({
   items,
   isLoading,
-  isFetching,
   total,
   page,
   pageSize,
@@ -27,10 +26,10 @@ export function BetsList({
   onOpenBet,
   onPageChange,
 }: BetsListProps) {
-  const showSkeleton = isLoading || isFetching;
+  const showSkeleton = isLoading;
 
   return (
-    <div className="space-y-4 px-3 py-4">
+    <div className="space-y-6 py-4">
       {showSkeleton ? <BetCardSkeleton count={5} /> : null}
 
       {!showSkeleton && items.length === 0 ? <EmptyBetsState /> : null}

@@ -2,14 +2,10 @@ import { Navigate, createRoute } from "@tanstack/react-router";
 import { rootRoute } from "./root";
 
 function MyBetsAliasRoute() {
-  return (
+  return ( 
     <Navigate
       to="/user/bets"
-      search={{
-        tab: "normal",
-        filter: "all",
-        page: "1",
-      }}
+      search={{}}
     />
   );
 }

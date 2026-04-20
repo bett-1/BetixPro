@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { Outlet, useNavigate, useSearch } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { BetsFilterBar } from "@/components/my-bets/BetsFilterBar";
 import { BetsList } from "@/components/my-bets/BetsList";
-import { BetsTabs } from "@/components/my-bets/BetsTabs";
 import {
   type MyBetFilter,
   type MyBetTab,
   useMyBets,
 } from "@/features/user/components/hooks/useMyBets";
+import { Outlet, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 
 const hideLostStorageKey = "my-bets-hide-lost";
 
@@ -19,21 +17,23 @@ function normalizeTab(value: unknown): MyBetTab {
     value === "shilisha" ||
     value === "jackpot" ||
     value === "virtual" ||
-    value === "sababisha"
+    value === "sababisha" ||
+    value === "custom" ||
+    value === "all"
   ) {
     return value;
   }
 
-  return "normal";
+  return "all";
 }
 
 function normalizeFilter(value: unknown): MyBetFilter {
   if (
+    value === "active" ||
+    value === "won" ||
+    value === "lost" ||
     value === "open" ||
-    value === "all" ||
-    value === "today" ||
-    value === "week" ||
-    value === "month"
+    value === "all"
   ) {
     return value;
   }
@@ -70,12 +70,18 @@ function MyBetsPageContent() {
   const filter = normalizeFilter(search.filter);
   const page = normalizePage(search.page);
 
-  const bets = useMyBets({
-    tab,
-    filter,
-    page,
-    hideLost,
-  });
+  // Memoize search params to prevent infinite loop in useMyBets socket effect
+  const args = useMemo(
+    () => ({
+      tab,
+      filter,
+      page,
+      hideLost,
+    }),
+    [tab, filter, page, hideLost],
+  );
+
+  const bets = useMyBets(args);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -86,8 +92,11 @@ function MyBetsPageContent() {
   }, [hideLost]);
 
   const formattedLastUpdated = useMemo(() => {
-    const source = bets.lastUpdatedAt ?? new Date().toISOString();
-    const parsed = new Date(source);
+    if (!bets.lastUpdatedAt) {
+      return "---";
+    }
+
+    const parsed = new Date(bets.lastUpdatedAt);
 
     return parsed.toLocaleTimeString([], {
       hour: "2-digit",
@@ -101,81 +110,67 @@ function MyBetsPageContent() {
     filter?: MyBetFilter;
     page?: number;
   }) => {
+    const nextTab = next.tab ?? tab;
+    const nextFilter = next.filter ?? filter;
+    const nextPage = next.page ?? page;
+
+    const newSearch: any = {};
+    // Only add to URL if they are not defaults
+    if (nextTab !== "all") newSearch.tab = nextTab;
+    if (nextFilter !== "all") newSearch.filter = nextFilter;
+    if (nextPage !== 1) newSearch.page = nextPage;
+
     void navigate({
       to: "/user/bets",
-      search: {
-        tab: next.tab ?? tab,
-        filter: next.filter ?? filter,
-        page: String(next.page ?? page),
-      },
+      search: newSearch,
       replace: true,
     });
   };
 
   return (
-    <div className="px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
-      <section className="mx-auto w-full max-w-[1180px] overflow-hidden rounded-2xl border border-[#1f2a3a] bg-[#0d1117] shadow-[0_20px_70px_rgba(0,0,0,0.35)] md:rounded-3xl">
-        <header className="flex items-center justify-between border-b border-[#243247] px-3 py-3 md:px-5 md:py-4">
-          <button
-            type="button"
-            onClick={() => {
-              void navigate({ to: "/user" });
+    <div className="min-h-screen bg-linear-to-br from-[#0a0f1a] via-[#0f172a] to-[#0a0f1a]">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 lg:px-8">
+        <main className="mx-auto w-full space-y-6">
+
+          <BetsFilterBar
+            filter={filter}
+            hideLost={hideLost}
+            onFilterChange={(nextFilter) => {
+              updateSearch({ filter: nextFilter, page: 1 });
             }}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#2b3a4f] bg-[#111827] px-3 py-1.5 text-sm text-[#c6d6ea] transition hover:border-[#3a506a] md:px-4"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
-          <h1 className="text-sm font-semibold text-white md:text-base">
-            My Bets
-          </h1>
-          <span className="w-16" aria-hidden="true" />
-        </header>
+            onHideLostChange={(value) => {
+              setHideLost(value);
+              updateSearch({ page: 1 });
+            }}
+            lastUpdated={formattedLastUpdated}
+          />
 
-        <BetsTabs
-          activeTab={tab}
-          onTabChange={(nextTab) => {
-            updateSearch({ tab: nextTab, page: 1 });
-          }}
-        />
+          <BetsList
+            items={bets.items}
+            isLoading={bets.isLoading}
+            isFetching={bets.isFetching}
+            total={bets.total}
+            page={bets.page}
+            pageSize={bets.pageSize}
+            totalPages={bets.totalPages}
+            onOpenBet={(betId) => {
+              const newSearch: any = {};
+              if (tab !== "all") newSearch.tab = tab;
+              if (filter !== "all") newSearch.filter = filter;
+              if (page !== 1) newSearch.page = page;
 
-        <BetsFilterBar
-          filter={filter}
-          hideLost={hideLost}
-          onFilterChange={(nextFilter) => {
-            updateSearch({ filter: nextFilter, page: 1 });
-          }}
-          onHideLostChange={(value) => {
-            setHideLost(value);
-            updateSearch({ page: 1 });
-          }}
-          lastUpdated={formattedLastUpdated}
-        />
+              void navigate({
+                to: "/user/bets/$betId",
+                params: { betId },
+                search: newSearch,
+              });
+            }}
+            onPageChange={(nextPage) => updateSearch({ page: nextPage })}
+          />
 
-        <BetsList
-          items={bets.items}
-          isLoading={bets.isLoading}
-          isFetching={bets.isFetching}
-          total={bets.total}
-          page={bets.page}
-          pageSize={bets.pageSize}
-          totalPages={bets.totalPages}
-          onOpenBet={(betId) => {
-            void navigate({
-              to: "/user/bets/$betId",
-              params: { betId },
-              search: {
-                tab,
-                filter,
-                page: String(page),
-              },
-            });
-          }}
-          onPageChange={(nextPage) => updateSearch({ page: nextPage })}
-        />
-
-        <Outlet />
-      </section>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -1671,7 +1671,9 @@ type EventsTab = "feed" | "custom" | "categories";
 const SportCategoriesManager = lazy(() => import("./SportCategoriesManager"));
 
 export default function Events() {
-  const [activeTab, setActiveTab] = useTabState<EventsTab>("feed");
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab") === "custom" ? "custom" : "feed";
+  const [activeTab, setActiveTab] = useTabState<EventsTab>(initialTab);
 
   return (
     <div className="space-y-3">

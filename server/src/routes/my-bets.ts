@@ -21,11 +21,13 @@ const tabSchema = z.enum([
   "jackpot",
   "virtual",
   "sababisha",
+  "custom",
+  "all",
 ]);
-const filterSchema = z.enum(["open", "all", "today", "week", "month"]);
+const filterSchema = z.enum(["all", "active", "won", "lost", "open"]);
 
 const listQuerySchema = z.object({
-  tab: tabSchema.default("normal"),
+  tab: tabSchema.default("all"),
   filter: filterSchema.default("all"),
   page: z.coerce.number().int().positive().default(1),
   hideLost: z
@@ -41,6 +43,8 @@ const tabToBetType: Record<z.infer<typeof tabSchema>, string> = {
   jackpot: "JACKPOT",
   virtual: "VIRTUAL",
   sababisha: "SABABISHA",
+  custom: "CUSTOM",
+  all: "", // Won't be used directly but required for the type mapping
 };
 
 function toClientStatus(args: {
@@ -67,27 +71,7 @@ function toClientStatus(args: {
   return "open" as const;
 }
 
-function getDateFilterWindow(filter: z.infer<typeof filterSchema>) {
-  const now = new Date();
-  const start = new Date(now);
 
-  if (filter === "today") {
-    start.setHours(0, 0, 0, 0);
-    return start;
-  }
-
-  if (filter === "week") {
-    start.setDate(start.getDate() - 7);
-    return start;
-  }
-
-  if (filter === "month") {
-    start.setDate(start.getDate() - 30);
-    return start;
-  }
-
-  return null;
-}
 
 function getCancellableUntil(placedAt: Date) {
   const cancellableUntil = new Date(placedAt);
@@ -184,19 +168,41 @@ myBetsRouter.get("/my-bets", myBetsListRateLimiter, async (req, res, next) => {
     const page = parsedQuery.data.page;
     const pageSize = 20;
 
-    const dateWindow = getDateFilterWindow(parsedQuery.data.filter);
-
     const where: Prisma.BetWhereInput = {
       userId,
-      betType: tabToBetType[parsedQuery.data.tab],
-      ...(parsedQuery.data.filter === "open"
+      ...(parsedQuery.data.tab !== "all"
+        ? { betType: tabToBetType[parsedQuery.data.tab] }
+        : {}),
+      ...(parsedQuery.data.filter === "active" || parsedQuery.data.filter === "open"
         ? { status: { in: ["PENDING"] } }
         : {}),
-      ...(dateWindow ? { placedAt: { gte: dateWindow } } : {}),
+      ...(parsedQuery.data.filter === "won"
+        ? { status: { in: ["WON"] } }
+        : {}),
+      ...(parsedQuery.data.filter === "lost"
+        ? { status: { in: ["LOST"] } }
+        : {}),
       ...(hideLost ? { status: { not: "LOST" } } : {}),
     };
 
-    const [bets, total] = await Promise.all([
+    const customWhere: Prisma.CustomBetWhereInput = {
+      userId,
+      ...(parsedQuery.data.filter === "active" || parsedQuery.data.filter === "open"
+        ? { status: { in: ["PENDING"] } }
+        : {}),
+      ...(parsedQuery.data.filter === "won"
+        ? { status: { in: ["WON"] } }
+        : {}),
+      ...(parsedQuery.data.filter === "lost"
+        ? { status: { in: ["LOST"] } }
+        : {}),
+      ...(hideLost ? { status: { not: "LOST" } } : {}),
+    };
+
+    const includeCustom =
+      parsedQuery.data.tab === "all" || parsedQuery.data.tab === "custom";
+
+    const [bets, totalBets, customBetsResult, totalCustom] = await Promise.all([
       prisma.bet.findMany({
         where,
         select: {
@@ -209,23 +215,51 @@ myBetsRouter.get("/my-bets", myBetsListRateLimiter, async (req, res, next) => {
           placedAt: true,
           isPromoted: true,
           cancelledAt: true,
+          selectionsSnapshot: true,
           event: {
             select: {
               commenceTime: true,
               status: true,
+              homeTeam: true,
+              awayTeam: true,
             },
           },
         },
         orderBy: { placedAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        take: page * pageSize,
       }),
       prisma.bet.count({ where }),
+      includeCustom
+        ? prisma.customBet.findMany({
+            where: customWhere,
+            select: {
+              id: true,
+              status: true,
+              stake: true,
+              odds: true,
+              potentialWin: true,
+              placedAt: true,
+              event: {
+                select: {
+                  startTime: true,
+                  status: true,
+                  teamHome: true,
+                  teamAway: true,
+                },
+              },
+            },
+            orderBy: { placedAt: "desc" },
+            take: page * pageSize,
+          })
+        : Promise.resolve([]),
+      includeCustom
+        ? prisma.customBet.count({ where: customWhere })
+        : Promise.resolve(0),
     ]);
 
     const now = new Date();
 
-    const items = await Promise.all(
+    const normalItems = await Promise.all(
       bets.map(async (bet) => {
         const computedPayout = computePossiblePayout(
           bet.stake,
@@ -259,6 +293,9 @@ myBetsRouter.get("/my-bets", myBetsListRateLimiter, async (req, res, next) => {
 
         const cancellableUntil = getCancellableUntil(bet.placedAt);
 
+        const isMultiple = Array.isArray(bet.selectionsSnapshot) && bet.selectionsSnapshot.length > 1;
+        const matchName = isMultiple ? "Multiple Events" : `${bet.event.homeTeam} vs ${bet.event.awayTeam}`;
+
         return {
           id: bet.id,
           bet_code: bet.betCode,
@@ -266,7 +303,8 @@ myBetsRouter.get("/my-bets", myBetsListRateLimiter, async (req, res, next) => {
           amount: bet.stake,
           possible_payout: computedPayout,
           total_odds: bet.displayOdds,
-          selections_count: 1,
+          selections_count: Array.isArray(bet.selectionsSnapshot) ? Math.max(1, bet.selectionsSnapshot.length) : 1,
+          match_name: matchName,
           placed_at: bet.placedAt.toISOString(),
           cancellable_until: cancellableUntil.toISOString(),
           is_cancellable: isCancellable({
@@ -281,8 +319,66 @@ myBetsRouter.get("/my-bets", myBetsListRateLimiter, async (req, res, next) => {
       }),
     );
 
+    const customItems = customBetsResult.map((bet) => {
+      let statusStr: "won" | "lost" | "cancelled" | "open" = "open";
+      if (bet.status === "WON") statusStr = "won";
+      else if (bet.status === "LOST") statusStr = "lost";
+      else if (bet.status === "VOID" || bet.status === "CANCELLED")
+        statusStr = "cancelled";
+
+      const cancellableUntil = getCancellableUntil(bet.placedAt);
+
+      return {
+        id: bet.id,
+        bet_code: `CB-${bet.id.substring(0, 8).toUpperCase()}`,
+        status: statusStr,
+        amount: bet.stake,
+        possible_payout: bet.potentialWin,
+        total_odds: bet.odds,
+        selections_count: 1,
+        match_name: `${bet.event.teamHome} vs ${bet.event.teamAway}`,
+        placed_at: bet.placedAt.toISOString(),
+        cancellable_until: cancellableUntil.toISOString(),
+        is_cancellable: isCancellable({
+          status:
+            bet.status === "PENDING"
+              ? "PENDING"
+              : bet.status === "WON"
+                ? "WON"
+                : bet.status === "LOST"
+                  ? "LOST"
+                  : "VOID",
+          placedAt: bet.placedAt,
+          matchStart: bet.event.startTime,
+          now,
+          cancelledAt: null,
+        }),
+        is_live: bet.event.status === "LIVE",
+      };
+    });
+
+    const allItems = [...normalItems, ...customItems].sort((a, b) => {
+      // Priority 1: Live and Open
+      if (a.is_live && !b.is_live) return -1;
+      if (!a.is_live && b.is_live) return 1;
+
+      // Priority 2: Open vs others
+      if (a.status === "open" && b.status !== "open") return -1;
+      if (a.status !== "open" && b.status === "open") return 1;
+
+      // Default: placed desc
+      return new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime();
+    });
+
+    const paginatedItems = allItems.slice(
+      (page - 1) * pageSize,
+      page * pageSize
+    );
+
+    const total = totalBets + totalCustom;
+
     return res.status(200).json({
-      items,
+      items: paginatedItems,
       total,
       page,
       pageSize,
@@ -343,39 +439,119 @@ myBetsRouter.get(
         },
       });
 
+      let customBet = null;
       if (!bet) {
+        customBet = await prisma.customBet.findUnique({
+          where: { id: parsedBetId.data },
+          select: {
+            id: true,
+            userId: true,
+            eventId: true,
+            status: true,
+            selection: {
+              select: {
+                name: true,
+                label: true,
+                market: {
+                  select: {
+                    selections: {
+                      where: { result: "WIN" },
+                      select: { name: true, label: true },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+            stake: true,
+            odds: true,
+            potentialWin: true,
+            placedAt: true,
+            event: {
+              select: {
+                teamHome: true,
+                teamAway: true,
+                status: true,
+                startTime: true,
+                category: true,
+              },
+            },
+          },
+        });
+      }
+
+      const activeBet = bet || customBet;
+
+      if (!activeBet) {
         return res.status(404).json({ message: "Bet not found." });
       }
 
-      if (bet.userId !== userId) {
+      if (activeBet.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const computedPayout = computePossiblePayout(bet.stake, bet.displayOdds);
-      if (Math.abs(computedPayout - bet.potentialPayout) > 0.01) {
+      if (customBet) {
+        let statusStr: "won" | "lost" | "cancelled" | "open" = "open";
+        if (customBet.status === "WON") statusStr = "won";
+        else if (customBet.status === "LOST") statusStr = "lost";
+        else if (customBet.status === "VOID" || customBet.status === "CANCELLED") statusStr = "cancelled";
+        
+        const winner = customBet.selection.market.selections[0];
+        const ftResult = winner ? (winner.name || winner.label) : null;
+
+        return res.status(200).json({
+          id: customBet.id,
+          bet_code: `CB-${customBet.id.substring(0, 8).toUpperCase()}`,
+          status: statusStr,
+          amount: customBet.stake,
+          possible_payout: customBet.potentialWin,
+          total_odds: customBet.odds,
+          match_name: `${customBet.event.teamHome} vs ${customBet.event.teamAway}`,
+          placed_at: customBet.placedAt.toISOString(),
+          promoted_text: null,
+          wlt: { won: 0, lost: 0, tie: 0 },
+          selections: [
+            {
+              event_id: customBet.eventId,
+              home_team: customBet.event.teamHome,
+              away_team: customBet.event.teamAway,
+              market_type: customBet.event.category,
+              pick: customBet.selection.name || customBet.selection.label,
+              odds: customBet.odds,
+              ft_result: ftResult,
+              status: statusStr,
+              live_score: null,
+            }
+          ]
+        });
+      }
+
+      // At this point we are dealing with a standard bet
+      const computedPayout = computePossiblePayout(bet!.stake, bet!.displayOdds);
+      if (Math.abs(computedPayout - bet!.potentialPayout) > 0.01) {
         await createAuditLog({
           userId,
-          betId: bet.id,
+          betId: bet!.id,
           action: "INTEGRITY_ERROR",
           attemptedData: {
-            storedPayout: bet.potentialPayout,
+            storedPayout: bet!.potentialPayout,
             computedPayout,
           },
           ipAddress: getClientIp(req.ip),
         });
       }
 
-      const rawSelections = Array.isArray(bet.selectionsSnapshot)
-        ? bet.selectionsSnapshot
+      const rawSelections = Array.isArray(bet!.selectionsSnapshot)
+        ? bet!.selectionsSnapshot
         : [];
 
       const fallbackSelection = {
-        eventId: bet.eventId,
-        homeTeam: bet.event.homeTeam,
-        awayTeam: bet.event.awayTeam,
-        marketType: bet.marketType,
-        side: bet.side,
-        odds: bet.displayOdds,
+        eventId: bet!.eventId,
+        homeTeam: bet!.event.homeTeam,
+        awayTeam: bet!.event.awayTeam,
+        marketType: bet!.marketType,
+        side: bet!.side,
+        odds: bet!.displayOdds,
       };
 
       const selections = (
@@ -389,37 +565,37 @@ myBetsRouter.get(
           event_id:
             typeof typedSelection.eventId === "string"
               ? typedSelection.eventId
-              : bet.id,
+              : bet!.id,
           home_team:
             typeof typedSelection.homeTeam === "string"
               ? typedSelection.homeTeam
-              : bet.event.homeTeam,
+              : bet!.event.homeTeam,
           away_team:
             typeof typedSelection.awayTeam === "string"
               ? typedSelection.awayTeam
-              : bet.event.awayTeam,
+              : bet!.event.awayTeam,
           market_type:
             typeof typedSelection.marketType === "string"
               ? typedSelection.marketType
-              : bet.marketType,
+              : bet!.marketType,
           pick:
             typeof typedSelection.side === "string"
               ? typedSelection.side
-              : bet.side,
+              : bet!.side,
           odds:
             typeof typedSelection.odds === "number"
               ? typedSelection.odds
-              : bet.displayOdds,
+              : bet!.displayOdds,
           ft_result:
-            bet.event.homeScore !== null && bet.event.awayScore !== null
-              ? `${bet.event.homeScore}:${bet.event.awayScore}`
+            bet!.event.homeScore !== null && bet!.event.awayScore !== null
+              ? `${bet!.event.homeScore}:${bet!.event.awayScore}`
               : null,
-          status: mapSelectionStatus(bet.status, bet.event.status),
+          status: mapSelectionStatus(bet!.status, bet!.event.status),
           live_score:
-            bet.event.status === "LIVE" &&
-            bet.event.homeScore !== null &&
-            bet.event.awayScore !== null
-              ? `${bet.event.homeScore}:${bet.event.awayScore}`
+            bet!.event.status === "LIVE" &&
+            bet!.event.homeScore !== null &&
+            bet!.event.awayScore !== null
+              ? `${bet!.event.homeScore}:${bet!.event.awayScore}`
               : null,
         };
       });
@@ -432,20 +608,24 @@ myBetsRouter.get(
       ).length;
       const tied = selections.length - won - lost;
 
+      const isMultiple = Array.isArray(bet!.selectionsSnapshot) && bet!.selectionsSnapshot.length > 1;
+      const matchName = isMultiple ? "Multiple Events" : `${bet!.event.homeTeam} vs ${bet!.event.awayTeam}`;
+
       return res.status(200).json({
-        id: bet.id,
-        bet_code: bet.betCode,
+        id: bet!.id,
+        bet_code: bet!.betCode,
         status: toClientStatus({
-          status: bet.status,
-          isPromoted: bet.isPromoted,
-          cancelledAt: bet.cancelledAt,
+          status: bet!.status,
+          isPromoted: bet!.isPromoted,
+          cancelledAt: bet!.cancelledAt,
         }),
-        amount: bet.stake,
+        amount: bet!.stake,
         possible_payout: computedPayout,
-        total_odds: bet.displayOdds,
-        placed_at: bet.placedAt.toISOString(),
-        promoted_text: bet.isPromoted
-          ? `Promoted Bet placed at ${bet.placedAt.toLocaleTimeString()}`
+        total_odds: bet!.displayOdds,
+        match_name: matchName,
+        placed_at: bet!.placedAt.toISOString(),
+        promoted_text: bet!.isPromoted
+          ? `Promoted Bet placed at ${bet!.placedAt.toLocaleTimeString()}`
           : null,
         wlt: {
           won,

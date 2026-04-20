@@ -10,8 +10,10 @@ export type MyBetTab =
   | "shilisha"
   | "jackpot"
   | "virtual"
-  | "sababisha";
-export type MyBetFilter = "open" | "all" | "today" | "week" | "month";
+  | "sababisha"
+  | "custom"
+  | "all";
+export type MyBetFilter = "all" | "active" | "won" | "lost" | "open";
 
 export type MyBetListItem = {
   id: string;
@@ -21,6 +23,7 @@ export type MyBetListItem = {
   possible_payout: number;
   total_odds: number;
   selections_count: number;
+  match_name?: string;
   placed_at: string;
   cancellable_until: string;
   is_cancellable: boolean;
@@ -70,35 +73,21 @@ function applyClientFilters(
   filter: MyBetFilter,
   hideLost: boolean,
 ) {
-  const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const weekStart = new Date(now);
-  weekStart.setDate(weekStart.getDate() - 7);
-  const monthStart = new Date(now);
-  monthStart.setDate(monthStart.getDate() - 30);
-
   return items.filter((item) => {
     if (hideLost && item.status === "lost") {
       return false;
     }
 
-    if (filter === "open") {
+    if (filter === "active" || filter === "open") {
       return item.status === "open";
     }
 
-    const placedAt = new Date(item.placed_at);
-
-    if (filter === "today") {
-      return placedAt >= todayStart;
+    if (filter === "won") {
+      return item.status === "won";
     }
 
-    if (filter === "week") {
-      return placedAt >= weekStart;
-    }
-
-    if (filter === "month") {
-      return placedAt >= monthStart;
+    if (filter === "lost") {
+      return item.status === "lost";
     }
 
     return true;
@@ -149,11 +138,22 @@ export function useMyBets(args: UseMyBetsArgs) {
     };
   }, []);
 
+  const argsKey = useMemo(
+    () => JSON.stringify(args),
+    [args.tab, args.filter, args.page, args.hideLost],
+  );
+
   useEffect(() => {
     if (!isAuthenticated || !accessToken || !user?.id) {
       socketRef.current?.disconnect();
       socketRef.current = null;
       return;
+    }
+
+    // Connect or reuse socket
+    if (socketRef.current?.connected) {
+      // If args changed but we are already connected, we might need to re-subscribe
+      // but the current implementation just refreshes the whole query which is fine.
     }
 
     socketRef.current?.disconnect();
@@ -189,7 +189,7 @@ export function useMyBets(args: UseMyBetsArgs) {
         socketRef.current = null;
       }
     };
-  }, [accessToken, args, isAuthenticated, queryClient, user?.id]);
+  }, [accessToken, argsKey, isAuthenticated, queryClient, user?.id]);
 
   const filteredItems = useMemo(() => {
     return applyClientFilters(
@@ -220,7 +220,7 @@ export function useMyBetsCount() {
     queryFn: async () => {
       const { data } = await api.get<MyBetsResponse>("/my-bets", {
         params: {
-          tab: "normal",
+          tab: "all",
           filter: "all",
           page: 1,
           hideLost: false,
