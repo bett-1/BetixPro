@@ -3,13 +3,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  CheckCircle2,
   CheckSquare,
   Loader2,
   RefreshCw,
   Settings2,
   Square,
-  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -17,6 +15,10 @@ import {
   AdminCard,
   AdminSectionHeader,
   AdminStatCard,
+  TableShell,
+  adminTableCellClassName,
+  adminTableClassName,
+  adminTableHeadCellClassName,
 } from "../../components/ui";
 
 interface SportCategory {
@@ -98,29 +100,28 @@ export default function SportCategoriesManager() {
     [],
   );
 
-  const handleToggle = useCallback(
-    async (category: SportCategory) => {
-      setToggling(category.id);
-      try {
-        const { data } = await api.patch<SportCategory>(
-          `/admin/sport-categories/${category.id}/toggle`,
-        );
-        setCategories((prev) =>
-          prev.map((c) => (c.id === data.id ? { ...c, isActive: data.isActive } : c)),
-        );
-        toast.success(
-          data.isActive
-            ? `${category.displayName} activated`
-            : `${category.displayName} deactivated`,
-        );
-      } catch {
-        toast.error("Failed to toggle category");
-      } finally {
-        setToggling(null);
-      }
-    },
-    [],
-  );
+  const handleToggle = useCallback(async (category: SportCategory) => {
+    setToggling(category.id);
+    try {
+      const { data } = await api.patch<SportCategory>(
+        `/admin/sport-categories/${category.id}/toggle`,
+      );
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.id === data.id ? { ...c, isActive: data.isActive } : c,
+        ),
+      );
+      toast.success(
+        data.isActive
+          ? `${category.displayName} activated`
+          : `${category.displayName} deactivated`,
+      );
+    } catch {
+      toast.error("Failed to toggle category");
+    } finally {
+      setToggling(null);
+    }
+  }, []);
 
   const handleSelectAll = useCallback(() => {
     setSelectedKeys(new Set(categories.map((c) => c.sportKey)));
@@ -147,7 +148,6 @@ export default function SportCategoriesManager() {
       toast.error("Select at least one sport to configure");
       return;
     }
-
     setConfiguring(true);
     setSyncStatus({
       progress: 0,
@@ -157,21 +157,17 @@ export default function SportCategoriesManager() {
       totalSports: selectedKeys.size,
       completedSports: 0,
     });
-
     try {
       await api.post("/admin/sport-categories/bulk-configure", {
         sportKeys: Array.from(selectedKeys),
         houseMargin: 5,
       });
-
-      // Poll for progress
       const pollInterval = window.setInterval(async () => {
         try {
           const { data } = await api.get<SyncStatus>(
             "/admin/sport-categories/sync-status",
           );
           setSyncStatus(data);
-
           if (data.done) {
             window.clearInterval(pollInterval);
             setConfiguring(false);
@@ -197,7 +193,6 @@ export default function SportCategoriesManager() {
     void loadCategories();
   }, [loadCategories]);
 
-  // Auto-refresh every 30 seconds
   useEffect(() => {
     const timer = window.setInterval(() => {
       void loadCategories({ background: true });
@@ -209,22 +204,15 @@ export default function SportCategoriesManager() {
     return (
       <div className="space-y-4">
         <div className="h-12 animate-pulse rounded-2xl border border-white/5 bg-white/5" />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-3 gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={`cat-skel-${i}`}
-              className="h-24 animate-pulse rounded-2xl border border-white/5 bg-white/5"
+              className="h-20 animate-pulse rounded-xl border border-white/5 bg-white/5"
             />
           ))}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={`card-skel-${i}`}
-              className="h-40 animate-pulse rounded-2xl border border-white/5 bg-white/5"
-            />
-          ))}
-        </div>
+        <div className="h-64 animate-pulse rounded-2xl border border-white/5 bg-white/5" />
       </div>
     );
   }
@@ -258,38 +246,28 @@ export default function SportCategoriesManager() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2">
         <AdminStatCard
-          label="Total Sports"
+          label="Total"
           value={String(categories.length)}
           tone="blue"
         />
-        <AdminStatCard
-          label="Active"
-          value={String(totalActive)}
-          tone="live"
-        />
+        <AdminStatCard label="Active" value={String(totalActive)} tone="live" />
         <AdminStatCard
           label="Inactive"
           value={String(totalInactive)}
-          tone="accent"
+          tone="red"
         />
       </div>
 
-      {/* Summary bar */}
-      <AdminCard className="p-3 sm:p-4">
+      {/* Toolbar */}
+      <AdminCard className="px-3 py-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-admin-text-muted/70">
+          <p className="text-[11px] text-admin-text-muted/70">
             <span className="font-bold text-admin-text-primary">
               {categories.length}
             </span>{" "}
-            sports available ·{" "}
-            <span className="font-bold text-admin-accent">
-              {totalActive}
-            </span>{" "}
-            active ·{" "}
-            <span className="font-bold text-admin-red">
-              {totalInactive}
-            </span>{" "}
-            inactive
+            sports ·{" "}
+            <span className="font-bold text-admin-accent">{totalActive}</span>{" "}
+            active
           </p>
           <div className="flex flex-wrap gap-1.5">
             <Button
@@ -327,12 +305,12 @@ export default function SportCategoriesManager() {
         </div>
       </AdminCard>
 
-      {/* Progress bar during configure */}
+      {/* Progress bar */}
       {configuring && syncStatus && (
         <AdminCard className="border-admin-accent/30 p-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-admin-accent uppercase tracking-wider">
+              <span className="font-bold uppercase tracking-wider text-admin-accent">
                 Configuring: {syncStatus.currentSport || "Starting..."}
               </span>
               <span className="tabular-nums text-admin-text-muted/80">
@@ -340,117 +318,155 @@ export default function SportCategoriesManager() {
                 {syncStatus.totalConfigured.toLocaleString()} events
               </span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-white/5 border border-white/5">
+            <div className="h-2.5 overflow-hidden rounded-full border border-white/5 bg-white/5">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-admin-accent via-amber-400 to-admin-accent bg-[length:200%_auto] animate-[shimmer_2s_linear_infinite] transition-all duration-700 shadow-[0_0_10px_rgba(245,197,24,0.3)]"
+                className="h-full animate-[shimmer_2s_linear_infinite] rounded-full bg-gradient-to-r from-admin-accent via-amber-400 to-admin-accent bg-[length:200%_auto] shadow-[0_0_10px_rgba(245,197,24,0.3)] transition-all duration-700"
                 style={{ width: `${syncStatus.progress}%` }}
               />
             </div>
-            <p className="text-[10px] text-admin-text-muted/60 text-right font-mono">
+            <p className="text-right font-mono text-[10px] text-admin-text-muted/60">
               {syncStatus.progress}% COMPLETE
             </p>
           </div>
         </AdminCard>
       )}
 
-      {/* Sport cards grid */}
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {categories.map((category) => {
-          const isSelected = selectedKeys.has(category.sportKey);
-          const isTogglingThis = toggling === category.id;
-
-          return (
-            <AdminCard
-              key={category.id}
-              className={cn(
-                "group cursor-pointer border-white/5 hover:border-admin-accent/30 transition-all duration-300",
-                isSelected && "border-admin-accent/40 bg-admin-accent/[0.03] shadow-[0_0_30px_rgba(245,197,24,0.05)]",
-              )}
-              onClick={() => toggleSelect(category.sportKey)}
-              interactive
-            >
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    {/* Checkbox */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSelect(category.sportKey);
-                      }}
+      {/* Sport Categories Table */}
+      <AdminCard className="overflow-hidden p-0">
+        <TableShell>
+          <table className={adminTableClassName}>
+            <thead>
+              <tr>
+                <th
+                  className={cn(
+                    adminTableHeadCellClassName,
+                    "w-10 text-center",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedKeys.size === categories.length &&
+                      categories.length > 0
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) handleSelectAll();
+                      else handleDeselectAll();
+                    }}
+                    className="size-3.5 rounded border-admin-border bg-admin-surface accent-admin-accent"
+                  />
+                </th>
+                <th className={adminTableHeadCellClassName}>Sport</th>
+                <th
+                  className={cn(
+                    adminTableHeadCellClassName,
+                    "w-24 text-center",
+                  )}
+                >
+                  Events
+                </th>
+                <th className={adminTableHeadCellClassName}>Last Synced</th>
+                <th
+                  className={cn(adminTableHeadCellClassName, "w-32 text-right")}
+                >
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {categories.map((category) => {
+                const isSelected = selectedKeys.has(category.sportKey);
+                const isTogglingThis = toggling === category.id;
+                return (
+                  <tr
+                    key={category.id}
+                    className={cn(
+                      "group cursor-pointer transition-colors duration-200 hover:bg-white/[0.02]",
+                      isSelected && "bg-admin-accent/[0.03]",
+                    )}
+                    onClick={() => toggleSelect(category.sportKey)}
+                  >
+                    <td
                       className={cn(
-                        "flex size-5 shrink-0 items-center justify-center rounded border transition",
-                        isSelected
-                          ? "border-admin-accent bg-admin-accent text-black"
-                          : "border-admin-border bg-admin-surface",
+                        adminTableCellClassName,
+                        "w-10 text-center",
                       )}
                     >
-                      {isSelected && <CheckCircle2 size={12} />}
-                    </button>
-
-                    {/* Icon + name */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-lg" aria-hidden="true">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleSelect(category.sportKey);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="size-3.5 rounded border-admin-border bg-admin-surface accent-admin-accent"
+                      />
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl" aria-hidden="true">
                           {category.icon}
                         </span>
-                        <h3 className="truncate text-sm font-bold text-admin-text-primary">
-                          {category.displayName}
-                        </h3>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-admin-text-primary">
+                            {category.displayName}
+                          </p>
+                          <p className="text-[10px] text-admin-text-muted">
+                            Key: {category.sportKey}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-0.5 text-[10px] text-admin-text-muted">
-                        Key: {category.sportKey}
+                    </td>
+                    <td className={cn(adminTableCellClassName, "text-center")}>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="font-mono text-xs font-bold text-admin-text-primary">
+                          {(
+                            category.liveEventCount ?? category.eventCount
+                          ).toLocaleString()}
+                        </span>
+                        <span className="text-[9px] uppercase tracking-tighter text-admin-text-muted">
+                          Events
+                        </span>
+                      </div>
+                    </td>
+                    <td className={adminTableCellClassName}>
+                      <p className="text-xs text-admin-text-muted">
+                        {formatSyncTime(category.lastSyncedAt)}
                       </p>
-                    </div>
-                  </div>
-
-                  {/* Toggle */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleToggle(category);
-                    }}
-                    disabled={isTogglingThis}
-                    className="shrink-0"
-                  >
-                    <Badge
-                      className={cn(
-                        "cursor-pointer text-[9px] font-bold uppercase tracking-wide transition",
-                        category.isActive
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                          : "border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20",
-                      )}
-                    >
-                      {isTogglingThis ? (
-                        <Loader2 className="mr-0.5 size-2.5 animate-spin" />
-                      ) : null}
-                      {category.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </button>
-                </div>
-
-                {/* Stats row */}
-                <div className="mt-2.5 flex items-center gap-3 border-t border-admin-border/50 pt-2">
-                  <div className="flex items-center gap-1 text-[10px] text-admin-text-muted">
-                    <Zap size={10} className="text-admin-accent" />
-                    <span>
-                      <span className="font-bold text-admin-text-primary">
-                        {(category.liveEventCount ?? category.eventCount).toLocaleString()}
-                      </span>{" "}
-                      events
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-admin-text-muted">
-                    Synced: {formatSyncTime(category.lastSyncedAt)}
-                  </div>
-                </div>
-              </div>
-            </AdminCard>
-          );
-        })}
-      </div>
+                    </td>
+                    <td className={cn(adminTableCellClassName, "text-right")}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleToggle(category);
+                        }}
+                        disabled={isTogglingThis}
+                        className="shrink-0"
+                      >
+                        <Badge
+                          className={cn(
+                            "cursor-pointer border-transparent text-[9px] font-bold uppercase tracking-wide transition",
+                            category.isActive
+                              ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                              : "bg-red-500/10 text-red-400 hover:bg-red-500/20",
+                          )}
+                        >
+                          {isTogglingThis ? (
+                            <Loader2 className="mr-0.5 size-2.5 animate-spin" />
+                          ) : null}
+                          {category.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </TableShell>
+      </AdminCard>
     </div>
   );
 }
