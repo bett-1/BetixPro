@@ -294,6 +294,11 @@ export default function SportCategoriesManager() {
           tone="accent"
         />
         <AdminStatCard
+          label="Total Events"
+          value={totalEvents.toLocaleString()}
+          tone="accent"
+        />
+        <AdminStatCard
           label="Sports Empty"
           value={String(sportsWithNoEvents)}
           tone={sportsWithNoEvents > 0 ? "gold" : "blue"}
