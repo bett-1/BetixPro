@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
-  CheckCircle2,
   CheckSquare,
   Loader2,
   RefreshCw,
@@ -409,65 +408,80 @@ export default function SportCategoriesManager() {
               onClick={() => toggleSelect(category.sportKey)}
             >
               <CardContent className="p-3">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    {/* Checkbox */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSelect(category.sportKey);
                       }}
-                      className={cn(
-                        "flex size-5 shrink-0 items-center justify-center rounded border transition",
-                        isSelected
-                          ? "border-admin-accent bg-admin-accent text-black"
-                          : "border-admin-border bg-admin-surface",
-                      )}
+                      className="flex size-7 shrink-0 items-center justify-center rounded border border-admin-border bg-admin-surface/70"
                     >
-                      {isSelected && <CheckCircle2 size={12} />}
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleSelect(category.sportKey);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="size-3.5 rounded border-admin-border bg-admin-surface accent-admin-accent"
+                      />
                     </button>
 
-                    {/* Icon + name */}
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-lg" aria-hidden="true">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl" aria-hidden="true">
                           {category.icon}
                         </span>
-                        <h3 className="truncate text-sm font-bold text-admin-text-primary">
+                        <p className="truncate text-sm font-bold text-admin-text-primary">
                           {category.displayName}
-                        </h3>
+                        </p>
                       </div>
-                      <p className="mt-0.5 text-[10px] text-admin-text-muted">
+                      <p className="text-[10px] text-admin-text-muted">
                         Key: {category.sportKey}
                       </p>
                     </div>
                   </div>
 
-                  {/* Toggle */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleToggle(category);
-                    }}
-                    disabled={isTogglingThis}
-                    className="shrink-0"
-                  >
-                    <Badge
-                      className={cn(
-                        "cursor-pointer text-[9px] font-bold uppercase tracking-wide transition",
-                        category.isActive
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                          : "border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20",
-                      )}
+                  <div className="ml-auto flex items-start gap-2">
+                    <div className="text-right">
+                      <p className="font-mono text-xs font-bold text-admin-text-primary">
+                        {eventCount.toLocaleString()}
+                      </p>
+                      <p className="text-[9px] uppercase tracking-tighter text-admin-text-muted">
+                        Events
+                      </p>
+                      <p className="text-[10px] text-admin-text-muted">
+                        {formatSyncTime(category.lastSyncedAt)}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleToggle(category);
+                      }}
+                      disabled={isTogglingThis}
+                      className="shrink-0"
                     >
-                      {isTogglingThis ? (
-                        <Loader2 className="mr-0.5 size-2.5 animate-spin" />
-                      ) : null}
-                      {category.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </button>
+                      <Badge
+                        className={cn(
+                          "cursor-pointer text-[9px] font-bold uppercase tracking-wide transition",
+                          category.isActive
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                            : "border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20",
+                        )}
+                      >
+                        {isTogglingThis ? (
+                          <Loader2 className="mr-0.5 size-2.5 animate-spin" />
+                        ) : null}
+                        {category.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Stats row */}

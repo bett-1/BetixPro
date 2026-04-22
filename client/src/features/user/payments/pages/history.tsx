@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { RefreshCw, Search } from "lucide-react";
 import {
   formatDateTime,
   formatMoney,
@@ -36,140 +35,171 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function PaymentsHistoryPage() {
-  const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<FilterOption>("all");
-  const { data, refetch, isFetching } = useWalletSummary();
+  const { data, isLoading: isHistoryLoading } = useWalletSummary();
   const transactions = data?.transactions ?? [];
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return transactions.filter((item) => {
-      const matchesQuery =
-        q.length === 0 ||
-        item.id.toLowerCase().includes(q) ||
-        item.reference.toLowerCase().includes(q) ||
-        item.channel.toLowerCase().includes(q) ||
-        (item.mpesaCode ?? "").toLowerCase().includes(q);
-      const matchesType = typeFilter === "all" || item.type === typeFilter;
-      return matchesQuery && matchesType;
+      return typeFilter === "all" || item.type === typeFilter;
     });
-  }, [query, typeFilter, transactions]);
+  }, [typeFilter, transactions]);
 
   return (
-    <section className="mx-auto w-full max-w-2xl space-y-3">
-      {/* ── Search + Refresh ── */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d5a73]"
-          />
-          <input
-            placeholder="Search by reference, code…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-11 w-full rounded-2xl border border-[#1a2f45] bg-[#0d1829] pl-9 pr-4 text-sm text-white outline-none placeholder:text-[#2e4a63] transition-colors focus:border-[#f5c518]"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => void refetch()}
-          className="flex h-11 items-center gap-1.5 rounded-2xl border border-[#1a2f45] bg-[#0d1829] px-4 text-xs font-medium text-[#4a6a85] transition hover:border-[#f5c518]/30 hover:text-white"
-        >
-          {/* refresh */}
-          <RefreshCw
-            className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </button>
-      </div>
+    <section className="mx-auto w-full max-w-5xl px-4 py-8">
+      <article className="mx-auto w-full max-w-[860px] overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
+        <div className="border-b border-[#1a2f45] bg-[#0d1829] px-6 py-4">
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-base font-bold text-white">
+                Transaction History
+              </h2>
+              <p className="text-xs text-[#4a6a85]">
+                Review your recent payment activity
+              </p>
+            </div>
 
-      {/* ── Type Pills ── */}
-      <div className="flex flex-wrap gap-1.5">
-        {TYPE_FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setTypeFilter(f)}
-            className={`rounded-full border px-3.5 py-1 text-xs font-semibold transition-all ${
-              typeFilter === f
-                ? "border-[#f5c518] bg-[#f5c518]/10 text-[#f5c518]"
-                : "border-[#1a2f45] bg-[#0d1829] text-[#4a6a85] hover:border-[#f5c518]/20 hover:text-white"
-            }`}
-          >
-            {f === "all" ? "All" : titleCase(f)}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Transaction List ── */}
-      <article className="overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1a2f45] bg-[#0d1829] px-5 py-3.5">
-          <h2 className="text-sm font-bold text-white">Transactions</h2>
-          <span className="rounded-full border border-[#1a2f45] bg-[#0b1421] px-2.5 py-0.5 text-xs font-semibold text-[#4a6a85]">
-            {filtered.length}
-          </span>
+            <div className="hidden flex-wrap gap-1.5 sm:flex">
+              {TYPE_FILTERS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setTypeFilter(f)}
+                  className={`rounded-full border px-3.5 py-1 text-xs font-semibold transition-all ${
+                    typeFilter === f
+                      ? "border-[#f5c518] bg-[#f5c518]/10 text-[#f5c518]"
+                      : "border-[#1a2f45] bg-[#08111d] text-[#4a6a85] hover:border-[#f5c518]/20 hover:text-white"
+                  }`}
+                >
+                  {f === "all" ? "All" : titleCase(f)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-sm font-semibold text-[#4a6a85]">
-              {transactions.length === 0
-                ? "No transactions yet"
-                : "No matches found"}
-            </p>
-            <p className="mt-1 text-xs text-[#2e4a63]">
-              {transactions.length === 0
-                ? "Make a deposit to get started"
-                : "Try a different search or filter"}
-            </p>
+        {isHistoryLoading ? (
+          <div className="px-6 py-6">
+            <div className="mb-4 hidden gap-2 sm:flex">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={`history-pill-skeleton-${index}`}
+                  className="h-7 w-20 animate-pulse rounded-full bg-[#122034]"
+                />
+              ))}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-[680px] w-full table-fixed">
+                <thead className="border-b border-[#1a2f45] bg-[#0d1829]">
+                  <tr>
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <th
+                        key={`history-head-skeleton-${index}`}
+                        className="px-3 py-3 sm:px-6"
+                      >
+                        <div className="h-2.5 w-16 animate-pulse rounded bg-[#14263a]" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, rowIndex) => (
+                    <tr
+                      key={`history-row-skeleton-${rowIndex}`}
+                      className="border-b border-[#1a2f45]"
+                    >
+                      <td className="px-3 py-4 sm:px-6">
+                        <div className="h-3 w-24 animate-pulse rounded bg-[#122034]" />
+                      </td>
+                      <td className="px-3 py-4 sm:px-6">
+                        <div className="h-3 w-36 animate-pulse rounded bg-[#122034]" />
+                      </td>
+                      <td className="px-3 py-4 sm:px-6">
+                        <div className="h-3 w-28 animate-pulse rounded bg-[#122034]" />
+                      </td>
+                      <td className="px-3 py-4 sm:px-6">
+                        <div className="h-5 w-16 animate-pulse rounded-full bg-[#122034]" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="px-6 py-12">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#1a2f45] bg-[#0d1829] py-16 text-center">
+              <p className="text-sm font-semibold text-[#4a6a85]">
+                {transactions.length === 0
+                  ? "No transactions yet"
+                  : "No matches found"}
+              </p>
+              <p className="mt-1 text-xs text-[#2e4a63]">
+                {transactions.length === 0
+                  ? "Make a deposit to get started"
+                  : "Try a different filter"}
+              </p>
+            </div>
           </div>
         ) : (
-          <ul className="divide-y divide-[#1a2f45]">
-            {filtered.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between gap-3 px-5 py-3.5 transition hover:bg-[#0d1829]"
-              >
-                {/* Left */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-sm font-bold ${TYPE_COLORS[item.type] ?? "text-white"}`}
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-[680px] w-full table-fixed">
+                <thead className="border-b border-[#1a2f45] bg-[#0d1829]">
+                  <tr className="text-left">
+                    <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#69839c] sm:px-6">
+                      Type
+                    </th>
+                    <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#69839c] sm:px-6">
+                      Date
+                    </th>
+                    <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#69839c] sm:px-6">
+                      Amount
+                    </th>
+                    <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#69839c] sm:px-6">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="border-b border-[#1a2f45] transition hover:bg-[#0d1829]"
                     >
-                      {titleCase(item.type)}
-                    </span>
-                    {item.mpesaCode && (
-                      <span className="rounded-md border border-[#1a2f45] bg-[#0d1829] px-2 py-0.5 font-mono text-[10px] text-[#4a6a85]">
-                        {item.mpesaCode}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-xs text-[#3d5a73]">
-                    {formatDateTime(item.createdAt)}
-                  </p>
-                </div>
-
-                {/* Right */}
-                <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
-                  <span
-                    className={`text-sm font-bold ${TYPE_COLORS[item.type] ?? "text-white"}`}
-                  >
-                    {["withdrawal", "bet-stake"].includes(item.type)
-                      ? "−"
-                      : "+"}
-                    {formatMoney(item.amount)}
-                  </span>
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLES[item.status as TransactionStatus] ?? ""}`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+                      <td className="whitespace-nowrap px-3 py-4 sm:px-6">
+                        <span
+                          className={`text-sm font-bold ${TYPE_COLORS[item.type] ?? "text-white"}`}
+                        >
+                          {titleCase(item.type)}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-xs text-[#3d5a73] sm:px-6">
+                        {formatDateTime(item.createdAt)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 sm:px-6">
+                        <span
+                          className={`text-sm font-bold ${TYPE_COLORS[item.type] ?? "text-white"}`}
+                        >
+                          {["withdrawal", "bet-stake"].includes(item.type)
+                            ? "-"
+                            : "+"}
+                          {formatMoney(item.amount)}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 sm:px-6">
+                        <span
+                          className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLES[item.status as TransactionStatus] ?? ""}`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </article>
     </section>

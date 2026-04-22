@@ -1202,6 +1202,39 @@ export async function getWalletSummary(
   }
 }
 
+export async function getEnabledPaymentMethods(
+  req: Request,
+  res: Response,
+  next: (error?: unknown) => void,
+) {
+  try {
+    const settings = await prisma.adminSettings.findUnique({
+      where: { key: "global" },
+      select: {
+        paymentMpesaEnabled: true,
+        paymentPaystackEnabled: true,
+        paymentBankTransferEnabled: true,
+      },
+    });
+
+    if (!settings) {
+      return res.status(200).json({
+        mpesa: false,
+        paystack: false,
+        bankTransfer: false,
+      });
+    }
+
+    return res.status(200).json({
+      mpesa: settings.paymentMpesaEnabled,
+      paystack: settings.paymentPaystackEnabled,
+      bankTransfer: settings.paymentBankTransferEnabled,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function listAdminWithdrawals(
   req: Request,
   res: Response,

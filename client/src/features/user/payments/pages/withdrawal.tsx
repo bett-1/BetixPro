@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import {
-  RefreshCw,
-  Smartphone,
-  ArrowUpRight,
-  Inbox,
-  LoaderCircle,
-} from "lucide-react";
+import { Smartphone, ArrowUpRight, LoaderCircle, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, formatMoney } from "../data";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { formatMoney } from "../data";
 import { useWalletSummary, walletSummaryQueryKey } from "../wallet";
 import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
 
-const quickAmounts = [500, 1000, 2500, 5000];
 const MAX_WITHDRAWAL = 500000;
 const WITHDRAWAL_FEE_PERCENTAGE = 15;
 const MIN_WITHDRAWAL = 50;
@@ -40,7 +41,8 @@ export default function PaymentsWithdrawalPage() {
   const { user } = useAuth();
   const [amount, setAmount] = useState("500");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: walletData, refetch: refetchWallet } = useWalletSummary();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { data: walletData, isLoading: isWalletLoading } = useWalletSummary();
   const queryClient = useQueryClient();
   const accountPhone = useMemo(
     () => normalizePhone(user?.phone ?? ""),
@@ -62,8 +64,8 @@ export default function PaymentsWithdrawalPage() {
         data.message || "Withdrawal request submitted successfully!",
       );
       setAmount("500");
+      setShowConfirmModal(false);
       queryClient.invalidateQueries({ queryKey: walletSummaryQueryKey });
-      refetchWallet();
     },
     onError: (error: any) => {
       toast.error(
@@ -94,26 +96,41 @@ export default function PaymentsWithdrawalPage() {
     [numAmount, balance, normalizedPhone, totalNeeded],
   );
 
-  const recentWithdrawals = Array.isArray(walletData?.transactions)
-    ? walletData.transactions.filter((t) => t.type === "withdrawal").slice(0, 3)
-    : [];
+  function validateWithdrawalInput() {
+    if (!isPhoneValid(normalizedPhone)) {
+      toast.error("Invalid phone. Use format: 2547XXXXXXXX");
+      return false;
+    }
+
+    if (numAmount < MIN_WITHDRAWAL) {
+      toast.error(`Minimum withdrawal is KES ${MIN_WITHDRAWAL}.`);
+      return false;
+    }
+
+    if (numAmount > MAX_WITHDRAWAL) {
+      toast.error(`Maximum withdrawal is KES ${MAX_WITHDRAWAL}.`);
+      return false;
+    }
+
+    if (totalNeeded > balance) {
+      toast.error(
+        `Insufficient balance. Need KES ${totalNeeded.toLocaleString()}.`,
+      );
+      return false;
+    }
+
+    return true;
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canWithdraw) {
-      if (!isPhoneValid(normalizedPhone))
-        toast.error("Invalid phone. Use format: 2547XXXXXXXX");
-      else if (numAmount < MIN_WITHDRAWAL)
-        toast.error(`Minimum withdrawal is KES ${MIN_WITHDRAWAL}.`);
-      else if (numAmount > MAX_WITHDRAWAL)
-        toast.error(`Maximum withdrawal is KES ${MAX_WITHDRAWAL}.`);
-      else if (totalNeeded > balance)
-        toast.error(
-          `Insufficient balance. Need KES ${totalNeeded.toLocaleString()}.`,
-        );
-      else toast.error("Please check your input and try again.");
-      return;
-    }
+    if (!validateWithdrawalInput()) return;
+    setShowConfirmModal(true);
+  }
+
+  async function onConfirmWithdrawal() {
+    if (!canWithdraw) return;
+
     setIsSubmitting(true);
     try {
       await withdrawalMutation.mutateAsync({
@@ -128,13 +145,37 @@ export default function PaymentsWithdrawalPage() {
   const phoneError = phone && !isPhoneValid(normalizePhone(phone));
   const busy = isSubmitting || withdrawalMutation.isPending;
 
+  if (isWalletLoading) {
+    return (
+      <section className="mx-auto w-full max-w-5xl px-4 py-8">
+        <div className="mx-auto w-full max-w-[700px] space-y-4">
+          <article className="overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
+            <div className="border-b border-[#1a2f45] bg-[#0d1829] px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 animate-pulse rounded-xl bg-[#14263a]" />
+                <div className="space-y-2">
+                  <div className="h-3 w-28 animate-pulse rounded bg-[#14263a]" />
+                  <div className="h-2.5 w-44 animate-pulse rounded bg-[#122034]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 px-7 py-6">
+              <div className="h-12 animate-pulse rounded-2xl bg-[#122034]" />
+              <div className="h-12 animate-pulse rounded-2xl bg-[#122034]" />
+              <div className="h-12 animate-pulse rounded-2xl bg-[#f5c518]/30" />
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="mx-auto grid w-full max-w-3xl gap-4 lg:grid-cols-[1.4fr_1fr]">
-      {/* ── Withdraw Form ── */}
-      <article className="overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
-        {/* Header */}
-        <div className="border-b border-[#1a2f45] bg-[#0d1829] px-6 pt-6 pb-5">
-          <div className="flex items-center justify-between">
+    <section className="mx-auto w-full max-w-5xl px-4 py-8">
+      <div className="mx-auto w-full max-w-[700px] space-y-4">
+        <article className="overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
+          <div className="border-b border-[#1a2f45] bg-[#0d1829] px-6 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#f5c518]/20 bg-[#f5c518]/10">
                 <ArrowUpRight size={17} className="text-[#f5c518]" />
@@ -144,200 +185,147 @@ export default function PaymentsWithdrawalPage() {
                   Withdraw Funds
                 </h2>
                 <p className="text-xs text-[#4a6a85]">
-                  Sent directly to your M-Pesa
+                  Enter amount and M-Pesa number to continue
                 </p>
               </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-widest text-[#3d5a73]">
-                Balance
-              </p>
-              <p className="text-sm font-bold text-white">
-                {formatMoney(balance)}
-              </p>
             </div>
           </div>
-        </div>
 
-        {/* Body */}
-        <div className="px-6 py-5">
-          <form onSubmit={onSubmit} className="space-y-4">
-            {/* Amount */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-widest text-[#3d5a73]">
-                Amount (KES)
-              </p>
-              <div className="flex overflow-hidden rounded-2xl border border-[#1a2f45] bg-[#0f1d2e] transition-colors focus-within:border-[#f5c518]">
-                <span className="flex items-center border-r border-[#1a2f45] px-4 text-xs font-bold text-[#3d5a73]">
-                  KES
-                </span>
-                <input
-                  className="h-14 w-full bg-transparent px-4 text-lg font-semibold text-white outline-none placeholder:text-[#2e4a63]"
-                  type="number"
-                  min={MIN_WITHDRAWAL}
-                  max={MAX_WITHDRAWAL}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder={`Min ${MIN_WITHDRAWAL}`}
-                />
-              </div>
+          <div className="space-y-5 px-7 py-6">
+            <form onSubmit={onSubmit} className="space-y-5">
+              <div className="space-y-4">
+                <label className="block space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-widest text-[#3d5a73]">
+                    Amount (KES)
+                  </span>
+                  <div className="flex overflow-hidden rounded-2xl border border-[#1a2f45] bg-[#0f1d2e] transition-colors focus-within:border-[#f5c518]">
+                    <span className="flex items-center gap-1.5 border-r border-[#1a2f45] px-3 text-xs font-bold text-[#3d5a73]">
+                      <Banknote className="h-3.5 w-3.5" />
+                      KES
+                    </span>
+                    <input
+                      className="h-12 w-full bg-transparent px-3 text-base font-semibold text-white outline-none placeholder:text-[#2e4a63]"
+                      type="number"
+                      min={MIN_WITHDRAWAL}
+                      max={MAX_WITHDRAWAL}
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder={`Min ${MIN_WITHDRAWAL}`}
+                    />
+                  </div>
+                  <p className="text-xs text-[#3d5a73]">
+                    Minimum withdrawal: KES {MIN_WITHDRAWAL}
+                  </p>
+                </label>
 
-              {/* Quick amounts */}
-              <div className="grid grid-cols-4 gap-2">
-                {quickAmounts.map((value) => {
-                  const fee = Math.ceil(
-                    (value * WITHDRAWAL_FEE_PERCENTAGE) / 100,
-                  );
-                  const insufficient = value + fee > balance;
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      disabled={insufficient}
-                      onClick={() => setAmount(String(value))}
-                      className={`rounded-xl border py-2.5 text-xs font-semibold transition-all duration-150 ${
-                        numAmount === value
-                          ? "border-[#f5c518] bg-[#f5c518]/10 text-[#f5c518]"
-                          : "border-[#1a2f45] bg-[#0f1d2e] text-[#7a94ad] hover:border-[#f5c518]/30 hover:text-white"
-                      } disabled:cursor-not-allowed disabled:opacity-40`}
-                    >
-                      {formatMoney(value)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Smartphone size={13} className="text-[#3d5a73]" />
-                <p className="text-xs font-medium uppercase tracking-widest text-[#3d5a73]">
-                  M-Pesa Number
-                </p>
-              </div>
-              <input
-                className={`h-12 w-full rounded-2xl border bg-[#0f1d2e] px-4 text-sm text-white outline-none placeholder:text-[#2e4a63] transition-colors ${
-                  phoneError
-                    ? "border-red-500/60 focus:border-red-500"
-                    : "border-[#1a2f45] focus:border-[#f5c518]"
-                }`}
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="2547XXXXXXXX"
-              />
-              {phoneError && (
-                <p className="text-xs text-red-400">Use format: 2547XXXXXXXX</p>
-              )}
-            </div>
-
-            {/* Fee breakdown */}
-            {numAmount > 0 && (
-              <div className="grid grid-cols-3 divide-x divide-[#1a2f45] overflow-hidden rounded-2xl border border-[#1a2f45] bg-[#0d1829]">
-                <div className="px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                    Withdraw
-                  </p>
-                  <p className="mt-0.5 text-sm font-bold text-white">
-                    {formatMoney(numAmount)}
-                  </p>
-                </div>
-                <div className="px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                    Fee ({WITHDRAWAL_FEE_PERCENTAGE}%)
-                  </p>
-                  <p className="mt-0.5 text-sm font-bold text-[#f5c518]">
-                    −{formatMoney(feeAmount)}
-                  </p>
-                </div>
-                <div className="px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400]">
-                    You Receive
-                  </p>
-                  <p className="mt-0.5 text-sm font-bold text-emerald-500">
-                    {formatMoney(netAmount)}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={!canWithdraw || busy}
-              className="h-14 w-full rounded-2xl bg-[#f5c518] text-base font-bold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {busy ? (
-                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <ArrowUpRight className="mr-2 h-5 w-5" />
-              )}
-              {busy ? "Processing..." : "Request Withdrawal"}
-            </Button>
-          </form>
-        </div>
-      </article>
-
-      {/* ── Recent Requests ── */}
-      <article className="overflow-hidden rounded-3xl border border-[#1a2f45] bg-[#0b1421] shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1a2f45] bg-[#0d1829] px-5 py-4">
-          <h3 className="text-sm font-bold text-white">Recent Requests</h3>
-          <button
-            type="button"
-            onClick={() => void refetchWallet()}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#4a6a85] transition hover:bg-[#1a2f45] hover:text-white"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Refresh
-          </button>
-        </div>
-
-        <div className="p-4 space-y-2">
-          {recentWithdrawals.length > 0 ? (
-            recentWithdrawals.map((entry) => (
-              <div
-                key={entry.id}
-                className="rounded-2xl border border-[#1a2f45] bg-[#0d1829] px-4 py-3 transition hover:border-[#f5c518]/20"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-white">
-                    {formatMoney(entry.amount)}
-                  </p>
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                      entry.status === "completed"
-                        ? "border-green-500/30 bg-green-500/10 text-green-400"
-                        : entry.status === "processing"
-                          ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                          : entry.status === "pending"
-                            ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
-                            : "border-red-500/30 bg-red-500/10 text-red-400"
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Smartphone size={13} className="text-[#3d5a73]" />
+                    <p className="text-xs font-medium uppercase tracking-widest text-[#3d5a73]">
+                      M-Pesa Number
+                    </p>
+                  </div>
+                  <div className="relative">
+                    <Smartphone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#3d5a73]" />
+                    <input
+                      className={`mt-2 h-12 w-full rounded-2xl border bg-[#0f1d2e] px-3 pl-10 text-sm text-white outline-none placeholder:text-[#2e4a63] transition-colors ${
+                        phoneError
+                          ? "border-red-500/60 focus:border-red-500"
+                          : "border-[#1a2f45] focus:border-[#f5c518]"
+                      }`}
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="2547XXXXXXXX"
+                    />
+                  </div>
+                  <p
+                    className={`mt-2 text-xs ${
+                      phoneError ? "text-red-400" : "text-[#3d5a73]"
                     }`}
                   >
-                    {entry.status}
-                  </span>
+                    {phoneError
+                      ? "Use format: 2547XXXXXXXX"
+                      : "Withdrawals are sent to this number."}
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-[#4a6a85]">
-                  {formatDateTime(entry.createdAt)}
-                </p>
               </div>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#1a2f45] bg-[#0d1829]">
-                <Inbox className="h-6 w-6 text-[#2e4a63]" />
-              </div>
-              <p className="mt-3 text-sm font-semibold text-[#4a6a85]">
-                No requests yet
-              </p>
-              <p className="mt-1 text-xs text-[#2e4a63]">
-                Your withdrawals will appear here
-              </p>
-            </div>
-          )}
-        </div>
-      </article>
+
+              <Button
+                type="submit"
+                disabled={busy}
+                className="h-12 w-full rounded-2xl bg-[#f5c518] text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {busy ? (
+                  <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <ArrowUpRight className="mr-2 h-5 w-5" />
+                )}
+                {busy ? "Processing..." : "Request Withdrawal"}
+              </Button>
+            </form>
+          </div>
+        </article>
+      </div>
+
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="max-w-xl border-[#1a2f45] bg-[#0b1421] p-0 text-white">
+          <DialogHeader className="border-b border-[#1a2f45] bg-[#0d1829] px-6 py-4">
+            <DialogTitle className="text-base font-bold text-white">
+              Confirm Withdrawal
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#4a6a85]">
+              Please review these details before submitting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 px-6 py-5">
+            <p className="text-sm leading-relaxed text-[#9bb0c6]">
+              You are about to withdraw{" "}
+              <span className="font-semibold text-white">
+                {formatMoney(numAmount)}
+              </span>{" "}
+              to{" "}
+              <span className="font-semibold text-white">{normalizedPhone}</span>
+              .
+            </p>
+            <p className="text-sm leading-relaxed text-[#9bb0c6]">
+              A{" "}
+              <span className="font-semibold text-[#f5c518]">
+                {WITHDRAWAL_FEE_PERCENTAGE}% fee ({formatMoney(feeAmount)})
+              </span>{" "}
+              will apply, and you will receive{" "}
+              <span className="font-semibold text-emerald-400">
+                {formatMoney(netAmount)}
+              </span>
+              .
+            </p>
+            <p className="text-xs text-[#6e86a1]">
+              Confirm to proceed with this withdrawal request.
+            </p>
+          </div>
+
+          <DialogFooter className="border-t border-[#1a2f45] px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+              disabled={busy}
+              className="border-[#294157] bg-transparent text-[#dce7f2] hover:bg-[#102134] hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void onConfirmWithdrawal()}
+              disabled={busy}
+              className="bg-[#f5c518] text-black hover:bg-[#e6b800]"
+            >
+              {busy ? "Submitting..." : "Confirm Withdrawal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
