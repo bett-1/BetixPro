@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Clock, TrendingUp } from "lucide-react";
-import { isAxiosError } from "axios";
-import { api } from "@/api/axiosConfig";
 import EventMarketsModal from "./EventMarketsModal";
 import type { BetSelection } from "./hooks/useBetSlip";
 import type { ApiEvent } from "./hooks/useEvents";
@@ -13,10 +11,6 @@ type EventCardProps = {
   highlightLabel?: string;
 };
 
-type DisplayedOddCountItem = {
-  marketType: string;
-  bookmakerName: string;
-};
 
 function formatKickoffCompact(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -162,43 +156,7 @@ export default function EventCard({
   selectedOdds,
   highlightLabel,
 }: EventCardProps) {
-  const [marketCount, setMarketCount] = useState<number>(0);
   const [showMarkets, setShowMarkets] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchMarketCount = async () => {
-      try {
-        const { data } = await api.get<{
-          displayedOdds?: DisplayedOddCountItem[];
-        }>(`/user/events/${event.eventId}`);
-
-        if (!cancelled) {
-          const groupedMarkets = new Set(
-            (data.displayedOdds ?? []).map(
-              (odd) => `${odd.marketType}::${odd.bookmakerName}`,
-            ),
-          );
-          setMarketCount(groupedMarkets.size);
-        }
-      } catch (fetchError) {
-        if (
-          !cancelled &&
-          isAxiosError<{ error?: string }>(fetchError) &&
-          fetchError.response?.status === 404
-        ) {
-          setMarketCount(0);
-        }
-      }
-    };
-
-    void fetchMarketCount();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [event.eventId]);
 
   const oddsPreview = useMemo<OddsPreview[]>(
     () => [
@@ -291,8 +249,8 @@ export default function EventCard({
               className="event-card-markets event-card-markets-top inline-flex shrink-0 items-center gap-1 rounded border border-[#29425f] bg-[#122235] px-1.5 py-[2px] text-[9px] font-semibold text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518]"
             >
               <TrendingUp size={10} />
-              <span className="sm:hidden">+{marketCount}</span>
-              <span className="hidden sm:inline">+{marketCount} markets</span>
+              <span className="sm:hidden">+{event.marketCount}</span>
+              <span className="hidden sm:inline">+{event.marketCount} markets</span>
             </button>
             <span className="event-card-countdown inline-flex items-center gap-0.5 text-[10px] font-medium text-[#8099b8]">
               <Clock size={10} className="text-[#5f7898]" />
