@@ -5,11 +5,11 @@ type UnauthorizedHandler = () => void;
 
 function sanitizeRawBase(raw?: string) {
   if (!raw) return undefined;
-  let v = raw.trim();
+  const v = raw.trim();
 
   // Replace old host if present.
   try {
-    const url = new URL(v, window?.location?.origin ?? undefined);
+    const url = new URL(v);
     if (url.hostname.toLowerCase().includes("api.betixpro.com")) {
       url.hostname = "server.betixpro.com";
       // Ensure path ends with /api
@@ -39,7 +39,6 @@ function resolveApiBaseUrl() {
 }
 
 const PRODUCTION_API_BASE_URL = "https://server.betixpro.com/api";
-}
 
 const api = axios.create({
   baseURL: resolveApiBaseUrl(),
