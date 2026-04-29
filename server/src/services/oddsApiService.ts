@@ -67,7 +67,8 @@ type ApiHealthState = {
   backoffUntil: number | null;
 };
 
-const BASE_URL = "https://api.the-odds-api.com/v4";
+const ODDS_API_BASE_URL =
+  process.env.ODDS_API_BASE_URL?.trim() || "https://api.the-odds-api.com/v4";
 const DEFAULT_MARKETS = ["h2h"];
 const MAX_BACKOFF_MS = 30 * 60 * 1000;
 
@@ -310,7 +311,7 @@ class OddsApiService {
       return null;
     }
 
-    const url = `${BASE_URL}${args.endpoint}${args.query ? `?${args.query.toString()}` : ""}`;
+    const url = `${ODDS_API_BASE_URL}${args.endpoint}${args.query ? `?${args.query.toString()}` : ""}`;
     const startedAt = Date.now();
 
     try {

@@ -17,7 +17,7 @@ type LoginResponse = {
 };
 
 const baseUrl = (
-  process.env.API_BASE_URL?.trim() || "http://localhost:5000/api"
+  process.env.VITE_API_BASE_URL?.trim() || "http://localhost:5000/api"
 ).replace(/\/$/, "");
 const demoAdminPhone = process.env.DEMO_ADMIN_PHONE?.trim() || "+254700000001";
 const demoAdminPassword =
