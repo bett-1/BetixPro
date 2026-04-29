@@ -3,8 +3,42 @@ import axios from "axios";
 type RefreshHandler = () => Promise<string | null>;
 type UnauthorizedHandler = () => void;
 
+function sanitizeRawBase(raw?: string) {
+  if (!raw) return undefined;
+  let v = raw.trim();
+
+  // Replace old host if present.
+  try {
+    const url = new URL(v, window?.location?.origin ?? undefined);
+    if (url.hostname.toLowerCase().includes("api.betixpro.com")) {
+      url.hostname = "server.betixpro.com";
+      // Ensure path ends with /api
+      if (!url.pathname.endsWith("/api")) {
+        url.pathname = (url.pathname.replace(/\/+$/, "") + "/api").replace(/\/\//g, "/");
+      }
+      return url.toString().replace(/\/$/, "");
+    }
+    return v;
+  } catch {
+    // If it's not a valid URL, return as-is
+    return v;
+  }
+}
+
 function resolveApiBaseUrl() {
-  return import.meta.env.VITE_API_BASE_URL?.trim() || "/api";
+  const raw = import.meta.env.VITE_API_BASE_URL?.trim();
+  const sanitized = sanitizeRawBase(raw);
+
+  if (sanitized) return sanitized;
+
+  // Default to same-origin proxy in dev or explicit production host otherwise
+  if (typeof window === "undefined") return PRODUCTION_API_BASE_URL;
+  const appHost = window.location.hostname;
+  const isLocalAppHost = appHost === "localhost" || appHost === "127.0.0.1";
+  return isLocalAppHost ? "/api" : PRODUCTION_API_BASE_URL;
+}
+
+const PRODUCTION_API_BASE_URL = "https://server.betixpro.com/api";
 }
 
 const api = axios.create({
