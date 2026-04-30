@@ -232,9 +232,10 @@ export default function LoginModal() {
       }
 
       const message =
-        isAxiosError<{ message?: string }>(error) &&
-        typeof error.response?.data?.message === "string"
-          ? error.response.data.message
+        isAxiosError<{ error?: string; message?: string }>(error) &&
+        (typeof error.response?.data?.error === "string" ||
+          typeof error.response?.data?.message === "string")
+          ? (error.response.data.error ?? error.response.data.message)!
           : "Invalid phone number or password.";
       setErrorMessage(message);
       toast.error(message);

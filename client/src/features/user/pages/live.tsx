@@ -24,6 +24,7 @@ import {
   type LiveMarketKey,
   type LiveMatch,
 } from "../components/hooks/useLiveMatches";
+import { hasCompleteLiveMatchOdds, isValidOdd } from "../utils/oddsValidator";
 
 const liveFilterStorageKey = "betixpro.live.filters.v1";
 const expandedMarketTabs = [
@@ -212,7 +213,9 @@ const LiveOddsButton = memo(function LiveOddsButton({
   selected: boolean;
   onClick: () => void;
 }) {
-  const [displayOdds, setDisplayOdds] = useState(odds ?? 0);
+  const hasDisplayableOdds = isValidOdd(odds) && !suspended;
+  const numericOdds = hasDisplayableOdds ? Number(odds) : 0;
+  const [displayOdds, setDisplayOdds] = useState(numericOdds);
   const [tone, setTone] = useState<OddsButtonTone>("neutral");
 
   useEffect(() => {
@@ -254,17 +257,18 @@ const LiveOddsButton = memo(function LiveOddsButton({
     return;
   }, [displayOdds, odds, previousOdds]);
 
+  if (!hasDisplayableOdds) {
+    return null;
+  }
+
   return (
     <button
       type="button"
-      disabled={suspended || odds === null}
       onClick={onClick}
       className={[
         "group relative min-h-[32px] rounded-[4px] border border-[#1e3a5f] px-0 py-1 text-center transition-[background-color,transform] duration-150 active:scale-[0.97]",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#F5C518]/55",
-        suspended || odds === null
-          ? "cursor-default bg-[#0f172a] text-[#334155] pointer-events-none"
-          : selected
+        selected
             ? "bg-[#F5C518] text-[#0d1117]"
             : "bg-[#0f172a] text-white hover:bg-[#162032]",
         tone === "up" ? "[animation:flashGreen_1.5s_ease-out]" : "",
@@ -302,6 +306,11 @@ const MatchRow = memo(function MatchRow({
   highlighted?: boolean;
 }) {
   const timerLabel = useMatchClock(match);
+
+  if (!hasCompleteLiveMatchOdds(match)) {
+    return null;
+  }
+
   const primaryMarket = match.markets[0];
   const columns = getColumnLabels(market);
   const totalCorners = match.stats.corners_home + match.stats.corners_away;

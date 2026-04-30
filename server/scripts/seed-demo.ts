@@ -244,7 +244,20 @@ function makeEmail(prefix: string, index: number) {
 }
 
 function makePhone(index: number) {
-  return `+2547${String(10000000 + index)}`;
+  return normalizeSeedPhone(`07${String(10000000 + index)}`);
+}
+
+function normalizeSeedPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) {
+    return `+254${digits.slice(1)}`;
+  }
+
+  if (digits.startsWith("254")) {
+    return `+${digits}`;
+  }
+
+  return phone.trim();
 }
 
 function makeReference(prefix: string, index: number) {
@@ -387,7 +400,7 @@ async function seedUsers(options: DemoOptions) {
         index === 1
           ? `admin@${demoDomain}`
           : `ops.${pad(index - 1, 2)}@${demoDomain}`,
-      phone: index === 1 ? "+254700000001" : makePhone(100 + index),
+      phone: index === 1 ? normalizeSeedPhone("0700000001") : makePhone(100 + index),
       fullName:
         index === 1 ? "Demo Admin" : `Operations Admin ${pad(index, 2)}`,
       role: "ADMIN",
@@ -508,6 +521,7 @@ async function seedEvents(count: number) {
           leagueName,
         },
         isActive: status !== "CANCELLED",
+        oddsVerified: status !== "CANCELLED",
         houseMargin: Number((0.04 + rng() * 0.06).toFixed(3)),
         marketsEnabled: ["h2h", "spreads", "totals"],
         fetchedAt: new Date(),

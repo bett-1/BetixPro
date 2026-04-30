@@ -95,13 +95,12 @@ const registerSchema = z.object({
 
 const loginSchema = z
   .object({
-    email: z.string().trim().email("Provide a valid email address.").optional(),
-    phone: z.string().trim().optional(),
+    phone: z.string().trim().min(1, "Phone is required."),
     password: z.string(),
   })
-  .refine((data) => Boolean(data.email || data.phone), {
-    message: "Provide either email or phone.",
-    path: ["email"],
+  .refine((data) => Boolean(data.phone), {
+    message: "Provide phone.",
+    path: ["phone"],
   });
 
 const verifyAdminMfaSchema = z.object({
@@ -311,6 +310,106 @@ async function findLoginUserByEmail(
           equals: normalizedEmail,
           mode: "insensitive",
         },
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        passwordHash: true,
+      },
+    });
+
+    if (!legacyUser) {
+      return null;
+    }
+
+    return {
+      ...legacyUser,
+      accountStatus: "ACTIVE",
+      bannedAt: null,
+      banReason: null,
+      adminTotpEnabled: false,
+      adminTotpSecret: null,
+      mustChangePassword: false,
+    };
+  }
+}
+
+function normalizePhoneVariants(phone: string): string[] {
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/\D/g, "");
+  const variants = [
+    trimmed,
+    digits ? `+${digits}` : "",
+    digits.length >= 9 ? `0${digits.slice(-9)}` : "",
+    digits,
+  ];
+
+  if (digits.startsWith("0")) {
+    variants.push(`+254${digits.slice(1)}`, `254${digits.slice(1)}`);
+  }
+
+  if (digits.startsWith("254")) {
+    variants.push(`+${digits}`, `0${digits.slice(-9)}`);
+  }
+
+  return Array.from(new Set(variants.filter(Boolean)));
+}
+
+async function findLoginUserByPhoneOrEmail(
+  phoneOrEmail: string,
+): Promise<LoginUserRecord | null> {
+  const phoneVariants = normalizePhoneVariants(phoneOrEmail);
+  const emailFallback = phoneOrEmail.trim().toLowerCase();
+
+  try {
+    return await prisma.user.findFirst({
+      where: {
+        OR: [
+          { phone: { in: phoneVariants } },
+          {
+            email: {
+              equals: emailFallback,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        passwordHash: true,
+        accountStatus: true,
+        bannedAt: true,
+        banReason: true,
+        adminTotpEnabled: true,
+        adminTotpSecret: true,
+        mustChangePassword: true,
+      },
+    });
+  } catch (error) {
+    if (!isMissingUsersColumnError(error)) {
+      throw error;
+    }
+
+    const legacyUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { phone: { in: phoneVariants } },
+          {
+            email: {
+              equals: emailFallback,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
       select: {
         id: true,
@@ -563,29 +662,25 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  const rawEmail =
-    typeof req.body?.email === "string"
-      ? req.body.email.trim().toLowerCase()
-      : null;
   const rawPhone =
     typeof req.body?.phone === "string" ? req.body.phone.trim() : null;
   const rawPassword =
     typeof req.body?.password === "string" ? req.body.password : null;
 
-  console.log("[LOGIN] Attempt for:", rawEmail ?? rawPhone ?? "(missing email)");
+  console.log("[LOGIN] Phone attempt:", rawPhone ?? "(missing phone)");
 
   try {
-    if ((!rawEmail && !rawPhone) || !rawPassword?.trim()) {
+    if (!rawPhone || !rawPassword?.trim()) {
       console.log("[LOGIN] User found:", false);
       return res
         .status(400)
-        .json({ error: "Email and password are required" });
+        .json({ error: "Phone and password are required" });
     }
 
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       console.log("[LOGIN] User found:", false);
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "User not found", field: "phone" });
     }
 
     if (
@@ -595,27 +690,19 @@ export async function login(req: Request, res: Response) {
       console.log("[LOGIN] User found:", false);
       return res
         .status(400)
-        .json({ error: "Email and password are required" });
+        .json({ error: "Phone and password are required" });
     }
 
-    const normalizedEmail = parsed.data.email?.trim().toLowerCase();
-    const normalizedPhone = parsed.data.phone
-      ? normalizeKenyanPhone(parsed.data.phone)
-      : null;
+    const phoneVariants = normalizePhoneVariants(parsed.data.phone);
+    console.log("[LOGIN] Phone variants:", phoneVariants);
 
-    if (!normalizedEmail && parsed.data.phone && !normalizedPhone) {
-      console.log("[LOGIN] User found:", false);
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    const user = normalizedEmail
-      ? await findLoginUserByEmail(normalizedEmail)
-      : await findLoginUserByPhone(normalizedPhone!);
+    const user = await findLoginUserByPhoneOrEmail(parsed.data.phone);
 
     console.log("[LOGIN] User found:", !!user);
+    console.log("[LOGIN] is_verified:", user?.isVerified);
 
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "User not found", field: "phone" });
     }
 
     const passwordFieldExists =
@@ -633,7 +720,9 @@ export async function login(req: Request, res: Response) {
     console.log("[LOGIN] Password match:", isValidPassword);
 
     if (!isValidPassword) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ error: "Invalid password", field: "password" });
     }
 
     if (!user.isVerified) {
@@ -727,7 +816,6 @@ export async function login(req: Request, res: Response) {
     });
   } catch (error) {
     const safeBody = {
-      email: rawEmail,
       phoneProvided: Boolean(rawPhone),
       passwordProvided: typeof req.body?.password === "string",
     };

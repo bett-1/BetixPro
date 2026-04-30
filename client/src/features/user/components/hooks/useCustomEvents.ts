@@ -5,6 +5,7 @@ import { api, resolveSocketBaseUrl } from "@/api/axiosConfig";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import type { CustomEventData } from "../CustomEventCard";
+import { hasCompleteCustomEventOdds } from "../../utils/oddsValidator";
 
 export interface PlaceCustomBetData {
   eventId: string;
@@ -49,7 +50,7 @@ export const useCustomEvents = () => {
       const res = await api.get<{ events: CustomEventData[] }>(
         "/user/custom-events",
       );
-      return res.data.events;
+      return res.data.events.filter(hasCompleteCustomEventOdds);
     },
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -63,7 +64,7 @@ export const useCustomEvents = () => {
   const loadEvent = useCallback(async (id: string) => {
     try {
       const res = await api.get<CustomEventData>(`/user/custom-events/${id}`);
-      return res.data;
+      return hasCompleteCustomEventOdds(res.data) ? res.data : null;
     } catch {
       return null;
     }

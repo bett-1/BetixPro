@@ -3,6 +3,7 @@ import { Clock, TrendingUp } from "lucide-react";
 import EventMarketsModal from "./EventMarketsModal";
 import type { BetSelection } from "./hooks/useBetSlip";
 import type { ApiEvent } from "./hooks/useEvents";
+import { hasCompleteEventOdds, isValidOdd } from "../utils/oddsValidator";
 
 type EventCardProps = {
   event: ApiEvent;
@@ -95,31 +96,28 @@ function OddsPreviewButton({
   isBoosted: boolean;
   onOddsSelect: (selection: BetSelection) => void;
 }) {
-  const disabled = typeof entry.odds !== "number";
+  if (!isValidOdd(entry.odds)) {
+    return null;
+  }
+
+  const odds = Number(entry.odds);
 
   return (
     <button
       type="button"
-      disabled={disabled}
       onClick={() => {
-        if (typeof entry.odds !== "number") {
-          return;
-        }
-
         onOddsSelect({
           eventId: event.eventId,
           eventName: `${event.homeTeam} vs ${event.awayTeam}`,
           leagueName: event.leagueName ?? "Featured Match",
           marketType: "h2h",
           side: entry.side,
-          odds: entry.odds,
+          odds,
           commenceTime: event.commenceTime,
         });
       }}
-      className={`odds-btn mobile-event-odds ${isSelected ? "is-selected" : ""} ${disabled ? "is-disabled" : ""} group/odds relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border px-1 py-1.5 text-center transition-all duration-200 ${
-        disabled
-          ? "cursor-not-allowed border-[#203349] bg-[#122131] text-[#3d5478]"
-          : isSelected
+      className={`odds-btn mobile-event-odds ${isSelected ? "is-selected" : ""} group/odds relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border px-1 py-1.5 text-center transition-all duration-200 ${
+        isSelected
             ? "border-[#f5c518] bg-[linear-gradient(180deg,rgba(245,197,24,0.16),rgba(245,197,24,0.06))] text-[#f5c518] shadow-[0_0_0_1px_rgba(245,197,24,0.25),0_4px_14px_rgba(245,197,24,0.2)]"
             : isBoosted
               ? "border-[#c48d1e] bg-[linear-gradient(180deg,#2b2311,#1b1a1d)] text-[#ffd36a] shadow-[0_0_10px_rgba(245,166,35,0.14)] hover:border-[#f5c518]"
@@ -128,9 +126,7 @@ function OddsPreviewButton({
     >
       <span
         className={`text-[8px] font-bold uppercase tracking-[0.12em] ${
-          disabled
-            ? "text-[#3d5478]"
-            : isSelected
+          isSelected
               ? "text-[#ffd500]/80"
               : isBoosted
                 ? "text-[#f5c518]/70"
@@ -200,6 +196,10 @@ export default function EventCard({
   const kickoffDisplay = formatKickoffCompact(event.commenceTime);
   const leagueShortName = getLeagueShortName(event);
   const leagueDotClass = getLeagueDotClass(event);
+
+  if (!hasCompleteEventOdds(event)) {
+    return null;
+  }
 
   return (
     <article

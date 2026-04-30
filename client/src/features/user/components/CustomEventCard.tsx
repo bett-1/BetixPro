@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Clock, Zap, Timer, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
+import { hasCompleteCustomEventOdds, isValidOdd } from "../utils/oddsValidator";
 
 interface Selection {
   id: string;
@@ -135,6 +136,22 @@ export function CustomEventCard({
   const isSuspended = event.status === "SUSPENDED";
   const isFinished = event.status === "FINISHED";
   const bettingDisabled = isSuspended || isFinished;
+  const visibleMarkets = event.markets
+    .map((market) => ({
+      ...market,
+      selections: market.selections.filter((selection) =>
+        isValidOdd(selection.odds),
+      ),
+    }))
+    .filter(
+      (market) =>
+        (!market.status || market.status === "OPEN") &&
+        market.selections.length >= 2,
+    );
+
+  if (!hasCompleteCustomEventOdds({ ...event, markets: visibleMarkets })) {
+    return null;
+  }
 
   return (
     <div
@@ -272,7 +289,7 @@ export function CustomEventCard({
       )}
 
       {/* Markets */}
-      {event.markets.map((market) => (
+      {visibleMarkets.map((market) => (
         <div
           key={market.id}
           className="border-t border-[#1e3350]/30 px-3 py-2 sm:px-4 sm:py-2.5"

@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { getOddsApiKey } from "./oddsAutomationConfig";
+import { hasCompleteOdds } from "../utils/oddsValidator";
 
 const SPORTS = [
   "soccer_epl",
@@ -75,6 +76,11 @@ export async function fetchAndSaveOdds(): Promise<void> {
     }>;
 
     for (const event of events) {
+      if (!hasCompleteOdds(event)) {
+        console.warn("[OddsSync] Skipping event with invalid odds:", event.id);
+        continue;
+      }
+
       savedEvents += 1;
       const existingEvent = await prisma.sportEvent.findUnique({
         where: { eventId: event.id },
@@ -90,6 +96,8 @@ export async function fetchAndSaveOdds(): Promise<void> {
           awayTeam: event.away_team,
           commenceTime: new Date(event.commence_time),
           fetchedAt: new Date(),
+          isActive: true,
+          oddsVerified: true,
         },
         create: {
           eventId: event.id,
@@ -99,6 +107,8 @@ export async function fetchAndSaveOdds(): Promise<void> {
           awayTeam: event.away_team,
           commenceTime: new Date(event.commence_time),
           status: "UPCOMING",
+          isActive: true,
+          oddsVerified: true,
         },
       });
 
@@ -107,6 +117,16 @@ export async function fetchAndSaveOdds(): Promise<void> {
       for (const bookmaker of event.bookmakers || []) {
         for (const market of bookmaker.markets || []) {
           for (const outcome of market.outcomes || []) {
+            if (!Number.isFinite(outcome.price) || outcome.price <= 0) {
+              console.warn("[OddsSync] Skipping invalid outcome odds:", {
+                eventId: event.id,
+                market: market.key,
+                side: outcome.name,
+                price: outcome.price,
+              });
+              continue;
+            }
+
             await prisma.eventOdds.create({
               data: {
                 eventId: event.id,
