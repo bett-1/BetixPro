@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, type Socket } from "socket.io-client";
-import { api } from "@/api/axiosConfig";
+import { api, resolveSocketBaseUrl } from "@/api/axiosConfig";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import type { CustomEventData } from "../CustomEventCard";
@@ -37,20 +37,6 @@ export interface CreateCustomEventData {
       under: number;
     };
   };
-}
-
-function resolveSocketBaseUrl() {
-  const explicitSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
-  if (explicitSocketUrl) {
-    return explicitSocketUrl;
-  }
-
-  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (rawBaseUrl && rawBaseUrl.startsWith("http")) {
-    return new URL(rawBaseUrl).origin;
-  }
-
-  return "http://localhost:5000";
 }
 
 export const useCustomEvents = () => {

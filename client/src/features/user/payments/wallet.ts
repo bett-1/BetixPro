@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/api/axiosConfig";
+import { api, resolveSocketBaseUrl } from "@/api/axiosConfig";
 
 export type WalletTransactionType =
   | "deposit"
@@ -94,20 +94,6 @@ export const walletUpdateBrowserEvent = "wallet:update-event";
 export const notificationUpdateBrowserEvent = "notification:update-event";
 
 export const walletSummaryQueryKey = ["wallet-summary"] as const;
-
-function resolveSocketBaseUrl() {
-  const explicitSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
-  if (explicitSocketUrl) {
-    return explicitSocketUrl;
-  }
-
-  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (rawBaseUrl && rawBaseUrl.startsWith("http")) {
-    return new URL(rawBaseUrl).origin;
-  }
-
-  return "http://localhost:5000";
-}
 
 export function useWalletSummary() {
   const { isAuthenticated } = useAuth();

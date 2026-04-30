@@ -16,9 +16,20 @@ type LoginResponse = {
   user?: { id: string; email: string; phone: string; role: string };
 };
 
-const baseUrl = (
-  process.env.VITE_API_BASE_URL?.trim() || "http://localhost:5000/api"
-).replace(/\/$/, "");
+function resolveBaseUrl() {
+  const explicitBaseUrl = process.env.API_BASE_URL?.trim();
+  if (explicitBaseUrl) {
+    return explicitBaseUrl.replace(/\/$/, "");
+  }
+
+  const apiUrl = (
+    process.env.VITE_API_URL?.trim() || "https://server.betixpro.com"
+  ).replace(/\/+$/, "");
+
+  return apiUrl.endsWith("/api") ? apiUrl : `${apiUrl}/api`;
+}
+
+const baseUrl = resolveBaseUrl();
 const demoAdminPhone = process.env.DEMO_ADMIN_PHONE?.trim() || "+254700000001";
 const demoAdminPassword =
   process.env.DEMO_ADMIN_PASSWORD?.trim() || "DemoAdmin@123";

@@ -3,42 +3,42 @@ import axios from "axios";
 type RefreshHandler = () => Promise<string | null>;
 type UnauthorizedHandler = () => void;
 
-function sanitizeRawBase(raw?: string) {
-  if (!raw) return undefined;
-  const v = raw.trim();
+const DEFAULT_API_URL = "https://server.betixpro.com";
 
-  // Replace old host if present.
-  try {
-    const url = new URL(v);
-    if (url.hostname.toLowerCase().includes("api.betixpro.com")) {
-      url.hostname = "server.betixpro.com";
-      // Ensure path ends with /api
-      if (!url.pathname.endsWith("/api")) {
-        url.pathname = (url.pathname.replace(/\/+$/, "") + "/api").replace(/\/\//g, "/");
-      }
-      return url.toString().replace(/\/$/, "");
-    }
-    return v;
-  } catch {
-    // If it's not a valid URL, return as-is
-    return v;
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function appendApiPath(baseUrl: string) {
+  const trimmed = trimTrailingSlash(baseUrl);
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+}
+
+function resolveConfiguredApiUrl() {
+  return import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_URL;
+}
+
+export function resolveApiBaseUrl() {
+  const configuredApiUrl = resolveConfiguredApiUrl();
+
+  if (!configuredApiUrl.startsWith("http")) {
+    return appendApiPath(configuredApiUrl);
   }
+
+  return appendApiPath(configuredApiUrl);
 }
 
-function resolveApiBaseUrl() {
-  const raw = import.meta.env.VITE_API_BASE_URL?.trim();
-  const sanitized = sanitizeRawBase(raw);
+export function resolveSocketBaseUrl() {
+  const configuredSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
+  const configuredApiUrl = configuredSocketUrl || resolveConfiguredApiUrl();
 
-  if (sanitized) return sanitized;
+  if (!configuredApiUrl.startsWith("http")) {
+    return trimTrailingSlash(configuredApiUrl.replace(/\/api\/?$/, ""));
+  }
 
-  // Default to same-origin proxy in dev or explicit production host otherwise
-  if (typeof window === "undefined") return PRODUCTION_API_BASE_URL;
-  const appHost = window.location.hostname;
-  const isLocalAppHost = appHost === "localhost" || appHost === "127.0.0.1";
-  return isLocalAppHost ? "/api" : PRODUCTION_API_BASE_URL;
+  const url = new URL(configuredApiUrl);
+  return url.origin;
 }
-
-const PRODUCTION_API_BASE_URL = "https://server.betixpro.com/api";
 
 const api = axios.create({
   baseURL: resolveApiBaseUrl(),
