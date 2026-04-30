@@ -4,6 +4,14 @@
 
 ---
 
+## 📖 Operator Guide
+
+If you are the **platform operator** (not a developer), everything you need to run the platform day-to-day is in the **[Operations Guide →](./OPERATIONS_GUIDE.md)**.
+
+It covers: logging in, processing withdrawals, managing users, creating events, handling risk alerts, and much more — in plain language with no technical knowledge required.
+
+---
+
 ## 🚀 Tech Stack
 
 ### Frontend (`/client`)
