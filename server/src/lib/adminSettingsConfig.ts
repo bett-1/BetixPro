@@ -2,6 +2,13 @@ import { z } from "zod";
 
 const percentageField = z.number().min(0).max(100);
 const nonNegativeInt = z.number().int().min(0);
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((val) => val === "" || z.string().url().safeParse(val).success, {
+    message: "Invalid URL",
+  });
 
 export const adminSettingsSchema = z.object({
   generalSystemConfig: z.object({
@@ -43,7 +50,14 @@ export const adminSettingsSchema = z.object({
       consumerKey: z.string().trim().min(8).max(255),
       consumerSecret: z.string().trim().min(8).max(255),
       passkey: z.string().trim().min(8).max(255),
-      callbackUrl: z.string().trim().url().max(500),
+      baseUrl: z.string().url(),
+      callbackUrl: optionalUrl,
+      b2cShortcode: z.string().trim().min(5).max(20).default("174379"),
+      initiatorName: z.string().trim().min(2).max(100).default("replace-with-initiator"),
+      securityCredential: z.string().trim().min(8).max(1024).default("replace-with-credential"),
+      commandId: z.string().trim().min(2).max(50).default("BusinessPayment"),
+      resultUrl: optionalUrl.default(""),
+      timeoutUrl: optionalUrl.default(""),
       transactionFeePercent: percentageField,
       autoWithdrawEnabled: z.boolean(),
       mpesaWithdrawalApprovalThreshold: nonNegativeInt,
@@ -52,8 +66,8 @@ export const adminSettingsSchema = z.object({
       secretKey: z.string().trim().min(8).max(512),
       publicKey: z.string().trim().min(8).max(512),
       webhookSecret: z.string().trim().min(8).max(512),
-      callbackUrl: z.string().trim().url().max(500),
-      webhookUrl: z.string().trim().url().max(500),
+      callbackUrl: optionalUrl,
+      webhookUrl: optionalUrl,
     }),
   }),
   bettingEngineConfig: z.object({
@@ -106,8 +120,8 @@ export const adminSettingsSchema = z.object({
   apiAndIntegrationsConfig: z.object({
     sportsApiKey: z.string().trim().max(255),
     oddsProviderName: z.string().trim().min(2).max(100),
-    primaryWebhookUrl: z.string().trim().url().max(500),
-    fallbackWebhookUrl: z.string().trim().url().max(500),
+    primaryWebhookUrl: optionalUrl,
+    fallbackWebhookUrl: optionalUrl,
     retryAttempts: z.number().int().min(0).max(15),
     retryBackoffMs: z.number().int().min(0).max(120000),
     requestsPerMinute: z.number().int().min(1).max(50000),
@@ -183,7 +197,14 @@ export const defaultAdminSettings: AdminSettingsConfig = {
       consumerKey: "replace-with-consumer-key",
       consumerSecret: "replace-with-consumer-secret",
       passkey: "replace-with-passkey",
+      baseUrl: "https://sandbox.safaricom.co.ke",
       callbackUrl: process.env.MPESA_CALLBACK_URL?.trim() || "",
+      b2cShortcode: "174379",
+      initiatorName: "replace-with-initiator",
+      securityCredential: "replace-with-credential",
+      commandId: "BusinessPayment",
+      resultUrl: process.env.MPESA_B2C_RESULT_URL?.trim() || "",
+      timeoutUrl: process.env.MPESA_B2C_TIMEOUT_URL?.trim() || "",
       transactionFeePercent: 15,
       autoWithdrawEnabled: false,
       mpesaWithdrawalApprovalThreshold: 50000,

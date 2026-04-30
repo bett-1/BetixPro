@@ -63,8 +63,20 @@ function mapDbStatus(status: string): MpesaDepositResult["status"] {
   }
 }
 
-function isPendingQueryResult(resultCode?: string) {
-  return ["", "1037", "1025", "9999"].includes((resultCode ?? "").trim());
+function isPendingQueryResult(data: MpesaStkQueryResponse) {
+  const code = String(data.ResultCode ?? "").trim();
+  const desc = (data.ResultDesc ?? data.ResponseDescription ?? "").toLowerCase();
+
+  // If we have an explicit success code, it's not pending.
+  if (code === "0") return false;
+
+  // If Safaricom explicitly says it's still processing, it's pending.
+  if (desc.includes("processing") || desc.includes("accepted") || desc.includes("waiting")) {
+    return true;
+  }
+
+  // Common pending codes or missing code (which implies in-progress)
+  return ["", "9999"].includes(code);
 }
 
 
@@ -300,7 +312,8 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
     };
   }
 
-  const config = getMpesaConfig();
+  const settings = await getSystemSettings();
+  const config = getMpesaConfig(settings);
   if (!config.isConfigured) {
     return {
       status: "pending",
@@ -337,6 +350,12 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
 
     const data = (await response.json().catch(() => ({}))) as MpesaStkQueryResponse;
 
+    console.log("[M-Pesa Status] Query response for", transaction.checkoutRequestId, ":", {
+      ok: response.ok,
+      status: response.status,
+      data,
+    });
+
     if (!response.ok) {
       throw new Error(
         data.errorMessage ||
@@ -371,7 +390,7 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
       };
     }
 
-    if (isPendingQueryResult(data.ResultCode)) {
+    if (isPendingQueryResult(data)) {
       return {
         status: "pending",
         message:
@@ -427,6 +446,7 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
 }
 
 export async function initializeMpesaDeposit(req: Request, res: Response) {
+  console.log("[M-Pesa STK Push] Request received");
   try {
     if (!req.user?.id) {
       res.status(401).json({ message: "Unauthorized" });
@@ -463,7 +483,7 @@ export async function initializeMpesaDeposit(req: Request, res: Response) {
       return;
     }
 
-    const config = getMpesaConfig();
+    const config = getMpesaConfig(settings);
     if (!config.isConfigured) {
       res.status(500).json({
         message: `M-Pesa is not configured: ${config.missingVars.join(", ")}`,

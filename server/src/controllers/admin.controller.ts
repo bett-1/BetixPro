@@ -68,7 +68,14 @@ const adminSettingsSelect = {
   mpesaConsumerKey: true,
   mpesaConsumerSecret: true,
   mpesaPasskey: true,
+  mpesaBaseUrl: true,
   mpesaCallbackUrl: true,
+  mpesaB2cShortcode: true,
+  mpesaB2cInitiatorName: true,
+  mpesaB2cSecurityCredential: true,
+  mpesaB2cCommandId: true,
+  mpesaB2cResultUrl: true,
+  mpesaB2cTimeoutUrl: true,
   mpesaTransactionFeePercent: true,
   mpesaAutoWithdrawEnabled: true,
   mpesaWithdrawalApprovalThreshold: true,
@@ -181,7 +188,14 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     mpesaConsumerKey: config.paymentsConfig.mpesa.consumerKey,
     mpesaConsumerSecret: config.paymentsConfig.mpesa.consumerSecret,
     mpesaPasskey: config.paymentsConfig.mpesa.passkey,
+    mpesaBaseUrl: config.paymentsConfig.mpesa.baseUrl,
     mpesaCallbackUrl: config.paymentsConfig.mpesa.callbackUrl,
+    mpesaB2cShortcode: config.paymentsConfig.mpesa.b2cShortcode,
+    mpesaB2cInitiatorName: config.paymentsConfig.mpesa.initiatorName,
+    mpesaB2cSecurityCredential: config.paymentsConfig.mpesa.securityCredential,
+    mpesaB2cCommandId: config.paymentsConfig.mpesa.commandId,
+    mpesaB2cResultUrl: config.paymentsConfig.mpesa.resultUrl,
+    mpesaB2cTimeoutUrl: config.paymentsConfig.mpesa.timeoutUrl,
     mpesaTransactionFeePercent:
       config.paymentsConfig.mpesa.transactionFeePercent,
     mpesaAutoWithdrawEnabled: config.paymentsConfig.mpesa.autoWithdrawEnabled,
@@ -300,7 +314,14 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
         consumerKey: record.mpesaConsumerKey,
         consumerSecret: record.mpesaConsumerSecret,
         passkey: record.mpesaPasskey,
+        baseUrl: record.mpesaBaseUrl,
         callbackUrl: record.mpesaCallbackUrl,
+        b2cShortcode: record.mpesaB2cShortcode,
+        initiatorName: record.mpesaB2cInitiatorName,
+        securityCredential: record.mpesaB2cSecurityCredential,
+        commandId: record.mpesaB2cCommandId,
+        resultUrl: record.mpesaB2cResultUrl,
+        timeoutUrl: record.mpesaB2cTimeoutUrl,
         transactionFeePercent: record.mpesaTransactionFeePercent,
         autoWithdrawEnabled: record.mpesaAutoWithdrawEnabled,
         mpesaWithdrawalApprovalThreshold:
@@ -994,7 +1015,7 @@ export async function getBettingAnalytics(req: Request, res: Response) {
   const previousEnd = new Date(currentStart.getTime() - 1);
   const previousStart = new Date(previousEnd.getTime() - currentDurationMs);
 
-  const [bets, previousBets, settings, walletTransactions] = await Promise.all([
+  const [bets, previousBets, walletTransactions] = await Promise.all([
     prisma.bet.findMany({
       where: {
         placedAt: { gte: currentStart, lte: currentEnd },
@@ -1024,13 +1045,6 @@ export async function getBettingAnalytics(req: Request, res: Response) {
         stake: true,
         potentialPayout: true,
         status: true,
-      },
-    }),
-    prisma.adminSettings.findUnique({
-      where: { key: "global" },
-      select: {
-        commissionPercent: true,
-        winningsTaxPercent: true,
       },
     }),
     prisma.walletTransaction.findMany({
@@ -2501,6 +2515,7 @@ export async function updateAdminSettings(req: Request, res: Response) {
     .safeParse(req.body);
 
   if (!parsedBody.success) {
+    console.error("Admin settings validation failed:", JSON.stringify(parsedBody.error.flatten(), null, 2));
     return res.status(400).json({
       message: "Invalid admin settings payload.",
       issues: parsedBody.error.flatten(),

@@ -4,6 +4,7 @@ import {
   verifyPaystackWebhookSignature,
   parseWebhookEvent,
 } from "../lib/paystack";
+import { getSystemSettings } from "../lib/settings";
 import {
   initializePaystackPayment,
   handlePaystackBrowserCallback,
@@ -91,7 +92,11 @@ paystackRouter.post("/webhook", async (req, res) => {
       return;
     }
 
-    const isValid = await verifyPaystackWebhookSignature(rawBody, signature);
+    const isValid = await verifyPaystackWebhookSignature(
+      rawBody,
+      signature,
+      await getSystemSettings(),
+    );
 
     if (!isValid) {
       console.error("Paystack webhook: invalid signature or secret not configured. Webhook rejected.");

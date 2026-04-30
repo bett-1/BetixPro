@@ -1,12 +1,645 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String                @id @default(uuid()) @db.Uuid
+  email                String                @unique
+  phone                String                @unique
+  passwordHash         String                @map("password_hash")
+  isVerified           Boolean               @default(false) @map("is_verified")
+  role                 UserRole              @default(USER)
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  fullName             String?               @map("full_name")
+  accountStatus        AccountStatus         @default(ACTIVE) @map("account_status")
+  bannedAt             DateTime?             @map("banned_at")
+  banReason            String?               @map("ban_reason")
+  adminTotpEnabled     Boolean               @default(false) @map("admin_totp_enabled")
+  adminTotpSecret      String?               @map("admin_totp_secret")
+  mustChangePassword   Boolean               @default(true) @map("must_change_password")
+  resetAttempts        Int                   @default(0) @map("reset_attempts")
+  resetLastAttempt     DateTime?             @map("reset_last_attempt")
+  resetToken           String?               @unique @map("reset_token")
+  resetTokenExpiry     DateTime?             @map("reset_token_expiry")
+  adminLoginChallenges AdminLoginChallenge[]
+  banAppeals           BanAppeal[]
+  betAuditLogs         BetAuditLog[]
+  bets                 Bet[]
+  contacts             Contact[]
+  notifications        Notification[]
+  refreshTokens        RefreshToken[]
+  riskAlerts           RiskAlert[]
+  transactions         WalletTransaction[]
+  wallet               Wallet?
+
+  @@map("users")
+}
+
+model BanAppeal {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @map("user_id") @db.Uuid
+  appealText   String          @map("appeal_text")
+  status       BanAppealStatus @default(PENDING)
+  responseText String?         @map("response_text")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  reviewedAt   DateTime?       @map("reviewed_at")
+  reviewedBy   String?         @map("reviewed_by")
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ban_appeals")
+}
+
+model Wallet {
+  id           String              @id @default(uuid()) @db.Uuid
+  userId       String              @unique @map("user_id") @db.Uuid
+  balance      Int                 @default(0) @map("balance")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  transactions WalletTransaction[]
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id                          String                  @id @default(uuid()) @db.Uuid
+  userId                      String                  @map("user_id") @db.Uuid
+  walletId                    String?                 @map("wallet_id") @db.Uuid
+  type                        WalletTransactionType
+  status                      WalletTransactionStatus @default(PENDING)
+  amount                      Int
+  currency                    String                  @default("KES")
+  channel                     String
+  reference                   String                  @unique
+  checkoutRequestId           String?                 @unique @map("checkout_request_id")
+  merchantRequestId           String?                 @unique @map("merchant_request_id")
+  phone                       String?                 @map("phone")
+  accountReference            String?                 @map("account_reference")
+  description                 String?                 @map("description")
+  providerReceiptNumber       String?                 @map("provider_receipt_number")
+  providerResponseCode        String?                 @map("provider_response_code")
+  providerResponseDescription String?                 @map("provider_response_description")
+  providerCallback            Json?                   @map("provider_callback")
+  processedAt                 DateTime?               @map("processed_at")
+  createdAt                   DateTime                @default(now()) @map("created_at")
+  updatedAt                   DateTime                @updatedAt @map("updated_at")
+  user                        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet                      Wallet?                 @relation(fields: [walletId], references: [id])
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([checkoutRequestId])
+  @@index([status])
+  @@map("wallet_transactions")
+}
+
+model Notification {
+  id            String               @id @default(uuid()) @db.Uuid
+  userId        String               @map("user_id") @db.Uuid
+  audience      NotificationAudience @default(USER)
+  type          NotificationType     @default(SYSTEM)
+  title         String
+  message       String
+  transactionId String?              @map("transaction_id") @db.Uuid
+  amount        Int?
+  balance       Int?
+  isRead        Boolean              @default(false) @map("is_read")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  mpesaCode     String?              @map("mpesa_code")
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, transactionId, type, audience])
+  @@index([userId])
+  @@index([audience, isRead])
+  @@index([createdAt])
+  @@index([transactionId])
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @map("token_hash")
+  deviceInfo String?  @map("device_info")
+  ipAddress  String?  @map("ip_address")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model AdminLoginChallenge {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  challengeHash String    @unique @map("challenge_hash")
+  otpHash       String    @map("otp_hash")
+  expiresAt     DateTime  @map("expires_at")
+  consumedAt    DateTime? @map("consumed_at")
+  attempts      Int       @default(0)
+  ipAddress     String?   @map("ip_address")
+  deviceInfo    String?   @map("device_info")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("admin_login_challenges")
+}
+
+model SportEvent {
+  id               String          @id @default(uuid()) @db.Uuid
+  eventId          String          @unique @map("event_id")
+  leagueId         String?         @map("league_id")
+  leagueName       String?         @map("league_name")
+  sportKey         String?         @map("sport_key")
+  homeTeam         String          @map("home_team")
+  awayTeam         String          @map("away_team")
+  commenceTime     DateTime        @map("commence_time")
+  status           EventStatus     @default(UPCOMING)
+  homeScore        Int?            @map("home_score")
+  awayScore        Int?            @map("away_score")
+  rawData          Json?           @map("raw_data")
+  isActive         Boolean         @default(false) @map("is_active")
+  houseMargin      Float           @default(0) @map("house_margin")
+  marketsEnabled   String[]        @default(["h2h"]) @map("markets_enabled")
+  fetchedAt        DateTime        @default(now()) @map("fetched_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  featuredPriority Int             @default(0) @map("featured_priority")
+  isFeatured       Boolean         @default(false) @map("is_featured")
+  archivedAt       DateTime?       @map("archived_at")
+  autoConfigured   Boolean         @default(false) @map("auto_configured")
+  bookmakerKey     String?         @map("bookmaker_key")
+  bookmakerMargin  Float           @default(0) @map("bookmaker_margin")
+  externalEventId  String?         @unique @map("external_event_id")
+  oddsVerified     Boolean         @default(false) @map("odds_verified")
+  syncedAt         DateTime?       @map("synced_at")
+  bets             Bet[]
+  displayedOdds    DisplayedOdds[]
+  odds             EventOdds[]
+
+  @@index([status])
+  @@index([commenceTime])
+  @@index([sportKey])
+  @@index([isActive])
+  @@index([oddsVerified])
+  @@index([syncedAt])
+  @@index([bookmakerMargin])
+  @@map("sport_events")
+}
+
+model EventOdds {
+  id            String     @id @default(uuid()) @db.Uuid
+  eventId       String     @map("event_id")
+  bookmakerId   String     @map("bookmaker_id")
+  bookmakerName String     @map("bookmaker_name")
+  marketType    String     @map("market_type")
+  side          String
+  decimalOdds   Float      @map("decimal_odds")
+  recordedAt    DateTime   @default(now()) @map("recorded_at")
+  event         SportEvent @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([bookmakerId])
+  @@map("event_odds")
+}
+
+model DisplayedOdds {
+  id            String     @id @default(uuid()) @db.Uuid
+  eventId       String     @map("event_id")
+  bookmakerId   String     @map("bookmaker_id")
+  bookmakerName String     @map("bookmaker_name")
+  marketType    String     @map("market_type")
+  side          String
+  rawOdds       Float      @map("raw_odds")
+  displayOdds   Float      @map("display_odds")
+  isVisible     Boolean    @default(true) @map("is_visible")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  event         SportEvent @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+
+  @@unique([eventId, bookmakerId, marketType, side])
+  @@index([eventId])
+  @@index([isVisible])
+  @@map("displayed_odds")
+}
+
+model Bet {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  eventId            String        @map("event_id")
+  bookmakerId        String?       @map("bookmaker_id")
+  marketType         String        @map("market_type")
+  side               String
+  stake              Float
+  displayOdds        Float         @map("display_odds")
+  potentialPayout    Float         @map("potential_payout")
+  status             BetStatus     @default(PENDING)
+  placedAt           DateTime      @default(now()) @map("placed_at")
+  settledAt          DateTime?     @map("settled_at")
+  betCode            String        @unique @map("bet_code")
+  betType            String        @default("NORMAL") @map("bet_type")
+  isPromoted         Boolean       @default(false) @map("is_promoted")
+  selectionsSnapshot Json?         @map("selections_snapshot")
+  cancelledAt        DateTime?     @map("cancelled_at")
+  cancelReason       String?       @map("cancel_reason")
+  lastStatusChangeAt DateTime      @default(now()) @map("last_status_change_at")
+  auditLogs          BetAuditLog[]
+  event              SportEvent    @relation(fields: [eventId], references: [eventId])
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([status])
+  @@index([placedAt])
+  @@index([userId, status])
+  @@index([userId, placedAt(sort: Desc)])
+  @@index([eventId, status])
+  @@index([placedAt, status])
+  @@index([userId, betType, placedAt(sort: Desc)])
+  @@map("bets")
+}
+
+model BetAuditLog {
+  id            String         @id @default(uuid()) @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  betId         String         @map("bet_id") @db.Uuid
+  action        BetAuditAction
+  attemptedData Json?          @map("attempted_data")
+  ipAddress     String?        @map("ip_address")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  bet           Bet            @relation(fields: [betId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([betId, createdAt(sort: Desc)])
+  @@map("bet_audit_log")
+}
+
+model AdminSettings {
+  key                              String   @id @default("global")
+  updatedBy                        String?  @map("updated_by")
+  createdAt                        DateTime @default(now()) @map("created_at")
+  updatedAt                        DateTime @updatedAt @map("updated_at")
+  platformName                     String   @default("BetWise") @map("platform_name")
+  environment                      String   @default("sandbox")
+  defaultCurrency                  String   @default("KES") @map("default_currency")
+  timezone                         String   @default("Africa/Nairobi")
+  maintenanceMode                  Boolean  @default(false) @map("maintenance_mode")
+  registrationEnabled              Boolean  @default(true) @map("registration_enabled")
+  minDeposit                       Int      @default(100) @map("min_deposit")
+  maxDeposit                       Int      @default(200000) @map("max_deposit")
+  minWithdrawal                    Int      @default(100) @map("min_withdrawal")
+  maxWithdrawal                    Int      @default(100000) @map("max_withdrawal")
+  dailyTransactionLimit            Int      @default(500000) @map("daily_transaction_limit")
+  maxActiveBetsPerUser             Int      @default(60) @map("max_active_bets_per_user")
+  defaultUserRole                  String   @default("USER") @map("default_user_role")
+  kycRequired                      Boolean  @default(true) @map("kyc_required")
+  kycRequireId                     Boolean  @default(true) @map("kyc_require_id")
+  kycRequirePhone                  Boolean  @default(true) @map("kyc_require_phone")
+  kycRequireEmail                  Boolean  @default(true) @map("kyc_require_email")
+  withdrawalRequiresKyc            Boolean  @default(true) @map("withdrawal_requires_kyc")
+  minimumAge                       Int      @default(18) @map("minimum_age")
+  allowedCountries                 String[] @default(["KE"]) @map("allowed_countries")
+  paymentBankTransferEnabled       Boolean  @default(false) @map("payment_bank_transfer_enabled")
+  minBetAmount                     Int      @default(10) @map("min_bet_amount")
+  maxBetAmount                     Int      @default(200000) @map("max_bet_amount")
+  maxWinPerBet                     Int      @default(1000000) @map("max_win_per_bet")
+  oddsMarginPercent                Float    @default(7) @map("odds_margin_percent")
+  betDelayMs                       Int      @default(1500) @map("bet_delay_ms")
+  cashoutEnabled                   Boolean  @default(true) @map("cashout_enabled")
+  cashoutMarginPercent             Float    @default(5) @map("cashout_margin_percent")
+  allowLiveBetting                 Boolean  @default(true) @map("allow_live_betting")
+  maxExposurePerEvent              Int      @default(2000000) @map("max_exposure_per_event")
+  maxExposurePerMarket             Int      @default(800000) @map("max_exposure_per_market")
+  maxPayoutPerDay                  Int      @default(8000000) @map("max_payout_per_day")
+  highRiskBetThreshold             Int      @default(250000) @map("high_risk_bet_threshold")
+  autoBlockSuspiciousUsers         Boolean  @default(true) @map("auto_block_suspicious_users")
+  welcomeBonusEnabled              Boolean  @default(true) @map("welcome_bonus_enabled")
+  bonusMode                        String   @default("percentage") @map("bonus_mode")
+  bonusAmount                      Int      @default(500) @map("bonus_amount")
+  bonusPercent                     Float    @default(100) @map("bonus_percent")
+  wageringRequirementMultiplier    Float    @default(3) @map("wagering_requirement_multiplier")
+  bonusExpiryHours                 Int      @default(168) @map("bonus_expiry_hours")
+  maxBonusPerUser                  Int      @default(3000) @map("max_bonus_per_user")
+  cashbackRule                     String   @default("5% cashback for net losses above KES 2,000, credited weekly.") @map("cashback_rule")
+  smsEnabled                       Boolean  @default(true) @map("sms_enabled")
+  emailEnabled                     Boolean  @default(true) @map("email_enabled")
+  notifyDepositSuccess             Boolean  @default(true) @map("notify_deposit_success")
+  notifyWithdrawalSuccess          Boolean  @default(true) @map("notify_withdrawal_success")
+  notifyBetPlaced                  Boolean  @default(false) @map("notify_bet_placed")
+  notifyBetResult                  Boolean  @default(true) @map("notify_bet_result")
+  notifyAdminAlerts                Boolean  @default(true) @map("notify_admin_alerts")
+  sportsApiKey                     String   @default("replace-with-sports-api-key") @map("sports_api_key")
+  oddsProviderName                 String   @default("TheOddsAPI") @map("odds_provider_name")
+  primaryWebhookUrl                String   @default("https://example.com/webhooks/sports") @map("primary_webhook_url")
+  fallbackWebhookUrl               String   @default("https://example.com/webhooks/sports/fallback") @map("fallback_webhook_url")
+  retryAttempts                    Int      @default(3) @map("retry_attempts")
+  retryBackoffMs                   Int      @default(5000) @map("retry_backoff_ms")
+  requestsPerMinute                Int      @default(600) @map("requests_per_minute")
+  adminTwoFactorRequired           Boolean  @default(true) @map("admin_two_factor_required")
+  passwordMinLength                Int      @default(8) @map("password_min_length")
+  requireUppercase                 Boolean  @default(true) @map("require_uppercase")
+  requireNumber                    Boolean  @default(true) @map("require_number")
+  requireSpecialChar               Boolean  @default(true) @map("require_special_char")
+  sessionTimeoutMinutes            Int      @default(60) @map("session_timeout_minutes")
+  maxLoginAttempts                 Int      @default(5) @map("max_login_attempts")
+  ipWhitelist                      String[] @default([]) @map("ip_whitelist")
+  ipBlacklist                      String[] @default([]) @map("ip_blacklist")
+  affiliateCommissionPercent       Float    @default(5) @map("affiliate_commission_percent")
+  multiLevelReferralsEnabled       Boolean  @default(false) @map("multi_level_referrals_enabled")
+  affiliateMinimumPayoutThreshold  Int      @default(1500) @map("affiliate_minimum_payout_threshold")
+  affiliateWithdrawalRule          String   @default("Monthly payouts after reconciliation and KYC check.") @map("affiliate_withdrawal_rule")
+  termsAndConditions               String   @default("By using this platform, you agree to our betting terms, fair usage policies, and anti-fraud controls.") @map("terms_and_conditions")
+  privacyPolicy                    String   @default("We process account and transactional data strictly for service operations, regulatory compliance, and fraud prevention.") @map("privacy_policy")
+  responsibleGamblingMessage       String   @default("Bet responsibly. Set limits and seek support if betting affects your wellbeing.") @map("responsible_gambling_message")
+  supportContactInfo               String   @default("support@betwise.co.ke | +254700000000") @map("support_contact_info")
+  adminWithdrawalSoundEnabled      Boolean  @default(true) @map("admin_withdrawal_sound_enabled")
+  adminWithdrawalSoundTone         String   @default("/sounds/universfield-new-notification-010-352755.mp3") @map("admin_withdrawal_sound_tone")
+  adminWithdrawalSoundVolume       Int      @default(80) @map("admin_withdrawal_sound_volume")
+  mpesaAutoWithdrawEnabled         Boolean  @default(false) @map("mpesa_auto_withdraw_enabled")
+  mpesaCallbackUrl                 String   @default("") @map("mpesa_callback_url")
+  mpesaConsumerKey                 String   @default("replace-with-consumer-key") @map("mpesa_consumer_key")
+  mpesaConsumerSecret              String   @default("replace-with-consumer-secret") @map("mpesa_consumer_secret")
+  mpesaPasskey                     String   @default("replace-with-passkey") @map("mpesa_passkey")
+  mpesaShortcode                   String   @default("174379") @map("mpesa_shortcode")
+  mpesaTransactionFeePercent       Float    @default(15) @map("mpesa_transaction_fee_percent")
+  mpesaWithdrawalApprovalThreshold Int      @default(50000) @map("mpesa_withdrawal_approval_threshold")
+  paymentMpesaEnabled              Boolean  @default(true) @map("payment_mpesa_enabled")
+  paymentPaystackEnabled           Boolean  @default(true) @map("payment_paystack_enabled")
+  paystackCallbackUrl              String   @default("https://your-domain.com/api/payments/paystack/callback") @map("paystack_callback_url")
+  paystackPublicKey                String   @default("pk_test_replace_me") @map("paystack_public_key")
+  paystackSecretKey                String   @default("sk_test_replace_me") @map("paystack_secret_key")
+  paystackWebhookSecret            String   @default("whsec_replace_me") @map("paystack_webhook_secret")
+  paystackWebhookUrl               String   @default("https://your-domain.com/api/payments/paystack/webhook") @map("paystack_webhook_url")
+  mpesaB2cCommandId                String   @default("BusinessPayment") @map("mpesa_b2c_command_id")
+  mpesaB2cInitiatorName            String   @default("replace-with-initiator") @map("mpesa_b2c_initiator_name")
+  mpesaB2cResultUrl                String   @default("") @map("mpesa_b2c_result_url")
+  mpesaB2cSecurityCredential       String   @default("replace-with-credential") @map("mpesa_b2c_security_credential")
+  mpesaB2cShortcode                String   @default("174379") @map("mpesa_b2c_shortcode")
+  mpesaB2cTimeoutUrl               String   @default("") @map("mpesa_b2c_timeout_url")
+  mpesaBaseUrl                     String   @default("https://sandbox.safaricom.co.ke") @map("mpesa_base_url")
+
+  @@map("admin_settings")
+}
+
+model RiskAlert {
+  id             String        @id @default(uuid()) @db.Uuid
+  alertType      RiskAlertType
+  severity       RiskSeverity  @default(MEDIUM)
+  status         AlertStatus   @default(OPEN)
+  description    String
+  userId         String?       @map("user_id") @db.Uuid
+  betId          String?       @map("bet_id") @db.Uuid
+  eventId        String?       @map("event_id")
+  triggeredValue Float?        @map("triggered_value")
+  threshold      Float?
+  details        Json?
+  actionTaken    String?       @map("action_taken")
+  resolvedAt     DateTime?     @map("resolved_at")
+  resolvedBy     String?       @map("resolved_by")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+  @@map("risk_alerts")
+}
+
+model Contact {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String?       @map("user_id") @db.Uuid
+  fullName  String        @map("full_name")
+  phone     String
+  subject   String
+  message   String
+  status    ContactStatus @default(SUBMITTED)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  user      User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([phone])
+  @@map("contacts")
+}
+
+model NewsletterSubscription {
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique
+  isActive       Boolean   @default(true) @map("is_active")
+  subscribedAt   DateTime  @default(now()) @map("subscribed_at")
+  unsubscribedAt DateTime? @map("unsubscribed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([isActive])
+  @@index([subscribedAt])
+  @@map("newsletter_subscriptions")
+}
+
+model CustomEvent {
+  id          String                @id @default(uuid()) @db.Uuid
+  league      String                @default("Custom League")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  bannerUrl   String?               @map("banner_url")
+  category    String                @default("Football")
+  createdBy   String                @map("created_by") @db.Uuid
+  description String?
+  endTime     DateTime?             @map("end_time")
+  publishedAt DateTime?             @map("published_at")
+  startTime   DateTime              @map("start_time")
+  teamAway    String                @map("team_away")
+  teamHome    String                @map("team_home")
+  title       String
+  status      CustomEventStatus     @default(DRAFT)
+  bets        CustomBet[]
+  auditLogs   CustomEventAuditLog[]
+  markets     CustomMarket[]
+
+  @@index([status])
+  @@index([startTime])
+  @@index([status, startTime])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("custom_events")
+}
+
+model CustomMarket {
+  id         String             @id @default(uuid()) @db.Uuid
+  eventId    String             @map("event_id") @db.Uuid
+  name       String
+  status     CustomMarketStatus @default(OPEN)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+  event      CustomEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  selections CustomSelection[]
+
+  @@index([eventId])
+  @@index([status])
+  @@map("custom_markets")
+}
+
+model CustomSelection {
+  id        String                @id @default(uuid()) @db.Uuid
+  marketId  String                @map("market_id") @db.Uuid
+  label     String
+  name      String
+  odds      Float
+  result    CustomSelectionResult @default(PENDING)
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+  bets      CustomBet[]
+  market    CustomMarket          @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+  @@map("custom_selections")
+}
+
+model CustomBet {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @map("user_id") @db.Uuid
+  eventId      String          @map("event_id") @db.Uuid
+  selectionId  String          @map("selection_id") @db.Uuid
+  stake        Float
+  odds         Float
+  potentialWin Float           @map("potential_win")
+  status       CustomBetStatus @default(PENDING)
+  placedAt     DateTime        @default(now()) @map("placed_at")
+  settledAt    DateTime?       @map("settled_at")
+  event        CustomEvent     @relation(fields: [eventId], references: [id])
+  selection    CustomSelection @relation(fields: [selectionId], references: [id])
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([selectionId])
+  @@index([status])
+  @@index([placedAt])
+  @@map("custom_bets")
+}
+
+model CustomEventAuditLog {
+  id            String      @id @default(uuid()) @db.Uuid
+  eventId       String      @map("event_id") @db.Uuid
+  adminId       String      @map("admin_id") @db.Uuid
+  action        String
+  previousValue String?     @map("previous_value")
+  newValue      String?     @map("new_value")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  event         CustomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("custom_event_audit_logs")
+}
+
+model SportCategory {
+  id           String              @id @default(uuid()) @db.Uuid
+  sportKey     String              @unique @map("sport_key")
+  displayName  String              @map("display_name")
+  apiSportId   String?             @map("api_sport_id")
+  icon         String              @default("🎯")
+  isActive     Boolean             @default(false) @map("is_active")
+  showInNav    Boolean             @default(true) @map("show_in_nav")
+  sortOrder    Int                 @default(0) @map("sort_order")
+  eventCount   Int                 @default(0) @map("event_count")
+  lastSyncedAt DateTime?           @map("last_synced_at")
+  configuredBy String?             @map("configured_by") @db.Uuid
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  configLogs   CategoryConfigLog[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("sport_categories")
+}
+
+model CategoryConfigLog {
+  id               String        @id @default(uuid()) @db.Uuid
+  sportKey         String        @map("sport_key")
+  adminId          String        @map("admin_id") @db.Uuid
+  eventsConfigured Int           @map("events_configured")
+  action           String
+  createdAt        DateTime      @default(now()) @map("created_at")
+  category         SportCategory @relation(fields: [sportKey], references: [sportKey])
+
+  @@index([sportKey])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("category_config_logs")
+}
+
+model AdminAlert {
+  id        String   @id @default(uuid()) @db.Uuid
+  type      String
+  message   String
+  sportKey  String?  @map("sport_key")
+  severity  String   @default("info")
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([severity])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("admin_alerts")
+}
+
+model ApiSyncLog {
+  id               String   @id @default(uuid()) @db.Uuid
+  jobName          String   @map("job_name")
+  status           String
+  sportsProcessed  Int      @default(0) @map("sports_processed")
+  eventsLoaded     Int      @default(0) @map("events_loaded")
+  creditsUsed      Int?     @map("credits_used")
+  creditsRemaining Int?     @map("credits_remaining")
+  errorMessage     String?  @map("error_message")
+  durationMs       Int?     @map("duration_ms")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([jobName])
+  @@index([createdAt])
+  @@map("api_sync_logs")
+}
+
+model OddsApiCallLog {
+  id               String   @id @default(uuid()) @db.Uuid
+  endpoint         String
+  sportKey         String?  @map("sport_key")
+  requestType      String   @map("request_type")
+  responseStatus   Int      @map("response_status")
+  creditsUsed      Int?     @map("credits_used")
+  creditsRemaining Int?     @map("credits_remaining")
+  durationMs       Int?     @map("duration_ms")
+  errorMessage     String?  @map("error_message")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([sportKey])
+  @@index([requestType])
+  @@index([responseStatus])
+  @@index([createdAt])
+  @@map("odds_api_call_logs")
 }
 
 enum UserRole {
@@ -30,10 +663,10 @@ enum WalletTransactionType {
 
 enum WalletTransactionStatus {
   PENDING
-  PROCESSING
   COMPLETED
   FAILED
   REVERSED
+  PROCESSING
 }
 
 enum NotificationAudience {
@@ -44,13 +677,13 @@ enum NotificationAudience {
 enum NotificationType {
   DEPOSIT_SUCCESS
   DEPOSIT_FAILED
+  SYSTEM
   WITHDRAWAL_SUCCESS
   WITHDRAWAL_FAILED
   BET_WON
   BET_LOST
   BET_VOID
   EVENT_ENDED
-  SYSTEM
 }
 
 enum EventStatus {
@@ -117,453 +750,6 @@ enum BanAppealStatus {
   WITHDRAWN
 }
 
-model User {
-  id            String               @id @default(uuid()) @db.Uuid
-  fullName      String?              @map("full_name")
-  email         String               @unique
-  phone         String               @unique
-  passwordHash  String               @map("password_hash")
-  resetToken    String?              @unique @map("reset_token")
-  resetTokenExpiry DateTime?         @map("reset_token_expiry")
-  resetAttempts Int                  @default(0) @map("reset_attempts")
-  resetLastAttempt DateTime?         @map("reset_last_attempt")
-  mustChangePassword Boolean         @default(true) @map("must_change_password")
-  isVerified    Boolean              @default(false) @map("is_verified")
-  accountStatus AccountStatus        @default(ACTIVE) @map("account_status")
-  adminTotpEnabled Boolean           @default(false) @map("admin_totp_enabled")
-  adminTotpSecret  String?           @map("admin_totp_secret")
-  bannedAt      DateTime?            @map("banned_at")
-  banReason     String?              @map("ban_reason")
-  role          UserRole             @default(USER)
-  createdAt     DateTime             @default(now()) @map("created_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
-  wallet        Wallet?
-  bets          Bet[]
-  notifications Notification[]
-  refreshTokens RefreshToken[]
-  transactions  WalletTransaction[]
-  betAuditLogs  BetAuditLog[]
-  riskAlerts    RiskAlert[]
-  contacts      Contact[]
-  banAppeals    BanAppeal[]
-  adminLoginChallenges AdminLoginChallenge[]
-
-  @@map("users")
-}
-
-model BanAppeal {
-  id              String              @id @default(uuid()) @db.Uuid
-  userId          String              @map("user_id") @db.Uuid
-  appealText      String              @map("appeal_text")
-  status          BanAppealStatus     @default(PENDING)
-  responseText    String?             @map("response_text")
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
-  reviewedAt      DateTime?           @map("reviewed_at")
-  reviewedBy      String?             @map("reviewed_by")
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("ban_appeals")
-}
-
-model Wallet {
-  id           String              @id @default(uuid()) @db.Uuid
-  userId       String              @unique @map("user_id") @db.Uuid
-  balance      Int                 @default(0) @map("balance")
-  createdAt    DateTime            @default(now()) @map("created_at")
-  updatedAt    DateTime            @updatedAt @map("updated_at")
-  transactions WalletTransaction[]
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("wallets")
-}
-
-model WalletTransaction {
-  id                          String                  @id @default(uuid()) @db.Uuid
-  userId                      String                  @map("user_id") @db.Uuid
-  walletId                    String?                 @map("wallet_id") @db.Uuid
-  type                        WalletTransactionType
-  status                      WalletTransactionStatus @default(PENDING)
-  amount                      Int
-  currency                    String                  @default("KES")
-  channel                     String
-  reference                   String                  @unique
-  checkoutRequestId           String?                 @unique @map("checkout_request_id")
-  merchantRequestId           String?                 @unique @map("merchant_request_id")
-  phone                       String?                 @map("phone")
-  accountReference            String?                 @map("account_reference")
-  description                 String?                 @map("description")
-  providerReceiptNumber       String?                 @map("provider_receipt_number")
-  providerResponseCode        String?                 @map("provider_response_code")
-  providerResponseDescription String?                 @map("provider_response_description")
-  providerCallback            Json?                   @map("provider_callback")
-  processedAt                 DateTime?               @map("processed_at")
-  createdAt                   DateTime                @default(now()) @map("created_at")
-  updatedAt                   DateTime                @updatedAt @map("updated_at")
-  user                        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet                      Wallet?                 @relation(fields: [walletId], references: [id])
-
-  @@index([userId])
-  @@index([walletId])
-  @@index([checkoutRequestId])
-  @@index([status])
-  @@map("wallet_transactions")
-}
-
-model Notification {
-  id            String               @id @default(uuid()) @db.Uuid
-  userId        String               @map("user_id") @db.Uuid
-  audience      NotificationAudience @default(USER)
-  type          NotificationType     @default(SYSTEM)
-  title         String
-  message       String
-  transactionId String?              @map("transaction_id") @db.Uuid
-  amount        Int?
-  balance       Int?
-  mpesaCode      String?              @map("mpesa_code")
-  isRead        Boolean              @default(false) @map("is_read")
-  createdAt     DateTime             @default(now()) @map("created_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, transactionId, type, audience])
-  @@index([userId])
-  @@index([audience, isRead])
-  @@index([createdAt])
-  @@index([transactionId])
-  @@map("notifications")
-}
-
-model RefreshToken {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  tokenHash  String   @map("token_hash")
-  deviceInfo String?  @map("device_info")
-  ipAddress  String?  @map("ip_address")
-  expiresAt  DateTime @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([tokenHash])
-  @@map("refresh_tokens")
-}
-
-model AdminLoginChallenge {
-  id           String   @id @default(uuid()) @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
-  challengeHash String  @unique @map("challenge_hash")
-  otpHash      String   @map("otp_hash")
-  expiresAt    DateTime @map("expires_at")
-  consumedAt   DateTime? @map("consumed_at")
-  attempts     Int      @default(0)
-  ipAddress    String?  @map("ip_address")
-  deviceInfo   String?  @map("device_info")
-  createdAt    DateTime @default(now()) @map("created_at")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("admin_login_challenges")
-}
-
-model SportEvent {
-  id               String        @id @default(uuid()) @db.Uuid
-  eventId          String        @unique @map("event_id")
-  externalEventId  String?       @unique @map("external_event_id")
-  leagueId         String?       @map("league_id")
-  leagueName       String?       @map("league_name")
-  sportKey         String?       @map("sport_key")
-  homeTeam         String        @map("home_team")
-  awayTeam         String        @map("away_team")
-  commenceTime     DateTime      @map("commence_time")
-  status           EventStatus   @default(UPCOMING)
-  homeScore        Int?          @map("home_score")
-  awayScore        Int?          @map("away_score")
-  rawData          Json?         @map("raw_data")
-  isActive         Boolean       @default(false) @map("is_active")
-  isFeatured       Boolean       @default(false) @map("is_featured")
-  featuredPriority Int           @default(0) @map("featured_priority")
-  houseMargin      Float         @default(0) @map("house_margin")
-  marketsEnabled   String[]      @default(["h2h"]) @map("markets_enabled")
-  fetchedAt        DateTime      @default(now()) @map("fetched_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
-  // ── Automated event management fields ──
-  oddsVerified     Boolean       @default(false) @map("odds_verified")
-  bookmakerKey     String?       @map("bookmaker_key")
-  bookmakerMargin  Float         @default(0) @map("bookmaker_margin")
-  autoConfigured   Boolean       @default(false) @map("auto_configured")
-  syncedAt         DateTime?     @map("synced_at")
-  archivedAt       DateTime?     @map("archived_at")
-  odds             EventOdds[]
-  displayedOdds    DisplayedOdds[]
-  bets             Bet[]
-
-  @@index([status])
-  @@index([commenceTime])
-  @@index([sportKey])
-  @@index([isActive])
-  @@index([oddsVerified])
-  @@index([syncedAt])
-  @@index([bookmakerMargin])
-  @@map("sport_events")
-}
-
-model EventOdds {
-  id            String    @id @default(uuid()) @db.Uuid
-  eventId       String    @map("event_id")
-  bookmakerId   String    @map("bookmaker_id")
-  bookmakerName String    @map("bookmaker_name")
-  marketType    String    @map("market_type")
-  side          String
-  decimalOdds   Float     @map("decimal_odds")
-  recordedAt    DateTime  @default(now()) @map("recorded_at")
-  event         SportEvent @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
-
-  @@index([eventId])
-  @@index([bookmakerId])
-  @@map("event_odds")
-}
-
-model DisplayedOdds {
-  id            String    @id @default(uuid()) @db.Uuid
-  eventId       String    @map("event_id")
-  bookmakerId   String    @map("bookmaker_id")
-  bookmakerName String    @map("bookmaker_name")
-  marketType    String    @map("market_type")
-  side          String
-  rawOdds       Float     @map("raw_odds")
-  displayOdds   Float     @map("display_odds")
-  isVisible     Boolean   @default(true) @map("is_visible")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  event         SportEvent @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
-
-  @@unique([eventId, bookmakerId, marketType, side])
-  @@index([eventId])
-  @@index([isVisible])
-  @@map("displayed_odds")
-}
-
-model Bet {
-  id                 String        @id @default(uuid()) @db.Uuid
-  userId             String        @map("user_id") @db.Uuid
-  eventId            String        @map("event_id")
-  bookmakerId        String?       @map("bookmaker_id")
-  betCode            String        @unique @map("bet_code")
-  betType            String        @default("NORMAL") @map("bet_type")
-  marketType         String        @map("market_type")
-  side               String
-  isPromoted         Boolean       @default(false) @map("is_promoted")
-  selectionsSnapshot Json?         @map("selections_snapshot")
-  stake              Float
-  displayOdds        Float         @map("display_odds")
-  potentialPayout    Float         @map("potential_payout")
-  status             BetStatus     @default(PENDING)
-  placedAt           DateTime      @default(now()) @map("placed_at")
-  settledAt          DateTime?     @map("settled_at")
-  cancelledAt        DateTime?     @map("cancelled_at")
-  cancelReason       String?       @map("cancel_reason")
-  lastStatusChangeAt DateTime      @default(now()) @map("last_status_change_at")
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event              SportEvent    @relation(fields: [eventId], references: [eventId])
-  auditLogs          BetAuditLog[]
-
-  @@index([userId])
-  @@index([eventId])
-  @@index([status])
-  @@index([placedAt])
-  @@index([userId, status])
-  @@index([userId, placedAt(sort: Desc)])
-  @@index([eventId, status])
-  @@index([placedAt, status])
-  @@index([userId, betType, placedAt(sort: Desc)])
-  @@map("bets")
-}
-
-model BetAuditLog {
-  id            String         @id @default(uuid()) @db.Uuid
-  userId        String         @db.Uuid @map("user_id")
-  betId         String         @db.Uuid @map("bet_id")
-  action        BetAuditAction
-  attemptedData Json?          @map("attempted_data")
-  ipAddress     String?        @map("ip_address")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bet           Bet            @relation(fields: [betId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt(sort: Desc)])
-  @@index([betId, createdAt(sort: Desc)])
-  @@map("bet_audit_log")
-}
-
-model AdminSettings {
-  key                             String   @id @default("global")
-  platformName                    String   @default("BetWise") @map("platform_name")
-  environment                     String   @default("sandbox")
-  defaultCurrency                 String   @default("KES") @map("default_currency")
-  timezone                        String   @default("Africa/Nairobi")
-  maintenanceMode                 Boolean  @default(false) @map("maintenance_mode")
-  registrationEnabled             Boolean  @default(true) @map("registration_enabled")
-  minDeposit                      Int      @default(100) @map("min_deposit")
-  maxDeposit                      Int      @default(200000) @map("max_deposit")
-  minWithdrawal                   Int      @default(100) @map("min_withdrawal")
-  maxWithdrawal                   Int      @default(100000) @map("max_withdrawal")
-  dailyTransactionLimit           Int      @default(500000) @map("daily_transaction_limit")
-  maxActiveBetsPerUser            Int      @default(60) @map("max_active_bets_per_user")
-  defaultUserRole                 String   @default("USER") @map("default_user_role")
-  kycRequired                     Boolean  @default(true) @map("kyc_required")
-  kycRequireId                    Boolean  @default(true) @map("kyc_require_id")
-  kycRequirePhone                 Boolean  @default(true) @map("kyc_require_phone")
-  kycRequireEmail                 Boolean  @default(true) @map("kyc_require_email")
-  withdrawalRequiresKyc           Boolean  @default(true) @map("withdrawal_requires_kyc")
-  minimumAge                      Int      @default(18) @map("minimum_age")
-  allowedCountries                String[] @default(["KE"]) @map("allowed_countries")
-  paymentMpesaEnabled             Boolean  @default(true) @map("payment_mpesa_enabled")
-  paymentBankTransferEnabled      Boolean  @default(false) @map("payment_bank_transfer_enabled")
-  mpesaShortcode                  String   @default("174379") @map("mpesa_shortcode")
-  mpesaConsumerKey                String   @default("replace-with-consumer-key") @map("mpesa_consumer_key")
-  mpesaConsumerSecret             String   @default("replace-with-consumer-secret") @map("mpesa_consumer_secret")
-  mpesaPasskey                    String   @default("replace-with-passkey") @map("mpesa_passkey")
-  mpesaCallbackUrl                String   @default("") @map("mpesa_callback_url")
-  mpesaTransactionFeePercent      Float    @default(15) @map("mpesa_transaction_fee_percent")
-  mpesaAutoWithdrawEnabled        Boolean  @default(false) @map("mpesa_auto_withdraw_enabled")
-  mpesaWithdrawalApprovalThreshold Int     @default(50000) @map("mpesa_withdrawal_approval_threshold")
-  paymentPaystackEnabled          Boolean  @default(true) @map("payment_paystack_enabled")
-  paystackSecretKey               String   @default("sk_test_replace_me") @map("paystack_secret_key")
-  paystackPublicKey               String   @default("pk_test_replace_me") @map("paystack_public_key")
-  paystackWebhookSecret           String   @default("whsec_replace_me") @map("paystack_webhook_secret")
-  paystackCallbackUrl             String   @default("https://your-domain.com/api/payments/paystack/callback") @map("paystack_callback_url")
-  paystackWebhookUrl               String   @default("https://your-domain.com/api/payments/paystack/webhook") @map("paystack_webhook_url")
-  minBetAmount                    Int      @default(10) @map("min_bet_amount")
-  maxBetAmount                    Int      @default(200000) @map("max_bet_amount")
-  maxWinPerBet                    Int      @default(1000000) @map("max_win_per_bet")
-  oddsMarginPercent               Float    @default(7) @map("odds_margin_percent")
-  betDelayMs                      Int      @default(1500) @map("bet_delay_ms")
-  cashoutEnabled                  Boolean  @default(true) @map("cashout_enabled")
-  cashoutMarginPercent            Float    @default(5) @map("cashout_margin_percent")
-  allowLiveBetting                Boolean  @default(true) @map("allow_live_betting")
-  maxExposurePerEvent             Int      @default(2000000) @map("max_exposure_per_event")
-  maxExposurePerMarket            Int      @default(800000) @map("max_exposure_per_market")
-  maxPayoutPerDay                 Int      @default(8000000) @map("max_payout_per_day")
-  highRiskBetThreshold            Int      @default(250000) @map("high_risk_bet_threshold")
-  autoBlockSuspiciousUsers        Boolean  @default(true) @map("auto_block_suspicious_users")
-  welcomeBonusEnabled             Boolean  @default(true) @map("welcome_bonus_enabled")
-  bonusMode                       String   @default("percentage") @map("bonus_mode")
-  bonusAmount                     Int      @default(500) @map("bonus_amount")
-  bonusPercent                    Float    @default(100) @map("bonus_percent")
-  wageringRequirementMultiplier   Float    @default(3) @map("wagering_requirement_multiplier")
-  bonusExpiryHours                Int      @default(168) @map("bonus_expiry_hours")
-  maxBonusPerUser                 Int      @default(3000) @map("max_bonus_per_user")
-  cashbackRule                    String   @default("5% cashback for net losses above KES 2,000, credited weekly.") @map("cashback_rule")
-  smsEnabled                      Boolean  @default(true) @map("sms_enabled")
-  emailEnabled                    Boolean  @default(true) @map("email_enabled")
-  notifyDepositSuccess            Boolean  @default(true) @map("notify_deposit_success")
-  notifyWithdrawalSuccess         Boolean  @default(true) @map("notify_withdrawal_success")
-  notifyBetPlaced                 Boolean  @default(false) @map("notify_bet_placed")
-  notifyBetResult                 Boolean  @default(true) @map("notify_bet_result")
-  notifyAdminAlerts               Boolean  @default(true) @map("notify_admin_alerts")
-  adminWithdrawalSoundEnabled     Boolean  @default(true) @map("admin_withdrawal_sound_enabled")
-  adminWithdrawalSoundTone        String   @default("/sounds/universfield-new-notification-010-352755.mp3") @map("admin_withdrawal_sound_tone")
-  adminWithdrawalSoundVolume      Int      @default(80) @map("admin_withdrawal_sound_volume")
-  sportsApiKey                    String   @default("replace-with-sports-api-key") @map("sports_api_key")
-  oddsProviderName                String   @default("TheOddsAPI") @map("odds_provider_name")
-  primaryWebhookUrl               String   @default("https://example.com/webhooks/sports") @map("primary_webhook_url")
-  fallbackWebhookUrl              String   @default("https://example.com/webhooks/sports/fallback") @map("fallback_webhook_url")
-  retryAttempts                   Int      @default(3) @map("retry_attempts")
-  retryBackoffMs                  Int      @default(5000) @map("retry_backoff_ms")
-  requestsPerMinute               Int      @default(600) @map("requests_per_minute")
-  adminTwoFactorRequired          Boolean  @default(true) @map("admin_two_factor_required")
-  passwordMinLength               Int      @default(8) @map("password_min_length")
-  requireUppercase                Boolean  @default(true) @map("require_uppercase")
-  requireNumber                   Boolean  @default(true) @map("require_number")
-  requireSpecialChar              Boolean  @default(true) @map("require_special_char")
-  sessionTimeoutMinutes           Int      @default(60) @map("session_timeout_minutes")
-  maxLoginAttempts                Int      @default(5) @map("max_login_attempts")
-  ipWhitelist                     String[] @default([]) @map("ip_whitelist")
-  ipBlacklist                     String[] @default([]) @map("ip_blacklist")
-  winningsTaxPercent              Float    @default(20) @map("winnings_tax_percent")
-  depositTaxPercent               Float    @default(0) @map("deposit_tax_percent")
-  commissionPercent               Float    @default(2) @map("commission_percent")
-  roundingRule                    String   @default("nearest_1") @map("rounding_rule")
-  affiliateCommissionPercent      Float    @default(5) @map("affiliate_commission_percent")
-  multiLevelReferralsEnabled      Boolean  @default(false) @map("multi_level_referrals_enabled")
-  affiliateMinimumPayoutThreshold Int      @default(1500) @map("affiliate_minimum_payout_threshold")
-  affiliateWithdrawalRule         String   @default("Monthly payouts after reconciliation and KYC check.") @map("affiliate_withdrawal_rule")
-  termsAndConditions              String   @default("By using this platform, you agree to our betting terms, fair usage policies, and anti-fraud controls.") @map("terms_and_conditions")
-  privacyPolicy                   String   @default("We process account and transactional data strictly for service operations, regulatory compliance, and fraud prevention.") @map("privacy_policy")
-  responsibleGamblingMessage      String   @default("Bet responsibly. Set limits and seek support if betting affects your wellbeing.") @map("responsible_gambling_message")
-  supportContactInfo              String   @default("support@betwise.co.ke | +254700000000") @map("support_contact_info")
-  updatedBy                       String?  @map("updated_by")
-  createdAt                       DateTime @default(now()) @map("created_at")
-  updatedAt                       DateTime @updatedAt @map("updated_at")
-
-  @@map("admin_settings")
-}
-
-model RiskAlert {
-  id             String        @id @default(uuid()) @db.Uuid
-  alertType      RiskAlertType
-  severity       RiskSeverity  @default(MEDIUM)
-  status         AlertStatus   @default(OPEN)
-  description    String
-  userId         String?       @map("user_id") @db.Uuid
-  betId          String?       @map("bet_id") @db.Uuid
-  eventId        String?       @map("event_id")
-  triggeredValue Float?        @map("triggered_value")
-  threshold      Float?
-  details        Json?
-  actionTaken    String?       @map("action_taken")
-  resolvedAt     DateTime?     @map("resolved_at")
-  resolvedBy     String?       @map("resolved_by")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([alertType])
-  @@index([severity])
-  @@index([status])
-  @@index([createdAt])
-  @@map("risk_alerts")
-}
-
-model Contact {
-  id        String        @id @default(uuid()) @db.Uuid
-  userId    String?       @map("user_id") @db.Uuid
-  fullName  String        @map("full_name")
-  phone     String
-  subject   String
-  message   String
-  status    ContactStatus @default(SUBMITTED)
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
-  user      User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@index([phone])
-  @@map("contacts")
-}
-
-model NewsletterSubscription {
-  id         String    @id @default(uuid()) @db.Uuid
-  email      String    @unique
-  isActive   Boolean   @default(true) @map("is_active")
-  subscribedAt DateTime @default(now()) @map("subscribed_at")
-  unsubscribedAt DateTime? @map("unsubscribed_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-
-  @@index([email])
-  @@index([isActive])
-  @@index([subscribedAt])
-  @@map("newsletter_subscriptions")
-}
-
 enum CustomEventStatus {
   DRAFT
   PUBLISHED
@@ -593,193 +779,4 @@ enum CustomBetStatus {
   LOST
   VOID
   CANCELLED
-}
-
-model CustomEvent {
-  id            String              @id @default(uuid()) @db.Uuid
-  title         String
-  teamHome      String              @map("team_home")
-  teamAway      String              @map("team_away")
-  category      String              @default("Football")
-  league        String              @default("Custom League")
-  startTime     DateTime            @map("start_time")
-  endTime       DateTime?           @map("end_time")
-  status        CustomEventStatus   @default(DRAFT)
-  description   String?
-  bannerUrl     String?             @map("banner_url")
-  createdBy     String              @map("created_by") @db.Uuid
-  publishedAt   DateTime?           @map("published_at")
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt @map("updated_at")
-  markets       CustomMarket[]
-  bets          CustomBet[]
-  auditLogs     CustomEventAuditLog[]
-
-  @@index([status])
-  @@index([startTime])
-  @@index([status, startTime])
-  @@index([createdBy])
-  @@index([createdAt])
-  @@map("custom_events")
-}
-
-model CustomMarket {
-  id          String              @id @default(uuid()) @db.Uuid
-  eventId     String              @map("event_id") @db.Uuid
-  event       CustomEvent         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  name        String
-  status      CustomMarketStatus  @default(OPEN)
-  createdAt   DateTime            @default(now()) @map("created_at")
-  updatedAt   DateTime            @updatedAt @map("updated_at")
-  selections  CustomSelection[]
-
-  @@index([eventId])
-  @@index([status])
-  @@map("custom_markets")
-}
-
-model CustomSelection {
-  id          String                @id @default(uuid()) @db.Uuid
-  marketId    String                @map("market_id") @db.Uuid
-  market      CustomMarket          @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  label       String
-  name        String
-  odds        Float
-  result      CustomSelectionResult @default(PENDING)
-  createdAt   DateTime              @default(now()) @map("created_at")
-  updatedAt   DateTime              @updatedAt @map("updated_at")
-  bets        CustomBet[]
-
-  @@index([marketId])
-  @@map("custom_selections")
-}
-
-model CustomBet {
-  id            String          @id @default(uuid()) @db.Uuid
-  userId        String          @map("user_id") @db.Uuid
-  eventId       String          @map("event_id") @db.Uuid
-  event         CustomEvent     @relation(fields: [eventId], references: [id])
-  selectionId   String          @map("selection_id") @db.Uuid
-  selection     CustomSelection @relation(fields: [selectionId], references: [id])
-  stake         Float
-  odds          Float
-  potentialWin  Float           @map("potential_win")
-  status        CustomBetStatus @default(PENDING)
-  placedAt      DateTime        @default(now()) @map("placed_at")
-  settledAt     DateTime?       @map("settled_at")
-
-  @@index([userId])
-  @@index([eventId])
-  @@index([selectionId])
-  @@index([status])
-  @@index([placedAt])
-  @@map("custom_bets")
-}
-
-model CustomEventAuditLog {
-  id            String      @id @default(uuid()) @db.Uuid
-  eventId       String      @map("event_id") @db.Uuid
-  event         CustomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  adminId       String      @map("admin_id") @db.Uuid
-  action        String
-  previousValue String?     @map("previous_value")
-  newValue      String?     @map("new_value")
-  createdAt     DateTime    @default(now()) @map("created_at")
-
-  @@index([eventId])
-  @@index([adminId])
-  @@index([createdAt])
-  @@map("custom_event_audit_logs")
-}
-
-model SportCategory {
-  id            String              @id @default(uuid()) @db.Uuid
-  sportKey      String              @unique @map("sport_key")
-  displayName   String              @map("display_name")
-  apiSportId    String?             @map("api_sport_id")
-  icon          String              @default("🎯")
-  isActive      Boolean             @default(false) @map("is_active")
-  showInNav     Boolean             @default(true) @map("show_in_nav")
-  sortOrder     Int                 @default(0) @map("sort_order")
-  eventCount    Int                 @default(0) @map("event_count")
-  lastSyncedAt  DateTime?           @map("last_synced_at")
-  configuredBy  String?             @map("configured_by") @db.Uuid
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt @map("updated_at")
-  configLogs    CategoryConfigLog[]
-
-  @@index([isActive])
-  @@index([sortOrder])
-  @@map("sport_categories")
-}
-
-model CategoryConfigLog {
-  id               String         @id @default(uuid()) @db.Uuid
-  sportKey         String         @map("sport_key")
-  adminId          String         @map("admin_id") @db.Uuid
-  eventsConfigured Int            @map("events_configured")
-  action           String
-  createdAt        DateTime       @default(now()) @map("created_at")
-  category         SportCategory  @relation(fields: [sportKey], references: [sportKey])
-
-  @@index([sportKey])
-  @@index([adminId])
-  @@index([createdAt])
-  @@map("category_config_logs")
-}
-
-// ── Automated Event Management: Admin Alerts ──
-
-model AdminAlert {
-  id        String   @id @default(uuid()) @db.Uuid
-  type      String   // NO_EVENTS, API_DOWN, LOW_CREDITS, SYNC_SUCCESS, SYNC_FAILED, EVENT_NO_ODDS, CREDITS_EXHAUSTED
-  message   String
-  sportKey  String?  @map("sport_key")
-  severity  String   @default("info") // info, warning, critical
-  isRead    Boolean  @default(false) @map("is_read")
-  metadata  Json?    // extra data (credits remaining, error details, etc.)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@index([severity])
-  @@index([isRead])
-  @@index([createdAt])
-  @@map("admin_alerts")
-}
-
-// ── Automated Event Management: API Sync Logs ──
-
-model ApiSyncLog {
-  id               String   @id @default(uuid()) @db.Uuid
-  jobName          String   @map("job_name")
-  status           String   // success, partial, failed
-  sportsProcessed  Int      @default(0) @map("sports_processed")
-  eventsLoaded     Int      @default(0) @map("events_loaded")
-  creditsUsed      Int?     @map("credits_used")
-  creditsRemaining Int?     @map("credits_remaining")
-  errorMessage     String?  @map("error_message")
-  durationMs       Int?     @map("duration_ms")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  @@index([jobName])
-  @@index([createdAt])
-  @@map("api_sync_logs")
-}
-
-model OddsApiCallLog {
-  id               String   @id @default(uuid()) @db.Uuid
-  endpoint         String
-  sportKey         String?  @map("sport_key")
-  requestType      String   @map("request_type")
-  responseStatus   Int      @map("response_status")
-  creditsUsed      Int?     @map("credits_used")
-  creditsRemaining Int?     @map("credits_remaining")
-  durationMs       Int?     @map("duration_ms")
-  errorMessage     String?  @map("error_message")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  @@index([sportKey])
-  @@index([requestType])
-  @@index([responseStatus])
-  @@index([createdAt])
-  @@map("odds_api_call_logs")
 }

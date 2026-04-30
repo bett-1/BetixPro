@@ -114,6 +114,8 @@ export default function DepositPage() {
   const [selectedMethod, setSelectedMethod] = useState<DepositMethod | null>(
     null,
   );
+  const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [retryCooldown, setRetryCooldown] = useState(0);
   const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
   const [isMethodMenuPreparing, setIsMethodMenuPreparing] = useState(false);
   const methodMenuTimerRef = useRef<number | null>(null);
@@ -175,6 +177,7 @@ export default function DepositPage() {
         setIsProcessing(false);
         setPaymentReference(storedReference);
         setPaymentStatus("success");
+        setPaymentMessage("Your wallet has been credited after confirmation.");
         setShowPaymentResult(true);
         toast.success("Payment successful! Your wallet has been credited.");
       } else if (routeStatus === "failed") {
@@ -183,6 +186,8 @@ export default function DepositPage() {
         setIsProcessing(false);
         setPaymentReference(storedReference);
         setPaymentStatus("failed");
+        setPaymentMessage("The payment could not be completed.");
+        setRetryCooldown(60);
         setShowPaymentResult(true);
         toast.error("Payment failed. Please try again.");
       } else if (routeStatus === "pending" && storedReference) {
@@ -216,6 +221,7 @@ export default function DepositPage() {
       setShouldVerifyPaystack(false);
       setIsProcessing(false);
       setPaymentStatus("success");
+      setPaymentMessage("Your wallet has been credited successfully.");
       setShowPaymentResult(true);
       toast.success("Payment confirmed! Your wallet has been credited.");
       return;
@@ -226,6 +232,8 @@ export default function DepositPage() {
       setShouldVerifyPaystack(false);
       setIsProcessing(false);
       setPaymentStatus("failed");
+      setPaymentMessage(paystackVerificationQuery.data?.message ?? "Payment could not be confirmed.");
+      setRetryCooldown(60);
       setShowPaymentResult(true);
       toast.error("Payment could not be confirmed.");
     }
@@ -267,6 +275,16 @@ export default function DepositPage() {
     [],
   );
 
+  useEffect(() => {
+    if (retryCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setRetryCooldown((c) => Math.max(0, c - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [retryCooldown]);
+
   const onMethodMenuOpenChange = (open: boolean) => {
     if (methodMenuTimerRef.current !== null) {
       window.clearTimeout(methodMenuTimerRef.current);
@@ -300,6 +318,7 @@ export default function DepositPage() {
         mpesaStatusQuery.data?.mpesaCode ?? pendingMpesaTransactionId,
       );
       setPaymentStatus("success");
+      setPaymentMessage(mpesaStatusQuery.data?.message ?? "M-Pesa deposit received successfully.");
       setShowPaymentResult(true);
       toast.success("M-Pesa deposit received successfully.");
       return;
@@ -311,6 +330,8 @@ export default function DepositPage() {
       setPendingMpesaTransactionId(null);
       setIsProcessing(false);
       setPaymentStatus("failed");
+      setPaymentMessage(failureMessage || "M-Pesa payment failed.");
+      setRetryCooldown(60);
       setShowPaymentResult(true);
       toast.error(failureMessage || "M-Pesa payment failed.");
     }
@@ -324,6 +345,8 @@ export default function DepositPage() {
   const onClose = () => {
     setShowPaymentResult(false);
     setPaymentStatus(null);
+    setPaymentMessage(null);
+    setRetryCooldown(0);
   };
 
   const onCancelProcessing = () => {
@@ -409,6 +432,7 @@ export default function DepositPage() {
     setIsProcessing(true);
     setShowPaymentResult(false);
     setPaymentStatus(null);
+    setPaymentMessage(null);
 
     try {
       const response = await mpesaInitializeMutation.mutateAsync({
@@ -453,6 +477,7 @@ export default function DepositPage() {
     setIsProcessing(true);
     setShowPaymentResult(false);
     setPaymentStatus(null);
+    setPaymentMessage(null);
 
     try {
       const response = await paystackInitializeMutation.mutateAsync({
@@ -756,11 +781,16 @@ export default function DepositPage() {
           paymentStatus === "failed"
         }
         status="failed"
-        title="M-Pesa Deposit Failed"
-        message={
-          mpesaStatusQuery.data?.message ??
-          "Your M-Pesa payment could not be confirmed."
+        title={
+          paymentMessage?.toLowerCase().includes("cancel")
+            ? "M-Pesa Payment Cancelled"
+            : "M-Pesa Deposit Failed"
         }
+        message={
+          paymentMessage ?? "Your M-Pesa payment could not be confirmed."
+        }
+        retryLabel={retryCooldown > 0 ? `Retry in ${retryCooldown}s` : "Retry Payment"}
+        retryDisabled={retryCooldown > 0}
         onClose={onClose}
         onRetry={onRetry}
       />

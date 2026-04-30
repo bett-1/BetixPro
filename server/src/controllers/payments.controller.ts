@@ -383,8 +383,10 @@ async function syncPaystackWithdrawalStatus(transactionId: string) {
   }
 
   try {
+    const settings = await getSystemSettings();
     const providerStatus = await getPaystackTransferStatus(
       transaction.checkoutRequestId,
+      settings,
     );
     const normalizedStatus = normalizePaystackTransferStatus(
       providerStatus.data?.status,
@@ -537,11 +539,15 @@ async function initiateWithdrawalDisbursement(args: {
 
     let payoutResponse;
     if (transaction.channel === "mpesa") {
-      const b2cResponse = await initiateMpesaB2C({
-        phoneNumber: payoutPhone,
-        amount: transaction.amount,
-        remarks: "BetWise Withdrawal",
-      });
+      const settings = await getSystemSettings();
+      const b2cResponse = await initiateMpesaB2C(
+        {
+          phoneNumber: payoutPhone,
+          amount: transaction.amount,
+          remarks: "BetWise Withdrawal",
+        },
+        settings,
+      );
 
       if (b2cResponse.ResponseCode !== "0") {
         const failureMessage =
@@ -598,16 +604,18 @@ async function initiateWithdrawalDisbursement(args: {
     }
 
     // Default to Paystack for other channels (including "paystack")
+    const settings = await getSystemSettings();
     payoutResponse = await initiatePaystackWithdrawal(
       payoutPhone,
       transaction.amount,
       transferReference,
+      settings,
     );
 
     if (!payoutResponse.data?.transfer_code) {
       const failureMessage =
         payoutResponse.message ?? "Paystack transfer request rejected.";
-
+    
       await settleFailedWithdrawal({
         transactionId: transaction.id,
         failureReason: failureMessage,

@@ -433,19 +433,20 @@ export default function WithdrawalsAdmin() {
         open={detailsOpen && selectedWithdrawal !== null}
         onOpenChange={(open) => !open && handleCloseDetails()}
       >
-        <AdminDialogContent className="max-w-md p-0">
-          <DialogHeader className="border-b border-admin-border bg-admin-surface/50 px-6 py-5">
+        <AdminDialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-md p-0 overflow-hidden">
+          <div className="flex flex-col h-full">
+            <DialogHeader className="border-b border-admin-border bg-admin-surface/50 px-5 py-4 sm:px-6 sm:py-5">
             <DialogTitle className="text-lg text-admin-text-primary">
               Withdrawal Request
             </DialogTitle>
-            <DialogDescription className="text-xs text-admin-text-muted">
+            <DialogDescription className="text-xs text-admin-text-muted hidden sm:block">
               Review the details below before processing.
             </DialogDescription>
           </DialogHeader>
 
           {selectedWithdrawal && (
             <div className="flex flex-col">
-              <ScrollArea className="max-h-[50vh] px-6 py-5">
+              <ScrollArea className="flex-1 px-5 py-4 sm:px-6 sm:py-5">
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
@@ -553,7 +554,7 @@ export default function WithdrawalsAdmin() {
               </ScrollArea>
 
               {selectedWithdrawal.status === "pending" && (
-                <div className="border-t border-admin-border bg-admin-surface/30 px-6 py-5">
+                <div className="border-t border-admin-border bg-admin-surface/30 px-5 py-4 sm:px-6 sm:py-5">
                   <div className="mb-4">
                     <label
                       htmlFor="rejectReason"
@@ -618,7 +619,8 @@ export default function WithdrawalsAdmin() {
               )}
             </div>
           )}
-        </AdminDialogContent>
+        </div>
+      </AdminDialogContent>
       </Dialog>
     </div>
   );

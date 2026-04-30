@@ -138,7 +138,7 @@ export const adminTableCellClassName =
 export const adminCompactActionsClassName = "flex flex-wrap items-center gap-1";
 export const adminFilterRowClassName = "flex flex-wrap gap-3";
 export const adminDialogContentClassName =
-  "overflow-hidden rounded-2xl border border-admin-border/50 bg-[#0b1426]/90 text-admin-text-primary shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300";
+  "w-full max-w-[95vw] sm:max-w-lg overflow-hidden rounded-2xl border border-admin-border/50 bg-[#0b1426]/90 text-admin-text-primary shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300";
 export const adminInputClassName =
   "h-12 rounded-xl border border-white/5 bg-black/20 px-4 text-admin-text-primary placeholder:text-admin-text-muted/60 transition-all focus-visible:border-admin-accent/40 focus-visible:bg-black/40 focus-visible:ring-4 focus-visible:ring-admin-accent/5";
 export const adminSelectTriggerClassName =
@@ -245,18 +245,20 @@ export function AdminSectionHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 className="text-xl font-bold tracking-[-0.02em] text-admin-text-primary sm:text-2xl">
+    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-0.5">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight text-admin-text-primary sm:text-2xl truncate">
           {title}
         </h1>
-        <p className="mt-1 max-w-3xl text-xs text-admin-text-muted sm:text-sm">
+        <p className="mt-0.5 text-[11px] font-medium text-admin-text-muted sm:text-sm line-clamp-1">
           {subtitle}
         </p>
       </div>
-      {actions ? (
-        <div className="flex flex-wrap items-center gap-3">{actions}</div>
-      ) : null}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

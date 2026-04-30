@@ -571,13 +571,14 @@ export default function Users() {
         open={!!selectedUserId && !actionDialog}
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       >
-        <AdminDialogContent className="max-w-lg p-0">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
+        <AdminDialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-lg p-0 overflow-hidden">
+          <div className="flex flex-col h-full">
+            <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg flex items-center gap-2">
               <Shield size={18} className="text-admin-accent" />
               User Profile
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Account details and management
             </DialogDescription>
           </DialogHeader>
@@ -703,8 +704,9 @@ export default function Users() {
           ) : (
             <div className="px-5 py-10 text-center text-admin-text-muted">
               User not found
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </AdminDialogContent>
       </Dialog>
 
@@ -713,10 +715,10 @@ export default function Users() {
         open={actionDialog?.type === "edit"}
         onOpenChange={(open) => !open && setActionDialog(null)}
       >
-        <AdminDialogContent className="max-w-md p-0">
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg">Edit User</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Update user profile information
             </DialogDescription>
           </DialogHeader>
@@ -786,12 +788,12 @@ export default function Users() {
         open={actionDialog?.type === "ban"}
         onOpenChange={(open) => !open && setActionDialog(null)}
       >
-        <AdminDialogContent className="max-w-md p-0">
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg text-admin-red">
               Ban User
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Restrict user access to the platform
             </DialogDescription>
           </DialogHeader>
@@ -839,10 +841,10 @@ export default function Users() {
         open={actionDialog?.type === "unban"}
         onOpenChange={(open) => !open && setActionDialog(null)}
       >
-        <AdminDialogContent className="max-w-md p-0">
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg">Unban User</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Restore user access to the platform
             </DialogDescription>
           </DialogHeader>
@@ -879,10 +881,10 @@ export default function Users() {
         open={actionDialog?.type === "changePassword"}
         onOpenChange={(open) => !open && setActionDialog(null)}
       >
-        <AdminDialogContent className="max-w-md p-0">
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg">Change Password</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Set a new password for this user account
             </DialogDescription>
           </DialogHeader>
@@ -988,13 +990,13 @@ export default function Users() {
         open={actionDialog?.type === "create"}
         onOpenChange={(open) => !open && setActionDialog(null)}
       >
-        <AdminDialogContent className="max-w-md p-0">
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg flex items-center gap-2">
               <UserPlus size={18} className="text-admin-accent" />
               Create New User
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>

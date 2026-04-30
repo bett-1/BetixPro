@@ -9,6 +9,8 @@ interface PaymentFeedbackModalProps {
   message: string;
   onClose: () => void;
   onRetry?: () => void;
+  retryLabel?: string;
+  retryDisabled?: boolean;
 }
 
 export function PaymentFeedbackModal({
@@ -18,6 +20,8 @@ export function PaymentFeedbackModal({
   message,
   onClose,
   onRetry,
+  retryLabel = "Retry Payment",
+  retryDisabled = false,
 }: PaymentFeedbackModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -87,10 +91,15 @@ export function PaymentFeedbackModal({
           {!isSuccess && onRetry && (
             <button
               onClick={onRetry}
-              className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] hover:from-[#6d28d9] hover:to-[#2563eb] transition flex items-center justify-center gap-2"
+              disabled={retryDisabled}
+              className={`flex-1 py-3 rounded-xl font-semibold text-white transition flex items-center justify-center gap-2 ${
+                retryDisabled
+                  ? "cursor-not-allowed bg-slate-700 opacity-50"
+                  : "bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] hover:from-[#6d28d9] hover:to-[#2563eb]"
+              }`}
             >
-              <RotateCcw size={16} />
-              Retry Payment
+              <RotateCcw size={16} className={retryDisabled ? "animate-spin" : ""} />
+              {retryLabel}
             </button>
           )}
         </div>

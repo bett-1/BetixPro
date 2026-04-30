@@ -44,6 +44,12 @@ export interface AdminSettingsConfig {
       consumerSecret: string;
       passkey: string;
       callbackUrl: string;
+      b2cShortcode: string;
+      initiatorName: string;
+      securityCredential: string;
+      commandId: string;
+      resultUrl: string;
+      timeoutUrl: string;
       transactionFeePercent: number;
       autoWithdrawEnabled: boolean;
       mpesaWithdrawalApprovalThreshold: number;
@@ -118,12 +124,6 @@ export interface AdminSettingsConfig {
     maxLoginAttempts: number;
     ipWhitelist: string[];
     ipBlacklist: string[];
-  };
-  taxAndFinancialRules: {
-    winningsTaxPercent: number;
-    depositTaxPercent: number;
-    commissionPercent: number;
-    roundingRule: "nearest_1" | "nearest_5" | "nearest_10" | "floor" | "ceil";
   };
   affiliateAndAgentConfig: {
     commissionPercent: number;

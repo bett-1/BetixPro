@@ -6,6 +6,7 @@ import { getOrCreateWallet } from "../lib/wallet";
 import { emitWalletUpdate } from "../lib/socket";
 import { createDepositNotifications } from "./notifications.controller";
 import { getSystemSettings } from "../lib/settings";
+import type { AdminSettingsConfig } from "../lib/adminSettingsConfig";
 import {
   initializePaystackTransaction,
   verifyPaystackTransaction,
@@ -56,6 +57,7 @@ function normalizePaystackChargeStatus(status: string | undefined) {
 
 async function finalizePaystackDeposit(
   reference: string,
+  settings: AdminSettingsConfig,
 ): Promise<FinalizePaystackDepositResult> {
   logPaystackContext("finalize:start", { reference });
 
@@ -100,7 +102,7 @@ async function finalizePaystackDeposit(
     try {
       // Attempt to verify with Paystack again
       const retryVerificationResult =
-        await verifyPaystackTransaction(reference);
+        await verifyPaystackTransaction(reference, settings);
 
       if (retryVerificationResult.data.status === "success") {
         // Payment actually succeeded on Paystack! Update our record
@@ -271,7 +273,7 @@ async function finalizePaystackDeposit(
 
   let verificationResult;
   try {
-    verificationResult = await verifyPaystackTransaction(reference);
+    verificationResult = await verifyPaystackTransaction(reference, settings);
     logPaystackContext("finalize:verified", {
       reference,
       transactionId: transaction.id,
@@ -648,18 +650,20 @@ export async function initializePaystackPayment(
     });
 
     // Call Paystack API to initialize transaction
-    const paystackResponse = await initializePaystackTransaction({
-      email: body.email,
-      amount: amountInSmallestUnit,
-      reference,
-      callbackUrl:
-        process.env.PAYSTACK_CALLBACK_URL?.trim() || body.callbackUrl,
-      metadata: {
-        userId: user.id,
-        transactionId: transaction.id,
-        ...body.metadata,
+    const paystackResponse = await initializePaystackTransaction(
+      {
+        email: body.email,
+        amount: amountInSmallestUnit,
+        reference,
+        callbackUrl: settings.paymentsConfig.paystack.callbackUrl || body.callbackUrl,
+        metadata: {
+          userId: user.id,
+          transactionId: transaction.id,
+          ...body.metadata,
+        },
       },
-    });
+      settings,
+    );
 
     // Update transaction with Paystack meta
     await prisma.walletTransaction.update({
@@ -739,7 +743,8 @@ export async function verifyPaystackPayment(
 ): Promise<void> {
   try {
     const { reference } = paystackVerifySchema.parse(req.params);
-    const result = await finalizePaystackDeposit(reference);
+    const settings = await getSystemSettings();
+    const result = await finalizePaystackDeposit(reference, settings);
     res.json({
       status: result.status,
       message: result.message,
@@ -821,7 +826,8 @@ export async function handlePaystackBrowserCallback(
   // Attempt to finalize and verify the payment
   let paymentStatus: "success" | "failed" | "pending" = "pending";
   try {
-    const result = await finalizePaystackDeposit(reference);
+    const settings = await getSystemSettings();
+    const result = await finalizePaystackDeposit(reference, settings);
     paymentStatus = result.status;
   } catch (error) {
     logPaystackContext("callback:verification_error", {

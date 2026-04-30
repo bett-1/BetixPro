@@ -330,14 +330,15 @@ export default function Transactions() {
         {/* Transaction Details Dialog */}
         <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
           {selectedTxn && (
-            <AdminDialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Transaction Details</DialogTitle>
-                <DialogDescription className="text-admin-text-muted">
-                  Review complete transaction information
-                </DialogDescription>
-              </DialogHeader>
-              <ScrollArea className="h-96 pr-4">
+            <AdminDialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-lg p-0 overflow-hidden">
+              <div className="flex flex-col h-full">
+                <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
+                  <DialogTitle>Transaction Details</DialogTitle>
+                  <DialogDescription className="text-admin-text-muted hidden sm:block">
+                    Review complete transaction information
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="flex-1 px-5 py-6">
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-admin-text-muted">
@@ -521,7 +522,8 @@ export default function Transactions() {
                   )}
                 </div>
               </ScrollArea>
-            </AdminDialogContent>
+            </div>
+          </AdminDialogContent>
           )}
         </Dialog>
       </AdminCard>

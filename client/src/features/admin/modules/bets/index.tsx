@@ -451,10 +451,10 @@ export default function Bets() {
                                         Settle bet
                                       </DropdownMenuItem>
                                     </DialogTrigger>
-                                    <DialogContent className="border-white/10 bg-[#0b1426] backdrop-blur-2xl">
+                                    <DialogContent className="max-w-[95vw] sm:max-w-md border-white/10 bg-[#0b1426] backdrop-blur-2xl p-5 sm:p-6">
                                       <DialogHeader>
                                         <DialogTitle className="text-xl font-bold text-admin-text-primary">Settle Bet</DialogTitle>
-                                        <DialogDescription className="text-admin-text-muted/70">
+                                        <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
                                           Choose the winning side for this event.
                                         </DialogDescription>
                                       </DialogHeader>
@@ -526,10 +526,10 @@ export default function Bets() {
                                         Void bet
                                       </DropdownMenuItem>
                                     </DialogTrigger>
-                                    <DialogContent className="border-white/10 bg-[#0b1426] backdrop-blur-2xl">
+                                    <DialogContent className="max-w-[95vw] sm:max-w-md border-white/10 bg-[#0b1426] backdrop-blur-2xl p-5 sm:p-6">
                                       <DialogHeader>
                                         <DialogTitle className="text-xl font-bold text-admin-red">Void Bet</DialogTitle>
-                                        <DialogDescription className="text-admin-text-muted/70">
+                                        <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
                                           This action will refund the stake and mark the bet as void.
                                         </DialogDescription>
                                       </DialogHeader>
@@ -589,10 +589,11 @@ export default function Bets() {
           if (!open) setSelectedBet(null);
         }}
       >
-        <DialogContent className="border-white/10 bg-[#0b1426] backdrop-blur-2xl max-w-xl">
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-xl border-white/10 bg-[#0b1426] backdrop-blur-2xl p-0 overflow-hidden">
+          <div className="flex flex-col h-full">
+            <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-2xl font-bold text-admin-text-primary">Bet Details</DialogTitle>
-            <DialogDescription className="text-admin-text-muted/70">
+            <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
               Complete information for this wager
             </DialogDescription>
           </DialogHeader>
@@ -683,8 +684,9 @@ export default function Bets() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </DialogContent>
+    </Dialog>
 
       {total > 20 && (
         <div className="flex items-center justify-between gap-3 pt-4">

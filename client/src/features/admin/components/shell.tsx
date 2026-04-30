@@ -132,6 +132,15 @@ export default function AdminShell() {
     [],
   );
 
+  const activeNavItem = useMemo(() => {
+    return adminNavigation.find((item) => {
+      if (item.to === "/admin/dashboard") {
+        return pathname === item.to;
+      }
+      return pathname.startsWith(item.to);
+    });
+  }, [pathname]);
+
   const handleLogout = async () => {
     await logout();
     toast.success("Logged out successfully");
@@ -459,7 +468,7 @@ export default function AdminShell() {
         {/* Main Content Area */}
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-admin-border/50 bg-[#0f1a2d]/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8 shadow-sm">
-            <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex items-center gap-2 lg:hidden">
               <button
                 type="button"
                 aria-label="Open sidebar"
@@ -468,6 +477,11 @@ export default function AdminShell() {
               >
                 <Menu size={18} />
               </button>
+              {activeNavItem && (
+                <span className="text-sm font-bold text-admin-text-primary truncate max-w-[120px]">
+                  {activeNavItem.label}
+                </span>
+              )}
             </div>
 
             {/* Search Bar - Updated for contrast */}
@@ -490,7 +504,7 @@ export default function AdminShell() {
             </div>
 
             {/* Right Actions */}
-            <div className="ml-auto flex items-center gap-2.5 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 ml-auto">
               {/* Notifications Dropdown */}
               <div className="relative" ref={notificationsRef}>
                 <button
@@ -520,7 +534,7 @@ export default function AdminShell() {
                     )}
                   />
                   {totalUnread > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-admin-card bg-admin-red px-1 text-[9px] font-bold text-white shadow-sm">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full border-2 border-[#0b1426] bg-admin-red px-0.5 text-[8px] font-bold text-white shadow-sm">
                       {Math.min(totalUnread, 99)}
                     </span>
                   )}
@@ -698,10 +712,11 @@ export default function AdminShell() {
                     if (!userMenuOpen) setNotificationsOpen(false);
                   }}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-full border p-1 pl-1.5 pr-3 transition-all focus:outline-none focus:ring-2 focus:ring-admin-accent/50",
+                    "flex items-center gap-2 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-admin-accent/50",
                     userMenuOpen
                       ? "border-admin-border bg-admin-border/30"
                       : "border-transparent hover:bg-admin-bg/50 hover:border-admin-border/80",
+                    "p-0.5 sm:p-1 sm:pl-1.5 sm:pr-3"
                   )}
                 >
                   <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 text-[11px] font-bold text-white shadow-inner">
