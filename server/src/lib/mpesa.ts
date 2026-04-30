@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { AdminSettingsConfig } from "./adminSettingsConfig";
 
 export type WalletTransactionStatus =
   | "PENDING"
@@ -131,7 +132,7 @@ export function normalizePhoneNumber(phone: string): string | null {
   return null;
 }
 
-export function getMpesaConfig():
+export function getMpesaConfig(settings: AdminSettingsConfig):
   | {
       isConfigured: true;
       baseUrl: string;
@@ -145,21 +146,25 @@ export function getMpesaConfig():
       isConfigured: false;
       missingVars: string[];
     } {
-  const env =
-    process.env.MPESA_ENV?.toLowerCase() === "live" ? "live" : "sandbox";
-  const consumerKey = process.env.MPESA_CONSUMER_KEY;
-  const consumerSecret = process.env.MPESA_CONSUMER_SECRET;
-  const shortcode = process.env.MPESA_SHORTCODE;
-  const passkey = process.env.MPESA_PASSKEY;
-  const callbackUrl = process.env.MPESA_CALLBACK_URL;
+  const env = settings.generalSystemConfig.environment;
+  const mpesa = settings.paymentsConfig.mpesa;
+
+  const consumerKey = mpesa.consumerKey;
+  const consumerSecret = mpesa.consumerSecret;
+  const shortcode = mpesa.shortcode;
+  const passkey = mpesa.passkey;
+  const callbackUrl = mpesa.callbackUrl;
 
   const missingVars: string[] = [];
 
-  if (!consumerKey) missingVars.push("MPESA_CONSUMER_KEY");
-  if (!consumerSecret) missingVars.push("MPESA_CONSUMER_SECRET");
-  if (!shortcode) missingVars.push("MPESA_SHORTCODE");
-  if (!passkey) missingVars.push("MPESA_PASSKEY");
-  if (!callbackUrl) missingVars.push("MPESA_CALLBACK_URL");
+  if (!consumerKey || consumerKey.includes("replace-with"))
+    missingVars.push("M-Pesa Consumer Key");
+  if (!consumerSecret || consumerSecret.includes("replace-with"))
+    missingVars.push("M-Pesa Consumer Secret");
+  if (!shortcode) missingVars.push("M-Pesa Shortcode");
+  if (!passkey || passkey.includes("replace-with"))
+    missingVars.push("M-Pesa Passkey");
+  if (!callbackUrl) missingVars.push("M-Pesa Callback URL");
 
   if (missingVars.length > 0) {
     return {
@@ -168,19 +173,19 @@ export function getMpesaConfig():
     };
   }
 
-  const baseUrl =
-    env === "live"
-      ? "https://api.safaricom.co.ke"
-      : "https://sandbox.safaricom.co.ke";
+  const baseUrl = "https://sandbox.safaricom.co.ke";
+
+  // env === "live"
+  //   ? "https://api.safaricom.co.ke"
 
   return {
     isConfigured: true,
     baseUrl,
-    consumerKey: consumerKey as string,
-    consumerSecret: consumerSecret as string,
-    shortcode: shortcode as string,
-    passkey: passkey as string,
-    callbackUrl: callbackUrl as string,
+    consumerKey,
+    consumerSecret,
+    shortcode,
+    passkey,
+    callbackUrl,
   };
 }
 
@@ -192,7 +197,7 @@ function deriveSiblingCallbackUrl(callbackUrl: string, pathname: string) {
   return url.toString();
 }
 
-export function getMpesaB2CConfig():
+export function getMpesaB2CConfig(settings: AdminSettingsConfig):
   | {
       isConfigured: true;
       baseUrl: string;
@@ -209,31 +214,33 @@ export function getMpesaB2CConfig():
       isConfigured: false;
       missingVars: string[];
     } {
-  const baseConfig = getMpesaConfig();
+  const baseConfig = getMpesaConfig(settings);
   if (!baseConfig.isConfigured) {
     return baseConfig;
   }
 
-  const initiatorName = process.env.MPESA_INITIATOR_NAME?.trim();
-  const securityCredential = process.env.MPESA_SECURITY_CREDENTIAL?.trim();
-  const commandId =
-    process.env.MPESA_B2C_COMMAND_ID?.trim() || "BusinessPayment";
+  const mpesa = settings.paymentsConfig.mpesa;
+  const initiatorName = mpesa.initiatorName;
+  const securityCredential = mpesa.securityCredential;
+  const commandId = mpesa.commandId || "BusinessPayment";
   const resultUrl =
-    process.env.MPESA_B2C_RESULT_URL?.trim() ||
+    mpesa.resultUrl ||
     deriveSiblingCallbackUrl(
       baseConfig.callbackUrl,
       "/api/payments/mpesa/withdrawals/result",
     );
   const timeoutUrl =
-    process.env.MPESA_B2C_TIMEOUT_URL?.trim() ||
+    mpesa.timeoutUrl ||
     deriveSiblingCallbackUrl(
       baseConfig.callbackUrl,
       "/api/payments/mpesa/withdrawals/timeout",
     );
 
   const missingVars: string[] = [];
-  if (!initiatorName) missingVars.push("MPESA_INITIATOR_NAME");
-  if (!securityCredential) missingVars.push("MPESA_SECURITY_CREDENTIAL");
+  if (!initiatorName || initiatorName.includes("replace-with"))
+    missingVars.push("M-Pesa Initiator Name");
+  if (!securityCredential || securityCredential.includes("replace-with"))
+    missingVars.push("M-Pesa Security Credential");
 
   if (missingVars.length > 0) {
     return {
@@ -247,7 +254,7 @@ export function getMpesaB2CConfig():
     baseUrl: baseConfig.baseUrl,
     consumerKey: baseConfig.consumerKey,
     consumerSecret: baseConfig.consumerSecret,
-    shortcode: baseConfig.shortcode,
+    shortcode: mpesa.b2cShortcode || baseConfig.shortcode,
     initiatorName: initiatorName as string,
     securityCredential: securityCredential as string,
     commandId,
@@ -346,13 +353,16 @@ export function getValue(
   return items.find((item) => item.Name === name)?.Value;
 }
 
-export async function initiateMpesaB2C(args: {
-  phoneNumber: string;
-  amount: number;
-  remarks?: string;
-  occasion?: string;
-}): Promise<MpesaB2CResponse> {
-  const config = getMpesaB2CConfig();
+export async function initiateMpesaB2C(
+  args: {
+    phoneNumber: string;
+    amount: number;
+    remarks?: string;
+    occasion?: string;
+  },
+  settings: AdminSettingsConfig,
+): Promise<MpesaB2CResponse> {
+  const config = getMpesaB2CConfig(settings);
   if (!config.isConfigured) {
     throw new Error(
       `M-Pesa B2C not configured: ${config.missingVars.join(", ")}`,
@@ -374,14 +384,17 @@ export async function initiateMpesaB2C(args: {
     Occassion: args.occasion || "",
   };
 
-  const response = await fetch(`${config.baseUrl}/mpesa/b2c/v1/paymentrequest`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${tokenResponse.access_token}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${config.baseUrl}/mpesa/b2c/v1/paymentrequest`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenResponse.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
 
   if (!response.ok) {
     const errorBody = await response.text();

@@ -537,11 +537,15 @@ async function initiateWithdrawalDisbursement(args: {
 
     let payoutResponse;
     if (transaction.channel === "mpesa") {
-      const b2cResponse = await initiateMpesaB2C({
-        phoneNumber: payoutPhone,
-        amount: transaction.amount,
-        remarks: "BetWise Withdrawal",
-      });
+      const settings = await getSystemSettings();
+      const b2cResponse = await initiateMpesaB2C(
+        {
+          phoneNumber: payoutPhone,
+          amount: transaction.amount,
+          remarks: "BetWise Withdrawal",
+        },
+        settings,
+      );
 
       if (b2cResponse.ResponseCode !== "0") {
         const failureMessage =

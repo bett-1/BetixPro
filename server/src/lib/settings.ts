@@ -58,6 +58,12 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
           consumerSecret: settings.mpesaConsumerSecret,
           passkey: settings.mpesaPasskey,
           callbackUrl: settings.mpesaCallbackUrl,
+          b2cShortcode: settings.mpesaB2cShortcode,
+          initiatorName: settings.mpesaB2cInitiatorName,
+          securityCredential: settings.mpesaB2cSecurityCredential,
+          commandId: settings.mpesaB2cCommandId,
+          resultUrl: settings.mpesaB2cResultUrl,
+          timeoutUrl: settings.mpesaB2cTimeoutUrl,
           transactionFeePercent: settings.mpesaTransactionFeePercent,
           autoWithdrawEnabled: settings.mpesaAutoWithdrawEnabled,
           mpesaWithdrawalApprovalThreshold:

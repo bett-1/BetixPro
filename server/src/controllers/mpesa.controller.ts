@@ -300,7 +300,8 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
     };
   }
 
-  const config = getMpesaConfig();
+  const settings = await getSystemSettings();
+  const config = getMpesaConfig(settings);
   if (!config.isConfigured) {
     return {
       status: "pending",
@@ -463,7 +464,7 @@ export async function initializeMpesaDeposit(req: Request, res: Response) {
       return;
     }
 
-    const config = getMpesaConfig();
+    const config = getMpesaConfig(settings);
     if (!config.isConfigured) {
       res.status(500).json({
         message: `M-Pesa is not configured: ${config.missingVars.join(", ")}`,
