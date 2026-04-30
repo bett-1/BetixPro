@@ -3,41 +3,23 @@ import axios from "axios";
 type RefreshHandler = () => Promise<string | null>;
 type UnauthorizedHandler = () => void;
 
-const DEFAULT_API_URL = "https://server.betixpro.com";
+const DEFAULT_API_URL = "https://api.betixpro.com";
+const DEFAULT_API_BASE_URL = "https://api.betixpro.com/api";
 
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, "");
 }
 
-function appendApiPath(baseUrl: string) {
-  const trimmed = trimTrailingSlash(baseUrl);
-  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
-}
-
-function resolveConfiguredApiUrl() {
-  return import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_URL;
-}
-
 export function resolveApiBaseUrl() {
-  const configuredApiUrl = resolveConfiguredApiUrl();
-
-  if (!configuredApiUrl.startsWith("http")) {
-    return appendApiPath(configuredApiUrl);
-  }
-
-  return appendApiPath(configuredApiUrl);
+  return trimTrailingSlash(
+    import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL,
+  );
 }
 
 export function resolveSocketBaseUrl() {
-  const configuredSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
-  const configuredApiUrl = configuredSocketUrl || resolveConfiguredApiUrl();
-
-  if (!configuredApiUrl.startsWith("http")) {
-    return trimTrailingSlash(configuredApiUrl.replace(/\/api\/?$/, ""));
-  }
-
-  const url = new URL(configuredApiUrl);
-  return url.origin;
+  return trimTrailingSlash(
+    import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_URL,
+  );
 }
 
 const api = axios.create({

@@ -23,7 +23,7 @@ function resolveBaseUrl() {
   }
 
   const apiUrl = (
-    process.env.VITE_API_URL?.trim() || "https://server.betixpro.com"
+    process.env.VITE_API_URL?.trim() || "https://api.betixpro.com"
   ).replace(/\/+$/, "");
 
   return apiUrl.endsWith("/api") ? apiUrl : `${apiUrl}/api`;

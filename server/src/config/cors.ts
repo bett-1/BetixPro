@@ -5,7 +5,7 @@ const REQUIRED_PRODUCTION_ORIGINS = [
   "https://www.betixpro.com",
 ];
 
-const DEVELOPMENT_ORIGINS = ["http://localhost:5173", "http://localhost:3000"];
+const REQUIRED_LOCAL_ORIGINS = ["http://localhost:5173"];
 
 const PRODUCTION_LIKE_ENV_NAMES = new Set(["production", "prod"]);
 
@@ -57,12 +57,10 @@ export function resolveAllowedOriginsFromEnv() {
   const fromCorsOrigins = parseRawOrigins(process.env.CORS_ORIGINS);
   const fromFrontendUrl = parseRawOrigins(process.env.FRONTEND_URL);
   const configured = unique([...fromCorsOrigins, ...fromFrontendUrl]);
-  const includeDevOrigins =
-    !isProductionLikeRuntime() ||
-    isTruthy(process.env.ENABLE_LOCALHOST_CORS_IN_PRODUCTION);
-  const baselineOrigins = includeDevOrigins
-    ? [...REQUIRED_PRODUCTION_ORIGINS, ...DEVELOPMENT_ORIGINS]
-    : [...REQUIRED_PRODUCTION_ORIGINS];
+  const baselineOrigins = [
+    ...REQUIRED_PRODUCTION_ORIGINS,
+    ...REQUIRED_LOCAL_ORIGINS,
+  ];
 
   return unique([...baselineOrigins, ...configured]);
 }
