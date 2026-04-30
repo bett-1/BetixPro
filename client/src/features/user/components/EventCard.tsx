@@ -168,10 +168,14 @@ export default function EventCard({
       const deepLink = `${baseUrl}/user?event=${event.eventId}`;
       const shortUrl = await shortenUrl(deepLink);
 
-      const shareText = `🔥 Check out this match: ${event.homeTeam} vs ${event.awayTeam} on BetixPro!\n\nBet now: ${shortUrl}`;
+      const shareText = 
+        `🏆 MATCH PREVIEW: ${event.homeTeam} vs ${event.awayTeam}\n\n` +
+        `🔥 Join me on BetixPro to bet on this massive matchup!\n` +
+        `📈 Best Odds | ⚡ Fast Payouts | 🛡️ Secure\n\n` +
+        `👉 Bet Now: ${shortUrl}`;
 
-      const shareData = {
-        title: "BetixPro Match",
+      const shareData: ShareData = {
+        title: `BetixPro: ${event.homeTeam} vs ${event.awayTeam}`,
         text: shareText,
       };
 

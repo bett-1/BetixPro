@@ -146,10 +146,15 @@ export function CustomEventCard({
       const deepLink = `${baseUrl}/user?event=${event.id}`;
       const shortUrl = await shortenUrl(deepLink);
 
-      const shareText = `⚡ Check out this custom match: ${event.teamHome} vs ${event.teamAway} on BetixPro!\n\nBet now: ${shortUrl}`;
+      const shareText = 
+        `⚡ CUSTOM EVENT: ${event.teamHome} vs ${event.teamAway}\n\n` +
+        `🔥 Check out this exclusive custom match on BetixPro!\n` +
+        `📊 Category: ${event.category}\n` +
+        `📈 High Stakes | ⚡ Fast Action\n\n` +
+        `👉 Bet Now: ${shortUrl}`;
 
-      const shareData = {
-        title: "BetixPro Custom Match",
+      const shareData: ShareData = {
+        title: `BetixPro Custom: ${event.teamHome} vs ${event.teamAway}`,
         text: shareText,
       };
 
