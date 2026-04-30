@@ -125,12 +125,6 @@ export interface AdminSettingsConfig {
     ipWhitelist: string[];
     ipBlacklist: string[];
   };
-  taxAndFinancialRules: {
-    winningsTaxPercent: number;
-    depositTaxPercent: number;
-    commissionPercent: number;
-    roundingRule: "nearest_1" | "nearest_5" | "nearest_10" | "floor" | "ceil";
-  };
   affiliateAndAgentConfig: {
     commissionPercent: number;
     multiLevelReferralsEnabled: boolean;

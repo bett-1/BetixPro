@@ -152,17 +152,6 @@ export const adminSettingsSchema = z.object({
     responsibleGamblingMessage: z.string().trim().min(10).max(1200),
     supportContactInfo: z.string().trim().min(6).max(320),
   }),
-  taxAndFinancialRules: z.object({
-    winningsTaxPercent: percentageField.default(20),
-    depositTaxPercent: percentageField.default(0),
-    commissionPercent: percentageField.default(15),
-    roundingRule: z.enum(["nearest_1", "nearest_5", "nearest_10", "floor", "ceil"]).default("nearest_1"),
-  }).default({
-    winningsTaxPercent: 20,
-    depositTaxPercent: 0,
-    commissionPercent: 15,
-    roundingRule: "nearest_1",
-  }),
 });
 
 export type AdminSettingsConfig = z.infer<typeof adminSettingsSchema>;
@@ -304,11 +293,5 @@ export const defaultAdminSettings: AdminSettingsConfig = {
     responsibleGamblingMessage:
       "Bet responsibly. Set limits and seek support if betting affects your wellbeing.",
     supportContactInfo: "support@betixpro.com | +254700000000",
-  },
-  taxAndFinancialRules: {
-    winningsTaxPercent: 20,
-    depositTaxPercent: 0,
-    commissionPercent: 15,
-    roundingRule: "nearest_1",
   },
 };

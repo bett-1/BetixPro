@@ -249,42 +249,6 @@ const sectionDefinitions: SectionDefinition[] = [
     ],
   },
   {
-    id: "tax-rules",
-    title: "Tax & Financial Rules",
-    subtitle: "Winnings tax, deposit tax, and rounding rules",
-    group: "Financial Operations",
-    icon: <Percent size={16} />,
-    fields: [
-      {
-        path: "taxAndFinancialRules.winningsTaxPercent",
-        label: "Winnings Tax (%)",
-        type: "number",
-      },
-      {
-        path: "taxAndFinancialRules.depositTaxPercent",
-        label: "Deposit Tax (%)",
-        type: "number",
-      },
-      {
-        path: "taxAndFinancialRules.commissionPercent",
-        label: "System Commission (%)",
-        type: "number",
-      },
-      {
-        path: "taxAndFinancialRules.roundingRule",
-        label: "Rounding Rule",
-        type: "select",
-        options: [
-          { label: "Nearest 1", value: "nearest_1" },
-          { label: "Nearest 5", value: "nearest_5" },
-          { label: "Nearest 10", value: "nearest_10" },
-          { label: "Floor (Round Down)", value: "floor" },
-          { label: "Ceil (Round Up)", value: "ceil" },
-        ],
-      },
-    ],
-  },
-  {
     id: "paystack",
     title: "Paystack Gateway",
     subtitle: "Card payments, Apple Pay, and bank transfers via Paystack",

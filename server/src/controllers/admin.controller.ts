@@ -138,10 +138,6 @@ const adminSettingsSelect = {
   privacyPolicy: true,
   responsibleGamblingMessage: true,
   supportContactInfo: true,
-  winningsTaxPercent: true,
-  depositTaxPercent: true,
-  commissionPercent: true,
-  roundingRule: true,
   updatedBy: true,
   createdAt: true,
   updatedAt: true,
@@ -271,10 +267,6 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     responsibleGamblingMessage:
       config.contentAndLegal.responsibleGamblingMessage,
     supportContactInfo: config.contentAndLegal.supportContactInfo,
-    winningsTaxPercent: config.taxAndFinancialRules.winningsTaxPercent,
-    depositTaxPercent: config.taxAndFinancialRules.depositTaxPercent,
-    commissionPercent: config.taxAndFinancialRules.commissionPercent,
-    roundingRule: config.taxAndFinancialRules.roundingRule,
     updatedBy,
   };
 }
@@ -414,17 +406,6 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
       privacyPolicy: record.privacyPolicy,
       responsibleGamblingMessage: record.responsibleGamblingMessage,
       supportContactInfo: record.supportContactInfo,
-    },
-    taxAndFinancialRules: {
-      winningsTaxPercent: record.winningsTaxPercent,
-      depositTaxPercent: record.depositTaxPercent,
-      commissionPercent: record.commissionPercent,
-      roundingRule: record.roundingRule as
-        | "nearest_1"
-        | "nearest_5"
-        | "nearest_10"
-        | "floor"
-        | "ceil",
     },
   };
 }
@@ -1031,7 +1012,7 @@ export async function getBettingAnalytics(req: Request, res: Response) {
   const previousEnd = new Date(currentStart.getTime() - 1);
   const previousStart = new Date(previousEnd.getTime() - currentDurationMs);
 
-  const [bets, previousBets, settings, walletTransactions] = await Promise.all([
+  const [bets, previousBets, walletTransactions] = await Promise.all([
     prisma.bet.findMany({
       where: {
         placedAt: { gte: currentStart, lte: currentEnd },
@@ -1061,13 +1042,6 @@ export async function getBettingAnalytics(req: Request, res: Response) {
         stake: true,
         potentialPayout: true,
         status: true,
-      },
-    }),
-    prisma.adminSettings.findUnique({
-      where: { key: "global" },
-      select: {
-        commissionPercent: true,
-        winningsTaxPercent: true,
       },
     }),
     prisma.walletTransaction.findMany({
