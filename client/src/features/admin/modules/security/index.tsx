@@ -12,6 +12,9 @@ import {
   Smartphone,
   Lock,
   Copy,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -57,6 +60,13 @@ export default function SecurityWizard() {
   const [setupToken, setSetupToken] = useState<string | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [manualEntryKey, setManualEntryKey] = useState<string | null>(null);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const statusQuery = useQuery({
     queryKey: ["admin-2fa-status"],
@@ -137,6 +147,40 @@ export default function SecurityWizard() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message ?? "Failed to disable 2FA");
+    },
+  });
+
+  const changePassword = useMutation({
+    mutationFn: async () => {
+      if (newPassword !== confirmPassword) {
+        throw new Error("New passwords do not match.");
+      }
+      if (newPassword.length < 10) {
+        throw new Error("New password must be at least 10 characters long.");
+      }
+      if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+        throw new Error("New password must include uppercase, lowercase, number, and special character.");
+      }
+      const response = await api.post("/auth/change-password", {
+        currentPassword,
+        newPassword,
+      });
+      return response.data;
+    },
+    onSuccess: (payload: any) => {
+      toast.success(payload?.message || "Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: any) => {
+      const fieldErrors = error.response?.data?.errors;
+      if (fieldErrors) {
+        const message = Object.values(fieldErrors).flat()[0];
+        toast.error((message as string) || "Failed to change password.");
+      } else {
+        toast.error(error.response?.data?.message ?? error.message ?? "Failed to change password.");
+      }
     },
   });
 
@@ -237,6 +281,94 @@ export default function SecurityWizard() {
               </div>
             </AdminCard>
           )}
+
+          <AdminCard className="overflow-hidden border-admin-border/50 bg-[#0b1426]/60 shadow-lg">
+            <div className="p-6">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-admin-accent/10 text-admin-accent border border-admin-accent/20 shadow-[inset_0_0_15px_rgba(245,197,24,0.1)]">
+                <KeyRound size={24} />
+              </div>
+              <h3 className="text-base font-bold text-admin-text-primary">
+                Change Password
+              </h3>
+              <p className="mt-2 text-xs text-admin-text-muted leading-relaxed mb-6">
+                Update your administrative password. We recommend using a strong password.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
+                    Current Password
+                  </p>
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
+                    >
+                      {showCurrentPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
+                    New Password
+                  </p>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
+                    >
+                      {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
+                    Confirm Password
+                  </p>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
+                    >
+                      {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => void changePassword.mutateAsync()}
+                  disabled={changePassword.isPending || !currentPassword || !newPassword || !confirmPassword}
+                  className="w-full h-10 bg-admin-accent text-admin-bg font-bold shadow-lg hover:bg-admin-accent-strong text-xs uppercase tracking-wider transition-all"
+                >
+                  {changePassword.isPending ? <Loader2 size={14} className="animate-spin mr-2" /> : null}
+                  Update Password
+                </Button>
+              </div>
+            </div>
+          </AdminCard>
         </div>
 
         {/* Right Column: Setup Wizard */}
