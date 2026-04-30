@@ -383,8 +383,10 @@ async function syncPaystackWithdrawalStatus(transactionId: string) {
   }
 
   try {
+    const settings = await getSystemSettings();
     const providerStatus = await getPaystackTransferStatus(
       transaction.checkoutRequestId,
+      settings,
     );
     const normalizedStatus = normalizePaystackTransferStatus(
       providerStatus.data?.status,
@@ -602,16 +604,18 @@ async function initiateWithdrawalDisbursement(args: {
     }
 
     // Default to Paystack for other channels (including "paystack")
+    const settings = await getSystemSettings();
     payoutResponse = await initiatePaystackWithdrawal(
       payoutPhone,
       transaction.amount,
       transferReference,
+      settings,
     );
 
     if (!payoutResponse.data?.transfer_code) {
       const failureMessage =
         payoutResponse.message ?? "Paystack transfer request rejected.";
-
+    
       await settleFailedWithdrawal({
         transactionId: transaction.id,
         failureReason: failureMessage,
