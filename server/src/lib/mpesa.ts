@@ -173,10 +173,10 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     };
   }
 
-  const baseUrl = "https://sandbox.safaricom.co.ke";
-
-  // env === "live"
-  //   ? "https://api.safaricom.co.ke"
+  const baseUrl =
+    env === "live"
+      ? "https://api.safaricom.co.ke"
+      : "https://sandbox.safaricom.co.ke";
 
   return {
     isConfigured: true,

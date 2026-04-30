@@ -1,14 +1,15 @@
 import { z } from "zod";
-import crypto from "crypto";
+import type { AdminSettingsConfig } from "./adminSettingsConfig";
 
 /**
- * Get Paystack configuration from environment variables.
+ * Get Paystack configuration from system settings.
  */
-async function getPaystackConfig() {
+export function getPaystackConfig(settings: AdminSettingsConfig) {
+  const paystack = settings.paymentsConfig.paystack;
   return {
-    secretKey: process.env.PAYSTACK_SECRET_KEY,
-    publicKey: process.env.PAYSTACK_PUBLIC_KEY,
-    webhookSecret: process.env.PAYSTACK_WEBHOOK_SECRET,
+    secretKey: paystack.secretKey,
+    publicKey: paystack.publicKey,
+    webhookSecret: paystack.webhookSecret,
   };
 }
 
@@ -108,8 +109,9 @@ export const paystackVerifySchema = z.object({
  */
 export async function initializePaystackTransaction(
   request: PaystackInitializeRequest,
+  settings: AdminSettingsConfig,
 ): Promise<PaystackInitializeResponse> {
-  const config = await getPaystackConfig();
+  const config = getPaystackConfig(settings);
   if (!config.secretKey) {
     throw new Error("PAYSTACK_SECRET_KEY not configured");
   }
@@ -177,9 +179,10 @@ export async function initializePaystackTransaction(
  */
 export async function verifyPaystackTransaction(
   reference: string,
+  settings: AdminSettingsConfig,
   maxRetries = 3,
 ): Promise<PaystackVerifyResponse> {
-  const config = await getPaystackConfig();
+  const config = getPaystackConfig(settings);
   if (!config.secretKey) {
     throw new Error("PAYSTACK_SECRET_KEY not configured");
   }
@@ -285,8 +288,9 @@ export async function verifyPaystackTransaction(
 export async function verifyPaystackWebhookSignature(
   payload: string | Buffer,
   signature: string,
+  settings: AdminSettingsConfig,
 ): Promise<boolean> {
-  const config = await getPaystackConfig();
+  const config = getPaystackConfig(settings);
   if (!config.webhookSecret) {
     console.error("PAYSTACK_WEBHOOK_SECRET not configured");
     return false;
@@ -442,9 +446,10 @@ export interface PaystackRecipientResponse {
  */
 export async function createPaystackTransferRecipient(
   phoneNumber: string,
+  settings: AdminSettingsConfig,
   name?: string,
 ): Promise<PaystackRecipientResponse> {
-  const config = await getPaystackConfig();
+  const config = getPaystackConfig(settings);
   if (!config.secretKey) {
     throw new Error("PAYSTACK_SECRET_KEY not configured");
   }
@@ -518,8 +523,9 @@ export async function initiatePaystackWithdrawal(
   phoneNumber: string,
   amount: number,
   reference: string,
+  settings: AdminSettingsConfig,
 ): Promise<PaystackTransferResponse> {
-  const config = await getPaystackConfig();
+  const config = getPaystackConfig(settings);
   if (!config.secretKey) {
     throw new Error("PAYSTACK_SECRET_KEY not configured");
   }
@@ -580,8 +586,9 @@ export async function initiatePaystackWithdrawal(
  */
 export async function getPaystackTransferStatus(
   transferCode: string,
+  settings: AdminSettingsConfig,
 ): Promise<PaystackTransferResponse> {
-  const config = await getPaystackConfig();
+  const config = getPaystackConfig(settings);
   if (!config.secretKey) {
     throw new Error("PAYSTACK_SECRET_KEY not configured");
   }
