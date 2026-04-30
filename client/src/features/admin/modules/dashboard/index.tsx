@@ -720,7 +720,7 @@ export default function Dashboard() {
               <DialogTitle className="text-admin-text-primary">
                 Transaction Details
               </DialogTitle>
-              <DialogDescription className="text-admin-text-muted">
+              <DialogDescription className="text-admin-text-muted hidden sm:block">
                 {selectedTransaction.type === "deposit"
                   ? "Wallet deposit transaction"
                   : "Wallet withdrawal transaction"}

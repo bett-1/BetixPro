@@ -405,7 +405,7 @@ export default function Risk() {
                               <div className="flex flex-col h-full">
                                 <DialogHeader className="p-5 sm:p-8 sm:pb-0">
                                   <DialogTitle>Risk Alert Details</DialogTitle>
-                                  <DialogDescription>
+                                  <DialogDescription className="hidden sm:block">
                                     {ALERT_TYPE_LABELS[selectedAlert.alertType]}
                                   </DialogDescription>
                                 </DialogHeader>

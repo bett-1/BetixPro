@@ -578,7 +578,7 @@ export default function Users() {
               <Shield size={18} className="text-admin-accent" />
               User Profile
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Account details and management
             </DialogDescription>
           </DialogHeader>
@@ -717,7 +717,7 @@ export default function Users() {
         <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg">Edit User</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Update user profile information
             </DialogDescription>
           </DialogHeader>
@@ -792,7 +792,7 @@ export default function Users() {
             <DialogTitle className="text-lg text-admin-red">
               Ban User
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Restrict user access to the platform
             </DialogDescription>
           </DialogHeader>
@@ -843,7 +843,7 @@ export default function Users() {
         <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg">Unban User</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Restore user access to the platform
             </DialogDescription>
           </DialogHeader>
@@ -883,7 +883,7 @@ export default function Users() {
         <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
             <DialogTitle className="text-lg">Change Password</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Set a new password for this user account
             </DialogDescription>
           </DialogHeader>
@@ -995,7 +995,7 @@ export default function Users() {
               <UserPlus size={18} className="text-admin-accent" />
               Create New User
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="hidden sm:block">
               Add a new user to the platform
             </DialogDescription>
           </DialogHeader>

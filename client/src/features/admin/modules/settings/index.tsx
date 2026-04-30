@@ -871,14 +871,14 @@ export default function Settings() {
               <div className="px-5 py-6 sm:px-10 sm:py-8 border-b border-[#3d6ba3]/20 bg-black/20 backdrop-blur-md">
                 <div className="flex items-center justify-between gap-6">
                   <div className="flex items-center gap-5">
-                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-[#f5c518] text-[#0d2137] shadow-lg shadow-[#f5c518]/20">
+                    <div className="hidden sm:flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-[#f5c518] text-[#0d2137] shadow-lg shadow-[#f5c518]/20">
                       {selectedSection.icon}
                     </div>
                     <div>
                       <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-white">
                         {selectedSection.title}
                       </DialogTitle>
-                      <DialogDescription className="mt-1 text-xs sm:text-sm text-[#a8c4e0]">
+                      <DialogDescription className="mt-1 hidden text-xs sm:block sm:text-sm text-[#a8c4e0]">
                         {selectedSection.subtitle}
                       </DialogDescription>
                     </div>
@@ -886,7 +886,7 @@ export default function Settings() {
 
                   <div
                     className={cn(
-                      "flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-500",
+                      "hidden sm:flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-500",
                       modalHasChanges
                         ? "border-[#f5c518]/30 bg-[#f5c518]/5 text-[#f5c518]"
                         : "border-emerald-500/30 bg-emerald-500/5 text-emerald-400",
@@ -905,8 +905,8 @@ export default function Settings() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-10 sm:py-10 app-scrollbar pr-4 sm:pr-6">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-10 sm:py-10 app-scrollbar pr-3 sm:pr-6">
+                <div className="grid grid-cols-1 gap-5 sm:gap-8 md:grid-cols-2">
                   {selectedSection.fields.map((field, index) => {
                     const value = field.path
                       ? getByPath(modalDraft, field.path)
@@ -952,7 +952,7 @@ export default function Settings() {
                       <div
                         key={field.path ?? `field-${index}`}
                         className={cn(
-                          "space-y-2.5",
+                          "space-y-1.5 sm:space-y-2.5",
                           fullWidth ? "md:col-span-2" : "",
                         )}
                       >
@@ -1074,7 +1074,7 @@ export default function Settings() {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 z-10 px-5 py-6 sm:px-10 sm:py-8 border-t border-[#3d6ba3]/20 bg-[#0b1426] flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+              <div className="sticky bottom-0 z-10 px-4 py-5 sm:px-10 sm:py-8 border-t border-[#3d6ba3]/20 bg-[#0b1426] flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
                 <Button
                   variant="outline"
                   onClick={closeModal}

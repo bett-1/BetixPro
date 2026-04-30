@@ -306,7 +306,7 @@ function CreateEventModal({
             <Plus size={20} className="text-admin-accent" />
             Create Custom Event
           </DialogTitle>
-          <DialogDescription className="text-admin-text-muted/70">
+          <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
             Create a new custom event with markets and odds
           </DialogDescription>
         </DialogHeader>
@@ -625,7 +625,7 @@ function SettleMarketDialog({
             <Trophy size={20} className="text-admin-accent" />
             Enter Results
           </DialogTitle>
-          <DialogDescription className="text-admin-text-muted/70">
+          <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
             Select the winning outcome for this match
           </DialogDescription>
         </DialogHeader>
@@ -762,7 +762,7 @@ function EventDetailDialog({
             <Eye size={20} className="text-admin-accent" />
             {event.title}
           </DialogTitle>
-          <DialogDescription className="text-admin-text-muted/70">
+          <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
             {event.teamHome} vs {event.teamAway} · {event.league}
           </DialogDescription>
         </DialogHeader>

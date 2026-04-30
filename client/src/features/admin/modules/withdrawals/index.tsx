@@ -439,7 +439,7 @@ export default function WithdrawalsAdmin() {
             <DialogTitle className="text-lg text-admin-text-primary">
               Withdrawal Request
             </DialogTitle>
-            <DialogDescription className="text-xs text-admin-text-muted">
+            <DialogDescription className="text-xs text-admin-text-muted hidden sm:block">
               Review the details below before processing.
             </DialogDescription>
           </DialogHeader>

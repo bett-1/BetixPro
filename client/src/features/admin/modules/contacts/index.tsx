@@ -426,7 +426,7 @@ export default function Contacts() {
             <div className="flex flex-col h-full">
               <DialogHeader className="px-5 py-4 sm:px-6 sm:py-5 border-b border-white/5">
               <DialogTitle className="text-xl">Message Details</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="hidden sm:block">
                 Submitted by{" "}
                 <span className="font-semibold text-admin-text-primary">
                   {selectedContact.fullName}

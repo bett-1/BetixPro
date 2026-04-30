@@ -334,7 +334,7 @@ export default function Transactions() {
               <div className="flex flex-col h-full">
                 <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
                   <DialogTitle>Transaction Details</DialogTitle>
-                  <DialogDescription className="text-admin-text-muted">
+                  <DialogDescription className="text-admin-text-muted hidden sm:block">
                     Review complete transaction information
                   </DialogDescription>
                 </DialogHeader>

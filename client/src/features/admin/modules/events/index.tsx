@@ -1518,7 +1518,7 @@ function FeedEvents() {
             <DialogTitle className="text-2xl font-bold">
               Bulk Update Events
             </DialogTitle>
-            <DialogDescription className="text-admin-text-muted/70">
+            <DialogDescription className="text-admin-text-muted/70 hidden sm:block">
               Apply margin and markets to a league, sport, or selection.
             </DialogDescription>
           </DialogHeader>
@@ -1648,7 +1648,7 @@ function FeedEvents() {
         <DialogContent className="max-w-[95vw] sm:max-w-md border-admin-border bg-admin-card p-5 sm:p-6 text-admin-text-primary">
           <DialogHeader>
             <DialogTitle>Create Custom Event</DialogTitle>
-            <DialogDescription className="text-admin-text-muted">
+            <DialogDescription className="text-admin-text-muted hidden sm:block">
               Add a new custom event with odds.
             </DialogDescription>
           </DialogHeader>
@@ -1796,7 +1796,7 @@ function FeedEvents() {
                 ? `${selectedEvent.homeTeam} vs ${selectedEvent.awayTeam}`
                 : "Event details"}
             </DialogTitle>
-            <DialogDescription className="text-admin-text-muted">
+            <DialogDescription className="text-admin-text-muted hidden sm:block">
               Review event metadata, markets, and displayed odds.
             </DialogDescription>
           </DialogHeader>
@@ -1902,7 +1902,7 @@ function FeedEvents() {
         <DialogContent className="max-w-[95vw] sm:max-w-lg border-admin-border bg-admin-card p-5 sm:p-6 text-admin-text-primary">
           <DialogHeader>
             <DialogTitle>Edit event markets</DialogTitle>
-            <DialogDescription className="text-admin-text-muted">
+            <DialogDescription className="text-admin-text-muted hidden sm:block">
               Adjust house margin and enabled markets.
             </DialogDescription>
           </DialogHeader>
