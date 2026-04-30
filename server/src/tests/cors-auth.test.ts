@@ -88,7 +88,7 @@ test("allowed origins include production and localhost entries", () => {
   withEnvSync(
     {
       CORS_ORIGINS:
-        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173,http://localhost:3000",
+        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173",
       FRONTEND_URL: undefined,
       NODE_ENV: "development",
     },
@@ -97,41 +97,22 @@ test("allowed origins include production and localhost entries", () => {
       assert.ok(allowed.includes("https://betixpro.com"));
       assert.ok(allowed.includes("https://www.betixpro.com"));
       assert.ok(allowed.includes("http://localhost:5173"));
-      assert.ok(allowed.includes("http://localhost:3000"));
     },
   );
 });
 
-test("production-like runtime excludes localhost unless explicitly enabled", () => {
+test("production-like runtime allows required localhost origin", () => {
   withEnvSync(
     {
       CORS_ORIGINS: "https://betixpro.com,https://www.betixpro.com",
       FRONTEND_URL: undefined,
       NODE_ENV: "prod",
-      ENABLE_LOCALHOST_CORS_IN_PRODUCTION: undefined,
     },
     () => {
       const allowed = resolveAllowedOriginsFromEnv();
       assert.ok(allowed.includes("https://betixpro.com"));
       assert.ok(allowed.includes("https://www.betixpro.com"));
-      assert.equal(allowed.includes("http://localhost:5173"), false);
-      assert.equal(allowed.includes("http://localhost:3000"), false);
-    },
-  );
-});
-
-test("production-like runtime can opt in localhost origins", () => {
-  withEnvSync(
-    {
-      CORS_ORIGINS: "https://betixpro.com,https://www.betixpro.com",
-      FRONTEND_URL: undefined,
-      NODE_ENV: "production",
-      ENABLE_LOCALHOST_CORS_IN_PRODUCTION: "true",
-    },
-    () => {
-      const allowed = resolveAllowedOriginsFromEnv();
       assert.ok(allowed.includes("http://localhost:5173"));
-      assert.ok(allowed.includes("http://localhost:3000"));
     },
   );
 });
@@ -156,7 +137,7 @@ test("request origin validator accepts allowed origins and rejects unknown origi
   withEnvSync(
     {
       CORS_ORIGINS:
-        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173,http://localhost:3000",
+        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173",
       FRONTEND_URL: undefined,
       NODE_ENV: "production",
     },
@@ -182,7 +163,7 @@ test("requests without Origin header are allowed for server-to-server paths", as
   await withEnv(
     {
       CORS_ORIGINS:
-        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173,http://localhost:3000",
+        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173",
       FRONTEND_URL: undefined,
       NODE_ENV: "production",
     },
@@ -201,7 +182,7 @@ test("preflight OPTIONS succeeds for allowed production origins", async () => {
   await withEnv(
     {
       CORS_ORIGINS:
-        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173,http://localhost:3000",
+        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173",
       FRONTEND_URL: undefined,
       NODE_ENV: "production",
     },
@@ -229,7 +210,7 @@ test("login endpoint CORS allows both production frontend origins", async () => 
   await withEnv(
     {
       CORS_ORIGINS:
-        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173,http://localhost:3000",
+        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173",
       FRONTEND_URL: undefined,
       NODE_ENV: "production",
     },
@@ -256,7 +237,7 @@ test("disallowed origin fails with 403 CORS policy response", async () => {
   await withEnv(
     {
       CORS_ORIGINS:
-        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173,http://localhost:3000",
+        "https://betixpro.com,https://www.betixpro.com,http://localhost:5173",
       FRONTEND_URL: undefined,
       NODE_ENV: "production",
     },

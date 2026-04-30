@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiUrl = env.VITE_API_URL || "https://server.betixpro.com";
+  const apiUrl = env.VITE_API_URL || "https://api.betixpro.com";
 
   return {
     plugins: [react(), tailwindcss()],
