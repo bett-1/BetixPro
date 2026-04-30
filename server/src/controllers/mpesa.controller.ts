@@ -63,8 +63,12 @@ function mapDbStatus(status: string): MpesaDepositResult["status"] {
   }
 }
 
-function isPendingQueryResult(resultCode?: string) {
-  return ["", "1037", "1025", "9999"].includes((resultCode ?? "").trim());
+function isPendingQueryResult(resultCode?: string | number | null) {
+  const code = String(resultCode ?? "").trim();
+  // Empty code usually means Safaricom is still processing and hasn't sent a result yet.
+  // 9999 or empty string are common for "in progress".
+  // 1037 is a timeout, which should be considered a failure, not pending.
+  return ["", "9999"].includes(code);
 }
 
 
@@ -337,6 +341,12 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
     });
 
     const data = (await response.json().catch(() => ({}))) as MpesaStkQueryResponse;
+
+    console.log("[M-Pesa Status] Query response for", transaction.checkoutRequestId, ":", {
+      ok: response.ok,
+      status: response.status,
+      data,
+    });
 
     if (!response.ok) {
       throw new Error(
