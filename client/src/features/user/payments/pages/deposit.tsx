@@ -115,6 +115,7 @@ export default function DepositPage() {
     null,
   );
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [retryCooldown, setRetryCooldown] = useState(0);
   const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
   const [isMethodMenuPreparing, setIsMethodMenuPreparing] = useState(false);
   const methodMenuTimerRef = useRef<number | null>(null);
@@ -186,6 +187,7 @@ export default function DepositPage() {
         setPaymentReference(storedReference);
         setPaymentStatus("failed");
         setPaymentMessage("The payment could not be completed.");
+        setRetryCooldown(60);
         setShowPaymentResult(true);
         toast.error("Payment failed. Please try again.");
       } else if (routeStatus === "pending" && storedReference) {
@@ -231,6 +233,7 @@ export default function DepositPage() {
       setIsProcessing(false);
       setPaymentStatus("failed");
       setPaymentMessage(paystackVerificationQuery.data?.message ?? "Payment could not be confirmed.");
+      setRetryCooldown(60);
       setShowPaymentResult(true);
       toast.error("Payment could not be confirmed.");
     }
@@ -271,6 +274,16 @@ export default function DepositPage() {
     },
     [],
   );
+
+  useEffect(() => {
+    if (retryCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setRetryCooldown((c) => Math.max(0, c - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [retryCooldown]);
 
   const onMethodMenuOpenChange = (open: boolean) => {
     if (methodMenuTimerRef.current !== null) {
@@ -318,6 +331,7 @@ export default function DepositPage() {
       setIsProcessing(false);
       setPaymentStatus("failed");
       setPaymentMessage(failureMessage || "M-Pesa payment failed.");
+      setRetryCooldown(60);
       setShowPaymentResult(true);
       toast.error(failureMessage || "M-Pesa payment failed.");
     }
@@ -332,6 +346,7 @@ export default function DepositPage() {
     setShowPaymentResult(false);
     setPaymentStatus(null);
     setPaymentMessage(null);
+    setRetryCooldown(0);
   };
 
   const onCancelProcessing = () => {
@@ -774,6 +789,8 @@ export default function DepositPage() {
         message={
           paymentMessage ?? "Your M-Pesa payment could not be confirmed."
         }
+        retryLabel={retryCooldown > 0 ? `Retry in ${retryCooldown}s` : "Retry Payment"}
+        retryDisabled={retryCooldown > 0}
         onClose={onClose}
         onRetry={onRetry}
       />
