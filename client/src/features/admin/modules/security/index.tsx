@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  ShieldOff,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -60,6 +61,8 @@ export default function SecurityWizard() {
   const [setupToken, setSetupToken] = useState<string | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [manualEntryKey, setManualEntryKey] = useState<string | null>(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isDisable2FAModalOpen, setIsDisable2FAModalOpen] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -144,6 +147,7 @@ export default function SecurityWizard() {
       toast.success("2FA disabled successfully");
       void queryClient.invalidateQueries({ queryKey: ["admin-2fa-status"] });
       setTwoFactorCode("");
+      setIsDisable2FAModalOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message ?? "Failed to disable 2FA");
@@ -172,6 +176,7 @@ export default function SecurityWizard() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setIsPasswordModalOpen(false);
     },
     onError: (error: any) => {
       const fieldErrors = error.response?.data?.errors;
@@ -217,162 +222,32 @@ export default function SecurityWizard() {
       <AdminSectionHeader
         title="Security Center"
         subtitle="Protect your administrative account with mandatory two-factor authentication"
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setIsPasswordModalOpen(true)}
+              variant="outline"
+              className="h-9 px-4 border-admin-border bg-admin-surface/30 text-admin-text-primary hover:bg-admin-surface/50 text-[11px] font-bold uppercase tracking-wider gap-2"
+            >
+              <KeyRound size={14} className="text-admin-accent" />
+              Change Password
+            </Button>
+            {isEnabled && (
+              <Button
+                onClick={() => setIsDisable2FAModalOpen(true)}
+                variant="outline"
+                className="h-9 px-4 border-admin-red/20 text-admin-red hover:bg-admin-red/10 text-[11px] font-bold uppercase tracking-wider gap-2"
+              >
+                <ShieldOff size={14} />
+                Disable 2FA
+              </Button>
+            )}
+          </div>
+        }
       />
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
-        {/* Left Column: Information */}
-        <div className="lg:col-span-4 space-y-6">
-          <AdminCard className="overflow-hidden border-admin-border/50 bg-[#0b1426]/60 shadow-lg">
-            <div className="p-4 sm:p-6">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-admin-accent/10 text-admin-accent border border-admin-accent/20 shadow-[inset_0_0_15px_rgba(245,197,24,0.1)]">
-                <Shield size={24} />
-              </div>
-              <h3 className="text-base font-bold text-admin-text-primary">
-                Account Protection
-              </h3>
-              <p className="mt-2 text-xs text-admin-text-muted leading-relaxed">
-                TOTP-based authentication adds an extra layer of security by
-                requiring a unique code from your mobile device.
-              </p>
-
-              <div className="mt-6">
-                 <div className={cn(
-                   "inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase",
-                   isEnabled 
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    : "bg-admin-red/10 text-admin-red border border-admin-red/20"
-                 )}>
-                   <div className={cn("h-1.5 w-1.5 rounded-full", isEnabled ? "bg-emerald-400 animate-pulse" : "bg-admin-red")} />
-                   {isEnabled ? "Protected" : "Vulnerable"}
-                 </div>
-              </div>
-            </div>
-          </AdminCard>
-
-          {isEnabled && (
-            <AdminCard className="border-admin-border/50 bg-admin-card/50 backdrop-blur-md">
-              <AdminCardHeader
-                title="Disable Protection"
-                subtitle="Enter your current code to remove 2FA"
-              />
-              <div className="p-4 pt-0 sm:pt-0 space-y-4">
-                <div className="space-y-1.5">
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={twoFactorCode}
-                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
-                    placeholder="000000"
-                    className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-center text-lg font-bold tracking-[0.5em] text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-4 focus:ring-admin-accent/10 transition-all"
-                  />
-                </div>
-                <Button
-                  onClick={() => void disable2FA.mutateAsync()}
-                  disabled={disable2FA.isPending || twoFactorCode.length !== 6}
-                  variant="outline"
-                  className="w-full h-10 border-admin-red/20 text-admin-red hover:bg-admin-red/10 text-xs font-bold uppercase tracking-wider"
-                >
-                  {disable2FA.isPending ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    "Disable TOTP"
-                  )}
-                </Button>
-              </div>
-            </AdminCard>
-          )}
-
-          <AdminCard className="overflow-hidden border-admin-border/50 bg-[#0b1426]/60 shadow-lg">
-            <div className="p-4 sm:p-6">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-admin-accent/10 text-admin-accent border border-admin-accent/20 shadow-[inset_0_0_15px_rgba(245,197,24,0.1)]">
-                <KeyRound size={24} />
-              </div>
-              <h3 className="text-base font-bold text-admin-text-primary">
-                Change Password
-              </h3>
-              <p className="mt-2 text-xs text-admin-text-muted leading-relaxed mb-6">
-                Update your administrative password. We recommend using a strong password.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
-                    Current Password
-                  </p>
-                  <div className="relative">
-                    <input
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
-                    >
-                      {showCurrentPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
-                    New Password
-                  </p>
-                  <div className="relative">
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
-                    >
-                      {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
-                    Confirm Password
-                  </p>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="h-10 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
-                    >
-                      {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => void changePassword.mutateAsync()}
-                  disabled={changePassword.isPending || !currentPassword || !newPassword || !confirmPassword}
-                  className="w-full h-10 bg-admin-accent text-admin-bg font-bold shadow-lg hover:bg-admin-accent-strong text-xs uppercase tracking-wider transition-all"
-                >
-                  {changePassword.isPending ? <Loader2 size={14} className="animate-spin mr-2" /> : null}
-                  Update Password
-                </Button>
-              </div>
-            </div>
-          </AdminCard>
-        </div>
-
-        {/* Right Column: Setup Wizard */}
-        <div className="lg:col-span-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="w-full">
           {!isEnabled ? (
             <AdminCard className="p-0 h-full border-admin-border/50 bg-[#0b1426]/40 shadow-2xl backdrop-blur-xl rounded-3xl overflow-hidden">
               <div className="flex flex-col h-full">
@@ -548,6 +423,135 @@ export default function SecurityWizard() {
           )}
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0 overflow-hidden border-white/5">
+          <DialogHeader className="p-6 pb-0 sm:p-8 sm:pb-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-admin-accent/10 text-admin-accent">
+                <KeyRound size={20} />
+              </div>
+              <DialogTitle className="text-xl font-bold text-admin-text-primary">Change Password</DialogTitle>
+            </div>
+            <p className="mt-2 text-sm text-admin-text-muted">Update your administrative password.</p>
+          </DialogHeader>
+
+          <div className="p-6 sm:p-8 space-y-5">
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
+                Current Password
+              </p>
+              <div className="relative">
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
+                >
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
+                New Password
+              </p>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-admin-text-muted">
+                Confirm Password
+              </p>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-sm text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-1 focus:ring-admin-accent/50 transition-all pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted hover:text-admin-text-primary"
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => void changePassword.mutateAsync()}
+              disabled={changePassword.isPending || !currentPassword || !newPassword || !confirmPassword}
+              className="w-full h-12 bg-admin-accent text-admin-bg font-bold shadow-lg hover:bg-admin-accent-strong text-xs uppercase tracking-widest transition-all"
+            >
+              {changePassword.isPending ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+              Update Password
+            </Button>
+          </div>
+        </AdminDialogContent>
+      </Dialog>
+
+      {/* Disable 2FA Modal */}
+      <Dialog open={isDisable2FAModalOpen} onOpenChange={setIsDisable2FAModalOpen}>
+        <AdminDialogContent className="max-w-[95vw] sm:max-w-md p-0 overflow-hidden border-white/5">
+          <DialogHeader className="p-6 pb-0 sm:p-8 sm:pb-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-admin-red/10 text-admin-red">
+                <ShieldOff size={20} />
+              </div>
+              <DialogTitle className="text-xl font-bold text-admin-text-primary">Disable Protection</DialogTitle>
+            </div>
+            <p className="mt-2 text-sm text-admin-text-muted">Enter your current code to remove 2FA.</p>
+          </DialogHeader>
+
+          <div className="p-6 sm:p-8 space-y-6">
+            <div className="space-y-1.5">
+              <input
+                type="text"
+                maxLength={6}
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="000000"
+                className="h-14 w-full rounded-xl border border-admin-border bg-admin-bg/50 px-4 text-center text-2xl font-bold tracking-[0.5em] text-admin-text-primary outline-none focus:border-admin-accent/50 focus:ring-4 focus:ring-admin-accent/10 transition-all"
+              />
+            </div>
+            <Button
+              onClick={() => void disable2FA.mutateAsync()}
+              disabled={disable2FA.isPending || twoFactorCode.length !== 6}
+              variant="outline"
+              className="w-full h-12 border-admin-red/20 text-admin-red hover:bg-admin-red/10 text-xs font-bold uppercase tracking-widest"
+            >
+              {disable2FA.isPending ? (
+                <Loader2 size={16} className="animate-spin mr-2" />
+              ) : (
+                "Disable 2FA"
+              )}
+            </Button>
+          </div>
+        </AdminDialogContent>
+      </Dialog>
 
       {/* QR Code Modal */}
       <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
