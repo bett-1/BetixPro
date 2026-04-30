@@ -77,40 +77,16 @@ async function upsertSeedAdmin(args: {
   phone: string;
   passwordHash: string;
 }) {
-  const byEmail = await prisma.user.findUnique({
+  return prisma.user.upsert({
     where: { email: args.email },
-    select: { id: true },
-  });
-
-  const byPhone = await prisma.user.findUnique({
-    where: { phone: args.phone },
-    select: { id: true },
-  });
-
-  if (byEmail && byPhone && byEmail.id !== byPhone.id) {
-    throw new Error(
-      `Seed conflict: admin email ${args.email} and phone ${args.phone} belong to different users.`,
-    );
-  }
-
-  const existingUserId = byEmail?.id ?? byPhone?.id;
-
-  if (existingUserId) {
-    return prisma.user.update({
-      where: { id: existingUserId },
-      data: {
-        email: args.email,
-        phone: args.phone,
-        passwordHash: args.passwordHash,
-        role: "ADMIN",
-        mustChangePassword: false,
-        isVerified: true,
-      },
-    });
-  }
-
-  return prisma.user.create({
-    data: {
+    update: {
+      phone: args.phone,
+      passwordHash: args.passwordHash,
+      role: "ADMIN",
+      mustChangePassword: false,
+      isVerified: true,
+    },
+    create: {
       email: args.email,
       phone: args.phone,
       passwordHash: args.passwordHash,
@@ -119,6 +95,46 @@ async function upsertSeedAdmin(args: {
       isVerified: true,
     },
   });
+}
+
+function parseCommaSeparatedEnv(value: string | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getAdminSeedInputs() {
+  const emails = parseCommaSeparatedEnv(process.env.ADMIN_EMAIL);
+  const passwords = parseCommaSeparatedEnv(process.env.ADMIN_PASSWORD);
+  const phones = parseCommaSeparatedEnv(process.env.ADMIN_PHONE);
+  const hasAdminEnv = emails.length > 0 || passwords.length > 0 || phones.length > 0;
+
+  if (!hasAdminEnv && process.env.NODE_ENV !== "production") {
+    return [
+      {
+        email: "admin@betwise.local",
+        password: "Admin@Betixpro123!",
+        phone: "+254700000001",
+      },
+    ];
+  }
+
+  if (!hasAdminEnv) {
+    return [];
+  }
+
+  if (emails.length !== passwords.length || emails.length !== phones.length) {
+    throw new Error(
+      "ADMIN_EMAIL, ADMIN_PASSWORD, and ADMIN_PHONE must contain the same number of comma-separated values.",
+    );
+  }
+
+  return emails.map((email, index) => ({
+    email,
+    password: passwords[index],
+    phone: phones[index],
+  }));
 }
 
 async function seedSportCategories() {
@@ -146,52 +162,83 @@ async function seedSportCategories() {
   }
 }
 
+async function seedAdmins() {
+  const admins = getAdminSeedInputs();
+
+  if (admins.length === 0) {
+    console.log("No admin users configured for seeding.");
+    return;
+  }
+
+  for (const adminInput of admins) {
+    const passwordHash = await bcrypt.hash(adminInput.password, 12);
+
+    await upsertSeedAdmin({
+      email: adminInput.email,
+      phone: adminInput.phone,
+      passwordHash,
+    });
+
+    console.log(`Seeded admin user: ${adminInput.email}`);
+  }
+}
+
+async function syncSportsApiKey() {
+  const apiSportsKey = process.env.API_SPORTS_KEY?.trim();
+
+  if (!apiSportsKey) {
+    console.log("No API_SPORTS_KEY configured; skipping API key sync.");
+    return;
+  }
+
+  await prisma.adminSettings.upsert({
+    where: { key: "global" },
+    update: {
+      sportsApiKey: apiSportsKey,
+    },
+    create: {
+      key: "global",
+      sportsApiKey: apiSportsKey,
+    },
+  });
+
+  console.log("Synced API_SPORTS_KEY into admin settings.");
+}
+
 async function main() {
   try {
-    console.log("Seeding demo user account...");
+    console.log("Seeding database...");
 
     const isProduction = process.env.NODE_ENV === "production";
-
-    // Never use seed files for privileged account creation in production.
-    if (isProduction) {
-      console.log("Skipping seed in production.");
-      return;
-    }
 
     const createStrongDevPassword = () => {
       const randomSegment = randomBytes(12).toString("base64url");
       return `Seed@${randomSegment}9!`;
     };
 
-    const userEmail = process.env.USER_EMAIL || "user@betwise.local";
-    const userPhone = process.env.USER_PHONE || "+254701234567";
-    const userPassword = process.env.USER_PASSWORD || createStrongDevPassword();
+    if (!isProduction) {
+      console.log("Seeding demo user account...");
 
-    const userPasswordHash = await bcrypt.hash(userPassword, 12);
+      const userEmail = process.env.USER_EMAIL || "user@betwise.local";
+      const userPhone = process.env.USER_PHONE || "+254701234567";
+      const userPassword = process.env.USER_PASSWORD || createStrongDevPassword();
 
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@betwise.local";
-    const adminPhone = process.env.ADMIN_PHONE || "+254700000001";
-    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@Betixpro123!";
-    const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
+      const userPasswordHash = await bcrypt.hash(userPassword, 12);
 
-    const user = await upsertSeedUser({
-      email: userEmail,
-      phone: userPhone,
-      passwordHash: userPasswordHash,
-    });
+      const user = await upsertSeedUser({
+        email: userEmail,
+        phone: userPhone,
+        passwordHash: userPasswordHash,
+      });
 
-    const admin = await upsertSeedAdmin({
-      email: adminEmail,
-      phone: adminPhone,
-      passwordHash: adminPasswordHash,
-    });
+      console.log(`USER:  ${user.phone} / ${userPassword}`);
+    }
 
+    await seedAdmins();
+    await syncSportsApiKey();
     await seedSportCategories();
 
     console.log("Seed complete.");
-
-    console.log(`USER:  ${user.phone} / ${userPassword}`);
-    console.log(`ADMIN: ${admin.phone} / ${adminPassword}`);
   } catch (error) {
     console.error("Seed failed:", error);
     process.exit(1);
