@@ -138,7 +138,7 @@ export const adminTableCellClassName =
 export const adminCompactActionsClassName = "flex flex-wrap items-center gap-1";
 export const adminFilterRowClassName = "flex flex-wrap gap-3";
 export const adminDialogContentClassName =
-  "overflow-hidden rounded-2xl border border-admin-border/50 bg-[#0b1426]/90 text-admin-text-primary shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300";
+  "w-full max-w-[95vw] sm:max-w-lg overflow-hidden rounded-2xl border border-admin-border/50 bg-[#0b1426]/90 text-admin-text-primary shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300";
 export const adminInputClassName =
   "h-12 rounded-xl border border-white/5 bg-black/20 px-4 text-admin-text-primary placeholder:text-admin-text-muted/60 transition-all focus-visible:border-admin-accent/40 focus-visible:bg-black/40 focus-visible:ring-4 focus-visible:ring-admin-accent/5";
 export const adminSelectTriggerClassName =

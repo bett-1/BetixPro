@@ -1513,7 +1513,7 @@ function FeedEvents() {
 
       {/* ── Bulk update dialog ── */}
       <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
-        <DialogContent className="max-w-[calc(100%-1rem)] border-white/10 bg-[#0b1426] p-6 text-admin-text-primary backdrop-blur-2xl sm:max-w-xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-xl border-white/10 bg-[#0b1426] p-5 sm:p-8 text-admin-text-primary backdrop-blur-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
               Bulk Update Events
@@ -1645,7 +1645,7 @@ function FeedEvents() {
 
       {/* ── Create Custom Event dialog ── */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-[calc(100%-1rem)] border-admin-border bg-admin-card p-4 text-admin-text-primary sm:max-w-md sm:p-6">
+        <DialogContent className="max-w-[95vw] sm:max-w-md border-admin-border bg-admin-card p-5 sm:p-6 text-admin-text-primary">
           <DialogHeader>
             <DialogTitle>Create Custom Event</DialogTitle>
             <DialogDescription className="text-admin-text-muted">
@@ -1789,7 +1789,7 @@ function FeedEvents() {
 
       {/* ── Detail dialog ── */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="max-w-[calc(100%-1rem)] border-admin-border bg-admin-card p-4 text-admin-text-primary sm:max-w-3xl sm:p-6">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl border-admin-border bg-admin-card p-5 sm:p-8 text-admin-text-primary">
           <DialogHeader>
             <DialogTitle>
               {selectedEvent
@@ -1899,7 +1899,7 @@ function FeedEvents() {
 
       {/* ── Config dialog ── */}
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
-        <DialogContent className="max-w-[calc(100%-1rem)] border-admin-border bg-admin-card p-4 text-admin-text-primary sm:max-w-lg sm:p-6">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg border-admin-border bg-admin-card p-5 sm:p-6 text-admin-text-primary">
           <DialogHeader>
             <DialogTitle>Edit event markets</DialogTitle>
             <DialogDescription className="text-admin-text-muted">

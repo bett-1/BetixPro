@@ -864,21 +864,21 @@ export default function Settings() {
         open={Boolean(selectedSection)}
         onOpenChange={(open) => (!open ? closeModal() : null)}
       >
-        <DialogContent className="border-[#3d6ba3]/40 bg-[#0b1426] p-0 sm:max-w-5xl h-[90vh] max-h-[90vh] overflow-hidden rounded-[3rem] shadow-[0_0_120px_rgba(0,0,0,0.85)]">
+        <DialogContent className="border-[#3d6ba3]/40 bg-[#0b1426] p-0 max-w-[95vw] sm:max-w-5xl h-[90vh] max-h-[90vh] overflow-hidden rounded-3xl sm:rounded-[3rem] shadow-[0_0_120px_rgba(0,0,0,0.85)]">
           {selectedSection && modalDraft ? (
             <div className="flex flex-col h-full min-h-0">
               {/* Header */}
-              <div className="px-10 py-8 border-b border-[#3d6ba3]/20 bg-black/20 backdrop-blur-md">
+              <div className="px-5 py-6 sm:px-10 sm:py-8 border-b border-[#3d6ba3]/20 bg-black/20 backdrop-blur-md">
                 <div className="flex items-center justify-between gap-6">
                   <div className="flex items-center gap-5">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f5c518] text-[#0d2137] shadow-lg shadow-[#f5c518]/20">
+                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-[#f5c518] text-[#0d2137] shadow-lg shadow-[#f5c518]/20">
                       {selectedSection.icon}
                     </div>
                     <div>
-                      <DialogTitle className="text-xl font-bold tracking-tight text-white">
+                      <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-white">
                         {selectedSection.title}
                       </DialogTitle>
-                      <DialogDescription className="mt-1 text-sm text-[#a8c4e0]">
+                      <DialogDescription className="mt-1 text-xs sm:text-sm text-[#a8c4e0]">
                         {selectedSection.subtitle}
                       </DialogDescription>
                     </div>
@@ -905,7 +905,7 @@ export default function Settings() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto px-10 py-10 app-scrollbar pr-6">
+              <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-10 sm:py-10 app-scrollbar pr-4 sm:pr-6">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                   {selectedSection.fields.map((field, index) => {
                     const value = field.path
@@ -1074,19 +1074,19 @@ export default function Settings() {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 z-10 px-10 py-8 border-t border-[#3d6ba3]/20 bg-[#0b1426] flex justify-end gap-4">
+              <div className="sticky bottom-0 z-10 px-5 py-6 sm:px-10 sm:py-8 border-t border-[#3d6ba3]/20 bg-[#0b1426] flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
                 <Button
                   variant="outline"
                   onClick={closeModal}
                   disabled={updateSettings.isPending}
-                  className="h-12 px-8 rounded-2xl border-[#3d6ba3]/30 text-[#a8c4e0] hover:bg-white/5"
+                  className="h-11 sm:h-12 px-6 sm:px-8 rounded-2xl border-[#3d6ba3]/30 text-[#a8c4e0] hover:bg-white/5 order-2 sm:order-1"
                 >
                   Discard
                 </Button>
                 <Button
                   onClick={() => void saveSection()}
                   disabled={updateSettings.isPending || !modalHasChanges}
-                  className="h-12 px-10 rounded-xl bg-[#f5c518] text-[#0d2137] font-bold shadow-xl shadow-[#f5c518]/10 hover:shadow-[#f5c518]/30 transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-[#e6b800]"
+                  className="h-11 sm:h-12 px-8 sm:px-10 rounded-xl bg-[#f5c518] text-[#0d2137] font-bold shadow-xl shadow-[#f5c518]/10 hover:shadow-[#f5c518]/30 transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-[#e6b800] order-1 sm:order-2"
                 >
                   {updateSettings.isPending ? (
                     <Loader2 size={18} className="animate-spin" />

@@ -422,8 +422,9 @@ export default function Contacts() {
       {/* Single Details Modal */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         {selectedContact && (
-          <DialogContent className="max-w-2xl bg-admin-card border-admin-border shadow-2xl">
-            <DialogHeader className="mb-4">
+          <DialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-2xl bg-admin-card border-admin-border shadow-2xl p-0 overflow-hidden">
+            <div className="flex flex-col h-full">
+              <DialogHeader className="px-5 py-4 sm:px-6 sm:py-5 border-b border-white/5">
               <DialogTitle className="text-xl">Message Details</DialogTitle>
               <DialogDescription>
                 Submitted by{" "}
@@ -433,7 +434,7 @@ export default function Contacts() {
               </DialogDescription>
             </DialogHeader>
 
-            <ScrollArea className="max-h-[60vh] pr-4">
+              <ScrollArea className="flex-1 px-5 py-4 sm:px-6 sm:py-5">
               <div className="space-y-8">
                 {/* Contact Info Grid */}
                 <div className="grid grid-cols-2 gap-y-6 gap-x-4 bg-admin-bg/50 p-4 rounded-lg border border-admin-border/50">
@@ -513,8 +514,8 @@ export default function Contacts() {
               </div>
             </ScrollArea>
 
-            {/* Quick Actions Footer */}
-            <div className="flex justify-end gap-3 pt-6 border-t border-admin-border mt-2">
+              {/* Quick Actions Footer */}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 p-5 sm:p-6 border-t border-admin-border mt-auto">
               <Button variant="ghost" onClick={() => setDetailsOpen(false)}>
                 Close
               </Button>
@@ -541,6 +542,8 @@ export default function Contacts() {
                   Resolve Inquiry
                 </Button>
               )}
+            </div>
+              </div>
             </div>
           </DialogContent>
         )}

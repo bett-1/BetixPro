@@ -401,15 +401,16 @@ export default function Risk() {
                             </AdminButton>
                           </DialogTrigger>
                           {selectedAlert?.id === alert.id && (
-                            <AdminDialogContent className="max-h-screen max-w-2xl overflow-hidden">
-                              <DialogHeader>
-                                <DialogTitle>Risk Alert Details</DialogTitle>
-                                <DialogDescription>
-                                  {ALERT_TYPE_LABELS[selectedAlert.alertType]}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <ScrollArea className="max-h-[60vh]">
-                                <div className="space-y-6 pr-4">
+                            <AdminDialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-2xl p-0 overflow-hidden">
+                              <div className="flex flex-col h-full">
+                                <DialogHeader className="p-5 sm:p-8 sm:pb-0">
+                                  <DialogTitle>Risk Alert Details</DialogTitle>
+                                  <DialogDescription>
+                                    {ALERT_TYPE_LABELS[selectedAlert.alertType]}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <ScrollArea className="flex-1 px-5 sm:px-8 py-6">
+                                  <div className="space-y-6">
                                   {/* Alert Overview */}
                                   <div className="space-y-4">
                                     <h4 className="font-semibold text-admin-text">
@@ -626,7 +627,8 @@ export default function Risk() {
                                   </div>
                                 </div>
                               </ScrollArea>
-                            </AdminDialogContent>
+                            </div>
+                          </AdminDialogContent>
                           )}
                         </Dialog>
                       </td>

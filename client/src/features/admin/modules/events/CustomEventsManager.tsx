@@ -300,7 +300,7 @@ function CreateEventModal({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-white/10 bg-[#0b1426] text-admin-text-primary backdrop-blur-2xl">
+      <DialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-2xl overflow-y-auto border-white/10 bg-[#0b1426] p-5 sm:p-8 text-admin-text-primary backdrop-blur-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <Plus size={20} className="text-admin-accent" />
@@ -619,7 +619,7 @@ function SettleMarketDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg border-white/10 bg-[#0b1426] text-admin-text-primary backdrop-blur-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg border-white/10 bg-[#0b1426] p-5 sm:p-8 text-admin-text-primary backdrop-blur-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <Trophy size={20} className="text-admin-accent" />
@@ -756,7 +756,7 @@ function EventDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto border-white/10 bg-[#0b1426] text-admin-text-primary backdrop-blur-2xl">
+      <DialogContent className="max-h-[85vh] max-w-[95vw] sm:max-w-2xl overflow-y-auto border-white/10 bg-[#0b1426] p-5 sm:p-8 text-admin-text-primary backdrop-blur-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <Eye size={20} className="text-admin-accent" />
