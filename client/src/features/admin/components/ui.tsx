@@ -245,18 +245,20 @@ export function AdminSectionHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 className="text-xl font-bold tracking-[-0.02em] text-admin-text-primary sm:text-2xl">
+    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-0.5">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight text-admin-text-primary sm:text-2xl truncate">
           {title}
         </h1>
-        <p className="mt-1 max-w-3xl text-xs text-admin-text-muted sm:text-sm">
+        <p className="mt-0.5 text-[11px] font-medium text-admin-text-muted sm:text-sm line-clamp-1">
           {subtitle}
         </p>
       </div>
-      {actions ? (
-        <div className="flex flex-wrap items-center gap-3">{actions}</div>
-      ) : null}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }
