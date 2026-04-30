@@ -360,7 +360,6 @@ This is where you configure how the entire platform behaves. Changes here affect
 - **Min Password Length** — The shortest password users are allowed to create.
 - **Session Timeout (minutes)** — How long before an inactive user is automatically logged out.
 - **Max Login Attempts** — After this many failed logins, an account is temporarily locked.
-- **IP Whitelist/Blacklist** — Control access from specific IP addresses.
 
 ---
 
