@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { api, resolveSocketBaseUrl } from "@/api/axiosConfig";
+import { hasCompleteLiveMatchOdds } from "../../utils/oddsValidator";
 
 export type LiveMarketKey =
   | "1x2"
@@ -199,7 +200,9 @@ export function useLiveMatches(filters: LiveFilterState) {
 
       for (const update of queued) {
         if (update.type === "match_added") {
-          map.set(update.match.id, update.match);
+          if (hasCompleteLiveMatchOdds(update.match)) {
+            map.set(update.match.id, update.match);
+          }
           continue;
         }
 
@@ -258,7 +261,9 @@ export function useLiveMatches(filters: LiveFilterState) {
       }
 
       return Array.from(map.values())
-        .filter((match) => !isFinishedMatch(match))
+        .filter(
+          (match) => !isFinishedMatch(match) && hasCompleteLiveMatchOdds(match),
+        )
         .sort((left, right) => {
           if (left.league.name !== right.league.name) {
             return left.league.name.localeCompare(right.league.name);
@@ -303,7 +308,11 @@ export function useLiveMatches(filters: LiveFilterState) {
         },
       });
 
-      setMatches(data.matches.filter((match) => !isFinishedMatch(match)));
+      setMatches(
+        data.matches.filter(
+          (match) => !isFinishedMatch(match) && hasCompleteLiveMatchOdds(match),
+        ),
+      );
       setLastUpdatedAt(data.lastUpdatedAt);
       setError(null);
     } catch {
@@ -348,7 +357,11 @@ export function useLiveMatches(filters: LiveFilterState) {
       if (!payload || payload.type !== "matches_snapshot") {
         return;
       }
-      setMatches(payload.matches.filter((match) => !isFinishedMatch(match)));
+      setMatches(
+        payload.matches.filter(
+          (match) => !isFinishedMatch(match) && hasCompleteLiveMatchOdds(match),
+        ),
+      );
       setLastUpdatedAt(payload.updatedAt);
     };
 

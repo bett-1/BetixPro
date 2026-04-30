@@ -2,6 +2,7 @@ import { Prisma, type EventStatus } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
+import { createCompleteOddsWhere, hasCompleteOdds } from "../../utils/oddsValidator";
 
 const userEventsRouter = Router();
 
@@ -76,12 +77,12 @@ function toMarkets(event: EventWithDisplayedOdds) {
   const homeH2H = getBestOdds(
     event.displayedOdds,
     "h2h",
-    (side) => normalizeValue(side) === homeName,
+    (side) => normalizeValue(side) === homeName || normalizeValue(side) === "home" || normalizeValue(side) === "1",
   );
   const awayH2H = getBestOdds(
     event.displayedOdds,
     "h2h",
-    (side) => normalizeValue(side) === awayName,
+    (side) => normalizeValue(side) === awayName || normalizeValue(side) === "away" || normalizeValue(side) === "2",
   );
   const drawH2H = getBestOdds(event.displayedOdds, "h2h", (side) => {
     const normalized = normalizeValue(side);
@@ -108,7 +109,7 @@ function toMarkets(event: EventWithDisplayedOdds) {
 
   return {
     h2h:
-      homeH2H !== null && awayH2H !== null
+      homeH2H !== null && drawH2H !== null && awayH2H !== null
         ? {
             home: homeH2H,
             draw: drawH2H,
@@ -154,6 +155,41 @@ function sortEvents(events: EventWithDisplayedOdds[]) {
   });
 }
 
+function logEventsApiRequest(endpoint: string, filters: unknown) {
+  console.log("[EventsAPI] Request:", {
+    endpoint,
+    filters,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+function logOddsFilter(
+  endpoint: string,
+  rawEvents: EventWithDisplayedOdds[],
+  validEvents: EventWithDisplayedOdds[],
+) {
+  console.log("[EventsAPI] Response:", {
+    endpoint,
+    totalFromDB: rawEvents.length,
+    afterOddsFilter: validEvents.length,
+    filtered: rawEvents.length - validEvents.length,
+    timestamp: new Date().toISOString(),
+  });
+
+  const validIds = new Set(validEvents.map((event) => event.eventId));
+  const filteredOut = rawEvents.filter((event) => !validIds.has(event.eventId));
+  if (filteredOut.length > 0) {
+    console.warn(
+      "[EventsAPI] Filtered out events with incomplete odds:",
+      filteredOut.map((event) => ({
+        id: event.eventId,
+        name: `${event.homeTeam} vs ${event.awayTeam}`,
+        odds: event.displayedOdds,
+      })),
+    );
+  }
+}
+
 async function getEvents(args: {
   sport?: string;
   league?: string;
@@ -161,6 +197,7 @@ async function getEvents(args: {
   page: number;
   limit: number;
   featuredOnly?: boolean;
+  endpoint: string;
 }) {
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -168,7 +205,7 @@ async function getEvents(args: {
   const where: Prisma.SportEventWhereInput = {
     isActive: true,
     oddsVerified: true,
-    displayedOdds: { some: { isVisible: true } },
+    ...createCompleteOddsWhere(),
     ...(args.featuredOnly ? { isFeatured: true } : {}),
     ...(args.status
       ? { status: args.status }
@@ -187,20 +224,24 @@ async function getEvents(args: {
       : undefined,
   };
 
-  const [events, total] = await Promise.all([
-    prisma.sportEvent.findMany({
-      where,
-      select: eventSelect,
-      orderBy: args.featuredOnly
-        ? [{ featuredPriority: "asc" }, { commenceTime: "asc" }]
-        : [{ status: "asc" }, { commenceTime: "asc" }],
-      skip: (args.page - 1) * args.limit,
-      take: args.limit,
-    }),
-    prisma.sportEvent.count({ where }),
-  ]);
+  const candidates = await prisma.sportEvent.findMany({
+    where,
+    select: eventSelect,
+    orderBy: args.featuredOnly
+      ? [{ featuredPriority: "asc" }, { commenceTime: "asc" }]
+      : [{ status: "asc" }, { commenceTime: "asc" }],
+    take: Math.max(args.limit * args.page * 5, args.limit),
+  });
 
-  const orderedEvents = sortEvents(events).map((event) => ({
+  const validEvents = candidates.filter(hasCompleteOdds);
+  logOddsFilter(args.endpoint, candidates, validEvents);
+
+  const pagedEvents = sortEvents(validEvents).slice(
+    (args.page - 1) * args.limit,
+    args.page * args.limit,
+  );
+
+  const orderedEvents = pagedEvents.map((event) => ({
     id: event.id,
     eventId: event.eventId,
     homeTeam: event.homeTeam,
@@ -222,14 +263,15 @@ async function getEvents(args: {
 
   return {
     events: orderedEvents,
-    total,
+    total: validEvents.length,
     page: args.page,
-    totalPages: Math.ceil(total / args.limit),
+    totalPages: Math.ceil(validEvents.length / args.limit),
   };
 }
 
 userEventsRouter.get("/user/events", async (req, res, next) => {
   try {
+    logEventsApiRequest(req.path, req.query);
     const parsedQuery = listEventsQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
       return res.status(400).json({ error: "Invalid events query" });
@@ -240,6 +282,7 @@ userEventsRouter.get("/user/events", async (req, res, next) => {
     const result = await getEvents({
       ...parsedQuery.data,
       featuredOnly,
+      endpoint: req.path,
     });
     return res.status(200).json(result);
   } catch (error) {
@@ -249,6 +292,7 @@ userEventsRouter.get("/user/events", async (req, res, next) => {
 
 userEventsRouter.get("/user/events/live", async (req, res, next) => {
   try {
+    logEventsApiRequest(req.path, req.query);
     const featuredOnly = req.query.featured === "true";
 
     const result = await getEvents({
@@ -265,6 +309,7 @@ userEventsRouter.get("/user/events/live", async (req, res, next) => {
         req.query.league.trim().length > 0
           ? req.query.league.trim()
           : undefined,
+      endpoint: req.path,
     });
 
     return res.status(200).json(result);
@@ -273,8 +318,9 @@ userEventsRouter.get("/user/events/live", async (req, res, next) => {
   }
 });
 
-userEventsRouter.get("/user/events/sports", async (_req, res, next) => {
+userEventsRouter.get("/user/events/sports", async (req, res, next) => {
   try {
+    logEventsApiRequest(req.path, req.query);
     const now = new Date();
     const windowEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -282,6 +328,7 @@ userEventsRouter.get("/user/events/sports", async (_req, res, next) => {
       where: {
         isActive: true,
         oddsVerified: true,
+        ...createCompleteOddsWhere(),
         OR: [
           { status: "LIVE" },
           {
@@ -327,6 +374,7 @@ userEventsRouter.get("/user/events/sports", async (_req, res, next) => {
 
 userEventsRouter.get("/user/events/:eventId", async (req, res, next) => {
   try {
+    logEventsApiRequest(req.path, req.params);
     const eventId = Array.isArray(req.params.eventId)
       ? req.params.eventId[0]
       : req.params.eventId;
@@ -340,7 +388,7 @@ userEventsRouter.get("/user/events/:eventId", async (req, res, next) => {
       select: eventSelect,
     });
 
-    if (!event || !event.displayedOdds) {
+    if (!event || !hasCompleteOdds(event)) {
       return res.status(404).json({ error: "Event not found" });
     }
 

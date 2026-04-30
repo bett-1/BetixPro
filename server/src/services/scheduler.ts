@@ -35,6 +35,7 @@ import {
   createEventEndedAdminNotification,
   createMatchEndedUserNotifications,
 } from "../controllers/notifications.controller";
+import { createCompleteOddsWhere } from "../utils/oddsValidator";
 
 type JobName = "event_sync" | "live_monitor" | "event_cleanup" | "health_check";
 type JobResult = {
@@ -183,7 +184,12 @@ export async function jobLiveEventMonitor(): Promise<JobResult> {
       let scoresUpdated = 0;
 
       const liveSports = await prisma.sportEvent.findMany({
-        where: { status: "LIVE", isActive: true, oddsVerified: true },
+        where: {
+          status: "LIVE",
+          isActive: true,
+          oddsVerified: true,
+          ...createCompleteOddsWhere(),
+        },
         select: { sportKey: true },
         distinct: ["sportKey"],
       });
@@ -252,6 +258,7 @@ export async function jobSportHealthCheck(): Promise<JobResult> {
             sportKey: { in: sport.apiSportKeys },
             isActive: true,
             oddsVerified: true,
+            ...createCompleteOddsWhere(),
             status: { in: ["UPCOMING", "LIVE"] },
             commenceTime: { gt: now, lte: dateTo },
           },
@@ -391,6 +398,7 @@ export async function getSystemStatus() {
       where: {
         isActive: true,
         oddsVerified: true,
+        ...createCompleteOddsWhere(),
         status: { in: ["UPCOMING", "LIVE"] },
         commenceTime: { gt: now, lte: dateTo },
       },
@@ -408,6 +416,7 @@ export async function getSystemStatus() {
             sportKey: { in: sport.apiSportKeys },
             isActive: true,
             oddsVerified: true,
+            ...createCompleteOddsWhere(),
             status: { in: ["UPCOMING", "LIVE"] },
             commenceTime: { gt: now, lte: dateTo },
           },

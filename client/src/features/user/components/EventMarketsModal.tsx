@@ -3,6 +3,7 @@ import { X, TrendingUp, Clock, ChevronRight } from "lucide-react";
 import { api } from "@/api/axiosConfig";
 import type { ApiEvent } from "./hooks/useEvents";
 import type { BetSelection } from "./hooks/useBetSlip";
+import { isValidOdd } from "../utils/oddsValidator";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,10 @@ function buildCardsFromDisplayedOdds(
   const byMarketType = new Map<string, DisplayedOdd[]>();
 
   for (const odd of displayedOdds) {
+    if (!isValidOdd(odd.displayOdds)) {
+      continue;
+    }
+
     const key = odd.marketType.trim().toLowerCase();
     const current = byMarketType.get(key) ?? [];
     current.push(odd);
@@ -123,12 +128,18 @@ function buildCardsFromDisplayedOdds(
       );
       const bestOddsValue = sorted[0]?.displayOdds ?? 0;
 
-      const bookmakerOdds: BookmakerOdd[] = sorted.map((odd) => ({
-        bookmakerName: odd.bookmakerName,
-        odds: odd.displayOdds,
-        id: odd.id,
-        isBest: odd.displayOdds === bestOddsValue,
-      }));
+      const bookmakerOdds: BookmakerOdd[] = sorted
+        .filter((odd) => isValidOdd(odd.displayOdds))
+        .map((odd) => ({
+          bookmakerName: odd.bookmakerName,
+          odds: odd.displayOdds,
+          id: odd.id,
+          isBest: odd.displayOdds === bestOddsValue,
+        }));
+
+      if (bookmakerOdds.length === 0) {
+        continue;
+      }
 
       outcomes.push({
         label: sideOdds[0]!.side, // Use first occurrence for label

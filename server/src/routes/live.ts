@@ -6,6 +6,7 @@ import {
   liveOddsRateLimiter,
 } from "../middleware/rateLimiter";
 import { prisma } from "../lib/prisma";
+import { createCompleteOddsWhere, hasCompleteOdds } from "../utils/oddsValidator";
 
 const liveRouter = Router();
 
@@ -224,7 +225,9 @@ function toMarketSelections(
         "Home",
         takeBest(
           (row) =>
-            normalize(row.side) === homeName || normalize(row.side) === "1",
+            normalize(row.side) === homeName ||
+            normalize(row.side) === "home" ||
+            normalize(row.side) === "1",
         ),
       ),
       toSelection(
@@ -240,7 +243,9 @@ function toMarketSelections(
         "Away",
         takeBest(
           (row) =>
-            normalize(row.side) === awayName || normalize(row.side) === "2",
+            normalize(row.side) === awayName ||
+            normalize(row.side) === "away" ||
+            normalize(row.side) === "2",
         ),
       ),
     ];
@@ -366,6 +371,29 @@ function toLiveMatch(
   };
 }
 
+function logLiveOddsFilter(endpoint: string, rawEvents: LiveEventRecord[], validEvents: LiveEventRecord[]) {
+  console.log("[EventsAPI] Response:", {
+    endpoint,
+    totalFromDB: rawEvents.length,
+    afterOddsFilter: validEvents.length,
+    filtered: rawEvents.length - validEvents.length,
+    timestamp: new Date().toISOString(),
+  });
+
+  const validIds = new Set(validEvents.map((event) => event.eventId));
+  const filteredOut = rawEvents.filter((event) => !validIds.has(event.eventId));
+  if (filteredOut.length > 0) {
+    console.warn(
+      "[EventsAPI] Filtered out live events with incomplete odds:",
+      filteredOut.map((event) => ({
+        id: event.eventId,
+        name: `${event.homeTeam} vs ${event.awayTeam}`,
+        odds: event.displayedOdds,
+      })),
+    );
+  }
+}
+
 function toMatchIds(value: string | undefined) {
   if (!value) {
     return [] as string[];
@@ -388,6 +416,7 @@ async function queryLiveEvents(args: z.infer<typeof liveQuerySchema>) {
     where: {
       isActive: true,
       oddsVerified: true,
+      ...createCompleteOddsWhere(),
       status: "LIVE",
       sportKey: args.sport || undefined,
       leagueName: args.league
@@ -409,7 +438,9 @@ async function queryLiveEvents(args: z.infer<typeof liveQuerySchema>) {
     take: args.limit,
   });
 
-  const mapped = events.map((event) => toLiveMatch(event, market));
+  const validEvents = events.filter(hasCompleteOdds);
+  logLiveOddsFilter("/live/matches", events, validEvents);
+  const mapped = validEvents.map((event) => toLiveMatch(event, market));
 
   if (!args.highlights) {
     return mapped;
@@ -429,6 +460,12 @@ liveRouter.get(
       if (!parsedQuery.success) {
         return res.status(400).json({ error: "Invalid live matches query" });
       }
+
+      console.log("[EventsAPI] Request:", {
+        endpoint: req.path,
+        filters: req.query,
+        timestamp: new Date().toISOString(),
+      });
 
       const matches = await queryLiveEvents(parsedQuery.data);
 
@@ -461,7 +498,7 @@ liveRouter.get(
         select: liveSelect,
       });
 
-      if (!event || !event.isActive) {
+      if (!event || !event.isActive || !hasCompleteOdds(event)) {
         return res.status(404).json({ error: "Live match not found" });
       }
 
@@ -548,6 +585,7 @@ liveRouter.get("/live/scores", liveOddsRateLimiter, async (req, res, next) => {
       where: {
         isActive: true,
         oddsVerified: true,
+        ...createCompleteOddsWhere(),
         status: { in: ["LIVE", "FINISHED"] },
         eventId: ids.length > 0 ? { in: ids } : undefined,
       },

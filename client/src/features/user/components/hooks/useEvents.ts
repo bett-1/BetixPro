@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api/axiosConfig";
+import { hasCompleteEventOdds } from "../../utils/oddsValidator";
 
 export interface ApiEvent {
   id: string;
@@ -101,7 +102,7 @@ export function useEvents(options: UseEventsOptions = {}) {
         },
       });
 
-      return data.events;
+      return data.events.filter(hasCompleteEventOdds);
     },
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -120,7 +121,7 @@ export function useEvents(options: UseEventsOptions = {}) {
         },
       });
 
-      return data.events;
+      return data.events.filter(hasCompleteEventOdds);
     },
     staleTime: 15_000,
     refetchInterval: 30_000,

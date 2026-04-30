@@ -7,6 +7,7 @@ import {
   SEVEN_DAY_WINDOW_MS,
 } from "./oddsAutomationConfig";
 import { createAlert } from "./adminAlertService";
+import { hasCompleteOdds } from "../utils/oddsValidator";
 
 function calculateOverround(outcomes: Array<{ price: number }>) {
   if (!outcomes.length) return Number.POSITIVE_INFINITY;
@@ -25,6 +26,10 @@ function findBestBookmaker(bookmakers: OddsApiBookmaker[]) {
     | null = null;
 
   for (const bookmaker of bookmakers) {
+    if (!hasCompleteOdds({ bookmakers: [bookmaker] })) {
+      continue;
+    }
+
     const eligibleMarkets = (bookmaker.markets ?? []).filter(
       (market) => Array.isArray(market.outcomes) && market.outcomes.length > 1,
     );
@@ -120,6 +125,12 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
   const now = new Date();
 
   for (const event of apiEvents) {
+    if (!hasCompleteOdds(event)) {
+      console.warn("[OddsSync] Skipping event with invalid odds:", event.id);
+      skipped += 1;
+      continue;
+    }
+
     const commenceTime = new Date(event.commence_time);
     if (!inManagedWindow(commenceTime, now)) {
       skipped += 1;
@@ -145,9 +156,7 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
 
         const houseMargin = existing?.houseMargin ?? 0;
         const status = statusForCommenceTime(commenceTime, now);
-        const isActive = bestBookmaker.markets.some(
-          (market) => (market.outcomes ?? []).length > 0,
-        );
+        const isActive = hasCompleteOdds(event);
 
         await tx.sportEvent.upsert({
           where: { eventId: event.id },
@@ -199,6 +208,16 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
 
         for (const market of bestBookmaker.markets) {
           for (const outcome of market.outcomes ?? []) {
+            if (!Number.isFinite(outcome.price) || outcome.price <= 0) {
+              console.warn("[OddsSync] Skipping invalid outcome odds:", {
+                eventId: event.id,
+                market: market.key,
+                side: outcome.name,
+                price: outcome.price,
+              });
+              continue;
+            }
+
             const displayOdds = Number((outcome.price / (1 + houseMargin / 100)).toFixed(2));
 
             await tx.eventOdds.create({
@@ -243,7 +262,11 @@ export async function deactivateEventsWithoutOdds() {
   const result = await prisma.sportEvent.updateMany({
     where: {
       isActive: true,
-      OR: [{ oddsVerified: false }, { displayedOdds: { none: {} } }],
+      OR: [
+        { oddsVerified: false },
+        { displayedOdds: { none: {} } },
+        { displayedOdds: { none: { isVisible: true, marketType: "h2h", displayOdds: { gt: 0 } } } },
+      ],
     },
     data: {
       isActive: false,
@@ -296,6 +319,11 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
   let updated = 0;
 
   for (const event of events) {
+    if (!hasCompleteOdds(event)) {
+      console.warn("[OddsSync] Skipping live event with invalid odds:", event.id);
+      continue;
+    }
+
     const bestBookmaker = findBestBookmaker(event.bookmakers ?? []);
     if (!bestBookmaker) continue;
 
@@ -325,6 +353,16 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
 
         for (const market of bestBookmaker.markets) {
           for (const outcome of market.outcomes ?? []) {
+            if (!Number.isFinite(outcome.price) || outcome.price <= 0) {
+              console.warn("[OddsSync] Skipping invalid live outcome odds:", {
+                eventId: event.id,
+                market: market.key,
+                side: outcome.name,
+                price: outcome.price,
+              });
+              continue;
+            }
+
             const displayOdds = Number(
               (outcome.price / (1 + (existing.houseMargin ?? 0) / 100)).toFixed(2),
             );

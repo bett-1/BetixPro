@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { authenticate } from "../../middleware/authenticate";
 import { getSystemSettings } from "../../lib/settings";
+import { hasValidCustomEventOdds } from "../../utils/oddsValidator";
 
 const userCustomEventsRouter = Router();
 
@@ -12,8 +13,13 @@ const userCustomEventsRouter = Router();
 
 // ── GET /user/custom-events ──
 
-userCustomEventsRouter.get("/user/custom-events", async (_req, res, next) => {
+userCustomEventsRouter.get("/user/custom-events", async (req, res, next) => {
   try {
+    console.log("[EventsAPI] Request:", {
+      endpoint: req.path,
+      filters: req.query,
+      timestamp: new Date().toISOString(),
+    });
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
     const events = await prisma.customEvent.findMany({
@@ -30,8 +36,16 @@ userCustomEventsRouter.get("/user/custom-events", async (_req, res, next) => {
       },
       include: {
         markets: {
+          where: {
+            selections: {
+              some: {
+                odds: { gt: 0 },
+              },
+            },
+          },
           include: {
             selections: {
+              where: { odds: { gt: 0 } },
               orderBy: { createdAt: "asc" },
             },
           },
@@ -43,7 +57,35 @@ userCustomEventsRouter.get("/user/custom-events", async (_req, res, next) => {
       ],
     });
 
-    return res.status(200).json({ events });
+    const validEvents = events.filter(hasValidCustomEventOdds);
+    console.log("[EventsAPI] Response:", {
+      endpoint: req.path,
+      totalFromDB: events.length,
+      afterOddsFilter: validEvents.length,
+      filtered: events.length - validEvents.length,
+      timestamp: new Date().toISOString(),
+    });
+
+    const validIds = new Set(validEvents.map((event) => event.id));
+    const filteredOut = events.filter((event) => !validIds.has(event.id));
+    if (filteredOut.length > 0) {
+      console.warn(
+        "[EventsAPI] Filtered out custom events with incomplete odds:",
+        filteredOut.map((event) => ({
+          id: event.id,
+          name: `${event.teamHome} vs ${event.teamAway}`,
+          odds: event.markets.map((market) => ({
+            market: market.name,
+            selections: market.selections.map((selection) => ({
+              id: selection.id,
+              odds: selection.odds,
+            })),
+          })),
+        })),
+      );
+    }
+
+    return res.status(200).json({ events: validEvents });
   } catch (error) {
     next(error);
   }
@@ -55,6 +97,11 @@ userCustomEventsRouter.get(
   "/user/custom-events/:id",
   async (req, res, next) => {
     try {
+      console.log("[EventsAPI] Request:", {
+        endpoint: req.path,
+        filters: req.params,
+        timestamp: new Date().toISOString(),
+      });
       const event = await prisma.customEvent.findFirst({
         where: {
           id: req.params.id,
@@ -65,6 +112,7 @@ userCustomEventsRouter.get(
             where: { status: { in: ["OPEN", "SUSPENDED"] } },
             include: {
               selections: {
+                where: { odds: { gt: 0 } },
                 orderBy: { createdAt: "asc" },
               },
             },
@@ -72,7 +120,7 @@ userCustomEventsRouter.get(
         },
       });
 
-      if (!event) {
+      if (!event || !hasValidCustomEventOdds(event)) {
         return res.status(404).json({ error: "Event not found" });
       }
 

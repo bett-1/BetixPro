@@ -8,6 +8,7 @@ import {
   emitLiveScoreUpdate,
 } from "../lib/socket";
 import { liveSelect, toLiveMatch } from "../routes/live";
+import { createCompleteOddsWhere, hasCompleteOdds } from "../utils/oddsValidator";
 
 type LiveSelection = {
   id: string;
@@ -46,6 +47,8 @@ async function pushLiveFeed() {
     const events = await prisma.sportEvent.findMany({
       where: {
         isActive: true,
+        oddsVerified: true,
+        ...createCompleteOddsWhere(),
         status: "LIVE",
       },
       select: liveSelect,
@@ -53,7 +56,8 @@ async function pushLiveFeed() {
       take: 250,
     });
 
-    const nextMatches = events.map((event) => toLiveMatch(event, "1x2"));
+    const validEvents = events.filter(hasCompleteOdds);
+    const nextMatches = validEvents.map((event) => toLiveMatch(event, "1x2"));
     const nextMap = new Map(nextMatches.map((match) => [match.id, match]));
 
     emitLiveMatches({
