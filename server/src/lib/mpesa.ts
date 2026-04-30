@@ -173,7 +173,7 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     };
   }
 
-  const baseUrl = mpesa.baseUrl;
+  const baseUrl = mpesa.baseUrl?.trim().replace(/\/+$/, "") || "";
 
   return {
     isConfigured: true,
@@ -294,6 +294,7 @@ export async function getMpesaAccessToken(config: {
         headers: {
           Authorization: `Basic ${authHeader}`,
           "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
         signal: controller.signal,
       },
@@ -301,13 +302,18 @@ export async function getMpesaAccessToken(config: {
 
     if (!tokenResponse.ok) {
       const errorBody = await tokenResponse.text().catch(() => "(no body)");
+      const cleanError = errorBody.includes("<html")
+        ? `Safaricom WAF blocked the request (Status ${tokenResponse.status}). Please ensure your server IP is whitelisted or check your M-Pesa settings.`
+        : errorBody;
+
       console.error("[M-Pesa Auth] Authentication failed:", {
         status: tokenResponse.status,
         statusText: tokenResponse.statusText,
         body: errorBody,
       });
+
       throw new Error(
-        `M-Pesa API authentication failed: ${tokenResponse.status} ${tokenResponse.statusText}. Response: ${errorBody}`,
+        `M-Pesa API authentication failed: ${tokenResponse.status} ${tokenResponse.statusText}. ${cleanError}`,
       );
     }
 
