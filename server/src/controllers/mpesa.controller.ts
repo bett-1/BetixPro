@@ -428,6 +428,7 @@ async function queryMpesaTransaction(transactionId: string): Promise<MpesaDeposi
 }
 
 export async function initializeMpesaDeposit(req: Request, res: Response) {
+  console.log("[M-Pesa STK Push] Request received");
   try {
     if (!req.user?.id) {
       res.status(401).json({ message: "Unauthorized" });

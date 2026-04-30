@@ -173,13 +173,7 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     };
   }
 
-  // const baseUrl =
-  //   env === "live"
-  //     ? "https://api.safaricom.co.ke"
-  //     : "https://sandbox.safaricom.co.ke";
-
-  // HELLO FUTURE DEV, MAKE SURE TO UNCOMMENT THE TOP BLOCK AND COMMENT THIS ONE:
-  const baseUrl = "https://sandbox.safaricom.co.ke";
+  const baseUrl = mpesa.baseUrl;
 
   return {
     isConfigured: true,

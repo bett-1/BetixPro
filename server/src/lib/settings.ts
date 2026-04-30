@@ -57,6 +57,7 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
           consumerKey: settings.mpesaConsumerKey,
           consumerSecret: settings.mpesaConsumerSecret,
           passkey: settings.mpesaPasskey,
+          baseUrl: settings.mpesaBaseUrl,
           callbackUrl: settings.mpesaCallbackUrl,
           b2cShortcode: settings.mpesaB2cShortcode,
           initiatorName: settings.mpesaB2cInitiatorName,
