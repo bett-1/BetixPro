@@ -1,4 +1,5 @@
 import { z } from "zod";
+import crypto from "crypto";
 import type { AdminSettingsConfig } from "./adminSettingsConfig";
 
 /**
@@ -534,6 +535,7 @@ export async function initiatePaystackWithdrawal(
     // First, create a transfer recipient for this phone number
     const recipientResponse = await createPaystackTransferRecipient(
       phoneNumber,
+      settings,
       `Withdrawal - ${phoneNumber}`,
     );
 
