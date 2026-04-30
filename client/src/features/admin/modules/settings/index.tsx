@@ -199,10 +199,36 @@ const sectionDefinitions: SectionDefinition[] = [
         label: "Online Passkey",
         type: "text",
       },
+      { type: "header", label: "M-Pesa B2C (Disbursements)" },
+      {
+        path: "paymentsConfig.mpesa.b2cShortcode",
+        label: "B2C Shortcode",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.initiatorName",
+        label: "Initiator Name",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.securityCredential",
+        label: "Security Credential",
+        type: "textarea",
+      },
+      {
+        path: "paymentsConfig.mpesa.resultUrl",
+        label: "B2C Result URL",
+        type: "text",
+      },
+      {
+        path: "paymentsConfig.mpesa.timeoutUrl",
+        label: "B2C Timeout URL",
+        type: "text",
+      },
       { type: "header", label: "Operations" },
       {
         path: "paymentsConfig.mpesa.callbackUrl",
-        label: "Result Callback URL",
+        label: "STK Result Callback URL",
         type: "text",
       },
       {
@@ -219,6 +245,42 @@ const sectionDefinitions: SectionDefinition[] = [
         path: "paymentsConfig.mpesa.mpesaWithdrawalApprovalThreshold",
         label: "Withdrawal Threshold",
         type: "number",
+      },
+    ],
+  },
+  {
+    id: "tax-rules",
+    title: "Tax & Financial Rules",
+    subtitle: "Winnings tax, deposit tax, and rounding rules",
+    group: "Financial Operations",
+    icon: <Percent size={16} />,
+    fields: [
+      {
+        path: "taxAndFinancialRules.winningsTaxPercent",
+        label: "Winnings Tax (%)",
+        type: "number",
+      },
+      {
+        path: "taxAndFinancialRules.depositTaxPercent",
+        label: "Deposit Tax (%)",
+        type: "number",
+      },
+      {
+        path: "taxAndFinancialRules.commissionPercent",
+        label: "System Commission (%)",
+        type: "number",
+      },
+      {
+        path: "taxAndFinancialRules.roundingRule",
+        label: "Rounding Rule",
+        type: "select",
+        options: [
+          { label: "Nearest 1", value: "nearest_1" },
+          { label: "Nearest 5", value: "nearest_5" },
+          { label: "Nearest 10", value: "nearest_10" },
+          { label: "Floor (Round Down)", value: "floor" },
+          { label: "Ceil (Round Up)", value: "ceil" },
+        ],
       },
     ],
   },

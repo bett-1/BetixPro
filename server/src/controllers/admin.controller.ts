@@ -69,6 +69,12 @@ const adminSettingsSelect = {
   mpesaConsumerSecret: true,
   mpesaPasskey: true,
   mpesaCallbackUrl: true,
+  mpesaB2cShortcode: true,
+  mpesaB2cInitiatorName: true,
+  mpesaB2cSecurityCredential: true,
+  mpesaB2cCommandId: true,
+  mpesaB2cResultUrl: true,
+  mpesaB2cTimeoutUrl: true,
   mpesaTransactionFeePercent: true,
   mpesaAutoWithdrawEnabled: true,
   mpesaWithdrawalApprovalThreshold: true,
@@ -132,6 +138,10 @@ const adminSettingsSelect = {
   privacyPolicy: true,
   responsibleGamblingMessage: true,
   supportContactInfo: true,
+  winningsTaxPercent: true,
+  depositTaxPercent: true,
+  commissionPercent: true,
+  roundingRule: true,
   updatedBy: true,
   createdAt: true,
   updatedAt: true,
@@ -182,6 +192,12 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     mpesaConsumerSecret: config.paymentsConfig.mpesa.consumerSecret,
     mpesaPasskey: config.paymentsConfig.mpesa.passkey,
     mpesaCallbackUrl: config.paymentsConfig.mpesa.callbackUrl,
+    mpesaB2cShortcode: config.paymentsConfig.mpesa.b2cShortcode,
+    mpesaB2cInitiatorName: config.paymentsConfig.mpesa.initiatorName,
+    mpesaB2cSecurityCredential: config.paymentsConfig.mpesa.securityCredential,
+    mpesaB2cCommandId: config.paymentsConfig.mpesa.commandId,
+    mpesaB2cResultUrl: config.paymentsConfig.mpesa.resultUrl,
+    mpesaB2cTimeoutUrl: config.paymentsConfig.mpesa.timeoutUrl,
     mpesaTransactionFeePercent:
       config.paymentsConfig.mpesa.transactionFeePercent,
     mpesaAutoWithdrawEnabled: config.paymentsConfig.mpesa.autoWithdrawEnabled,
@@ -255,6 +271,10 @@ function toDbSettingsData(config: AdminSettingsConfig, updatedBy: string) {
     responsibleGamblingMessage:
       config.contentAndLegal.responsibleGamblingMessage,
     supportContactInfo: config.contentAndLegal.supportContactInfo,
+    winningsTaxPercent: config.taxAndFinancialRules.winningsTaxPercent,
+    depositTaxPercent: config.taxAndFinancialRules.depositTaxPercent,
+    commissionPercent: config.taxAndFinancialRules.commissionPercent,
+    roundingRule: config.taxAndFinancialRules.roundingRule,
     updatedBy,
   };
 }
@@ -301,6 +321,12 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
         consumerSecret: record.mpesaConsumerSecret,
         passkey: record.mpesaPasskey,
         callbackUrl: record.mpesaCallbackUrl,
+        b2cShortcode: record.mpesaB2cShortcode,
+        initiatorName: record.mpesaB2cInitiatorName,
+        securityCredential: record.mpesaB2cSecurityCredential,
+        commandId: record.mpesaB2cCommandId,
+        resultUrl: record.mpesaB2cResultUrl,
+        timeoutUrl: record.mpesaB2cTimeoutUrl,
         transactionFeePercent: record.mpesaTransactionFeePercent,
         autoWithdrawEnabled: record.mpesaAutoWithdrawEnabled,
         mpesaWithdrawalApprovalThreshold:
@@ -388,6 +414,17 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
       privacyPolicy: record.privacyPolicy,
       responsibleGamblingMessage: record.responsibleGamblingMessage,
       supportContactInfo: record.supportContactInfo,
+    },
+    taxAndFinancialRules: {
+      winningsTaxPercent: record.winningsTaxPercent,
+      depositTaxPercent: record.depositTaxPercent,
+      commissionPercent: record.commissionPercent,
+      roundingRule: record.roundingRule as
+        | "nearest_1"
+        | "nearest_5"
+        | "nearest_10"
+        | "floor"
+        | "ceil",
     },
   };
 }
@@ -2501,6 +2538,7 @@ export async function updateAdminSettings(req: Request, res: Response) {
     .safeParse(req.body);
 
   if (!parsedBody.success) {
+    console.error("Admin settings validation failed:", JSON.stringify(parsedBody.error.flatten(), null, 2));
     return res.status(400).json({
       message: "Invalid admin settings payload.",
       issues: parsedBody.error.flatten(),

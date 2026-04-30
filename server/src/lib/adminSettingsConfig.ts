@@ -2,6 +2,13 @@ import { z } from "zod";
 
 const percentageField = z.number().min(0).max(100);
 const nonNegativeInt = z.number().int().min(0);
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((val) => val === "" || z.string().url().safeParse(val).success, {
+    message: "Invalid URL",
+  });
 
 export const adminSettingsSchema = z.object({
   generalSystemConfig: z.object({
@@ -43,13 +50,13 @@ export const adminSettingsSchema = z.object({
       consumerKey: z.string().trim().min(8).max(255),
       consumerSecret: z.string().trim().min(8).max(255),
       passkey: z.string().trim().min(8).max(255),
-      callbackUrl: z.string().trim().url().max(500),
-      b2cShortcode: z.string().trim().min(5).max(20),
-      initiatorName: z.string().trim().min(2).max(100),
-      securityCredential: z.string().trim().min(8).max(1024),
-      commandId: z.string().trim().min(2).max(50),
-      resultUrl: z.string().trim().url().max(500),
-      timeoutUrl: z.string().trim().url().max(500),
+      callbackUrl: optionalUrl,
+      b2cShortcode: z.string().trim().min(5).max(20).default("174379"),
+      initiatorName: z.string().trim().min(2).max(100).default("replace-with-initiator"),
+      securityCredential: z.string().trim().min(8).max(1024).default("replace-with-credential"),
+      commandId: z.string().trim().min(2).max(50).default("BusinessPayment"),
+      resultUrl: optionalUrl.default(""),
+      timeoutUrl: optionalUrl.default(""),
       transactionFeePercent: percentageField,
       autoWithdrawEnabled: z.boolean(),
       mpesaWithdrawalApprovalThreshold: nonNegativeInt,
@@ -58,8 +65,8 @@ export const adminSettingsSchema = z.object({
       secretKey: z.string().trim().min(8).max(512),
       publicKey: z.string().trim().min(8).max(512),
       webhookSecret: z.string().trim().min(8).max(512),
-      callbackUrl: z.string().trim().url().max(500),
-      webhookUrl: z.string().trim().url().max(500),
+      callbackUrl: optionalUrl,
+      webhookUrl: optionalUrl,
     }),
   }),
   bettingEngineConfig: z.object({
@@ -112,8 +119,8 @@ export const adminSettingsSchema = z.object({
   apiAndIntegrationsConfig: z.object({
     sportsApiKey: z.string().trim().max(255),
     oddsProviderName: z.string().trim().min(2).max(100),
-    primaryWebhookUrl: z.string().trim().url().max(500),
-    fallbackWebhookUrl: z.string().trim().url().max(500),
+    primaryWebhookUrl: optionalUrl,
+    fallbackWebhookUrl: optionalUrl,
     retryAttempts: z.number().int().min(0).max(15),
     retryBackoffMs: z.number().int().min(0).max(120000),
     requestsPerMinute: z.number().int().min(1).max(50000),
@@ -144,6 +151,17 @@ export const adminSettingsSchema = z.object({
     privacyPolicy: z.string().trim().min(20).max(20000),
     responsibleGamblingMessage: z.string().trim().min(10).max(1200),
     supportContactInfo: z.string().trim().min(6).max(320),
+  }),
+  taxAndFinancialRules: z.object({
+    winningsTaxPercent: percentageField.default(20),
+    depositTaxPercent: percentageField.default(0),
+    commissionPercent: percentageField.default(15),
+    roundingRule: z.enum(["nearest_1", "nearest_5", "nearest_10", "floor", "ceil"]).default("nearest_1"),
+  }).default({
+    winningsTaxPercent: 20,
+    depositTaxPercent: 0,
+    commissionPercent: 15,
+    roundingRule: "nearest_1",
   }),
 });
 
@@ -286,5 +304,11 @@ export const defaultAdminSettings: AdminSettingsConfig = {
     responsibleGamblingMessage:
       "Bet responsibly. Set limits and seek support if betting affects your wellbeing.",
     supportContactInfo: "support@betixpro.com | +254700000000",
+  },
+  taxAndFinancialRules: {
+    winningsTaxPercent: 20,
+    depositTaxPercent: 0,
+    commissionPercent: 15,
+    roundingRule: "nearest_1",
   },
 };

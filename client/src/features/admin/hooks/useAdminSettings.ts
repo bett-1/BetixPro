@@ -44,6 +44,12 @@ export interface AdminSettingsConfig {
       consumerSecret: string;
       passkey: string;
       callbackUrl: string;
+      b2cShortcode: string;
+      initiatorName: string;
+      securityCredential: string;
+      commandId: string;
+      resultUrl: string;
+      timeoutUrl: string;
       transactionFeePercent: number;
       autoWithdrawEnabled: boolean;
       mpesaWithdrawalApprovalThreshold: number;
