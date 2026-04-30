@@ -22,6 +22,9 @@ import { requireTrustedOrigin } from "../middleware/requireTrustedOrigin";
 
 const authRouter = Router();
 
+authRouter.get("/auth/test-login", (_req, res) => {
+  res.json({ message: "Auth route working", timestamp: new Date() });
+});
 authRouter.post("/auth/register", registerRateLimiter, register);
 authRouter.post("/auth/login", loginRateLimiter, login);
 authRouter.post(
