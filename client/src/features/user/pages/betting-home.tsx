@@ -244,6 +244,37 @@ export default function BettingHome() {
     const params = new URLSearchParams(
       typeof window !== "undefined" ? window.location.search : "",
     );
+    const eventId = params.get("event");
+
+    if (!eventId) {
+      return;
+    }
+
+    // Wait a bit for events to load and render
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(`event-${eventId}`);
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        // Add a temporary highlight effect
+        element.classList.add("ring-2", "ring-[#f5c518]", "ring-offset-2", "ring-offset-[#0f1923]");
+        setTimeout(() => {
+          element.classList.remove("ring-2", "ring-[#f5c518]", "ring-offset-2", "ring-offset-[#0f1923]");
+        }, 3000);
+      }
+    }, 800); // Slightly longer delay to ensure data is fetched and rendered
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [location, loading]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(
+      typeof window !== "undefined" ? window.location.search : "",
+    );
     const shouldFocusHighlights =
       params.get("section") === "highlights" ||
       window.location.hash === "#highlights";

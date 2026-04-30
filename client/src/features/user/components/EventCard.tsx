@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
-import { Clock, TrendingUp } from "lucide-react";
+import { Clock, TrendingUp, Share2 } from "lucide-react";
+import { toast } from "sonner";
+import { shortenUrl } from "../utils/urlShortener";
+
 import EventMarketsModal from "./EventMarketsModal";
 import type { BetSelection } from "./hooks/useBetSlip";
 import type { ApiEvent } from "./hooks/useEvents";
@@ -153,6 +156,29 @@ export default function EventCard({
   highlightLabel,
 }: EventCardProps) {
   const [showMarkets, setShowMarkets] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSharing) return;
+
+    try {
+      setIsSharing(true);
+      const baseUrl = window.location.origin;
+      const deepLink = `${baseUrl}/user?event=${event.eventId}`;
+      const shortUrl = await shortenUrl(deepLink);
+
+      await navigator.clipboard.writeText(shortUrl);
+      toast.success("Match link copied!", {
+        description: "Share it with your friends to bet together.",
+      });
+    } catch (err) {
+      console.error("Failed to share:", err);
+      toast.error("Failed to copy link");
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   const oddsPreview = useMemo<OddsPreview[]>(
     () => [
@@ -203,6 +229,7 @@ export default function EventCard({
 
   return (
     <article
+      id={`event-${event.eventId}`}
       className={`event-card mobile-event-card group relative w-full max-w-full overflow-hidden rounded-xl border bg-[#0f1923] transition-all duration-300 ${
         highlightLabel
           ? "border-[#8e6612]/65 hover:border-[#c48d1e]"
@@ -243,6 +270,15 @@ export default function EventCard({
                 Live
               </span>
             ) : null}
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              className="inline-flex shrink-0 items-center justify-center rounded border border-[#29425f] bg-[#122235] p-1 text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518] disabled:opacity-50"
+              title="Share match"
+            >
+              <Share2 size={10} className={isSharing ? "animate-pulse" : ""} />
+            </button>
             <button
               type="button"
               onClick={() => setShowMarkets(true)}
