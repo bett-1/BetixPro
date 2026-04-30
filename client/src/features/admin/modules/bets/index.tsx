@@ -684,10 +684,9 @@ export default function Bets() {
               </div>
             </div>
           )}
-              </div>
-            </div>
-          </DialogContent>
-      </Dialog>
+        </div>
+      </DialogContent>
+    </Dialog>
 
       {total > 20 && (
         <div className="flex items-center justify-between gap-3 pt-4">

@@ -704,7 +704,8 @@ export default function Users() {
           ) : (
             <div className="px-5 py-10 text-center text-admin-text-muted">
               User not found
-            </div>
+              </div>
+            )}
           </div>
         </AdminDialogContent>
       </Dialog>

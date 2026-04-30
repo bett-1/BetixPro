@@ -542,7 +542,6 @@ export default function Contacts() {
                   Resolve Inquiry
                 </Button>
               )}
-            </div>
               </div>
             </div>
           </DialogContent>

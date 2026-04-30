@@ -522,9 +522,8 @@ export default function Transactions() {
                   )}
                 </div>
               </ScrollArea>
-                </div>
-              </div>
-            </AdminDialogContent>
+            </div>
+          </AdminDialogContent>
           )}
         </Dialog>
       </AdminCard>
