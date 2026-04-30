@@ -569,18 +569,33 @@ export async function login(req: Request, res: Response) {
       : null;
   const rawPhone =
     typeof req.body?.phone === "string" ? req.body.phone.trim() : null;
+  const rawPassword =
+    typeof req.body?.password === "string" ? req.body.password : null;
+
+  console.log("[LOGIN] Attempt for:", rawEmail ?? rawPhone ?? "(missing email)");
 
   try {
+    if ((!rawEmail && !rawPhone) || !rawPassword?.trim()) {
+      console.log("[LOGIN] User found:", false);
+      return res
+        .status(400)
+        .json({ error: "Email and password are required" });
+    }
+
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      console.log("[LOGIN] User found:", false);
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     if (
       typeof parsed.data.password !== "string" ||
       !parsed.data.password.trim()
     ) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      console.log("[LOGIN] User found:", false);
+      return res
+        .status(400)
+        .json({ error: "Email and password are required" });
     }
 
     const normalizedEmail = parsed.data.email?.trim().toLowerCase();
@@ -589,15 +604,18 @@ export async function login(req: Request, res: Response) {
       : null;
 
     if (!normalizedEmail && parsed.data.phone && !normalizedPhone) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      console.log("[LOGIN] User found:", false);
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const user = normalizedEmail
       ? await findLoginUserByEmail(normalizedEmail)
       : await findLoginUserByPhone(normalizedPhone!);
 
+    console.log("[LOGIN] User found:", !!user);
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const passwordFieldExists =
@@ -606,6 +624,20 @@ export async function login(req: Request, res: Response) {
 
     if (!passwordFieldExists) {
       throw new Error("User password hash is missing.");
+    }
+
+    const isValidPassword = await bcrypt.compare(
+      parsed.data.password,
+      user.passwordHash,
+    );
+    console.log("[LOGIN] Password match:", isValidPassword);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ error: "Account not verified" });
     }
 
     if (user.bannedAt) {
@@ -628,14 +660,6 @@ export async function login(req: Request, res: Response) {
       return res
         .status(403)
         .json({ message: "This account has been suspended." });
-    }
-
-    const isValidPassword = await bcrypt.compare(
-      parsed.data.password,
-      user.passwordHash,
-    );
-    if (!isValidPassword) {
-      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     if (user.mustChangePassword) {

@@ -25,7 +25,9 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   const isCorsBlocked =
-    err instanceof Error && err.message === "Not allowed by CORS";
+    err instanceof Error &&
+    (err.message === "Not allowed by CORS" ||
+      err.message.startsWith("CORS policy:"));
 
   console.error("GLOBAL ERROR", {
     message: err instanceof Error ? err.message : "Unknown error",

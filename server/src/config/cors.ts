@@ -5,7 +5,10 @@ const REQUIRED_PRODUCTION_ORIGINS = [
   "https://www.betixpro.com",
 ];
 
-const REQUIRED_LOCAL_ORIGINS = ["http://localhost:5173"];
+const REQUIRED_LOCAL_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+];
 
 const PRODUCTION_LIKE_ENV_NAMES = new Set(["production", "prod"]);
 
@@ -67,28 +70,6 @@ export function resolveAllowedOriginsFromEnv() {
 
 export function validateCorsConfiguration() {
   const allowedOrigins = resolveAllowedOriginsFromEnv();
-  const isProductionLike = isProductionLikeRuntime();
-  const configuredCorsOrigins = parseRawOrigins(process.env.CORS_ORIGINS);
-
-  if (isProductionLike && !(process.env.CORS_ORIGINS ?? "").trim()) {
-    throw new Error(
-      "CORS_ORIGINS must be set in production and include public frontend origins.",
-    );
-  }
-
-  if (isProductionLike) {
-    const missingRequiredOrigins = REQUIRED_PRODUCTION_ORIGINS.filter(
-      (requiredOrigin) => !configuredCorsOrigins.includes(requiredOrigin),
-    );
-
-    if (missingRequiredOrigins.length > 0) {
-      throw new Error(
-        `CORS_ORIGINS is missing required production origins: ${missingRequiredOrigins.join(
-          ", ",
-        )}`,
-      );
-    }
-  }
 
   return allowedOrigins;
 }
@@ -138,11 +119,12 @@ export function createCorsOptions(): CorsOptions {
         return;
       }
 
+      console.error("[CORS] Blocked origin:", origin);
       console.warn("[CORS] Rejected origin", {
         origin,
         allowedOrigins: resolveAllowedOriginsFromEnv(),
       });
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error(`CORS policy: origin ${origin} not allowed`));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

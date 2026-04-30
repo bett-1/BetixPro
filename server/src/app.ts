@@ -44,6 +44,7 @@ app.use((req, _res, next) => {
 });
 
 app.use(cors(corsOptions));
+// Express 5 rejects "*" route patterns; this is the all-paths preflight equivalent.
 app.options(/.*/, cors(corsOptions));
 app.use(cookieParser());
 app.use(
