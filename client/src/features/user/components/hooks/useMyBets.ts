@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, type Socket } from "socket.io-client";
-import { api } from "@/api/axiosConfig";
+import { api, resolveSocketBaseUrl } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
 
 export type MyBetStatus = "bonus" | "won" | "lost" | "open" | "cancelled";
@@ -54,20 +54,6 @@ export const myBetsQueryKey = (args: UseMyBetsArgs) =>
   ["my-bets", args.tab, args.filter, args.page, args.hideLost] as const;
 
 export const myBetsNavbarCountQueryKey = ["my-bets", "navbar-count"] as const;
-
-function resolveSocketBaseUrl() {
-  const explicitSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
-  if (explicitSocketUrl) {
-    return explicitSocketUrl;
-  }
-
-  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (rawBaseUrl && rawBaseUrl.startsWith("http")) {
-    return new URL(rawBaseUrl).origin;
-  }
-
-  return "http://localhost:5000";
-}
 
 function applyClientFilters(
   items: MyBetListItem[],

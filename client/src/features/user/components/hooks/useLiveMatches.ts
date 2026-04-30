@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import { api } from "@/api/axiosConfig";
+import { api, resolveSocketBaseUrl } from "@/api/axiosConfig";
 
 export type LiveMarketKey =
   | "1x2"
@@ -145,20 +145,6 @@ type PendingUpdate =
   | MatchStatusMessage
   | MatchAddedMessage
   | MatchRemovedMessage;
-
-function resolveSocketBaseUrl() {
-  const explicitSocketUrl = import.meta.env.VITE_SOCKET_BASE_URL?.trim();
-  if (explicitSocketUrl) {
-    return explicitSocketUrl;
-  }
-
-  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (rawBaseUrl && rawBaseUrl.startsWith("http")) {
-    return new URL(rawBaseUrl).origin;
-  }
-
-  return "http://localhost:5000";
-}
 
 function cloneMatches(matches: LiveMatch[]) {
   return matches.map((match) => ({
