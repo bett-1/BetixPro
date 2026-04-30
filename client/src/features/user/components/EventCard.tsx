@@ -168,16 +168,17 @@ export default function EventCard({
       const deepLink = `${baseUrl}/user?event=${event.eventId}`;
       const shortUrl = await shortenUrl(deepLink);
 
+      const shareText = `🔥 Check out this match: ${event.homeTeam} vs ${event.awayTeam} on BetixPro!\n\nBet now: ${shortUrl}`;
+
       const shareData = {
         title: "BetixPro Match",
-        text: `Check out this match: ${event.homeTeam} vs ${event.awayTeam} on BetixPro!`,
-        url: shortUrl,
+        text: shareText,
       };
 
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shortUrl);
+        await navigator.clipboard.writeText(shareText);
         toast.success("Match link copied!", {
           description: "Share it with your friends to bet together.",
         });
