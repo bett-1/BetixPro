@@ -146,10 +146,20 @@ export function CustomEventCard({
       const deepLink = `${baseUrl}/user?event=${event.id}`;
       const shortUrl = await shortenUrl(deepLink);
 
-      await navigator.clipboard.writeText(shortUrl);
-      toast.success("Match link copied!", {
-        description: "Share it with your friends to bet together.",
-      });
+      const shareData = {
+        title: "BetixPro Custom Match",
+        text: `Check out this custom match: ${event.teamHome} vs ${event.teamAway} on BetixPro!`,
+        url: shortUrl,
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shortUrl);
+        toast.success("Match link copied!", {
+          description: "Share it with your friends to bet together.",
+        });
+      }
     } catch (err) {
       console.error("Failed to share:", err);
       toast.error("Failed to copy link");
