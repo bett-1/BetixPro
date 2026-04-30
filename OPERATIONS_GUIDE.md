@@ -21,7 +21,7 @@
 12. [Contact Messages](#12-contact-messages)
 13. [Newsletter Subscribers](#13-newsletter-subscribers)
 14. [Platform Settings](#14-platform-settings)
-15. [Security Settings](#15-security-settings)
+15. [Security Center (Admin Profile)](#15-security-center-admin-profile)
 16. [Quick Settings](#16-quick-settings)
 17. [Daily Checklist](#17-daily-checklist)
 18. [Common Situations & What to Do](#18-common-situations--what-to-do)
@@ -355,25 +355,26 @@ This is where you configure how the entire platform behaves. Changes here affect
 - **Email/SMS Enabled** — Toggle email and SMS notifications to users.
 - **Notify on Deposit/Withdrawal/Bet Result** — Choose which events trigger a notification.
 
+#### Global Security Rules
+- **Admin 2FA Required** — Forces all admin accounts to use two-factor authentication.
+- **Min Password Length** — The shortest password users are allowed to create.
+- **Session Timeout (minutes)** — How long before an inactive user is automatically logged out.
+- **Max Login Attempts** — After this many failed logins, an account is temporarily locked.
+- **IP Whitelist/Blacklist** — Control access from specific IP addresses.
+
 ---
 
-## 15. Security Settings
+## 15. Security Center (Admin Profile)
 
 Go to: **Admin → Security**
 
-Controls security rules for both users and administrators.
+This section is dedicated to your personal administrator account security. It contains tools to harden your login credentials.
 
-### Key settings
+### What you can do
 
-| Setting | What it does |
-|---|---|
-| **Admin 2FA Required** | Forces all admin accounts to use two-factor authentication. **Keep this ON always.** |
-| **Min Password Length** | The shortest password users are allowed to create. |
-| **Require Uppercase / Number / Special Char** | Password complexity rules for users. |
-| **Session Timeout (minutes)** | How long before an inactive user is automatically logged out. |
-| **Max Login Attempts** | After this many failed logins, the account is temporarily locked. |
-| **IP Whitelist** | Only allow admin access from specific IP addresses (advanced). |
-| **IP Blacklist** | Block access from specific IP addresses entirely (advanced). |
+- **Enable Two-Factor Authentication (2FA)** — Set up Microsoft Authenticator (or any TOTP app) to require a unique code from your mobile device every time you log in. **We highly recommend keeping this ON.**
+- **Change Password** — Update your administrative password at any time. You will need to provide your current password, and your new password must meet the system's strong password requirements (minimum 10 characters, including uppercase, lowercase, numbers, and special characters).
+- **Disable Protection** — If 2FA is active, you can disable it by entering a valid code from your authenticator app.
 
 ---
 
