@@ -361,7 +361,9 @@ html.light {
 }
 
 .match-highlight {
-  border-color: var(--color-accent) !important;
-  background-color: rgba(245, 197, 24, 0.05);
-  z-index: 1;
+  border-color: #f5c518 !important;
+  border-width: 2px !important;
+  background-color: rgba(245, 197, 24, 0.08) !important;
+  box-shadow: 0 0 20px rgba(245, 197, 24, 0.25) !important;
+  z-index: 10 !important;
 }
