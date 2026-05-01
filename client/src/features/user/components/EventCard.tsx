@@ -174,7 +174,7 @@ export default function EventCard({
         `Bet now: ${shortUrl}`;
 
       const shareData: ShareData = {
-        title: `BetixPro | ${event.homeTeam} vs ${event.awayTeam}`,
+        title: `${event.homeTeam} vs ${event.awayTeam}`,
         text: shareText,
       };
 
