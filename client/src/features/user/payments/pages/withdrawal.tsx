@@ -3,11 +3,16 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -19,12 +24,6 @@ import {
   LoaderCircle,
   Smartphone,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -115,7 +114,7 @@ export default function PaymentsWithdrawalPage() {
     numAmount > 0 ? Math.ceil((numAmount * feePercentage) / 100) : 0;
   const netAmount = numAmount - feeAmount;
   const balance = walletData?.wallet?.balance ?? 0;
-  const totalNeeded = numAmount + feeAmount;
+  const totalNeeded = numAmount;
 
   useEffect(() => {
     if (accountPhone && !phone) setPhone(accountPhone);
@@ -356,51 +355,56 @@ export default function PaymentsWithdrawalPage() {
       </div>
 
       <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-        <DialogContent className="max-w-xl border-[#1a2f45] bg-[#0b1421] p-0 text-white">
-          <DialogHeader className="border-b border-[#1a2f45] bg-[#0d1829] px-6 py-4">
-            <DialogTitle className="text-base font-bold text-white">
-              Confirm Withdrawal
-            </DialogTitle>
-            <DialogDescription className="text-xs text-[#4a6a85]">
-              Please review these details before submitting.
-            </DialogDescription>
+        <DialogContent className="max-w-[400px] border-[#1a2f45] bg-[#0b1421] p-0 text-white overflow-hidden shadow-2xl">
+          <DialogHeader className="border-b border-[#1a2f45] bg-[#0d1829] px-5 py-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5c518]/10 text-[#f5c518]">
+                <Banknote size={16} />
+              </div>
+              <DialogTitle className="text-sm font-bold text-white tracking-tight uppercase">
+                Confirm Withdrawal
+              </DialogTitle>
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4 px-6 py-5">
-            <p className="text-sm leading-relaxed text-[#9bb0c6]">
-              You are about to withdraw{" "}
-              <span className="font-semibold text-white">
-                {formatMoney(numAmount)}
-              </span>{" "}
-              to{" "}
-              <span className="font-semibold text-white">
-                {normalizedPhone}
-              </span>
-              .
-            </p>
-            <p className="text-sm leading-relaxed text-[#9bb0c6]">
-              A{" "}
-              <span className="font-semibold text-[#f5c518]">
-                {feePercentage}% fee ({formatMoney(feeAmount)})
-              </span>{" "}
-              will apply, and you will receive{" "}
-              <span className="font-semibold text-emerald-400">
-                {formatMoney(netAmount)}
-              </span>
-              .
-            </p>
-            <p className="text-xs text-[#6e86a1]">
-              Confirm to proceed with this withdrawal request.
+          <div className="px-5 py-4">
+            <div className="rounded-xl border border-[#1a2f45] bg-[#0d1829]/30 p-3.5 space-y-3">
+              <div className="flex items-center justify-between text-[11px] font-medium text-[#4a6a85] uppercase tracking-wider">
+                <span>Withdrawal Details</span>
+                <span className="flex items-center gap-1.5 text-white bg-[#14263a] px-2 py-0.5 rounded-md lowercase normal-case">
+                  <Smartphone size={10} className="text-[#f5c518]" />
+                  {normalizedPhone}
+                </span>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#9bb0c6]">Amount</span>
+                  <span className="font-semibold text-white">{formatMoney(numAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#9bb0c6]">Service Fee ({feePercentage}%)</span>
+                  <span className="font-semibold text-red-400">-{formatMoney(feeAmount)}</span>
+                </div>
+                <div className="mt-2 border-t border-[#1a2f45] pt-2 flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#f5c518]">You Receive</span>
+                  <span className="text-base font-black text-white">{formatMoney(netAmount)}</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[10px] text-center text-[#4a6a85] leading-normal px-2">
+              Funds will be sent to your registered number.
             </p>
           </div>
 
-          <DialogFooter className="border-t border-[#1a2f45] px-6 py-4">
+          <DialogFooter className="border-t border-[#1a2f45] bg-[#0d1829]/30 px-5 py-4 gap-2.5 flex-row">
             <Button
               type="button"
               variant="outline"
               onClick={() => setShowConfirmModal(false)}
               disabled={busy}
-              className="border-[#294157] bg-transparent text-[#dce7f2] hover:bg-[#102134] hover:text-white"
+              className="h-10 flex-1 border-[#294157] bg-transparent text-[#dce7f2] hover:bg-[#102134] hover:text-white rounded-xl text-[11px] font-bold"
             >
               Cancel
             </Button>
@@ -408,9 +412,13 @@ export default function PaymentsWithdrawalPage() {
               type="button"
               onClick={() => void onConfirmWithdrawal()}
               disabled={busy}
-              className="bg-[#f5c518] text-black hover:bg-[#e6b800]"
+              className="h-10 flex-1 bg-[#f5c518] text-black hover:bg-[#e6b800] rounded-xl text-[11px] font-black shadow-lg shadow-[#f5c518]/10"
             >
-              {busy ? "Submitting..." : "Confirm Withdrawal"}
+              {busy ? (
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                "CONFIRM"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

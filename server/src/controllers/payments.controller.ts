@@ -519,6 +519,10 @@ async function initiateWithdrawalDisbursement(args: {
     const transferReference = transaction.reference || `WD-${randomUUID()}`;
     const payoutPhone = transaction.phone?.trim();
 
+    const meta = getWithdrawalProviderMeta(transaction.providerCallback);
+    const feeAmount = meta.fee ?? 0;
+    const payoutAmount = Math.max(0, transaction.amount - feeAmount);
+
     if (!payoutPhone) {
       const failureMessage =
         "Missing withdrawal destination phone number for Paystack payout.";
@@ -543,7 +547,7 @@ async function initiateWithdrawalDisbursement(args: {
       const b2cResponse = await initiateMpesaB2C(
         {
           phoneNumber: payoutPhone,
-          amount: transaction.amount,
+          amount: payoutAmount,
           remarks: "BetWise Withdrawal",
         },
         settings,
@@ -607,7 +611,7 @@ async function initiateWithdrawalDisbursement(args: {
     const settings = await getSystemSettings();
     payoutResponse = await initiatePaystackWithdrawal(
       payoutPhone,
-      transaction.amount,
+      payoutAmount,
       transferReference,
       settings,
     );
@@ -843,13 +847,13 @@ export async function createWithdrawalRequest(
     const feeAmount = Math.ceil(
       (requestedAmount * feePercentage) / 100,
     );
-    const totalDebit = requestedAmount + feeAmount;
+    const totalDebit = requestedAmount;
 
     const wallet = await getOrCreateWallet(userId);
 
     if (wallet.balance < totalDebit) {
       return res.status(400).json({
-        message: `Insufficient balance. You need KES ${totalDebit.toLocaleString()} (amount + fees) but only have KES ${wallet.balance.toLocaleString()}.`,
+        message: `Insufficient balance. You need KES ${totalDebit.toLocaleString()} to complete this withdrawal, but only have KES ${wallet.balance.toLocaleString()}.`,
       });
     }
 
@@ -934,7 +938,7 @@ export async function createWithdrawalRequest(
 
     if (!withdrawalResult) {
       return res.status(400).json({
-        message: `Insufficient balance. You need KES ${totalDebit.toLocaleString()} (amount + fees).`,
+        message: `Insufficient balance. You need KES ${totalDebit.toLocaleString()}.`,
       });
     }
 
