@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Clock, Zap, Timer, Trophy } from "lucide-react";
+import { Clock, Zap, Timer, Trophy, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { shortenUrl } from "../utils/urlShortener";
 import { hasCompleteCustomEventOdds, isValidOdd } from "../utils/oddsValidator";
 
 interface Selection {
@@ -132,6 +134,44 @@ export function CustomEventCard({
   onSelectOutcome,
   activeSelections = [],
 }: CustomEventCardProps) {
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSharing) return;
+
+    try {
+      setIsSharing(true);
+      const baseUrl = window.location.origin;
+      const deepLink = `${baseUrl}/user?event=${event.id}`;
+      const shortUrl = await shortenUrl(deepLink);
+
+      const shareText = 
+        `BetixPro | ${event.teamHome} vs ${event.teamAway}\n\n` +
+        `Check out this exclusive custom match on BetixPro.\n\n` +
+        `Bet now: ${shortUrl}`;
+
+      const shareData: ShareData = {
+        title: `BetixPro | ${event.teamHome} vs ${event.teamAway}`,
+        text: shareText,
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        toast.success("Match link copied!", {
+          description: "Share it with your friends to bet together.",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to share:", err);
+      toast.error("Failed to copy link");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const isLive = event.status === "LIVE";
   const isSuspended = event.status === "SUSPENDED";
   const isFinished = event.status === "FINISHED";
@@ -155,6 +195,7 @@ export function CustomEventCard({
 
   return (
     <div
+      id={`event-${event.id}`}
       className={cn(
         "custom-event-card mobile-event-card relative overflow-hidden rounded-2xl border transition-all duration-300",
         "bg-gradient-to-br from-[#111d2e] via-[#0f1a2d] to-[#0d1624]",
@@ -201,6 +242,16 @@ export function CustomEventCard({
             {event.league}
           </span>
         </div>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          disabled={isSharing}
+          className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[#223752] bg-[#122133] p-1.5 text-[#89a3c7] transition hover:border-amber-400/50 hover:text-amber-400 disabled:opacity-50"
+          title="Share custom match"
+        >
+          <Share2 size={12} className={isSharing ? "animate-pulse" : ""} />
+        </button>
       </div>
 
       {/* Live timer — prominent, full width row */}
