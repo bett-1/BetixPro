@@ -836,9 +836,10 @@ export async function handlePaystackBrowserCallback(
     paymentStatus = "pending";
   }
 
-  const redirectUrl = new URL(
-    process.env.FRONTEND_URL?.trim() || "http://localhost:5173",
-  );
+  const rawFrontendUrl = process.env.FRONTEND_URL?.trim() || "http://localhost:5173";
+  // If FRONTEND_URL contains multiple comma-separated URLs (e.g. for CORS), take the first one
+  const primaryFrontendUrl = rawFrontendUrl.split(",")[0].trim();
+  const redirectUrl = new URL(primaryFrontendUrl);
   redirectUrl.pathname = "/user/payments/deposit";
   redirectUrl.searchParams.set("status", paymentStatus);
 
