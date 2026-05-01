@@ -245,6 +245,7 @@ export default function EventCard({
     const eventIdFromUrl = rawParams.get("event") || routerParams?.event;
     return eventIdFromUrl && String(eventIdFromUrl) === String(event.eventId);
   }, [location.search, event.eventId]);
+  
 
   if (!hasCompleteEventOdds(event)) {
     return null;
