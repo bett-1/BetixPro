@@ -183,7 +183,7 @@ The "Brain" of BetixPro. Settings are grouped into logical modals.
 These settings are **unique to your admin account** and do not affect the platform globally.
 
 *   **Withdrawal Audio Alerts**: Enable/Disable the notification sound for new withdrawal requests.
-*   **Tone Selection**: Choose from several alert sounds
+*   **Tone Selection**: Choose from several alert sounds.
 *   **Volume & Visibility**: Adjust volume and choose if sounds should play when the tab is in the background.
 
 ---
