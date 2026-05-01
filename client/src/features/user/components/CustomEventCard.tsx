@@ -242,15 +242,14 @@ export function CustomEventCard({
             {event.league}
           </span>
         </div>
-
         <button
           type="button"
           onClick={handleShare}
           disabled={isSharing}
-          className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[#223752] bg-[#122133] p-1.5 text-[#89a3c7] transition hover:border-amber-400/50 hover:text-amber-400 disabled:opacity-50"
+          className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded border border-[#223752] bg-[#122133] text-[#89a3c7] transition-all duration-200 hover:border-amber-400/50 hover:bg-amber-400 hover:text-[#0b1120] active:scale-90 disabled:opacity-50"
           title="Share custom match"
         >
-          <Share2 size={12} className={isSharing ? "animate-pulse" : ""} />
+          <Share2 size={11} className={isSharing ? "animate-pulse" : ""} />
         </button>
       </div>
 

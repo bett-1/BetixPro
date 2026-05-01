@@ -286,15 +286,6 @@ export default function EventCard({
             ) : null}
             <button
               type="button"
-              onClick={handleShare}
-              disabled={isSharing}
-              className="inline-flex shrink-0 items-center justify-center rounded border border-[#29425f] bg-[#122235] p-1 text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518] disabled:opacity-50"
-              title="Share match"
-            >
-              <Share2 size={10} className={isSharing ? "animate-pulse" : ""} />
-            </button>
-            <button
-              type="button"
               onClick={() => setShowMarkets(true)}
               className="event-card-markets event-card-markets-top inline-flex shrink-0 items-center gap-1 rounded border border-[#29425f] bg-[#122235] px-1.5 py-[2px] text-[9px] font-semibold text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518]"
             >
@@ -306,6 +297,15 @@ export default function EventCard({
               <Clock size={10} className="text-[#5f7898]" />
               {kickoffDisplay}
             </span>
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              className="inline-flex h-[20px] w-[22px] shrink-0 items-center justify-center rounded border border-[#29425f] bg-[#122235] text-[#95afcc] transition-all duration-200 hover:border-[#f5c518]/50 hover:bg-[#f5c518] hover:text-[#0b1120] active:scale-90 disabled:opacity-50"
+              title="Share match"
+            >
+              <Share2 size={11} className={isSharing ? "animate-pulse" : ""} />
+            </button>
           </div>
         </div>
 
