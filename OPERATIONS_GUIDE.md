@@ -171,7 +171,7 @@ The "Brain" of BetixPro. Settings are grouped into logical modals.
 *   **Credentials**: Shortcode, Consumer Key, Consumer Secret, and Online Passkey.
 *   **B2C Config**: Initiator Name, Security Credential, and Result/Timeout URLs.
 *   **STK Result Callback**: The URL where Safaricom sends payment confirmations.
-*   **Platform Fee**: Percentage charged to the user on every transaction.
+*   **Platform Fee**: Configurable percentage charged to the user on withdrawals.
 
 ### **Paystack Gateway Modal**
 *   **API Keys**: Live Secret and Public keys.
