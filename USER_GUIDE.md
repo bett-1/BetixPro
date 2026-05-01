@@ -38,7 +38,7 @@ To start betting, you need to add funds to your BetixPro wallet.
 ### 2.2 Withdrawing Your Winnings
 1.  Go to the **"Withdraw"** section.
 2.  Enter the amount to withdraw (Minimum: 100 KES).
-3.  **Important Note**: A **5% withdrawal fee** applies to all requests.
+3.  **Important Note**: A withdrawal fee applies to all requests; please refer to the fee shown in the app during the withdrawal process.
 4.  Requests are typically reviewed within 24 hours. Once approved, the funds will be sent directly to your registered M-Pesa number.
 
 ---
