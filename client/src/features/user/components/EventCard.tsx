@@ -169,7 +169,7 @@ export default function EventCard({
       const shortUrl = await shortenUrl(deepLink);
 
       const shareText = 
-        `BetixPro | ${event.homeTeam} vs ${event.awayTeam}\n\n` +
+        `${event.homeTeam} vs ${event.awayTeam}\n\n` +
         `Join the action on BetixPro. High odds, fast payouts, and secure betting.\n\n` +
         `Bet now: ${shortUrl}`;
 
