@@ -241,13 +241,21 @@ export default function EventCard({
     return null;
   }
 
+  const isShared = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("event") === event.eventId;
+  }, [event.eventId]);
+
   return (
     <article
       id={`event-${event.eventId}`}
       className={`event-card mobile-event-card group relative w-full max-w-full overflow-hidden rounded-xl border bg-[#0f1923] transition-all duration-300 ${
-        highlightLabel
-          ? "border-[#8e6612]/65 hover:border-[#c48d1e]"
-          : "border-[#24384f] hover:border-[#355373]"
+        isShared
+          ? "match-highlight shadow-[0_0_20px_rgba(245,197,24,0.15)]"
+          : highlightLabel
+            ? "border-[#8e6612]/65 hover:border-[#c48d1e]"
+            : "border-[#24384f] hover:border-[#355373]"
       }`}
     >
       {/* Subtle top accent line */}
