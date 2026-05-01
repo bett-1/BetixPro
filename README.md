@@ -1,14 +1,13 @@
-# 🏆 BetixPro -  Betting Management System
+ # 🏆 BetixPro -  Betting Management System
 
 **BetixPro** is a comprehensive, end-to-end sports betting and management platform designed for private use. It features a modern, high-performance web interface, a robust backend with automated sports data synchronization, and integrated payment gateways.
 
 ---
 
-## 📖 Operator Guide
+If you are the **platform operator** (admin), everything you need to manage the platform is in the **[Operations Guide →](./OPERATIONS_GUIDE.md)**.
 
-If you are the **platform operator** (not a developer), everything you need to run the platform day-to-day is in the **[Operations Guide →](./OPERATIONS_GUIDE.md)**.
+If you are a **user** of the platform, please refer to the **[User Guide →](./USER_GUIDE.md)** for a step-by-step walkthrough of all features.
 
-It covers: logging in, processing withdrawals, managing users, creating events, handling risk alerts, and much more — in plain language with no technical knowledge required.
 
 ---
 
