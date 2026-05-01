@@ -1,6 +1,6 @@
 # BetixPro: Comprehensive Admin Operations Guide
 
-This guide is the authoritative manual for platform administrators. It provides a granular deep-dive into every module, modal, and setting found in the BetixPro Dashboard, enabling professional management of the platform.
+This guide is the  manual for BetixPro operations. It is intended to be updated as the platform evolves.
 
 ---
 
@@ -183,7 +183,7 @@ The "Brain" of BetixPro. Settings are grouped into logical modals.
 These settings are **unique to your admin account** and do not affect the platform globally.
 
 *   **Withdrawal Audio Alerts**: Enable/Disable the notification sound for new withdrawal requests.
-*   **Tone Selection**: Choose from several alert sounds (e.g., "Cash Register," "Modern Alert").
+*   **Tone Selection**: Choose from several alert sounds
 *   **Volume & Visibility**: Adjust volume and choose if sounds should play when the tab is in the background.
 
 ---
