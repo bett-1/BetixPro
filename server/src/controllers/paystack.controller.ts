@@ -573,8 +573,7 @@ export async function initializePaystackPayment(
     logPaystackContext("initialize:request", {
       email: body.email,
       amountKes: body.amount,
-      callbackUrl:
-        body.callbackUrl ?? process.env.PAYSTACK_CALLBACK_URL?.trim(),
+      callbackUrl: body.callbackUrl,
     });
 
     const authenticatedUser = req.user?.id
@@ -838,9 +837,7 @@ export async function handlePaystackBrowserCallback(
   }
 
   const redirectUrl = new URL(
-    process.env.PAYSTACK_SUCCESS_REDIRECT_URL?.trim() ||
-      process.env.FRONTEND_URL?.trim() ||
-      "http://localhost:5173",
+    process.env.FRONTEND_URL?.trim() || "http://localhost:5173",
   );
   redirectUrl.pathname = "/user/payments/deposit";
   redirectUrl.searchParams.set("status", paymentStatus);
