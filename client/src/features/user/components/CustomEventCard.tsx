@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Clock, Zap, Timer, Trophy, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { shortenUrl } from "../utils/urlShortener";
 import { hasCompleteCustomEventOdds, isValidOdd } from "../utils/oddsValidator";
@@ -189,15 +190,15 @@ export function CustomEventCard({
         market.selections.length >= 2,
     );
 
+  const location = useLocation();
+  const isShared = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("event") === event.id;
+  }, [location.search, event.id]);
+
   if (!hasCompleteCustomEventOdds({ ...event, markets: visibleMarkets })) {
     return null;
   }
-
-  const isShared = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const params = new URLSearchParams(window.location.search);
-    return params.get("event") === event.id;
-  }, [event.id]);
 
   return (
     <div

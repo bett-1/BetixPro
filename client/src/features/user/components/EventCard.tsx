@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Clock, TrendingUp, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "@tanstack/react-router";
 import { shortenUrl } from "../utils/urlShortener";
 
 import EventMarketsModal from "./EventMarketsModal";
@@ -237,15 +238,15 @@ export default function EventCard({
   const leagueShortName = getLeagueShortName(event);
   const leagueDotClass = getLeagueDotClass(event);
 
+  const location = useLocation();
+  const isShared = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("event") === event.eventId;
+  }, [location.search, event.eventId]);
+
   if (!hasCompleteEventOdds(event)) {
     return null;
   }
-
-  const isShared = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const params = new URLSearchParams(window.location.search);
-    return params.get("event") === event.eventId;
-  }, [event.eventId]);
 
   return (
     <article
@@ -286,25 +287,28 @@ export default function EventCard({
             </p>
           </div>
 
-          <div className="event-card-meta flex shrink-0 items-center gap-1.5">
-            {isLive ? (
-              <span className="inline-flex items-center rounded-full border border-[#1ea84a]/60 bg-[#1ea84a]/15 px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-[0.08em] text-[#58e27f]">
-                Live
+          <div className="flex shrink-0 items-center gap-1.5">
+            <div className="event-card-meta flex items-center gap-1.5">
+              {isLive ? (
+                <span className="inline-flex items-center rounded-full border border-[#1ea84a]/60 bg-[#1ea84a]/15 px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-[0.08em] text-[#58e27f]">
+                  Live
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setShowMarkets(true)}
+                className="event-card-markets event-card-markets-top inline-flex shrink-0 items-center gap-1 rounded border border-[#29425f] bg-[#122235] px-1.5 py-[2px] text-[9px] font-semibold text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518]"
+              >
+                <TrendingUp size={10} />
+                <span className="sm:hidden">+{event.marketCount}</span>
+                <span className="hidden sm:inline">+{event.marketCount} markets</span>
+              </button>
+              <span className="event-card-countdown inline-flex items-center gap-0.5 text-[10px] font-medium text-[#8099b8]">
+                <Clock size={10} className="text-[#5f7898]" />
+                {kickoffDisplay}
               </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setShowMarkets(true)}
-              className="event-card-markets event-card-markets-top inline-flex shrink-0 items-center gap-1 rounded border border-[#29425f] bg-[#122235] px-1.5 py-[2px] text-[9px] font-semibold text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518]"
-            >
-              <TrendingUp size={10} />
-              <span className="sm:hidden">+{event.marketCount}</span>
-              <span className="hidden sm:inline">+{event.marketCount} markets</span>
-            </button>
-            <span className="event-card-countdown inline-flex items-center gap-0.5 text-[10px] font-medium text-[#8099b8]">
-              <Clock size={10} className="text-[#5f7898]" />
-              {kickoffDisplay}
-            </span>
+            </div>
+
             <button
               type="button"
               onClick={handleShare}
