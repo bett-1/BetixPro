@@ -1,6 +1,6 @@
 # BetixPro: Comprehensive Admin Operations Guide
 
-This guide is the  manual for BetixPro operations. It is intended to be updated as the platform evolves.
+Welcome to **BetixPro Admin**! This guide is designed to help you manage the platform with ease, from monitoring live wagers to configuring global system settings. Follow these instructions to ensure smooth, secure, and profitable platform operations.
 
 ---
 
