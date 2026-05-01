@@ -258,11 +258,6 @@ export default function BettingHome() {
           behavior: "smooth",
           block: "center",
         });
-        // Add a temporary highlight effect
-        element.classList.add("ring-2", "ring-[#f5c518]", "ring-offset-2", "ring-offset-[#0f1923]");
-        setTimeout(() => {
-          element.classList.remove("ring-2", "ring-[#f5c518]", "ring-offset-2", "ring-offset-[#0f1923]");
-        }, 3000);
       }
     }, 800); // Slightly longer delay to ensure data is fetched and rendered
 

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Clock, Zap, Timer, Trophy, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { shortenUrl } from "../utils/urlShortener";
 import { hasCompleteCustomEventOdds, isValidOdd } from "../utils/oddsValidator";
@@ -193,17 +193,25 @@ export function CustomEventCard({
     return null;
   }
 
+  const isShared = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("event") === event.id;
+  }, [event.id]);
+
   return (
     <div
       id={`event-${event.id}`}
       className={cn(
         "custom-event-card mobile-event-card relative overflow-hidden rounded-2xl border transition-all duration-300",
         "bg-gradient-to-br from-[#111d2e] via-[#0f1a2d] to-[#0d1624]",
-        isFinished
-          ? "border-[#1e3350]/30 opacity-80"
-          : isLive
-            ? "border-emerald-500/25 shadow-[0_0_24px_rgba(16,185,129,0.06)]"
-            : "border-[#1e3350]/50 hover:border-amber-400/20",
+        isShared
+          ? "match-highlight shadow-[0_0_20px_rgba(245,197,24,0.15)]"
+          : isFinished
+            ? "border-[#1e3350]/30 opacity-80"
+            : isLive
+              ? "border-emerald-500/25 shadow-[0_0_24px_rgba(16,185,129,0.06)]"
+              : "border-[#1e3350]/50 hover:border-amber-400/20",
       )}
     >
       {/* Status ribbon — top edge glow */}
