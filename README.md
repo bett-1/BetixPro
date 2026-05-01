@@ -17,7 +17,7 @@ If you are a **user** of the platform, please refer to the **[User Guide →](./
 - **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
 - **Type Safety**: [TypeScript](https://www.typescriptlang.org/)
 - **State Management**: [TanStack Query v5](https://tanstack.com/query/latest)
-- **Routing**: [TanStack Router](https://tanstack.com/router/late
+- **Routing**: [TanStack Router](https://tanstack.com/router/latest)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **UI Components**: [Radix UI](https://www.radix-ui.com/) + [Lucide React](https://lucide.dev/)
 - **Charts**: [Recharts](https://recharts.org/)
