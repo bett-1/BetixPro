@@ -131,7 +131,7 @@ Found in **Settings > Security**, this wizard guides admins through:
 *   **Disabling 2FA**: Requires the current 6-digit code for verification.
 
 ### **Password Management**
-*   **Password Complexity**: Must be 10+ characters, including Uppercase, Lowercase, Number, and Special Character.
+*   **Password Requirements**: Password rules are configured in **Settings > Security** and may vary based on the platform's current security settings.
 *   **Forced Change**: New admin accounts are forced to change their temporary password upon first login before accessing any data.
 
 ---
