@@ -1,105 +1,127 @@
-# BetixPro: Professional Operations & Administrator Guide
+# BetixPro: Comprehensive Admin Operations Guide
 
-This guide provides a comprehensive walkthrough for platform administrators and operators. It covers every module of the BetixPro administrative ecosystem, from day-to-day financial processing to advanced system configuration.
-
----
-
-## 1. Dashboard & Platform Analytics
-The **Admin Dashboard** is your central command center.
-*   **Key Metrics**: Monitor total active users, betting volume, and platform revenue in real-time.
-*   **Performance Trends**: View charts detailing transaction growth and sport category popularity.
-*   **System Status**: Quick-glance indicators for API health, database connectivity, and maintenance mode status.
+This guide is a deep-dive manual for platform administrators. It is organized by the navigation sections found in the admin dashboard, providing detailed instructions on how to use every feature you will interact with.
 
 ---
 
-## 2. User Management & Compliance
+## 1. Dashboard (The Command Center)
+The **Dashboard** is the first page you see upon login. It provides a real-time pulse of the platform.
 
-### 2.1 Managing the User Directory
-*   **Search & Filter**: Locate users by email, phone number, or account status.
-*   **User Profiles**: Click on any user to view their:
-    *   **Wallet Balance**: Current available funds.
-    *   **Betting History**: A complete list of all placed, won, and lost bets.
-    *   **Activity Logs**: Record of logins and sensitive account changes.
-*   **Account Controls**: Admins can manually adjust account statuses (Active/Suspended) and provide specific reasons for bans.
-
-### 2.2 Ban Appeals
-When a user is suspended, they may submit an appeal.
-*   **Review Process**: Access the "Appeals" module to read user justifications.
-*   **Resolution**: Approve the appeal to instantly restore account access or reject it with a final administrative response.
+*   **Real-Time Analytics Cards**:
+    *   **Users**: Total registered users and growth trends.
+    *   **Total Stakes**: The total value of all bets placed.
+    *   **Revenue/GGR**: The platform's Gross Gaming Revenue.
+    *   **Pending Withdrawals**: High-priority count of requests needing attention.
+*   **System Health Indicators**: Monitor the status of the Odds API and database connectivity.
+*   **Recent Activity**: A live feed of the latest bets and deposits.
 
 ---
 
-## 3. Financial Operations
+## 2. Users (Customer Management)
+The **Users** page allows you to manage the lifecycle of every customer on the platform.
 
-### 3.1 Processing Withdrawals
-Withdrawals are the most critical daily task. The **Withdrawals Module** allows for precise control:
-*   **Workflow**:
-    1.  Filter by **"Pending"** to see new requests.
-    2.  **Review**: Check the user's betting history and transaction patterns for potential fraud.
-    3.  **Approve**: Click "Approve" to initiate an automated M-Pesa B2C disbursement.
-    4.  **Reject**: If suspicious, click "Reject" and provide a reason. Funds are automatically returned to the user's wallet.
-*   **Audit Tools**: View provider messages (e.g., M-Pesa response codes) and transaction references for every request.
-*   **Reporting**: Use the **"Export CSV"** feature to download financial records for accounting.
-
-### 3.2 Transaction Monitoring
-*   **Global Ledger**: Monitor all deposits (M-Pesa STK/Paystack) and stakes in real-time.
-*   **Reconciliation**: Use the unique transaction references to cross-match with payment gateway dashboards.
+*   **User Directory**: Search for users by email, phone number, or ID.
+*   **Profile Deep-Dive**: Clicking a user opens their full administrative profile:
+    *   **Financial Overview**: Current wallet balance and total life-time deposit/withdrawal stats.
+    *   **Betting History**: View every bet the user has ever placed, including active and settled ones.
+    *   **Account Status**: Toggle between **Active** and **Suspended**. 
+    *   **Ban Appeals**: If a user is banned, their appeal (if submitted) will appear here for your review and response.
+*   **Manual Adjustments**: (If enabled) Adjust user balances or reset passwords.
 
 ---
 
-## 4. Sportsbook & Odds Management
+## 3. Bets (Market Monitoring)
+The **Bets** page is where you monitor all wagering activity.
 
-### 4.1 Odds Synchronization
-BetixPro integrates with **TheOddsAPI** for professional-grade data.
-*   **API Logs**: Monitor the "Sync Logs" to ensure data is flowing correctly.
-*   **Credit Management**: Track your API credit usage to prevent service interruptions.
-*   **Manual Verification**: Admins can verify odds for specific high-profile events to ensure accuracy before they go live.
-
-### 4.2 Custom Event Engine
-For events not covered by APIs (e.g., local tournaments or custom specials):
-1.  **Create Event**: Define the teams, start time, and category.
-2.  **Define Markets**: Add markets (e.g., Match Winner, Total Points).
-3.  **Set Odds**: Manually enter the decimal odds for each selection.
-4.  **Settlement**: Once the event concludes, manually mark selections as **Win**, **Lose**, or **Void** to trigger automated bet payouts.
+*   **Bet List**: A real-time view of all bets placed across the platform.
+*   **Filtering**: Filter bets by status (Pending, Won, Lost, Void) or by specific sports.
+*   **Audit Logs**: Click any bet to see its "Audit Trail"—this includes when it was placed, the IP address used, and any status changes made by the system or admins.
 
 ---
 
-## 5. System Configuration & Settings
+## 4. Payments (Deposit Tracking)
+The **Payments** page (Transactions) tracks all funds entering the platform.
 
-### 5.1 Financial Limits (User Defaults)
-Located in **Settings > User Defaults**:
-*   **Min/Max Deposit**: Control the floor and ceiling for incoming funds.
-*   **Withdrawal Limits**: Set the minimum and maximum amount per request (Default Min: 100 KES).
-*   **Daily Limits**: Cap the total transaction volume per user per day to mitigate risk.
-
-### 5.2 Payment Gateway Configuration
-#### M-Pesa (Safaricom)
-*   **Credentials**: Configure Shortcodes, Consumer Keys, Secrets, and Online Passkeys.
-*   **B2C Settings**: Enter Initiator names and Security Credentials for automated payouts.
-*   **Auto-Approval**: Toggle automated withdrawal approval for amounts below a specific threshold.
-
-#### Paystack
-*   **Keys**: Manage Live Secret and Public keys.
-*   **Webhooks**: Configure the Webhook Secret to ensure secure communication between Paystack and your server.
-
-### 5.3 Risk Management
-*   **Exposure Limits**: Set maximum payouts per bet and per day.
-*   **Thresholds**: Configure "High Risk" bet amounts that trigger administrative alerts.
-*   **Security**: Manage IP Whitelisting and Blacklisting for the admin portal.
+*   **Deposit Ledger**: View all successful and failed deposit attempts.
+*   **Provider Details**: See whether a deposit came through M-Pesa or Paystack, along with the provider's unique reference number.
+*   **Reconciliation**: Use this page to confirm that funds have actually hit your business account by matching the "Provider Reference" found here.
 
 ---
 
-## 6. Security & Support
+## 5. Withdrawals (Payout Management)
+The **Withdrawals** page is arguably the most critical operational area.
 
-### 6.1 Administrator Security
-*   **Password Policy**: All admins must use complex passwords (10+ chars, symbols, uppercase).
-*   **Two-Factor Authentication (2FA)**: Use the **Security Wizard** to enable TOTP (e.g., Google Authenticator) for your admin account.
-*   **First-Time Login**: New admins are required to change their temporary passwords immediately upon first access.
-
-### 6.2 Customer Communication
-*   **Contact Messages**: Review and respond to inquiries submitted via the platform's contact form.
-*   **Newsletter**: Manage the list of subscribers and export emails for marketing campaigns.
+*   **Processing Requests**:
+    *   **Pending Tab**: Review new requests. Ensure the user's betting activity is legitimate before approving.
+    *   **Approve Button**: Triggers the automated M-Pesa B2C payout. Ensure your M-Pesa B2C balance is sufficient.
+    *   **Reject Button**: Prompts you for a reason (e.g., "Inconsistent Betting Pattern"). The funds are immediately returned to the user's wallet.
+*   **Export CSV**: Generate a spreadsheet of all withdrawals for monthly financial reconciliation.
+*   **Audio Alerts**: The platform will play a notification sound whenever a new withdrawal request is received (can be configured in Settings).
 
 ---
 
-*This guide is updated as of May 2026. For technical issues beyond operational scope, contact the development team.*
+## 6. Events (Custom Market Engine)
+The **Events** page allows you to create betting opportunities that aren't covered by our automated API.
+
+*   **Custom Event Creation**:
+    1.  Click "New Event".
+    2.  Set the **Teams/Competitors**, **Category** (Football, Politics, etc.), and **Start Time**.
+*   **Market Management**: Add markets (e.g., "Winner", "Total Goals").
+*   **Manual Settlement**: Once the event is over, you MUST come here to mark the winning selection. This will automatically trigger payouts to all winning bettors.
+
+---
+
+## 7. Odds (Data Feed Management)
+The **Odds** page manages the connection to external sports data providers.
+
+*   **API Sync Logs**: View a history of data refreshes. If the odds on the site look "stale," check these logs for errors.
+*   **Credit Monitor**: Displays how many "credits" remain on your Odds API plan.
+*   **House Margin**: Adjust the "House Margin" to control the profitability of the odds displayed to users.
+
+---
+
+## 8. Risk (Security & Fraud)
+The **Risk** page alerts you to suspicious activity.
+
+*   **Automated Alerts**: The system flags:
+    *   **High-Risk Bets**: Stakes exceeding your configured threshold.
+    *   **Suspicious Patterns**: Rapid betting or unusual success rates.
+    *   **Exposure Limits**: When a single match has too much total stake, potentially risking a large payout.
+*   **Resolution**: Mark alerts as "Reviewed" or "Resolved" after taking action (like suspending a user).
+
+---
+
+## 9. Analytics & Reports
+The **Analytics** and **Reports** pages turn data into insights.
+
+*   **Financial Reports**: Download PDF or CSV summaries of daily, weekly, or monthly performance.
+*   **User Growth**: Visualize how many new users are joining and their retention rates.
+*   **Category Performance**: See which sports are generating the most volume.
+
+---
+
+## 10. Messages & Newsletter
+*   **Messages**: An inbox for all "Contact Us" submissions from users. You can read, tag, and mark messages as resolved.
+*   **Newsletter**: Manage your email subscriber list. Export the list for use in marketing tools or send platform-wide announcements.
+
+---
+
+## 11. Security (Admin Protection)
+The **Security** page protects the administrative side of the platform.
+
+*   **Two-Factor Authentication (2FA)**: Admins should use this to link a mobile authenticator app.
+*   **Audit Trail**: A log of all actions taken by administrators (e.g., who changed a user's balance or updated a system setting).
+
+---
+
+## 12. Settings (Global Configuration)
+The **Settings** page is the "brain" of the platform.
+
+*   **Platform Info**: Change the site name, support email, and contact info.
+*   **Transaction Limits**: Set the minimum and maximum amounts for deposits, withdrawals, and individual bets.
+*   **Payment Credentials**: Update M-Pesa Shortcodes, API Keys, and Paystack Secrets directly—no code changes required.
+*   **KYC Rules**: Toggle whether users must verify their ID before withdrawing.
+
+---
+
+*This guide is designed for daily operational use. If you encounter an error message not covered here, please contact technical support.*
