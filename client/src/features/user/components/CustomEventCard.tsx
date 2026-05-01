@@ -192,8 +192,7 @@ export function CustomEventCard({
 
   const location = useLocation();
   const isShared = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get("event") === event.id;
+    return (location.search as any).event === event.id;
   }, [location.search, event.id]);
 
   if (!hasCompleteCustomEventOdds({ ...event, markets: visibleMarkets })) {

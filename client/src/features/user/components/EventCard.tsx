@@ -240,8 +240,7 @@ export default function EventCard({
 
   const location = useLocation();
   const isShared = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get("event") === event.eventId;
+    return (location.search as any).event === event.eventId;
   }, [location.search, event.eventId]);
 
   if (!hasCompleteEventOdds(event)) {
