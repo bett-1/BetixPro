@@ -241,37 +241,40 @@ export default function BettingHome() {
   }, [nonLiveEvents, nonLiveCustomEvents]);
 
   useEffect(() => {
-    const params = new URLSearchParams(
-      typeof window !== "undefined" ? window.location.search : "",
-    );
-    const eventId = params.get("event");
+    const searchParams = location.search as any;
+    const eventId = searchParams.event;
 
     if (!eventId) {
       return;
     }
 
-    // Wait a bit for events to load and render
-    const timer = window.setTimeout(() => {
+    let attempts = 0;
+    const maxAttempts = 20; // Try for 2 seconds (100ms * 20)
+
+    const interval = window.setInterval(() => {
+      attempts++;
       const element = document.getElementById(`event-${eventId}`);
+
       if (element) {
         element.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
+        window.clearInterval(interval);
+      } else if (attempts >= maxAttempts) {
+        window.clearInterval(interval);
       }
-    }, 800); // Slightly longer delay to ensure data is fetched and rendered
+    }, 150); // check every 150ms
 
     return () => {
-      window.clearTimeout(timer);
+      window.clearInterval(interval);
     };
-  }, [location, loading]);
+  }, [location.search, loading]);
 
   useEffect(() => {
-    const params = new URLSearchParams(
-      typeof window !== "undefined" ? window.location.search : "",
-    );
+    const searchParams = location.search as any;
     const shouldFocusHighlights =
-      params.get("section") === "highlights" ||
+      searchParams.section === "highlights" ||
       window.location.hash === "#highlights";
 
     if (!shouldFocusHighlights) {
