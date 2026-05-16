@@ -25,6 +25,8 @@ import {
   respondToBanAppeal,
 } from "../controllers/admin.controller";
 import { requireAdmin } from "../middleware/requireAdmin";
+import { getCacheHitRate, getCreditBalance, getDailyCallCount, getPollingMode } from "../services/oddsCache";
+import { getCreditState } from "../services/creditTracker";
 
 const adminRouter = Router();
 
@@ -41,6 +43,43 @@ adminRouter.get(
   requireAdmin,
   getBettingAnalytics,
 );
+
+adminRouter.get("/admin/credits", authenticate, requireAdmin, async (_req, res, next) => {
+  try {
+    const [redisBalance, dailyCallCount, pollingMode, cacheHitRate] = await Promise.all([
+      getCreditBalance().catch(() => null),
+      getDailyCallCount().catch(() => 0),
+      getPollingMode().catch(() => "normal"),
+      getCacheHitRate().catch(() => 0),
+    ]);
+
+    const memoryState = getCreditState();
+    const used = redisBalance?.used ?? memoryState.used ?? 0;
+    const remaining = redisBalance?.remaining ?? memoryState.remaining ?? 20_000;
+    const dayOfMonth = Math.max(1, new Date().getDate());
+    const dailyAverage = Number((used / dayOfMonth).toFixed(2));
+    const projectedMonthEnd = Math.round(dailyAverage * 30);
+    const daysUntilEmpty = dailyAverage > 0 ? Math.floor(remaining / dailyAverage) : null;
+    const safeUntil =
+      daysUntilEmpty === null
+        ? null
+        : new Date(Date.now() + daysUntilEmpty * 24 * 60 * 60 * 1000).toISOString();
+
+    res.status(200).json({
+      remaining,
+      used,
+      dailyAverage,
+      dailyCallCount,
+      dailyLimit: 100,
+      projectedMonthEnd,
+      safeUntil,
+      pollingMode,
+      cacheHitRate: `${cacheHitRate}%`,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // User Management
 adminRouter.get("/admin/users", authenticate, requireAdmin, getAllUsers);

@@ -1,5 +1,16 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { getOddsApiKey, MONTHLY_API_BUDGET } from "./oddsAutomationConfig";
+import {
+  getDailyCallCount,
+  getOddsCache,
+  getTTLForEvent,
+  incrementDailyCallCount,
+  isWithinDailyLimit,
+  setLastPollForSport,
+  setOddsCache,
+} from "./oddsCache";
+import { getCurrentPollingMode, recordOddsApiCredits } from "./creditTracker";
 
 export interface OddsApiOutcome {
   name: string;
@@ -53,6 +64,7 @@ type OddsRequestOptions = {
   dateFrom?: string;
   dateTo?: string;
   markets?: string[];
+  allowApiFetch?: boolean;
 };
 
 type ApiHealthState = {
@@ -240,10 +252,11 @@ async function logApiCall(data: {
   }
 }
 
-function updateCredits(headers: Headers) {
+async function updateCredits(headers: Headers) {
   apiState.creditsRemaining = parsePositiveInt(headers.get("x-requests-remaining"));
   apiState.creditsUsed = parsePositiveInt(headers.get("x-requests-used"));
   apiState.lastCheckedAt = new Date();
+  await recordOddsApiCredits(headers);
 }
 
 function noteSuccess() {
@@ -298,6 +311,51 @@ function canCallApi() {
   return { allowed: true };
 }
 
+async function cacheEvent(event: OddsApiEvent) {
+  const ttl = getTTLForEvent({
+    status: new Date(event.commence_time) <= new Date() ? "LIVE" : "UPCOMING",
+    commenceTime: event.commence_time,
+  });
+  if (ttl <= 0) return;
+
+  try {
+    await setOddsCache(event.id, event, ttl);
+  } catch (error) {
+    console.error("[OddsApi] Redis write failed:", error);
+  }
+
+  try {
+    await prisma.oddsCache.upsert({
+      where: { id: event.id },
+      update: {
+        sport: event.sport_key,
+        data: event as unknown as Prisma.InputJsonValue,
+        fetchedAt: new Date(),
+        expiresAt: new Date(Date.now() + ttl * 1000),
+      },
+      create: {
+        id: event.id,
+        sport: event.sport_key,
+        data: event as unknown as Prisma.InputJsonValue,
+        fetchedAt: new Date(),
+        expiresAt: new Date(Date.now() + ttl * 1000),
+      },
+    });
+  } catch (error) {
+    console.error("[OddsApi] Failed to persist odds cache snapshot:", error);
+  }
+}
+
+async function getPersistedCachedEvent(eventId: string): Promise<OddsApiEvent | null> {
+  try {
+    const row = await prisma.oddsCache.findUnique({ where: { id: eventId } });
+    return row?.data ? (row.data as unknown as OddsApiEvent) : null;
+  } catch (error) {
+    console.error("[OddsApi] Failed to read persisted odds cache:", error);
+    return null;
+  }
+}
+
 class OddsApiService {
   private async request<T>(args: {
     endpoint: string;
@@ -305,7 +363,27 @@ class OddsApiService {
     sportKey?: string;
     query?: URLSearchParams;
     sanitize: (payload: unknown) => T;
+    allowApiFetch?: boolean;
   }): Promise<T | null> {
+    if (args.allowApiFetch === false) {
+      return null;
+    }
+
+    const pollingMode = getCurrentPollingMode();
+    if (pollingMode === "emergency") {
+      console.error("[OddsApi] Emergency polling mode active; serving cache only.");
+      return null;
+    }
+
+    const withinLimit = await isWithinDailyLimit().catch((error) => {
+      console.error("[OddsApi] Daily limit check failed; allowing one guarded call:", error);
+      return true;
+    });
+    if (!withinLimit) {
+      console.warn("[OddsApi] Daily API limit reached; serving cache only.");
+      return null;
+    }
+
     const precheck = canCallApi();
     if (!precheck.allowed) {
       return null;
@@ -316,7 +394,11 @@ class OddsApiService {
 
     try {
       const response = await fetch(url);
-      updateCredits(response.headers);
+      await updateCredits(response.headers);
+      const dailyCount = await incrementDailyCallCount().catch((error) => {
+        console.error("[OddsApi] Failed to increment Redis daily call count:", error);
+        return null;
+      });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
@@ -335,12 +417,24 @@ class OddsApiService {
       const json = (await response.json()) as unknown;
       const sanitized = args.sanitize(json);
       noteSuccess();
+      if (args.sportKey) {
+        await setLastPollForSport(args.sportKey).catch((error) =>
+          console.error("[OddsApi] Failed to record sport poll timestamp:", error),
+        );
+      }
       await logApiCall({
         endpoint: args.endpoint,
         sportKey: args.sportKey,
         requestType: args.requestType,
         responseStatus: response.status,
         durationMs: Date.now() - startedAt,
+      });
+      console.info("[OddsApi] API call completed", {
+        timestamp: new Date().toISOString(),
+        sport: args.sportKey ?? "global",
+        creditsUsed: apiState.creditsUsed,
+        creditsRemaining: apiState.creditsRemaining,
+        dailyCallCount: dailyCount,
       });
       return sanitized;
     } catch (error) {
@@ -396,11 +490,58 @@ class OddsApiService {
       requestType: "odds",
       sportKey,
       query,
+      allowApiFetch: options?.allowApiFetch,
       sanitize: (payload) =>
         Array.isArray(payload)
           ? payload.map(sanitizeEvent).filter((item): item is OddsApiEvent => item !== null)
           : [],
+    }).then(async (events) => {
+      if (events) {
+        await Promise.allSettled(events.map(cacheEvent));
+      }
+      return events;
     });
+  }
+
+  async fetchOddsForEvent(eventId: string, sport: string): Promise<OddsApiEvent | null> {
+    try {
+      const cached = await getOddsCache<OddsApiEvent>(eventId);
+      if (cached) return cached;
+    } catch (error) {
+      console.error("[OddsApi] Redis read failed, going direct:", error);
+    }
+
+    const fallback = await getPersistedCachedEvent(eventId);
+    const withinLimit = await isWithinDailyLimit().catch(() => true);
+    if (!withinLimit || getCurrentPollingMode() === "emergency") {
+      console.warn("[OddsApi] API fetch skipped for event; serving stale cache if available.", {
+        eventId,
+        sport,
+      });
+      return fallback;
+    }
+
+    const events = await this.fetchOddsBatch(sport);
+    const event = events?.find((item) => item.id === eventId) ?? null;
+    return event ?? fallback;
+  }
+
+  async fetchOddsBatch(sport: string): Promise<OddsApiEvent[] | null> {
+    const events = await this.fetchSportOdds(sport, { allowApiFetch: true });
+    if (events === null) {
+      try {
+        const rows = await prisma.oddsCache.findMany({
+          where: { sport },
+          orderBy: { fetchedAt: "desc" },
+          take: 500,
+        });
+        return rows.map((row) => row.data as unknown as OddsApiEvent);
+      } catch (error) {
+        console.error("[OddsApi] Failed to read stale sport odds cache:", error);
+        return null;
+      }
+    }
+    return events;
   }
 
   async fetchSportScores(sportKey: string): Promise<OddsApiScoreEvent[] | null> {
@@ -462,6 +603,14 @@ export async function fetchAvailableSports() {
 
 export async function fetchSportOdds(sportKey: string, options?: OddsRequestOptions) {
   return oddsApiService.fetchSportOdds(sportKey, options);
+}
+
+export async function fetchOddsForEvent(eventId: string, sport: string) {
+  return oddsApiService.fetchOddsForEvent(eventId, sport);
+}
+
+export async function fetchOddsBatch(sport: string) {
+  return oddsApiService.fetchOddsBatch(sport);
 }
 
 export async function fetchSportScores(sportKey: string) {

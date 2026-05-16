@@ -8,6 +8,12 @@ function runCommand(command) {
   });
 }
 
+function isConnectionFailure(output) {
+  return /P1000|P1001|P1002|P1017|ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|Can't reach database server|Schema engine error/i.test(
+    output,
+  );
+}
+
 function getFailedMigrations() {
   const status = runCommand("pnpm exec prisma migrate status");
   const statusOutput = `${status.stdout || ""}${status.stderr || ""}`;
@@ -30,6 +36,14 @@ function getFailedMigrations() {
       "[prisma-resolve] Migrations table not ready yet; continuing.\n",
     );
     return [];
+  }
+
+  if (isConnectionFailure(statusOutput)) {
+    process.stderr.write(statusOutput);
+    process.stderr.write(
+      "[prisma-resolve] Database is not reachable; skipping failed-migration parsing so the deploy retry wrapper can retry.\n",
+    );
+    process.exit(status.status || 1);
   }
 
   const failed = Array.from(

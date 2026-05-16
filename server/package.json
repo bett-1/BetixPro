@@ -10,7 +10,7 @@
     "dev": "nodemon",
     "prebuild": "pnpm prisma:generate && pnpm prisma:ensure-client",
     "build": "tsc",
-    "build:render": "pnpm run build && pnpm run db:deploy",
+    "build:render": "pnpm run build",
     "prestart": "pnpm prisma:ensure-client",
     "start": "node dist/server.js",
     "start:render": "pnpm run db:deploy && pnpm run start",
@@ -25,7 +25,7 @@
     "prisma:seed:demo:reset": "tsx scripts/seed-demo.ts --reset",
     "prisma:studio": "prisma studio",
     "prisma:reset": "prisma migrate reset --force && pnpm prisma:seed",
-    "db:deploy": "pnpm prisma:generate && pnpm prisma:resolve-failed && prisma migrate deploy && prisma db seed",
+    "db:deploy": "node scripts/deployDatabase.cjs",
     "test:smoke": "tsx scripts/smoke-test.ts"
   },
   "prisma": {
@@ -45,6 +45,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
+    "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "node-cron": "^4.2.1",
@@ -59,6 +60,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/ioredis": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.12.0",

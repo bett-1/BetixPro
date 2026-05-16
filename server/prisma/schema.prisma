@@ -642,6 +642,29 @@ model OddsApiCallLog {
   @@map("odds_api_call_logs")
 }
 
+model ApiCreditLog {
+  id              Int      @id @default(autoincrement())
+  used            Int
+  remaining       Int
+  lastRequestCost Int      @map("last_request_cost")
+  timestamp       DateTime @default(now())
+
+  @@index([timestamp])
+  @@map("api_credit_logs")
+}
+
+model OddsCache {
+  id        String   @id
+  sport     String
+  data      Json
+  fetchedAt DateTime @map("fetched_at")
+  expiresAt DateTime @map("expires_at")
+
+  @@index([sport])
+  @@index([expiresAt])
+  @@map("odds_cache")
+}
+
 enum UserRole {
   USER
   ADMIN
