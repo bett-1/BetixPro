@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Banknote,
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { PaymentFeedbackModal } from "@/components/PaymentFeedbackModal";
 import { PaymentLoadingModal } from "@/components/PaymentLoadingModal";
 import { useAuth } from "@/context/AuthContext";
+import { profileQueryKey } from "@/hooks/useProfile";
 import { formatMoney } from "../data";
 import { useEnabledPaymentMethods } from "../hooks/usePaymentMethods";
 import {
@@ -30,6 +32,7 @@ import {
   useMpesaDepositStatus,
   useMpesaInitialize,
 } from "../hooks/useMpesaPayment";
+import { walletSummaryQueryKey } from "../wallet";
 
 
 const paystackPendingStorageKey = "betwise-paystack-pending-reference";
@@ -69,6 +72,7 @@ function isValidPhone(phone: string) {
 
 export default function DepositPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const enabledMethodsQuery = useEnabledPaymentMethods();
   const paystackInitializeMutation = usePaystackInitialize();
   const mpesaInitializeMutation = useMpesaInitialize();
@@ -306,6 +310,11 @@ export default function DepositPage() {
     }, 20);
   };
 
+  const refreshWalletBalances = () => {
+    void queryClient.invalidateQueries({ queryKey: walletSummaryQueryKey });
+    void queryClient.invalidateQueries({ queryKey: profileQueryKey });
+  };
+
   useEffect(() => {
     const status = mpesaStatusQuery.data?.status;
     if (!pendingMpesaTransactionId || !status) return;
@@ -320,6 +329,7 @@ export default function DepositPage() {
       setPaymentStatus("success");
       setPaymentMessage(mpesaStatusQuery.data?.message ?? "M-Pesa deposit received successfully.");
       setShowPaymentResult(true);
+      refreshWalletBalances();
       toast.success("M-Pesa deposit received successfully.");
       return;
     }
