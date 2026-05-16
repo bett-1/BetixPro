@@ -46,7 +46,7 @@ export const adminSettingsSchema = z.object({
       paystack: z.boolean(),
     }),
     mpesa: z.object({
-      shortcode: z.string().trim().min(5).max(20),
+      shortcode: z.string().trim().min(5).max(200),
       consumerKey: z.string().trim().min(8).max(255),
       consumerSecret: z.string().trim().min(8).max(255),
       passkey: z.string().trim().min(8).max(1024),
@@ -209,7 +209,7 @@ export const defaultAdminSettings: AdminSettingsConfig = {
       passkey: "replace-with-passkey",
       baseUrl: "https://api.safaricom.co.ke",
       callbackUrl: "",
-      b2cShortcode: "replace-with-live-b2c-shortcode",
+      b2cShortcode: "replace-live-b2c",
       initiatorName: "replace-with-initiator",
       securityCredential: "replace-with-credential",
       commandId: "BusinessPayment",
