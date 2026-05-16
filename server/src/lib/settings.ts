@@ -15,12 +15,10 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
       return defaultAdminSettings;
     }
 
-    // Convert flat DB record to nested config object
-    // This logic is mirrored from admin.controller.ts toConfig function
-    const config: AdminSettingsConfig = {
+    const config = {
       generalSystemConfig: {
         platformName: settings.platformName,
-        environment: settings.environment as "sandbox" | "live",
+        environment: "live" as const,
         defaultCurrency: settings.defaultCurrency,
         timezone: settings.timezone,
         maintenanceMode: settings.maintenanceMode,
@@ -153,7 +151,7 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
         responsibleGamblingMessage: settings.responsibleGamblingMessage,
         supportContactInfo: settings.supportContactInfo,
       },
-    };
+    } satisfies AdminSettingsConfig;
 
     const parsed = adminSettingsSchema.safeParse(config);
 

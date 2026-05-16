@@ -13,7 +13,7 @@ const optionalUrl = z
 export const adminSettingsSchema = z.object({
   generalSystemConfig: z.object({
     platformName: z.string().trim().min(2).max(100),
-    environment: z.enum(["sandbox", "live"]),
+    environment: z.literal("live"),
     defaultCurrency: z.string().trim().min(3).max(8),
     timezone: z.string().trim().min(3).max(64),
     maintenanceMode: z.boolean(),
@@ -46,15 +46,25 @@ export const adminSettingsSchema = z.object({
       paystack: z.boolean(),
     }),
     mpesa: z.object({
-      shortcode: z.string().trim().min(5).max(20),
+      shortcode: z.string().trim().min(5).max(200),
       consumerKey: z.string().trim().min(8).max(255),
       consumerSecret: z.string().trim().min(8).max(255),
-      passkey: z.string().trim().min(8).max(255),
+      passkey: z.string().trim().min(8).max(1024),
       baseUrl: z.string().url(),
       callbackUrl: optionalUrl,
       b2cShortcode: z.string().trim().min(5).max(20).default("174379"),
-      initiatorName: z.string().trim().min(2).max(100).default("replace-with-initiator"),
-      securityCredential: z.string().trim().min(8).max(1024).default("replace-with-credential"),
+      initiatorName: z
+        .string()
+        .trim()
+        .min(2)
+        .max(100)
+        .default("replace-with-initiator"),
+      securityCredential: z
+        .string()
+        .trim()
+        .min(8)
+        .max(1024)
+        .default("replace-with-credential"),
       commandId: z.string().trim().min(2).max(50).default("BusinessPayment"),
       resultUrl: optionalUrl.default(""),
       timeoutUrl: optionalUrl.default(""),
@@ -160,7 +170,7 @@ export type AdminSettingsConfig = z.infer<typeof adminSettingsSchema>;
 export const defaultAdminSettings: AdminSettingsConfig = {
   generalSystemConfig: {
     platformName: "BetixPro",
-    environment: "sandbox",
+    environment: "live",
     defaultCurrency: "KES",
     timezone: "Africa/Nairobi",
     maintenanceMode: false,
@@ -193,13 +203,13 @@ export const defaultAdminSettings: AdminSettingsConfig = {
       paystack: true,
     },
     mpesa: {
-      shortcode: "174379",
+      shortcode: "replace-with-live-shortcode",
       consumerKey: "replace-with-consumer-key",
       consumerSecret: "replace-with-consumer-secret",
       passkey: "replace-with-passkey",
-      baseUrl: "https://sandbox.safaricom.co.ke",
+      baseUrl: "https://api.safaricom.co.ke",
       callbackUrl: "",
-      b2cShortcode: "174379",
+      b2cShortcode: "replace-live-b2c",
       initiatorName: "replace-with-initiator",
       securityCredential: "replace-with-credential",
       commandId: "BusinessPayment",
