@@ -2515,7 +2515,10 @@ export async function updateAdminSettings(req: Request, res: Response) {
     .safeParse(req.body);
 
   if (!parsedBody.success) {
-    console.error("Admin settings validation failed:", JSON.stringify(parsedBody.error.flatten(), null, 2));
+    console.error(
+      "Admin settings validation failed:",
+      JSON.stringify(parsedBody.error.flatten(), null, 2),
+    );
     return res.status(400).json({
       message: "Invalid admin settings payload.",
       issues: parsedBody.error.flatten(),
