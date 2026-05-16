@@ -146,14 +146,8 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
       isConfigured: false;
       missingVars: string[];
     } {
-  const env = settings.generalSystemConfig.environment;
   const mpesa = settings.paymentsConfig.mpesa;
-  const MPESA_ENVIRONMENT = "prod";
-
-    const defaultBaseUrl =
-      MPESA_ENVIRONMENT === "prod"
-        ? "https://api.safaricom.co.ke"
-        : "https://sandbox.safaricom.co.ke";
+  const defaultBaseUrl = "https://api.safaricom.co.ke";
 
   const consumerKey = mpesa.consumerKey;
   const consumerSecret = mpesa.consumerSecret;
@@ -167,7 +161,9 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     missingVars.push("M-Pesa Consumer Key");
   if (!consumerSecret || consumerSecret.includes("replace-with"))
     missingVars.push("M-Pesa Consumer Secret");
-  if (!shortcode) missingVars.push("M-Pesa Shortcode");
+  if (!shortcode || shortcode.includes("replace-with")) {
+    missingVars.push("M-Pesa Shortcode");
+  }
   if (!passkey || passkey.includes("replace-with"))
     missingVars.push("M-Pesa Passkey");
   if (!callbackUrl) missingVars.push("M-Pesa Callback URL");
@@ -180,17 +176,13 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
   }
 
   const configuredBaseUrl = mpesa.baseUrl?.trim().replace(/\/+$/, "") || "";
-  const baseUrl = configuredBaseUrl || defaultBaseUrl;
-  const normalizedBaseUrl =
-    env === "live" && baseUrl.includes("sandbox.safaricom.co.ke")
-      ? defaultBaseUrl
-      : env === "sandbox" && baseUrl.includes("api.safaricom.co.ke")
-        ? defaultBaseUrl
-        : baseUrl;
+  const baseUrl = configuredBaseUrl.startsWith("https://api.safaricom.co.ke")
+    ? configuredBaseUrl
+    : defaultBaseUrl;
 
   return {
     isConfigured: true,
-    baseUrl: normalizedBaseUrl,
+    baseUrl,
     consumerKey,
     consumerSecret,
     shortcode,
@@ -251,6 +243,8 @@ export function getMpesaB2CConfig(settings: AdminSettingsConfig):
     missingVars.push("M-Pesa Initiator Name");
   if (!securityCredential || securityCredential.includes("replace-with"))
     missingVars.push("M-Pesa Security Credential");
+  if (!mpesa.b2cShortcode || mpesa.b2cShortcode.includes("replace-with"))
+    missingVars.push("M-Pesa B2C Shortcode");
 
   if (missingVars.length > 0) {
     return {
@@ -307,7 +301,8 @@ export async function getMpesaAccessToken(config: {
         headers: {
           Authorization: `Basic ${authHeader}`,
           "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
         signal: controller.signal,
       },

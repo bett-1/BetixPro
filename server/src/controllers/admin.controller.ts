@@ -277,7 +277,7 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
   return {
     generalSystemConfig: {
       platformName: record.platformName,
-      environment: record.environment as "sandbox" | "live",
+      environment: "live",
       defaultCurrency: record.defaultCurrency,
       timezone: record.timezone,
       maintenanceMode: record.maintenanceMode,

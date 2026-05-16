@@ -4,7 +4,7 @@ import { api } from "@/api/axiosConfig";
 export interface AdminSettingsConfig {
   generalSystemConfig: {
     platformName: string;
-    environment: "sandbox" | "live";
+    environment: "live";
     defaultCurrency: string;
     timezone: string;
     maintenanceMode: boolean;

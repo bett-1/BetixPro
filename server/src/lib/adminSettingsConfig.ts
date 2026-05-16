@@ -10,12 +10,10 @@ const optionalUrl = z
     message: "Invalid URL",
   });
 
-
-
 export const adminSettingsSchema = z.object({
   generalSystemConfig: z.object({
     platformName: z.string().trim().min(2).max(100),
-    environment: z.enum(["sandbox", "live"]),
+    environment: z.literal("live"),
     defaultCurrency: z.string().trim().min(3).max(8),
     timezone: z.string().trim().min(3).max(64),
     maintenanceMode: z.boolean(),
@@ -172,7 +170,7 @@ export type AdminSettingsConfig = z.infer<typeof adminSettingsSchema>;
 export const defaultAdminSettings: AdminSettingsConfig = {
   generalSystemConfig: {
     platformName: "BetixPro",
-    environment: "sandbox",
+    environment: "live",
     defaultCurrency: "KES",
     timezone: "Africa/Nairobi",
     maintenanceMode: false,
@@ -205,13 +203,13 @@ export const defaultAdminSettings: AdminSettingsConfig = {
       paystack: true,
     },
     mpesa: {
-      shortcode: "174379",
+      shortcode: "replace-with-live-shortcode",
       consumerKey: "replace-with-consumer-key",
       consumerSecret: "replace-with-consumer-secret",
       passkey: "replace-with-passkey",
-      baseUrl: "https://sandbox.safaricom.co.ke",
+      baseUrl: "https://api.safaricom.co.ke",
       callbackUrl: "",
-      b2cShortcode: "174379",
+      b2cShortcode: "replace-with-live-b2c-shortcode",
       initiatorName: "replace-with-initiator",
       securityCredential: "replace-with-credential",
       commandId: "BusinessPayment",
