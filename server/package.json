@@ -10,7 +10,7 @@
     "dev": "nodemon",
     "prebuild": "pnpm prisma:generate && pnpm prisma:ensure-client",
     "build": "tsc",
-    "build:render": "pnpm run build && pnpm run db:deploy",
+    "build:render": "pnpm run build",
     "prestart": "pnpm prisma:ensure-client",
     "start": "node dist/server.js",
     "start:render": "pnpm run db:deploy && pnpm run start",
