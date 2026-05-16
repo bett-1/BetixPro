@@ -13,20 +13,104 @@ const ADMIN_PASS = "Admin@Betixpro123!";
 const ADMIN_PHONE = "+254700000001";
 
 const SPORT_CATEGORIES = [
-  { sportKey: "soccer", displayName: "Football", icon: "⚽", apiSportId: "soccer", sortOrder: 1 },
-  { sportKey: "basketball", displayName: "Basketball", icon: "🏀", apiSportId: "basketball", sortOrder: 2 },
-  { sportKey: "tennis", displayName: "Tennis", icon: "🎾", apiSportId: "tennis", sortOrder: 3 },
-  { sportKey: "americanfootball", displayName: "American Football", icon: "🏈", apiSportId: "americanfootball", sortOrder: 4 },
-  { sportKey: "cricket", displayName: "Cricket", icon: "🏏", apiSportId: "cricket", sortOrder: 5 },
-  { sportKey: "icehockey", displayName: "Ice Hockey", icon: "🏒", apiSportId: "icehockey", sortOrder: 6 },
-  { sportKey: "rugbyunion", displayName: "Rugby Union", icon: "🏉", apiSportId: "rugbyleague", sortOrder: 7 },
-  { sportKey: "boxing_mma", displayName: "Boxing / MMA", icon: "🥊", apiSportId: "mma", sortOrder: 8 },
-  { sportKey: "baseball", displayName: "Baseball", icon: "⚾", apiSportId: "baseball", sortOrder: 9 },
-  { sportKey: "volleyball", displayName: "Volleyball", icon: "🏐", apiSportId: "volleyball", sortOrder: 10 },
-  { sportKey: "tabletennis", displayName: "Table Tennis", icon: "🏓", apiSportId: "tabletennis", sortOrder: 11 },
-  { sportKey: "golf", displayName: "Golf", icon: "⛳", apiSportId: "golf", sortOrder: 12 },
-  { sportKey: "snooker", displayName: "Snooker", icon: "🎱", apiSportId: "snooker", sortOrder: 13 },
-  { sportKey: "darts", displayName: "Darts", icon: "🎯", apiSportId: "darts", sortOrder: 14 },
+  {
+    sportKey: "soccer",
+    displayName: "Football",
+    icon: "⚽",
+    apiSportId: "soccer",
+    sortOrder: 1,
+  },
+  {
+    sportKey: "basketball",
+    displayName: "Basketball",
+    icon: "🏀",
+    apiSportId: "basketball",
+    sortOrder: 2,
+  },
+  {
+    sportKey: "tennis",
+    displayName: "Tennis",
+    icon: "🎾",
+    apiSportId: "tennis",
+    sortOrder: 3,
+  },
+  {
+    sportKey: "americanfootball",
+    displayName: "American Football",
+    icon: "🏈",
+    apiSportId: "americanfootball",
+    sortOrder: 4,
+  },
+  {
+    sportKey: "cricket",
+    displayName: "Cricket",
+    icon: "🏏",
+    apiSportId: "cricket",
+    sortOrder: 5,
+  },
+  {
+    sportKey: "icehockey",
+    displayName: "Ice Hockey",
+    icon: "🏒",
+    apiSportId: "icehockey",
+    sortOrder: 6,
+  },
+  {
+    sportKey: "rugbyunion",
+    displayName: "Rugby Union",
+    icon: "🏉",
+    apiSportId: "rugbyleague",
+    sortOrder: 7,
+  },
+  {
+    sportKey: "boxing_mma",
+    displayName: "Boxing / MMA",
+    icon: "🥊",
+    apiSportId: "mma",
+    sortOrder: 8,
+  },
+  {
+    sportKey: "baseball",
+    displayName: "Baseball",
+    icon: "⚾",
+    apiSportId: "baseball",
+    sortOrder: 9,
+  },
+  {
+    sportKey: "volleyball",
+    displayName: "Volleyball",
+    icon: "🏐",
+    apiSportId: "volleyball",
+    sortOrder: 10,
+  },
+  {
+    sportKey: "tabletennis",
+    displayName: "Table Tennis",
+    icon: "🏓",
+    apiSportId: "tabletennis",
+    sortOrder: 11,
+  },
+  {
+    sportKey: "golf",
+    displayName: "Golf",
+    icon: "⛳",
+    apiSportId: "golf",
+    sortOrder: 12,
+  },
+  {
+    sportKey: "snooker",
+    displayName: "Snooker",
+    icon: "🎱",
+    apiSportId: "snooker",
+    sortOrder: 13,
+  },
+  {
+    sportKey: "darts",
+    displayName: "Darts",
+    icon: "🎯",
+    apiSportId: "darts",
+    sortOrder: 14,
+  },
 ];
 
 async function upsertSeedUser(args: {
@@ -114,7 +198,8 @@ function getAdminSeedInputs() {
   const emails = parseCommaSeparatedEnv(process.env.ADMIN_EMAIL);
   const passwords = parseCommaSeparatedEnv(process.env.ADMIN_PASSWORD);
   const phones = parseCommaSeparatedEnv(process.env.ADMIN_PHONE);
-  const hasAdminEnv = emails.length > 0 || passwords.length > 0 || phones.length > 0;
+  const hasAdminEnv =
+    emails.length > 0 || passwords.length > 0 || phones.length > 0;
 
   if (!hasAdminEnv && process.env.NODE_ENV !== "production") {
     return [
