@@ -23,10 +23,19 @@ function ttlForTrackingKey() {
   return getSecondsUntilMidnight();
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 async function expireTrackingKey(key: string) {
-  const ttl = await redis.ttl(key);
-  if (ttl < 0) {
-    await redis.expire(key, ttlForTrackingKey());
+  if (!redis) return;
+  try {
+    const ttl = await redis.ttl(key);
+    if (ttl < 0) {
+      await redis.expire(key, ttlForTrackingKey());
+    }
+  } catch (error) {
+    console.warn("[Redis] expireTrackingKey failed:", getErrorMessage(error));
   }
 }
 
@@ -47,107 +56,191 @@ export function getTTLForEvent(input: { status?: string | null; commenceTime?: D
 }
 
 export async function setOddsCache(eventId: string, data: unknown, ttlSeconds: number): Promise<void> {
+  if (!redis) return;
   if (ttlSeconds <= 0) return;
-  const now = new Date();
-  const envelope: CachedOddsEnvelope = {
-    data,
-    fetchedAt: now.toISOString(),
-    expiresAt: new Date(now.getTime() + ttlSeconds * 1000).toISOString(),
-  };
-  await redis.setex(`odds:${eventId}`, ttlSeconds, JSON.stringify(envelope));
+  try {
+    const now = new Date();
+    const envelope: CachedOddsEnvelope = {
+      data,
+      fetchedAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + ttlSeconds * 1000).toISOString(),
+    };
+    await redis.setex(`odds:${eventId}`, ttlSeconds, JSON.stringify(envelope));
+  } catch (error) {
+    console.warn("[Redis] setOddsCache failed:", getErrorMessage(error));
+  }
 }
 
 export async function getOddsCache<T = unknown>(eventId: string): Promise<T | null> {
-  const cached = await redis.get(`odds:${eventId}`);
-  if (!cached) {
-    await recordCacheMiss().catch(() => undefined);
+  if (!redis) return null;
+  try {
+    const cached = await redis.get(`odds:${eventId}`);
+    if (!cached) {
+      await recordCacheMiss().catch(() => undefined);
+      return null;
+    }
+
+    await recordCacheHit().catch(() => undefined);
+
+    const parsed = JSON.parse(cached) as CachedOddsEnvelope<T> | T;
+    if (parsed && typeof parsed === "object" && "data" in parsed) {
+      return (parsed as CachedOddsEnvelope<T>).data;
+    }
+    return parsed as T;
+  } catch (error) {
+    console.warn("[Redis] getOddsCache failed:", getErrorMessage(error));
     return null;
   }
-
-  await recordCacheHit().catch(() => undefined);
-
-  const parsed = JSON.parse(cached) as CachedOddsEnvelope<T> | T;
-  if (parsed && typeof parsed === "object" && "data" in parsed) {
-    return (parsed as CachedOddsEnvelope<T>).data;
-  }
-  return parsed as T;
 }
 
 export async function getAllCachedOddsKeys(): Promise<string[]> {
-  return redis.keys("odds:*");
+  if (!redis) return [];
+  try {
+    return await redis.keys("odds:*");
+  } catch (error) {
+    console.warn("[Redis] getAllCachedOddsKeys failed:", getErrorMessage(error));
+    return [];
+  }
 }
 
 export async function setCreditBalance(used: number, remaining: number): Promise<void> {
-  await redis.hset("odds:credits", {
-    used: String(used),
-    remaining: String(remaining),
-    updatedAt: String(Date.now()),
-  });
-  await redis.expire("odds:credits", ONE_DAY_SECONDS);
+  if (!redis) return;
+  try {
+    await redis.hset("odds:credits", {
+      used: String(used),
+      remaining: String(remaining),
+      updatedAt: String(Date.now()),
+    });
+    await redis.expire("odds:credits", ONE_DAY_SECONDS);
+  } catch (error) {
+    console.warn("[Redis] setCreditBalance failed:", getErrorMessage(error));
+  }
 }
 
 export async function getCreditBalance(): Promise<{ used: number; remaining: number; updatedAt: number } | null> {
-  const data = await redis.hgetall("odds:credits");
-  if (!data || !data.remaining) return null;
-  return {
-    used: Number.parseInt(data.used || "0", 10),
-    remaining: Number.parseInt(data.remaining, 10),
-    updatedAt: Number.parseInt(data.updatedAt || "0", 10),
-  };
+  if (!redis) return null;
+  try {
+    const data = await redis.hgetall("odds:credits");
+    if (!data || !data.remaining) return null;
+    return {
+      used: Number.parseInt(data.used || "0", 10),
+      remaining: Number.parseInt(data.remaining, 10),
+      updatedAt: Number.parseInt(data.updatedAt || "0", 10),
+    };
+  } catch (error) {
+    console.warn("[Redis] getCreditBalance failed:", getErrorMessage(error));
+    return null;
+  }
 }
 
 export async function setPollingMode(mode: PollingMode): Promise<void> {
-  await redis.set("odds:pollingMode", mode, "EX", ONE_DAY_SECONDS);
+  if (!redis) return;
+  try {
+    await redis.set("odds:pollingMode", mode, "EX", ONE_DAY_SECONDS);
+  } catch (error) {
+    console.warn("[Redis] setPollingMode failed:", getErrorMessage(error));
+  }
 }
 
 export async function getPollingMode(): Promise<PollingMode> {
-  const mode = await redis.get("odds:pollingMode");
-  return mode === "reduced" || mode === "emergency" ? mode : "normal";
+  if (!redis) return "normal";
+  try {
+    const mode = await redis.get("odds:pollingMode");
+    return mode === "reduced" || mode === "emergency" ? mode : "normal";
+  } catch (error) {
+    console.warn("[Redis] getPollingMode failed:", getErrorMessage(error));
+    return "normal";
+  }
 }
 
 export async function setLastPollForSport(sport: string, timestamp = Date.now()): Promise<void> {
-  await redis.set(`odds:lastPoll:${sport}`, String(timestamp), "EX", ONE_DAY_SECONDS);
+  if (!redis) return;
+  try {
+    await redis.set(`odds:lastPoll:${sport}`, String(timestamp), "EX", ONE_DAY_SECONDS);
+  } catch (error) {
+    console.warn("[Redis] setLastPollForSport failed:", getErrorMessage(error));
+  }
 }
 
 export async function getLastPollForSport(sport: string): Promise<number | null> {
-  const value = await redis.get(`odds:lastPoll:${sport}`);
-  return value ? Number.parseInt(value, 10) : null;
+  if (!redis) return null;
+  try {
+    const value = await redis.get(`odds:lastPoll:${sport}`);
+    return value ? Number.parseInt(value, 10) : null;
+  } catch (error) {
+    console.warn("[Redis] getLastPollForSport failed:", getErrorMessage(error));
+    return null;
+  }
 }
 
 export async function incrementDailyCallCount(): Promise<number> {
-  const key = "odds:dailyCount";
-  const count = await redis.incr(key);
-  if (count === 1) {
-    await redis.expire(key, getSecondsUntilMidnight());
+  if (!redis) return 0;
+  try {
+    const key = "odds:dailyCount";
+    const count = await redis.incr(key);
+    if (count === 1) {
+      await redis.expire(key, getSecondsUntilMidnight());
+    }
+    return count;
+  } catch (error) {
+    console.warn("[Redis] incrementDailyCallCount failed:", getErrorMessage(error));
+    return 0;
   }
-  return count;
 }
 
 export async function getDailyCallCount(): Promise<number> {
-  const val = await redis.get("odds:dailyCount");
-  return val ? Number.parseInt(val, 10) : 0;
+  if (!redis) return 0;
+  try {
+    const val = await redis.get("odds:dailyCount");
+    return val ? Number.parseInt(val, 10) : 0;
+  } catch (error) {
+    console.warn("[Redis] getDailyCallCount failed:", getErrorMessage(error));
+    return 0;
+  }
 }
 
 export async function isWithinDailyLimit(): Promise<boolean> {
-  return (await getDailyCallCount()) < 100;
+  if (!redis) return true;
+  try {
+    return (await getDailyCallCount()) < 100;
+  } catch (error) {
+    console.warn("[Redis] isWithinDailyLimit failed, allowing call:", getErrorMessage(error));
+    return true;
+  }
 }
 
 export async function recordCacheHit(): Promise<void> {
+  if (!redis) return;
   const key = "odds:cacheHits";
-  await redis.incr(key);
-  await expireTrackingKey(key);
+  try {
+    await redis.incr(key);
+    await expireTrackingKey(key);
+  } catch (error) {
+    console.warn("[Redis] recordCacheHit failed:", getErrorMessage(error));
+  }
 }
 
 export async function recordCacheMiss(): Promise<void> {
+  if (!redis) return;
   const key = "odds:cacheMisses";
-  await redis.incr(key);
-  await expireTrackingKey(key);
+  try {
+    await redis.incr(key);
+    await expireTrackingKey(key);
+  } catch (error) {
+    console.warn("[Redis] recordCacheMiss failed:", getErrorMessage(error));
+  }
 }
 
 export async function getCacheHitRate(): Promise<number> {
-  const [hitsRaw, missesRaw] = await Promise.all([redis.get("odds:cacheHits"), redis.get("odds:cacheMisses")]);
-  const hits = hitsRaw ? Number.parseInt(hitsRaw, 10) : 0;
-  const misses = missesRaw ? Number.parseInt(missesRaw, 10) : 0;
-  const total = hits + misses;
-  return total > 0 ? Number(((hits / total) * 100).toFixed(2)) : 0;
+  if (!redis) return 0;
+  try {
+    const [hitsRaw, missesRaw] = await Promise.all([redis.get("odds:cacheHits"), redis.get("odds:cacheMisses")]);
+    const hits = hitsRaw ? Number.parseInt(hitsRaw, 10) : 0;
+    const misses = missesRaw ? Number.parseInt(missesRaw, 10) : 0;
+    const total = hits + misses;
+    return total > 0 ? Number(((hits / total) * 100).toFixed(2)) : 0;
+  } catch (error) {
+    console.warn("[Redis] getCacheHitRate failed:", getErrorMessage(error));
+    return 0;
+  }
 }

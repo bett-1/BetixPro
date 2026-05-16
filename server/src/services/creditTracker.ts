@@ -27,6 +27,24 @@ function parseHeaderInt(headers: Headers, name: string) {
   return Number.isFinite(value) ? value : null;
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function writeCreditLog(used: number, remaining: number, lastRequestCost: number) {
+  try {
+    await prisma.apiCreditLog.create({
+      data: {
+        used,
+        remaining,
+        lastRequestCost,
+      },
+    });
+  } catch (error) {
+    console.warn("[OddsApi] DB credit log write skipped:", getErrorMessage(error));
+  }
+}
+
 export function modeForRemainingCredits(remaining: number | null): PollingMode {
   if (remaining !== null && remaining < EMERGENCY_CREDIT_THRESHOLD) return "emergency";
   if (remaining !== null && remaining < LOW_CREDIT_THRESHOLD) return "reduced";
@@ -58,13 +76,7 @@ export async function recordOddsApiCredits(headers: Headers) {
       : Promise.resolve(),
     setPollingMode(state.pollingMode),
     state.used !== null && state.remaining !== null
-      ? prisma.apiCreditLog.create({
-          data: {
-            used: state.used,
-            remaining: state.remaining,
-            lastRequestCost,
-          },
-        })
+      ? writeCreditLog(state.used, state.remaining, lastRequestCost)
       : Promise.resolve(),
   ]);
 
