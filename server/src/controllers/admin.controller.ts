@@ -1625,7 +1625,7 @@ export async function createUser(req: Request, res: Response) {
       email: parsedBody.data.email,
       phone: normalizedPhone,
       passwordHash,
-      isVerified: parsedBody.data.isVerified ?? false,
+      isVerified: parsedBody.data.isVerified ?? true,
       accountStatus: parsedBody.data.accountStatus ?? "ACTIVE",
       role: "USER",
       wallet: {
