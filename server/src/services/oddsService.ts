@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { getOddsApiKey } from "./oddsAutomationConfig";
 import { hasCompleteOdds } from "../utils/oddsValidator";
+import { fetchOddsBatch } from "./oddsApiService";
 
 const SPORTS = [
   "soccer_epl",
@@ -21,41 +22,8 @@ export async function fetchAndSaveOdds(): Promise<void> {
   let failedRequests = 0;
   let savedEvents = 0;
 
-  const results = await Promise.allSettled(
-    SPORTS.map((sport) =>
-      fetch(
-        `https://api.the-odds-api.com/v4/sports/${sport}/odds?apiKey=${oddsApiKey}&regions=eu&markets=h2h,spreads,totals&oddsFormat=decimal`,
-      ),
-    ),
-  );
-
-  for (const result of results) {
-    if (result.status !== "fulfilled") {
-      continue;
-    }
-
-    if (!result.value.ok) {
-      const details = await result.value.text();
-      console.warn(
-        `[Odds] Request failed with status ${result.value.status}: ${details.slice(0, 180)}`,
-      );
-      failedRequests += 1;
-      continue;
-    }
-
-    const payload = (await result.value.json()) as unknown;
-    if (!Array.isArray(payload)) {
-      const message =
-        typeof payload === "object" && payload !== null && "message" in payload
-          ? String(
-              (payload as { message?: unknown }).message ?? "unknown error",
-            )
-          : "unknown error";
-      console.warn(`[Odds] Unexpected payload shape: ${message}`);
-      continue;
-    }
-
-    const events = payload as Array<{
+  for (const sport of SPORTS) {
+    const events = (await fetchOddsBatch(sport)) as Array<{
       id: string;
       sport_title: string;
       sport_key: string;
@@ -73,7 +41,12 @@ export async function fetchAndSaveOdds(): Promise<void> {
           }>;
         }>;
       }>;
-    }>;
+    }> | null;
+
+    if (!events) {
+      failedRequests += 1;
+      continue;
+    }
 
     for (const event of events) {
       if (!hasCompleteOdds(event)) {
