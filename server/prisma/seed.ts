@@ -6,6 +6,12 @@ import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
 
+// Default admin credentials for local development only.
+// Override with ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_PHONE env vars in other environments.
+const ADMIN_EMAIL = "admin@betwise.local";
+const ADMIN_PASS = "Admin@Betixpro123!";
+const ADMIN_PHONE = "+254700000001";
+
 const SPORT_CATEGORIES = [
   { sportKey: "soccer", displayName: "Football", icon: "⚽", apiSportId: "soccer", sortOrder: 1 },
   { sportKey: "basketball", displayName: "Basketball", icon: "🏀", apiSportId: "basketball", sortOrder: 2 },
@@ -207,38 +213,13 @@ async function syncSportsApiKey() {
 
 async function main() {
   try {
-    console.log("Seeding database...");
+    console.log("Seeding admin users (minimal)...");
 
-    const isProduction = process.env.NODE_ENV === "production";
-
-    const createStrongDevPassword = () => {
-      const randomSegment = randomBytes(12).toString("base64url");
-      return `Seed@${randomSegment}9!`;
-    };
-
-    if (!isProduction) {
-      console.log("Seeding demo user account...");
-
-      const userEmail = process.env.USER_EMAIL || "user@betwise.local";
-      const userPhone = process.env.USER_PHONE || "+254701234567";
-      const userPassword = process.env.USER_PASSWORD || createStrongDevPassword();
-
-      const userPasswordHash = await bcrypt.hash(userPassword, 12);
-
-      const user = await upsertSeedUser({
-        email: userEmail,
-        phone: userPhone,
-        passwordHash: userPasswordHash,
-      });
-
-      console.log(`USER:  ${user.phone} / ${userPassword}`);
-    }
-
+    // Only seed admin credentials and minimal app settings.
+    // This avoids creating demo users, sport categories or syncing API keys.
     await seedAdmins();
-    await syncSportsApiKey();
-    await seedSportCategories();
 
-    console.log("Seed complete.");
+    console.log("Admin seed complete.");
   } catch (error) {
     console.error("Seed failed:", error);
     process.exit(1);
