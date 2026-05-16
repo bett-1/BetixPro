@@ -34,7 +34,6 @@ import {
 } from "../hooks/useMpesaPayment";
 import { walletSummaryQueryKey } from "../wallet";
 
-
 const paystackPendingStorageKey = "betwise-paystack-pending-reference";
 const paystackLogoUrl = "/images/paystack.svg";
 const mpesaPendingStorageKey = "betwise-mpesa-pending-transaction";
@@ -236,7 +235,10 @@ export default function DepositPage() {
       setShouldVerifyPaystack(false);
       setIsProcessing(false);
       setPaymentStatus("failed");
-      setPaymentMessage(paystackVerificationQuery.data?.message ?? "Payment could not be confirmed.");
+      setPaymentMessage(
+        paystackVerificationQuery.data?.message ??
+          "Payment could not be confirmed.",
+      );
       setRetryCooldown(60);
       setShowPaymentResult(true);
       toast.error("Payment could not be confirmed.");
@@ -327,7 +329,10 @@ export default function DepositPage() {
         mpesaStatusQuery.data?.mpesaCode ?? pendingMpesaTransactionId,
       );
       setPaymentStatus("success");
-      setPaymentMessage(mpesaStatusQuery.data?.message ?? "M-Pesa deposit received successfully.");
+      setPaymentMessage(
+        mpesaStatusQuery.data?.message ??
+          "M-Pesa deposit received successfully.",
+      );
       setShowPaymentResult(true);
       refreshWalletBalances();
       toast.success("M-Pesa deposit received successfully.");
@@ -569,13 +574,8 @@ export default function DepositPage() {
   const getMethodLabel = (method: DepositMethod) =>
     method === "mpesa" ? "M-Pesa" : "Paystack";
 
-
-
   const renderMethodDropdown = (align: "center" | "end") => (
-    <DropdownMenu
-      open={isMethodMenuOpen}
-      onOpenChange={onMethodMenuOpenChange}
-    >
+    <DropdownMenu open={isMethodMenuOpen} onOpenChange={onMethodMenuOpenChange}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -645,9 +645,11 @@ export default function DepositPage() {
                   className="h-12 w-auto object-contain"
                 />
               ) : (
-
-                  <img src={paystackLogoUrl} alt="Paystack" className="h-10 w-auto object-contain" />
-
+                <img
+                  src={paystackLogoUrl}
+                  alt="Paystack"
+                  className="h-10 w-auto object-contain"
+                />
               )}
               <span className="text-base font-bold text-white">
                 {!isMpesa && ""}
@@ -731,7 +733,10 @@ export default function DepositPage() {
                     />
                   </div>
                   <p className="text-xs text-[#3d5a73]">
-                    Minimum deposit: KES {(enabledMethodsQuery.data?.limits.minDeposit ?? 500).toLocaleString()}
+                    Minimum deposit: KES{" "}
+                    {(
+                      enabledMethodsQuery.data?.limits.minDeposit ?? 500
+                    ).toLocaleString()}
                   </p>
                 </label>
 
@@ -799,7 +804,9 @@ export default function DepositPage() {
         message={
           paymentMessage ?? "Your M-Pesa payment could not be confirmed."
         }
-        retryLabel={retryCooldown > 0 ? `Retry in ${retryCooldown}s` : "Retry Payment"}
+        retryLabel={
+          retryCooldown > 0 ? `Retry in ${retryCooldown}s` : "Retry Payment"
+        }
         retryDisabled={retryCooldown > 0}
         onClose={onClose}
         onRetry={onRetry}
