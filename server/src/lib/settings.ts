@@ -15,10 +15,10 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
       return defaultAdminSettings;
     }
 
-    const config: AdminSettingsConfig = {
+    const config = {
       generalSystemConfig: {
         platformName: settings.platformName,
-        environment: "live",
+        environment: "live" as const,
         defaultCurrency: settings.defaultCurrency,
         timezone: settings.timezone,
         maintenanceMode: settings.maintenanceMode,
@@ -151,7 +151,7 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
         responsibleGamblingMessage: settings.responsibleGamblingMessage,
         supportContactInfo: settings.supportContactInfo,
       },
-    };
+    } satisfies AdminSettingsConfig;
 
     const parsed = adminSettingsSchema.safeParse(config);
 

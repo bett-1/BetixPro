@@ -277,7 +277,7 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
   return {
     generalSystemConfig: {
       platformName: record.platformName,
-      environment: "live",
+      environment: "live" as const,
       defaultCurrency: record.defaultCurrency,
       timezone: record.timezone,
       maintenanceMode: record.maintenanceMode,
@@ -410,7 +410,7 @@ function toConfig(record: AdminSettingsRecord): AdminSettingsConfig {
       responsibleGamblingMessage: record.responsibleGamblingMessage,
       supportContactInfo: record.supportContactInfo,
     },
-  };
+  } satisfies AdminSettingsConfig;
 }
 
 const updateUserSchema = z.object({

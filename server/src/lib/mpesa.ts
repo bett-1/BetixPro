@@ -176,9 +176,7 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
   }
 
   const configuredBaseUrl = mpesa.baseUrl?.trim().replace(/\/+$/, "") || "";
-  const baseUrl = configuredBaseUrl.startsWith("https://api.safaricom.co.ke")
-    ? configuredBaseUrl
-    : defaultBaseUrl;
+  const baseUrl = configuredBaseUrl || defaultBaseUrl;
 
   return {
     isConfigured: true,
