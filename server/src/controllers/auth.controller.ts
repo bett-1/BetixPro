@@ -673,9 +673,7 @@ export async function login(req: Request, res: Response) {
   try {
     if (!rawPhone || !rawPassword?.trim()) {
       console.log("[LOGIN] User found:", false);
-      return res
-        .status(400)
-        .json({ error: "Phone and password are required" });
+      return res.status(400).json({ error: "Phone and password are required" });
     }
 
     const parsed = loginSchema.safeParse(req.body);
@@ -689,9 +687,7 @@ export async function login(req: Request, res: Response) {
       !parsed.data.password.trim()
     ) {
       console.log("[LOGIN] User found:", false);
-      return res
-        .status(400)
-        .json({ error: "Phone and password are required" });
+      return res.status(400).json({ error: "Phone and password are required" });
     }
 
     const phoneVariants = normalizePhoneVariants(parsed.data.phone);
@@ -1083,7 +1079,8 @@ export async function forgotPassword(req: Request, res: Response) {
 
     const hasActiveWindow =
       user.resetLastAttempt !== null &&
-      now.getTime() - user.resetLastAttempt.getTime() < RESET_RATE_LIMIT_WINDOW_MS;
+      now.getTime() - user.resetLastAttempt.getTime() <
+        RESET_RATE_LIMIT_WINDOW_MS;
     const attemptsInWindow = hasActiveWindow ? user.resetAttempts : 0;
 
     if (attemptsInWindow >= RESET_RATE_LIMIT_MAX_ATTEMPTS) {

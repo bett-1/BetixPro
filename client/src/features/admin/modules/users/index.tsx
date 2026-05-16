@@ -324,7 +324,9 @@ export default function Users() {
       await updateUserAction(user.id, { isVerified: !user.isVerified });
       await refetch();
       toast.success(
-        user.isVerified ? "User unverified successfully" : "User verified successfully",
+        user.isVerified
+          ? "User unverified successfully"
+          : "User verified successfully",
       );
     } catch (err: any) {
       toast.error(
@@ -591,144 +593,146 @@ export default function Users() {
         <AdminDialogContent className="max-h-[90vh] max-w-[95vw] sm:max-w-lg p-0 overflow-hidden">
           <div className="flex flex-col h-full">
             <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
-            <DialogTitle className="text-lg flex items-center gap-2">
-              <Shield size={18} className="text-admin-accent" />
-              User Profile
-            </DialogTitle>
-            <DialogDescription className="hidden sm:block">
-              Account details and management
-            </DialogDescription>
-          </DialogHeader>
+              <DialogTitle className="text-lg flex items-center gap-2">
+                <Shield size={18} className="text-admin-accent" />
+                User Profile
+              </DialogTitle>
+              <DialogDescription className="hidden sm:block">
+                Account details and management
+              </DialogDescription>
+            </DialogHeader>
 
-          {userLoading ? (
-            <div className="px-5 py-10 text-center text-admin-text-muted">
-              Loading...
-            </div>
-          ) : selectedUser ? (
-            <div className="px-5 pb-5">
-              {/* Grid layout for user info - saves space */}
-              <div className="grid grid-cols-2 gap-3 pt-3">
-                <div className="space-y-0.5">
-                  <p className="text-xs text-admin-text-muted font-medium">
-                    Phone
-                  </p>
-                  <p className="text-sm font-mono text-admin-text-primary">
-                    {selectedUser.phone}
-                  </p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-admin-text-muted font-medium">
-                    Full Name
-                  </p>
-                  <p className="text-sm text-admin-text-primary">
-                    {selectedUser.name || "—"}
-                  </p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-admin-text-muted font-medium">
-                    Status
-                  </p>
-                  <span
-                    className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${
-                      selectedUser.status === "active"
-                        ? "bg-admin-accent/20 text-admin-accent"
-                        : "bg-admin-red/20 text-admin-red"
-                    }`}
-                  >
-                    {selectedUser.status === "active" ? "Active" : "Banned"}
-                  </span>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-admin-text-muted font-medium">
-                    Email Verified
-                  </p>
-                  <p className="text-sm font-medium text-admin-accent">
-                    {selectedUser.isVerified ? "✓ Yes" : "No"}
-                  </p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-admin-text-muted font-medium">
-                    Member Since
-                  </p>
-                  <p className="text-sm text-admin-text-primary">
-                    {new Date(selectedUser.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+            {userLoading ? (
+              <div className="px-5 py-10 text-center text-admin-text-muted">
+                Loading...
               </div>
-
-              <Divider />
-
-              {/* Financial info - also in grid */}
-              <div className="bg-admin-accent/5 rounded-lg p-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+            ) : selectedUser ? (
+              <div className="px-5 pb-5">
+                {/* Grid layout for user info - saves space */}
+                <div className="grid grid-cols-2 gap-3 pt-3">
+                  <div className="space-y-0.5">
                     <p className="text-xs text-admin-text-muted font-medium">
-                      Balance
+                      Phone
                     </p>
-                    <p className="text-base font-bold text-admin-accent font-mono">
-                      KES {(selectedUser.balance ?? 0).toLocaleString()}
+                    <p className="text-sm font-mono text-admin-text-primary">
+                      {selectedUser.phone}
                     </p>
                   </div>
-                  <div>
+                  <div className="space-y-0.5">
                     <p className="text-xs text-admin-text-muted font-medium">
-                      Total Bets
+                      Full Name
                     </p>
-                    <p className="text-base font-semibold text-admin-text-primary">
-                      {(selectedUser.totalBets ?? 0).toLocaleString()}
+                    <p className="text-sm text-admin-text-primary">
+                      {selectedUser.name || "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-admin-text-muted font-medium">
+                      Status
+                    </p>
+                    <span
+                      className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${
+                        selectedUser.status === "active"
+                          ? "bg-admin-accent/20 text-admin-accent"
+                          : "bg-admin-red/20 text-admin-red"
+                      }`}
+                    >
+                      {selectedUser.status === "active" ? "Active" : "Banned"}
+                    </span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-admin-text-muted font-medium">
+                      Email Verified
+                    </p>
+                    <p className="text-sm font-medium text-admin-accent">
+                      {selectedUser.isVerified ? "✓ Yes" : "No"}
+                    </p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-admin-text-muted font-medium">
+                      Member Since
+                    </p>
+                    <p className="text-sm text-admin-text-primary">
+                      {new Date(selectedUser.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-              </div>
 
-              <Divider />
+                <Divider />
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <AdminButton
-                  onClick={() => handleOpenEdit(selectedUser)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  Edit Profile
-                </AdminButton>
-                <AdminButton
-                  onClick={() => handleOpenChangePassword(selectedUser.id)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  Change Password
-                </AdminButton>
-                <AdminButton
-                  onClick={() => handleToggleVerification(selectedUser)}
-                  size="sm"
-                  variant="ghost"
-                  disabled={isSubmitting}
-                >
-                  {selectedUser.isVerified ? "Unverify Account" : "Verify Account"}
-                </AdminButton>
-                {selectedUser.status === "active" ? (
+                {/* Financial info - also in grid */}
+                <div className="bg-admin-accent/5 rounded-lg p-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-medium">
+                        Balance
+                      </p>
+                      <p className="text-base font-bold text-admin-accent font-mono">
+                        KES {(selectedUser.balance ?? 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-admin-text-muted font-medium">
+                        Total Bets
+                      </p>
+                      <p className="text-base font-semibold text-admin-text-primary">
+                        {(selectedUser.totalBets ?? 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Divider />
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-2">
                   <AdminButton
-                    onClick={() => handleOpenBan(selectedUser.id)}
-                    tone="red"
+                    onClick={() => handleOpenEdit(selectedUser)}
                     size="sm"
-                    className="col-span-2"
+                    variant="ghost"
                   >
-                    Ban User
+                    Edit Profile
                   </AdminButton>
-                ) : (
                   <AdminButton
-                    onClick={() => handleOpenUnban(selectedUser.id)}
+                    onClick={() => handleOpenChangePassword(selectedUser.id)}
                     size="sm"
-                    className="col-span-2"
+                    variant="ghost"
                   >
-                    Unban User
+                    Change Password
                   </AdminButton>
-                )}
+                  <AdminButton
+                    onClick={() => handleToggleVerification(selectedUser)}
+                    size="sm"
+                    variant="ghost"
+                    disabled={isSubmitting}
+                  >
+                    {selectedUser.isVerified
+                      ? "Unverify Account"
+                      : "Verify Account"}
+                  </AdminButton>
+                  {selectedUser.status === "active" ? (
+                    <AdminButton
+                      onClick={() => handleOpenBan(selectedUser.id)}
+                      tone="red"
+                      size="sm"
+                      className="col-span-2"
+                    >
+                      Ban User
+                    </AdminButton>
+                  ) : (
+                    <AdminButton
+                      onClick={() => handleOpenUnban(selectedUser.id)}
+                      size="sm"
+                      className="col-span-2"
+                    >
+                      Unban User
+                    </AdminButton>
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="px-5 py-10 text-center text-admin-text-muted">
-              User not found
+            ) : (
+              <div className="px-5 py-10 text-center text-admin-text-muted">
+                User not found
               </div>
             )}
           </div>
