@@ -49,12 +49,22 @@ export const adminSettingsSchema = z.object({
       shortcode: z.string().trim().min(5).max(20),
       consumerKey: z.string().trim().min(8).max(255),
       consumerSecret: z.string().trim().min(8).max(255),
-      passkey: z.string().trim().min(8).max(255),
+      passkey: z.string().trim().min(8).max(1024),
       baseUrl: z.string().url(),
       callbackUrl: optionalUrl,
       b2cShortcode: z.string().trim().min(5).max(20).default("174379"),
-      initiatorName: z.string().trim().min(2).max(100).default("replace-with-initiator"),
-      securityCredential: z.string().trim().min(8).max(1024).default("replace-with-credential"),
+      initiatorName: z
+        .string()
+        .trim()
+        .min(2)
+        .max(100)
+        .default("replace-with-initiator"),
+      securityCredential: z
+        .string()
+        .trim()
+        .min(8)
+        .max(1024)
+        .default("replace-with-credential"),
       commandId: z.string().trim().min(2).max(50).default("BusinessPayment"),
       resultUrl: optionalUrl.default(""),
       timeoutUrl: optionalUrl.default(""),
