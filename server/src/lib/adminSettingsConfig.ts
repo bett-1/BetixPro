@@ -10,6 +10,8 @@ const optionalUrl = z
     message: "Invalid URL",
   });
 
+
+
 export const adminSettingsSchema = z.object({
   generalSystemConfig: z.object({
     platformName: z.string().trim().min(2).max(100),

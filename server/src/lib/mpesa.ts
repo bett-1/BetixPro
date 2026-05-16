@@ -148,6 +148,12 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     } {
   const env = settings.generalSystemConfig.environment;
   const mpesa = settings.paymentsConfig.mpesa;
+  const MPESA_ENVIRONMENT = "prod";
+
+    const defaultBaseUrl =
+      MPESA_ENVIRONMENT === "prod"
+        ? "https://api.safaricom.co.ke"
+        : "https://sandbox.safaricom.co.ke";
 
   const consumerKey = mpesa.consumerKey;
   const consumerSecret = mpesa.consumerSecret;
@@ -173,11 +179,18 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     };
   }
 
-  const baseUrl = mpesa.baseUrl?.trim().replace(/\/+$/, "") || "";
+  const configuredBaseUrl = mpesa.baseUrl?.trim().replace(/\/+$/, "") || "";
+  const baseUrl = configuredBaseUrl || defaultBaseUrl;
+  const normalizedBaseUrl =
+    env === "live" && baseUrl.includes("sandbox.safaricom.co.ke")
+      ? defaultBaseUrl
+      : env === "sandbox" && baseUrl.includes("api.safaricom.co.ke")
+        ? defaultBaseUrl
+        : baseUrl;
 
   return {
     isConfigured: true,
-    baseUrl,
+    baseUrl: normalizedBaseUrl,
     consumerKey,
     consumerSecret,
     shortcode,
