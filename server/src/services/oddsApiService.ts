@@ -108,6 +108,10 @@ function sanitizeText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function sanitizeOutcome(outcome: unknown): OddsApiOutcome | null {
   if (!outcome || typeof outcome !== "object") return null;
   const row = outcome as Record<string, unknown>;
@@ -321,7 +325,7 @@ async function cacheEvent(event: OddsApiEvent) {
   try {
     await setOddsCache(event.id, event, ttl);
   } catch (error) {
-    console.error("[OddsApi] Redis write failed:", error);
+    console.warn("[OddsApi] Redis write skipped:", getErrorMessage(error));
   }
 
   try {
@@ -342,7 +346,7 @@ async function cacheEvent(event: OddsApiEvent) {
       },
     });
   } catch (error) {
-    console.error("[OddsApi] Failed to persist odds cache snapshot:", error);
+    console.warn("[OddsApi] DB cache write skipped:", getErrorMessage(error));
   }
 }
 
@@ -351,7 +355,7 @@ async function getPersistedCachedEvent(eventId: string): Promise<OddsApiEvent | 
     const row = await prisma.oddsCache.findUnique({ where: { id: eventId } });
     return row?.data ? (row.data as unknown as OddsApiEvent) : null;
   } catch (error) {
-    console.error("[OddsApi] Failed to read persisted odds cache:", error);
+    console.warn("[OddsApi] DB cache read skipped:", getErrorMessage(error));
     return null;
   }
 }
@@ -508,7 +512,7 @@ class OddsApiService {
       const cached = await getOddsCache<OddsApiEvent>(eventId);
       if (cached) return cached;
     } catch (error) {
-      console.error("[OddsApi] Redis read failed, going direct:", error);
+      console.warn("[OddsApi] Redis read skipped, going direct:", getErrorMessage(error));
     }
 
     const fallback = await getPersistedCachedEvent(eventId);
@@ -537,7 +541,7 @@ class OddsApiService {
         });
         return rows.map((row) => row.data as unknown as OddsApiEvent);
       } catch (error) {
-        console.error("[OddsApi] Failed to read stale sport odds cache:", error);
+        console.warn("[OddsApi] DB cache read skipped:", getErrorMessage(error));
         return null;
       }
     }

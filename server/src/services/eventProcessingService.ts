@@ -15,6 +15,15 @@ function calculateOverround(outcomes: Array<{ price: number }>) {
   return Number((implied - 1).toFixed(4));
 }
 
+function getInvalidOddsContext(event: OddsApiEvent) {
+  return {
+    hasBookmakers: !!event.bookmakers?.length,
+    bookmakersCount: event.bookmakers?.length ?? 0,
+    hasMarkets: !!event.bookmakers?.[0]?.markets?.length,
+    rawKeys: Object.keys(event),
+  };
+}
+
 function findBestBookmaker(bookmakers: OddsApiBookmaker[]) {
   let best:
     | {
@@ -126,7 +135,7 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
 
   for (const event of apiEvents) {
     if (!hasCompleteOdds(event)) {
-      console.warn("[OddsSync] Skipping event with invalid odds:", event.id);
+      console.warn("[OddsSync] Skipping event with invalid odds:", event.id, getInvalidOddsContext(event));
       skipped += 1;
       continue;
     }
@@ -320,7 +329,7 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
 
   for (const event of events) {
     if (!hasCompleteOdds(event)) {
-      console.warn("[OddsSync] Skipping live event with invalid odds:", event.id);
+      console.warn("[OddsSync] Skipping live event with invalid odds:", event.id, getInvalidOddsContext(event));
       continue;
     }
 

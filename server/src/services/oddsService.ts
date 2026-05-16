@@ -12,6 +12,19 @@ const SPORTS = [
   "americanfootball_nfl",
 ];
 
+function getInvalidOddsContext(event: {
+  bookmakers?: Array<{
+    markets?: unknown[];
+  }>;
+} & Record<string, unknown>) {
+  return {
+    hasBookmakers: !!event.bookmakers?.length,
+    bookmakersCount: event.bookmakers?.length ?? 0,
+    hasMarkets: !!event.bookmakers?.[0]?.markets?.length,
+    rawKeys: Object.keys(event),
+  };
+}
+
 export async function fetchAndSaveOdds(): Promise<void> {
   const oddsApiKey = getOddsApiKey();
   if (!oddsApiKey) {
@@ -50,7 +63,7 @@ export async function fetchAndSaveOdds(): Promise<void> {
 
     for (const event of events) {
       if (!hasCompleteOdds(event)) {
-        console.warn("[OddsSync] Skipping event with invalid odds:", event.id);
+        console.warn("[OddsSync] Skipping event with invalid odds:", event.id, getInvalidOddsContext(event));
         continue;
       }
 
