@@ -127,7 +127,7 @@ export default function Users() {
     phone: "",
     password: "",
     confirmPassword: "",
-    isVerified: false,
+    isVerified: true,
     accountStatus: "ACTIVE" as "ACTIVE" | "SUSPENDED",
   });
 
@@ -195,7 +195,7 @@ export default function Users() {
       phone: "",
       password: "",
       confirmPassword: "",
-      isVerified: false,
+      isVerified: true,
       accountStatus: "ACTIVE",
     });
     setActionDialog({ type: "create" });
@@ -313,6 +313,23 @@ export default function Users() {
       toast.success("User created successfully");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to create user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleVerification = async (user: User) => {
+    setIsSubmitting(true);
+    try {
+      await updateUserAction(user.id, { isVerified: !user.isVerified });
+      await refetch();
+      toast.success(
+        user.isVerified ? "User unverified successfully" : "User verified successfully",
+      );
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to update verification status",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -680,6 +697,14 @@ export default function Users() {
                   variant="ghost"
                 >
                   Change Password
+                </AdminButton>
+                <AdminButton
+                  onClick={() => handleToggleVerification(selectedUser)}
+                  size="sm"
+                  variant="ghost"
+                  disabled={isSubmitting}
+                >
+                  {selectedUser.isVerified ? "Unverify Account" : "Verify Account"}
                 </AdminButton>
                 {selectedUser.status === "active" ? (
                   <AdminButton

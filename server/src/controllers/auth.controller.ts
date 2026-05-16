@@ -637,6 +637,7 @@ export async function register(req: Request, res: Response) {
       email: parsed.data.email,
       phone: normalizedPhone!,
       passwordHash,
+      isVerified: true,
       mustChangePassword: false,
     },
     select: {
