@@ -1067,7 +1067,7 @@ function FeedEvents() {
               <Button
                 size="sm"
                 onClick={() => setCreateDialogOpen(true)}
-                className="w-full bg-amber-500 text-black hover:bg-amber-600 sm:w-auto"
+                className="w-full bg-amber-500 hidden text-black hover:bg-amber-600 sm:w-auto"
               >
                 <Plus className="size-3.5" />
                 Create Custom Event
