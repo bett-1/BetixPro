@@ -1,4 +1,4 @@
- # 🏆 BetixPro -  Betting Management System
+# 🏆 BetixPro - Betting Management System
 
 **BetixPro** is a comprehensive, end-to-end sports betting and management platform designed for private use. It features a modern, high-performance web interface, a robust backend with automated sports data synchronization, and integrated payment gateways.
 
@@ -10,12 +10,12 @@ If you are a **developer**, start with the **[Developer Guide](./DEVELOPER_GUIDE
 
 If you are a **user** of the platform, please refer to the **[User Guide](./USER_GUIDE.md)** for a step-by-step walkthrough of all features.
 
-
 ---
 
 ## 🚀 Tech Stack
 
 ### Frontend (`/client`)
+
 - **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
 - **Type Safety**: [TypeScript](https://www.typescriptlang.org/)
 - **State Management**: [TanStack Query v5](https://tanstack.com/query/latest)
@@ -26,6 +26,7 @@ If you are a **user** of the platform, please refer to the **[User Guide](./USER
 - **Real-time**: [Socket.io Client](https://socket.io/)
 
 ### Backend (`/server`)
+
 - **Runtime**: [Node.js](https://nodejs.org/)
 - **Framework**: [Express.js](https://expressjs.com/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/)
@@ -52,17 +53,20 @@ BetixPro/
 ## 🛠️ Getting Started
 
 ### Prerequisites
+
 - **Node.js** (v18+ recommended)
 - **pnpm** (Package manager)
 - **PostgreSQL** instance
 
 ### 1. Clone the Repository
+
 ```bash
 git clone <repository-url>
 cd BetixPro
 ```
 
 ### 2. Backend Setup (`/server`)
+
 1. Navigate to the server directory:
    ```bash
    cd server
@@ -85,6 +89,7 @@ cd BetixPro
    ```
 
 ### 3. Frontend Setup (`/client`)
+
 1. Navigate to the client directory:
    ```bash
    cd ../client
@@ -125,4 +130,4 @@ cd BetixPro
 
 ## 🔒 License
 
- All rights reserved.
+All rights reserved.
