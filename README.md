@@ -8,6 +8,8 @@ If you are the **platform operator** (admin), start with the **[Owner Guide](./O
 
 If you are a **developer**, start with the **[Developer Guide](./DEVELOPER_GUIDE.md)** for the project structure, setup, and maintenance notes.
 
+If you are a **system administrator**, start with the **[Troubleshooting Guide](./TROUBLESHOOTING_GUIDE.md)** for incident triage, environment checks, and recovery steps.
+
 If you are a **user** of the platform, please refer to the **[User Guide](./USER_GUIDE.md)** for a step-by-step walkthrough of all features.
 
 ---
@@ -45,7 +47,6 @@ BetixPro/
 ├── client/           # React frontend application
 ├── server/           # Express backend API & Prisma schema
 ├── render.yaml       # Deployment configuration for Render
-└── vercel/           # Deployment configuration for Vercel
 ```
 
 ---
