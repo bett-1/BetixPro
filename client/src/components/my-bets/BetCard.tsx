@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarClock } from "lucide-react";
 import type { MyBetListItem } from "@/features/user/components/hooks/useMyBets";
 import { CancellationTimer } from "./CancellationTimer";
+import { api } from "@/api/axiosConfig";
 
 const badgeClassByStatus: Record<MyBetListItem["status"], string> = {
   bonus: "bg-[#F5C518] text-[#111827]",
@@ -37,6 +38,10 @@ function formatDate(date: string) {
 export function BetCard({ bet, onClick }: BetCardProps) {
   const previousStatus = useRef<MyBetListItem["status"]>(bet.status);
   const [flashStatus, setFlashStatus] = useState(false);
+  const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const liveIntervalRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     if (previousStatus.current !== bet.status) {
@@ -48,6 +53,72 @@ export function BetCard({ bet, onClick }: BetCardProps) {
 
     return undefined;
   }, [bet.status]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    async function fetchLive() {
+      if (!bet.is_live) {
+        setLiveStats(null);
+        return;
+      }
+
+      try {
+        setLiveLoading(true);
+
+        const { data: detail } = await api.get(`/my-bets/${bet.id}`);
+        const eventId = detail?.selections?.[0]?.event_id;
+        if (!eventId) {
+          setLiveStats(null);
+          return;
+        }
+
+        const { data: liveRes } = await api.get(`/live/${eventId}`);
+        const match = liveRes?.match;
+        if (!match) {
+          setLiveStats(null);
+          return;
+        }
+
+        const stats: LiveStats = {
+          minute: match.minute ?? 0,
+          period: match.period,
+          home_score: match.home_team?.score ?? null,
+          away_score: match.away_team?.score ?? null,
+          corners_home: match.stats?.corners_home,
+          corners_away: match.stats?.corners_away,
+          yellows_home: match.stats?.yellows_home,
+          yellows_away: match.stats?.yellows_away,
+        };
+
+        if (mountedRef.current) {
+          setLiveStats(stats);
+        }
+      } catch (err) {
+        // ignore
+      } finally {
+        if (mountedRef.current) setLiveLoading(false);
+      }
+    }
+
+    // initial fetch
+    void fetchLive();
+
+    // poll while live
+    if (bet.is_live) {
+      liveIntervalRef.current = window.setInterval(() => {
+        void fetchLive();
+      }, 10_000);
+    }
+
+    return () => {
+      mountedRef.current = false;
+      if (liveIntervalRef.current !== null) {
+        window.clearInterval(liveIntervalRef.current);
+        liveIntervalRef.current = null;
+      }
+    };
+  }, [bet.id, bet.is_live]);
 
   return (
     <button
@@ -100,14 +171,17 @@ export function BetCard({ bet, onClick }: BetCardProps) {
 
           <div className="text-right shrink-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[#6b86a8] mb-1.5 opacity-80">
-              {bet.status === "won" ? "Total Payout" : bet.status === "lost" ? "Lost" : "Possible Payout"}
+              {bet.status === "won"
+                ? "Total Payout"
+                : bet.status === "lost"
+                  ? "Lost"
+                  : "Possible Payout"}
             </p>
             <p className="text-lg font-black text-white leading-none">
               {formatMoney(bet.possible_payout)}
             </p>
           </div>
         </div>
-
 
         {/* BOTTOM ROW: DATE & LIVE & SELECTIONS */}
         <div className="mt-1 flex items-center justify-between border-t border-[#1e3350]/30 pt-3">
@@ -118,7 +192,8 @@ export function BetCard({ bet, onClick }: BetCardProps) {
             </span>
             <span className="h-3 w-[1px] bg-[#1e3350]/50" />
             <span className="font-semibold text-[#8ea0b6]">
-              {bet.selections_count} {bet.selections_count === 1 ? "Selection" : "Selections"}
+              {bet.selections_count}{" "}
+              {bet.selections_count === 1 ? "Selection" : "Selections"}
             </span>
           </div>
 
@@ -136,6 +211,48 @@ export function BetCard({ bet, onClick }: BetCardProps) {
           <CancellationTimer cancellableUntil={bet.cancellable_until} />
         </div>
       ) : null}
+      {liveStats ? (
+        <div className="mt-3 border-t border-[#1e3350]/20 pt-3 text-[12px] text-[#c6d6ea]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-white font-bold text-lg">
+                {liveStats.home_score ?? "-"} : {liveStats.away_score ?? "-"}
+              </div>
+              <div className="text-sm text-[#8ea0b6]">
+                {liveStats.period ?? `${liveStats.minute}'`}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-[11px] text-[#9db0c8]">
+              <div>
+                Corners {liveStats.corners_home ?? 0}-
+                {liveStats.corners_away ?? 0}
+              </div>
+              <div>
+                Yellows {liveStats.yellows_home ?? 0}-
+                {liveStats.yellows_away ?? 0}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </button>
   );
+}
+
+type LiveStats = {
+  minute: number;
+  period?: string;
+  home_score: number | null;
+  away_score: number | null;
+  corners_home?: number;
+  corners_away?: number;
+  yellows_home?: number;
+  yellows_away?: number;
+};
+
+// Show live stats for live bets by fetching bet detail and live match
+// This component is lightweight and performs short polling while live.
+export function BetCardWithLive({ bet, onClick }: BetCardProps) {
+  // This wrapper keeps backward compatibility but is not used by default.
+  return <BetCard bet={bet} onClick={onClick} />;
 }
