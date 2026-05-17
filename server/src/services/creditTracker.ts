@@ -27,10 +27,6 @@ function parseHeaderInt(headers: Headers, name: string) {
   return Number.isFinite(value) ? value : null;
 }
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
 async function writeCreditLog(used: number, remaining: number, lastRequestCost: number) {
   try {
     await prisma.apiCreditLog.create({
@@ -40,8 +36,8 @@ async function writeCreditLog(used: number, remaining: number, lastRequestCost: 
         lastRequestCost,
       },
     });
-  } catch (error) {
-    console.warn("[OddsApi] DB credit log write skipped:", getErrorMessage(error));
+  } catch {
+    // Silently skip until the optional credit log table exists in production.
   }
 }
 

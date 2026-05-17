@@ -16,6 +16,11 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import sgMail from "@sendgrid/mail";
+import {
+  canUseSendGrid,
+  handleSendGridError,
+  normalizeSendGridEnvValue,
+} from "../utils/sendgridGuard";
 
 // ── Types ──
 
@@ -32,7 +37,7 @@ export type AlertType =
   | "EVENT_NO_ODDS";
 
 function canSendAdminEmail() {
-  return Boolean(process.env.SENDGRID_API_KEY && process.env.FROM_EMAIL);
+  return Boolean(canUseSendGrid() && process.env.SENDGRID_API_KEY && process.env.FROM_EMAIL);
 }
 
 async function sendAdminAlertEmail(type: AlertType, message: string, severity: AlertSeverity) {
@@ -49,11 +54,11 @@ async function sendAdminAlertEmail(type: AlertType, message: string, severity: A
     const recipients = admins.map((admin) => admin.email).filter(Boolean);
     if (!recipients.length) return;
 
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY!.trim());
+    sgMail.setApiKey(normalizeSendGridEnvValue(process.env.SENDGRID_API_KEY!));
     await sgMail.sendMultiple({
       to: recipients,
       from: {
-        email: process.env.FROM_EMAIL!.trim(),
+        email: normalizeSendGridEnvValue(process.env.FROM_EMAIL!),
         name: "Betixpro Alerts",
       },
       subject: `[Betixpro Admin Alert] ${type.replace(/_/g, " ")}`,
@@ -61,7 +66,7 @@ async function sendAdminAlertEmail(type: AlertType, message: string, severity: A
       html: `<p><strong>${type.replace(/_/g, " ")}</strong></p><p>${message}</p>`,
     });
   } catch (error) {
-    console.error("[AdminAlert] Failed to send alert email:", error);
+    handleSendGridError(error, "admin alert email");
   }
 }
 

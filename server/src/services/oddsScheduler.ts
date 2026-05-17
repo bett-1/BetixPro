@@ -1,30 +1,37 @@
 import cron from "node-cron";
 import { prisma } from "../lib/prisma";
 import { mapApiSportKeyToCategoryKey } from "./oddsAutomationConfig";
-import { getDailyCallCount, getLastPollForSport, getPollingMode } from "./oddsCache";
+import {
+  DAILY_API_CALL_LIMIT,
+  getCreditBalance,
+  getDailyCallCount,
+  getLastPollForSport,
+  getPollingMode,
+} from "./oddsCache";
 import { hydrateCreditStateFromRedis, getCurrentPollingMode } from "./creditTracker";
 import { fetchOddsBatch } from "./oddsApiService";
 import { processAndSaveEvents, transitionToLive } from "./eventProcessingService";
 
 const STAGGER_DELAY_MS = 2_000;
-const DAILY_API_CALL_LIMIT = 100;
+const MAX_SPORTS_PER_CYCLE = 2;
 
 type PollTier = "live" | "near" | "far";
 
 const NORMAL_INTERVALS: Record<PollTier, number> = {
   live: 5 * 60 * 1000,
-  near: 15 * 60 * 1000,
-  far: 60 * 60 * 1000,
+  near: 20 * 60 * 1000,
+  far: 90 * 60 * 1000,
 };
 
 const REDUCED_INTERVALS: Record<PollTier, number> = {
   live: 30 * 60 * 1000,
-  near: 2 * 60 * 60 * 1000,
-  far: 2 * 60 * 60 * 1000,
+  near: 3 * 60 * 60 * 1000,
+  far: 4 * 60 * 60 * 1000,
 };
 
 let started = false;
 let running = false;
+let hourlySummaryStarted = false;
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -89,8 +96,26 @@ async function getSportsDueForPolling() {
   }
 
   return Array.from(dueSports.entries())
-    .slice(0, Math.max(0, DAILY_API_CALL_LIMIT - dailyCount))
+    .slice(0, Math.min(MAX_SPORTS_PER_CYCLE, Math.max(0, DAILY_API_CALL_LIMIT - dailyCount)))
     .map(([sportKey, tier]) => ({ sportKey, tier }));
+}
+
+function startHourlyCreditSummary() {
+  if (hourlySummaryStarted) return;
+  hourlySummaryStarted = true;
+
+  setInterval(() => {
+    void (async () => {
+      const count = await getDailyCallCount().catch(() => 0);
+      const credits = await getCreditBalance().catch(() => null);
+      console.log("[OddsScheduler] Hourly credit summary:", {
+        dailyCallsUsed: count,
+        dailyCallLimit: DAILY_API_CALL_LIMIT,
+        creditsRemaining: credits?.remaining ?? "unknown",
+        creditsUsed: credits?.used ?? "unknown",
+      });
+    })();
+  }, 60 * 60 * 1000);
 }
 
 export async function runOddsPollingCycle() {
@@ -147,6 +172,7 @@ export function startOddsScheduler() {
   cron.schedule("* * * * *", () => {
     void runOddsPollingCycle();
   });
+  startHourlyCreditSummary();
 
   console.info("[OddsScheduler] Credit-safe odds polling scheduled.");
 }

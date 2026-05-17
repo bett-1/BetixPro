@@ -1,7 +1,12 @@
 import sgMail from "@sendgrid/mail";
+import {
+  canUseSendGrid,
+  handleSendGridError,
+  normalizeSendGridEnvValue,
+} from "./sendgridGuard";
 
 function getRequiredEnv(name: "SENDGRID_API_KEY" | "FROM_EMAIL") {
-  const value = process.env[name]?.trim();
+  const value = process.env[name] ? normalizeSendGridEnvValue(process.env[name]) : "";
   if (!value) {
     throw new Error(`${name} is required.`);
   }
@@ -22,25 +27,31 @@ async function sendEmail(args: {
   text: string;
   html: string;
 }) {
+  if (!canUseSendGrid()) return;
+
   sgMail.setApiKey(getRequiredEnv("SENDGRID_API_KEY"));
 
-  await sgMail.send({
-    to: args.to,
-    from: getDefaultFrom(),
-    subject: args.subject,
-    text: args.text,
-    html: args.html,
-    mailSettings: {
-      sandboxMode: {
-        enable: false,
+  try {
+    await sgMail.send({
+      to: args.to,
+      from: getDefaultFrom(),
+      subject: args.subject,
+      text: args.text,
+      html: args.html,
+      mailSettings: {
+        sandboxMode: {
+          enable: false,
+        },
       },
-    },
-    headers: {
-      "X-Priority": "3",
-      "X-Mailer": "Betixpro Mailer",
-      "List-Unsubscribe": "<mailto:support@betixpro.com>",
-    },
-  });
+      headers: {
+        "X-Priority": "3",
+        "X-Mailer": "Betixpro Mailer",
+        "List-Unsubscribe": "<mailto:support@betixpro.com>",
+      },
+    });
+  } catch (error) {
+    handleSendGridError(error, args.subject);
+  }
 }
 
 export async function sendMicrosoftAuthenticatorInstallEmail(email: string) {

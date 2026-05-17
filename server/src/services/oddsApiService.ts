@@ -345,8 +345,8 @@ async function cacheEvent(event: OddsApiEvent) {
         expiresAt: new Date(Date.now() + ttl * 1000),
       },
     });
-  } catch (error) {
-    console.warn("[OddsApi] DB cache write skipped:", getErrorMessage(error));
+  } catch {
+    // Silently skip until the optional odds cache table exists in production.
   }
 }
 
@@ -354,8 +354,7 @@ async function getPersistedCachedEvent(eventId: string): Promise<OddsApiEvent | 
   try {
     const row = await prisma.oddsCache.findUnique({ where: { id: eventId } });
     return row?.data ? (row.data as unknown as OddsApiEvent) : null;
-  } catch (error) {
-    console.warn("[OddsApi] DB cache read skipped:", getErrorMessage(error));
+  } catch {
     return null;
   }
 }
@@ -540,8 +539,7 @@ class OddsApiService {
           take: 500,
         });
         return rows.map((row) => row.data as unknown as OddsApiEvent);
-      } catch (error) {
-        console.warn("[OddsApi] DB cache read skipped:", getErrorMessage(error));
+      } catch {
         return null;
       }
     }
