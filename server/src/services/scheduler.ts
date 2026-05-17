@@ -38,6 +38,7 @@ import { runOddsHealthCheck, scheduleOddsPolling } from "./oddsScheduler";
 import {
   createEventEndedAdminNotification,
   createMatchEndedUserNotifications,
+  createSportMatchEndedUserNotifications,
 } from "../controllers/notifications.controller";
 import { createCompleteOddsWhere } from "../utils/oddsValidator";
 
@@ -233,6 +234,17 @@ export async function jobEventCleanup(): Promise<JobResult> {
         cleanupOldAlerts(),
       ]);
 
+        if (archived.finishedEvents.length > 0) {
+          await Promise.all(
+            archived.finishedEvents.map((event) =>
+              createSportMatchEndedUserNotifications({
+                eventId: event.id,
+                eventName: `${event.homeTeam} vs ${event.awayTeam}`,
+              }),
+            ),
+          );
+        }
+
       await refreshCategorySummaries();
 
       return {
@@ -241,6 +253,7 @@ export async function jobEventCleanup(): Promise<JobResult> {
         meta: {
           finished: archived.finished,
           cancelled: archived.cancelled,
+          finishedEvents: archived.finishedEvents.length,
           deactivated,
           windowFixed,
           alertsCleaned,

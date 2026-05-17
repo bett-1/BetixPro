@@ -106,17 +106,20 @@ export function useMyBets(args: UseMyBetsArgs) {
       return data;
     },
     refetchInterval: (queryState) => {
-      if (isSocketConnected) {
-        return false;
-      }
-
       const nextData = queryState.state.data;
       if (!nextData) {
         return 60_000;
       }
 
-      const hasOpenBets = nextData.items.some((item) => item.status === "open");
-      return hasOpenBets ? 60_000 : false;
+      const hasActiveBets = nextData.items.some(
+        (item) => item.status === "open" || item.is_live,
+      );
+
+      if (isSocketConnected) {
+        return hasActiveBets ? 30_000 : false;
+      }
+
+      return hasActiveBets ? 60_000 : false;
     },
     staleTime: 30_000,
     refetchOnWindowFocus: false,

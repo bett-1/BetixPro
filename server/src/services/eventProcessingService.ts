@@ -496,6 +496,20 @@ export async function archiveFinishedEvents() {
   const now = new Date();
   const cancelCutoff = new Date(now.getTime() - 6 * 60 * 60 * 1000);
 
+  const finishedEvents = await prisma.sportEvent.findMany({
+    where: {
+      status: "LIVE",
+      commenceTime: { lte: now },
+      homeScore: { not: null },
+      awayScore: { not: null },
+    },
+    select: {
+      id: true,
+      homeTeam: true,
+      awayTeam: true,
+    },
+  });
+
   const finished = await prisma.sportEvent.updateMany({
     where: {
       status: "LIVE",
@@ -524,7 +538,11 @@ export async function archiveFinishedEvents() {
     },
   });
 
-  return { finished: finished.count, cancelled: cancelled.count };
+  return {
+    finished: finished.count,
+    cancelled: cancelled.count,
+    finishedEvents,
+  };
 }
 
 export async function refreshCategorySummaries() {
