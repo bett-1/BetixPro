@@ -7,7 +7,21 @@ import {
   SEVEN_DAY_WINDOW_MS,
 } from "./oddsAutomationConfig";
 import { createAlert } from "./adminAlertService";
-import { hasCompleteOdds } from "../utils/oddsValidator";
+import { isValidOdds } from "../utils/oddsValidator";
+import { processMarketsFromBookmakers } from "./marketProcessor";
+
+const BOOKMAKER_PRIORITY = [
+  "bet365",
+  "unibet",
+  "williamhill",
+  "betfair",
+  "paddypower",
+  "skybet",
+  "ladbrokes",
+  "coral",
+  "betway",
+  "pinnacle",
+];
 
 function calculateOverround(outcomes: Array<{ price: number }>) {
   if (!outcomes.length) return Number.POSITIVE_INFINITY;
@@ -16,12 +30,33 @@ function calculateOverround(outcomes: Array<{ price: number }>) {
 }
 
 function getInvalidOddsContext(event: OddsApiEvent) {
+  const bookmakerWithMostMarkets = (event.bookmakers ?? []).reduce<OddsApiBookmaker | null>(
+    (best, current) => {
+      if (!best) return current;
+      return (current.markets?.length ?? 0) > (best.markets?.length ?? 0) ? current : best;
+    },
+    null,
+  );
+
   return {
     hasBookmakers: !!event.bookmakers?.length,
     bookmakersCount: event.bookmakers?.length ?? 0,
-    hasMarkets: !!event.bookmakers?.[0]?.markets?.length,
+    hasMarkets: !!bookmakerWithMostMarkets?.markets?.length,
+    bookmakerKeys: event.bookmakers?.map((bookmaker) => bookmaker.key) ?? [],
+    marketKeys: bookmakerWithMostMarkets?.markets?.map((market) => market.key) ?? [],
     rawKeys: Object.keys(event),
   };
+}
+
+function getBookmakerPriority(key: string) {
+  const index = BOOKMAKER_PRIORITY.indexOf(key);
+  return index === -1 ? Number.POSITIVE_INFINITY : index;
+}
+
+function getValidMarkets(bookmaker: OddsApiBookmaker) {
+  return (bookmaker.markets ?? []).filter((market) =>
+    (market.outcomes ?? []).some((outcome) => Number.isFinite(outcome.price) && outcome.price > 1),
+  );
 }
 
 function findBestBookmaker(bookmakers: OddsApiBookmaker[]) {
@@ -35,20 +70,26 @@ function findBestBookmaker(bookmakers: OddsApiBookmaker[]) {
     | null = null;
 
   for (const bookmaker of bookmakers) {
-    if (!hasCompleteOdds({ bookmakers: [bookmaker] })) {
-      continue;
-    }
-
-    const eligibleMarkets = (bookmaker.markets ?? []).filter(
-      (market) => Array.isArray(market.outcomes) && market.outcomes.length > 1,
-    );
+    const eligibleMarkets = getValidMarkets(bookmaker);
     if (!eligibleMarkets.length) continue;
 
-    const h2h = eligibleMarkets.find((market) => market.key === "h2h") ?? eligibleMarkets[0];
-    const margin = calculateOverround(h2h.outcomes ?? []);
+    const h2h =
+      eligibleMarkets.find((market) => market.key === "h2h" && (market.outcomes?.length ?? 0) > 1) ??
+      eligibleMarkets.find((market) => (market.outcomes?.length ?? 0) > 1) ??
+      eligibleMarkets[0];
+    const margin = calculateOverround((h2h.outcomes ?? []).filter((outcome) => outcome.price > 1));
     if (!Number.isFinite(margin)) continue;
 
-    if (!best || margin < best.margin) {
+    const bestPriority = best ? getBookmakerPriority(best.bookmakerKey) : Number.POSITIVE_INFINITY;
+    const currentPriority = getBookmakerPriority(bookmaker.key);
+    const bestMarketCount = best?.markets.length ?? 0;
+
+    if (
+      !best ||
+      currentPriority < bestPriority ||
+      (currentPriority === bestPriority && eligibleMarkets.length > bestMarketCount) ||
+      (currentPriority === bestPriority && eligibleMarkets.length === bestMarketCount && margin < best.margin)
+    ) {
       best = {
         bookmakerKey: bookmaker.key,
         bookmakerName: bookmaker.title,
@@ -134,7 +175,7 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
   const now = new Date();
 
   for (const event of apiEvents) {
-    if (!hasCompleteOdds(event)) {
+    if (!isValidOdds(event)) {
       console.warn("[OddsSync] Skipping event with invalid odds:", event.id, getInvalidOddsContext(event));
       skipped += 1;
       continue;
@@ -154,7 +195,14 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
 
     const marketCount = bestBookmaker.markets.length;
     const featured = shouldFeatureEvent(event, marketCount, bestBookmaker.margin);
-    const marketsEnabled = Array.from(new Set(bestBookmaker.markets.map((market) => market.key)));
+    const processedMarkets = processMarketsFromBookmakers(event.bookmakers ?? []);
+    const marketsEnabled = Array.from(
+      new Set(
+        processedMarkets.length
+          ? processedMarkets.map((market) => market.key)
+          : bestBookmaker.markets.map((market) => market.key),
+      ),
+    );
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -165,7 +213,7 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
 
         const houseMargin = existing?.houseMargin ?? 0;
         const status = statusForCommenceTime(commenceTime, now);
-        const isActive = hasCompleteOdds(event);
+        const isActive = isValidOdds(event);
 
         await tx.sportEvent.upsert({
           where: { eventId: event.id },
@@ -179,6 +227,8 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
             status,
             isActive,
             rawData: event as unknown as Prisma.InputJsonValue,
+            oddsData: (event.bookmakers ?? []) as unknown as Prisma.InputJsonValue,
+            marketsData: processedMarkets as unknown as Prisma.InputJsonValue,
             fetchedAt: now,
             syncedAt: now,
             oddsVerified: isActive,
@@ -200,6 +250,8 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
             status,
             isActive,
             rawData: event as unknown as Prisma.InputJsonValue,
+            oddsData: (event.bookmakers ?? []) as unknown as Prisma.InputJsonValue,
+            marketsData: processedMarkets as unknown as Prisma.InputJsonValue,
             fetchedAt: now,
             syncedAt: now,
             houseMargin,
@@ -328,13 +380,14 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
   let updated = 0;
 
   for (const event of events) {
-    if (!hasCompleteOdds(event)) {
+    if (!isValidOdds(event)) {
       console.warn("[OddsSync] Skipping live event with invalid odds:", event.id, getInvalidOddsContext(event));
       continue;
     }
 
     const bestBookmaker = findBestBookmaker(event.bookmakers ?? []);
     if (!bestBookmaker) continue;
+    const processedMarkets = processMarketsFromBookmakers(event.bookmakers ?? []);
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -354,6 +407,11 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
             oddsVerified: true,
             isActive: true,
             rawData: event as unknown as Prisma.InputJsonValue,
+            oddsData: (event.bookmakers ?? []) as unknown as Prisma.InputJsonValue,
+            marketsData: processedMarkets as unknown as Prisma.InputJsonValue,
+            marketsEnabled: processedMarkets.length
+              ? Array.from(new Set(processedMarkets.map((market) => market.key)))
+              : undefined,
           },
         });
 

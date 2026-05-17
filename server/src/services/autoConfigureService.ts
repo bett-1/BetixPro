@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { SEVEN_DAY_WINDOW_MS } from "../config/sportsConfig";
 import { refreshCategorySummaries } from "./eventProcessingService";
 import { createCompleteOddsWhere } from "../utils/oddsValidator";
+import { processMarketsFromBookmakers } from "./marketProcessor";
 
 function marketsFromRawData(rawData: Prisma.JsonValue | null): string[] {
   if (!rawData || typeof rawData !== "object") return ["h2h"];
@@ -18,6 +19,12 @@ function marketsFromRawData(rawData: Prisma.JsonValue | null): string[] {
   }
 
   return keys.size ? Array.from(keys) : ["h2h"];
+}
+
+function bookmakersFromRawData(rawData: Prisma.JsonValue | null): unknown[] {
+  if (!rawData || typeof rawData !== "object") return [];
+  const event = rawData as { bookmakers?: unknown };
+  return Array.isArray(event.bookmakers) ? event.bookmakers : [];
 }
 
 export async function activateAllEventsWithOdds(): Promise<void> {
@@ -37,6 +44,8 @@ export async function activateAllEventsWithOdds(): Promise<void> {
       homeTeam: true,
       awayTeam: true,
       rawData: true,
+      oddsData: true,
+      marketsData: true,
       isActive: true,
       oddsVerified: true,
       autoConfigured: true,
@@ -48,13 +57,21 @@ export async function activateAllEventsWithOdds(): Promise<void> {
   for (const event of eventsWithOdds) {
     try {
       const marketsEnabled = event.marketsEnabled.length ? event.marketsEnabled : marketsFromRawData(event.rawData);
+      const bookmakers = Array.isArray(event.oddsData) ? event.oddsData : bookmakersFromRawData(event.rawData);
+      const processedMarkets = processMarketsFromBookmakers(bookmakers);
       await prisma.sportEvent.update({
         where: { eventId: event.eventId },
         data: {
           isActive: true,
           oddsVerified: true,
           autoConfigured: true,
-          marketsEnabled,
+          oddsData: bookmakers.length ? (bookmakers as unknown as Prisma.InputJsonValue) : undefined,
+          marketsData: processedMarkets.length
+            ? (processedMarkets as unknown as Prisma.InputJsonValue)
+            : event.marketsData ?? undefined,
+          marketsEnabled: processedMarkets.length
+            ? Array.from(new Set(processedMarkets.map((market) => market.key)))
+            : marketsEnabled,
           syncedAt: new Date(),
         },
       });
@@ -85,6 +102,10 @@ export async function activateAllEventsWithOdds(): Promise<void> {
   );
 
   console.log("[AutoConfigure] Auto-activation complete", { scanned: eventsWithOdds.length, activated, stale: stale.count });
+}
+
+export async function autoConfigureAllEvents(): Promise<void> {
+  await activateAllEventsWithOdds();
 }
 
 export async function markEventsAsConfigured(): Promise<number> {

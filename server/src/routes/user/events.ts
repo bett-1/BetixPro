@@ -3,6 +3,11 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { createCompleteOddsWhere, hasCompleteOdds } from "../../utils/oddsValidator";
+import {
+  groupMarketsByTab,
+  processMarketsFromBookmakers,
+  type ProcessedMarket,
+} from "../../services/marketProcessor";
 
 const userEventsRouter = Router();
 
@@ -25,6 +30,7 @@ const eventSelect = {
   status: true,
   homeScore: true,
   awayScore: true,
+  marketsData: true,
   displayedOdds: {
     where: { isVisible: true },
     select: {
@@ -48,6 +54,14 @@ type EventWithDisplayedOdds = Prisma.SportEventGetPayload<{
 
 function normalizeValue(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function getStoredMarketsCount(marketsData: Prisma.JsonValue | null | undefined) {
+  return Array.isArray(marketsData) ? marketsData.length : 0;
 }
 
 function getBestOdds(
@@ -109,7 +123,7 @@ function toMarkets(event: EventWithDisplayedOdds) {
 
   return {
     h2h:
-      homeH2H !== null && drawH2H !== null && awayH2H !== null
+      homeH2H !== null && awayH2H !== null
         ? {
             home: homeH2H,
             draw: drawH2H,
@@ -253,11 +267,13 @@ async function getEvents(args: {
     homeScore: event.homeScore,
     awayScore: event.awayScore,
     markets: toMarkets(event),
-    marketCount: new Set(
-      (event.displayedOdds ?? []).map(
-        (odd) => `${odd.marketType}::${odd.bookmakerName}`,
-      ),
-    ).size,
+    marketCount:
+      getStoredMarketsCount(event.marketsData) ||
+      new Set(
+        (event.displayedOdds ?? []).map(
+          (odd) => `${odd.marketType}::${odd.bookmakerName}`,
+        ),
+      ).size,
     _count: event._count,
   }));
 
@@ -366,6 +382,84 @@ userEventsRouter.get("/user/events/sports", async (req, res, next) => {
           leagues: Array.from(leagues),
         }),
       ),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+userEventsRouter.get("/user/events/:eventId/markets", async (req, res, next) => {
+  try {
+    logEventsApiRequest(req.path, req.params);
+    const requestedId = Array.isArray(req.params.eventId)
+      ? req.params.eventId[0]
+      : req.params.eventId;
+
+    if (!requestedId?.trim()) {
+      return res.status(400).json({ error: "Invalid event id" });
+    }
+
+    const event = await prisma.sportEvent.findFirst({
+      where: {
+        OR: [
+          { eventId: requestedId },
+          { externalEventId: requestedId },
+          ...(isUuid(requestedId) ? [{ id: requestedId }] : []),
+        ],
+      },
+      select: {
+        id: true,
+        eventId: true,
+        externalEventId: true,
+        homeTeam: true,
+        awayTeam: true,
+        leagueName: true,
+        sportKey: true,
+        commenceTime: true,
+        status: true,
+        homeScore: true,
+        awayScore: true,
+        rawData: true,
+        oddsData: true,
+        marketsData: true,
+        marketsEnabled: true,
+        isActive: true,
+        oddsVerified: true,
+      },
+    });
+
+    if (!event || !event.isActive || !event.oddsVerified) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    let markets: ProcessedMarket[] = [];
+    if (Array.isArray(event.marketsData)) {
+      markets = event.marketsData as unknown as ProcessedMarket[];
+    } else if (Array.isArray(event.oddsData)) {
+      markets = processMarketsFromBookmakers(event.oddsData);
+    } else if (event.rawData && typeof event.rawData === "object") {
+      const rawEvent = event.rawData as { bookmakers?: unknown };
+      markets = processMarketsFromBookmakers(rawEvent.bookmakers);
+    }
+
+    const grouped = groupMarketsByTab(markets);
+
+    return res.status(200).json({
+      id: event.id,
+      eventId: event.eventId,
+      externalEventId: event.externalEventId,
+      homeTeam: event.homeTeam,
+      awayTeam: event.awayTeam,
+      leagueName: event.leagueName,
+      sportKey: event.sportKey,
+      commenceTime: event.commenceTime,
+      status: event.status,
+      homeScore: event.homeScore,
+      awayScore: event.awayScore,
+      markets,
+      grouped,
+      totalMarkets: markets.length,
+      marketsEnabled: event.marketsEnabled,
     });
   } catch (error) {
     next(error);

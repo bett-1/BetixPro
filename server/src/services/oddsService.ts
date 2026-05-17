@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { getOddsApiKey } from "./oddsAutomationConfig";
-import { hasCompleteOdds } from "../utils/oddsValidator";
+import { isValidOdds } from "../utils/oddsValidator";
 import { fetchOddsBatch } from "./oddsApiService";
 
 const SPORTS = [
@@ -9,18 +9,28 @@ const SPORTS = [
   "soccer_spain_la_liga",
   "soccer_italy_serie_a",
   "basketball_nba",
+  "basketball_wnba",
   "americanfootball_nfl",
 ];
 
 function getInvalidOddsContext(event: {
   bookmakers?: Array<{
+    key?: string;
     markets?: unknown[];
   }>;
 } & Record<string, unknown>) {
+  const bookmakerWithMostMarkets = (event.bookmakers ?? []).reduce<
+    { key?: string; markets?: unknown[] } | null
+  >((best, current) => {
+    if (!best) return current;
+    return (current.markets?.length ?? 0) > (best.markets?.length ?? 0) ? current : best;
+  }, null);
+
   return {
     hasBookmakers: !!event.bookmakers?.length,
     bookmakersCount: event.bookmakers?.length ?? 0,
-    hasMarkets: !!event.bookmakers?.[0]?.markets?.length,
+    hasMarkets: !!bookmakerWithMostMarkets?.markets?.length,
+    bookmakerKeys: event.bookmakers?.map((bookmaker) => bookmaker.key) ?? [],
     rawKeys: Object.keys(event),
   };
 }
@@ -62,7 +72,7 @@ export async function fetchAndSaveOdds(): Promise<void> {
     }
 
     for (const event of events) {
-      if (!hasCompleteOdds(event)) {
+      if (!isValidOdds(event)) {
         console.warn("[OddsSync] Skipping event with invalid odds:", event.id, getInvalidOddsContext(event));
         continue;
       }

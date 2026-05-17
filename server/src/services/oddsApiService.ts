@@ -26,6 +26,7 @@ export interface OddsApiMarket {
 export interface OddsApiBookmaker {
   key: string;
   title: string;
+  last_update?: string;
   markets?: OddsApiMarket[];
 }
 
@@ -81,7 +82,18 @@ type ApiHealthState = {
 
 const ODDS_API_BASE_URL =
   process.env.ODDS_API_BASE_URL?.trim() || "https://api.the-odds-api.com/v4";
-const DEFAULT_MARKETS = ["h2h"];
+export const MARKETS_TO_FETCH = ["h2h", "spreads", "totals", "outrights"];
+export const REGIONS_TO_FETCH = "eu,uk,us";
+export const BOOKMAKERS_TO_FETCH = [
+  "bet365",
+  "unibet",
+  "williamhill",
+  "pinnacle",
+  "betfair",
+  "paddypower",
+  "marathonbet",
+  "betway",
+];
 const MAX_BACKOFF_MS = 30 * 60 * 1000;
 
 let consecutiveFailures = 0;
@@ -165,6 +177,7 @@ function sanitizeEvent(event: unknown): OddsApiEvent | null {
           {
             key: sanitizeText(bm.key),
             title: sanitizeText(bm.title),
+            last_update: typeof bm.last_update === "string" ? sanitizeText(bm.last_update) : undefined,
             markets,
           },
         ];
@@ -223,11 +236,11 @@ function normalizeCommenceTimeParam(value?: string): string | null {
 }
 
 function getDefaultMarketsForSport(sportKey: string): string[] {
-  // Outright futures endpoints typically reject h2h/spreads/totals combinations.
-  if (/(winner|championship|outright)/i.test(sportKey)) {
-    return ["outrights"];
-  }
-  return DEFAULT_MARKETS;
+  return MARKETS_TO_FETCH;
+}
+
+function getRegionsForSport(sportKey: string): string {
+  return REGIONS_TO_FETCH;
 }
 
 async function logApiCall(data: {
@@ -477,9 +490,11 @@ class OddsApiService {
     const apiKey = getOddsApiKey();
     const query = new URLSearchParams({
       apiKey,
-      regions: "eu",
+      regions: getRegionsForSport(sportKey),
       markets: (options?.markets?.length ? options.markets : getDefaultMarketsForSport(sportKey)).join(","),
+      dateFormat: "iso",
       oddsFormat: "decimal",
+      bookmakers: BOOKMAKERS_TO_FETCH.join(","),
     });
 
     const commenceTimeFrom = normalizeCommenceTimeParam(options?.dateFrom);
