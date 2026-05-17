@@ -27,53 +27,104 @@ function bookmakersFromRawData(rawData: Prisma.JsonValue | null): unknown[] {
   return Array.isArray(event.bookmakers) ? event.bookmakers : [];
 }
 
+function isMissingColumnError(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022";
+}
+
 export async function activateAllEventsWithOdds(): Promise<void> {
   console.log("[AutoConfigure] Starting auto-activation scan...");
 
   const now = new Date();
   const windowEnd = new Date(now.getTime() + SEVEN_DAY_WINDOW_MS);
 
-  const eventsWithOdds = await prisma.sportEvent.findMany({
-    where: {
-      displayedOdds: { some: { isVisible: true, displayOdds: { gt: 0 } } },
-      commenceTime: { gte: now, lte: windowEnd },
-      status: { in: ["UPCOMING", "LIVE"] },
-    },
-    select: {
-      eventId: true,
-      homeTeam: true,
-      awayTeam: true,
-      rawData: true,
-      oddsData: true,
-      marketsData: true,
-      isActive: true,
-      oddsVerified: true,
-      autoConfigured: true,
-      marketsEnabled: true,
-    },
-  });
+  let eventsWithOdds: Array<{
+    eventId: string;
+    homeTeam: string;
+    awayTeam: string;
+    rawData: Prisma.JsonValue | null;
+    oddsData?: unknown;
+    marketsData?: unknown;
+    isActive: boolean;
+    oddsVerified: boolean;
+    autoConfigured: boolean;
+    marketsEnabled: string[];
+  }> = [];
+  let missingOddsColumns = false;
+
+  try {
+    eventsWithOdds = await prisma.sportEvent.findMany({
+      where: {
+        displayedOdds: { some: { isVisible: true, displayOdds: { gt: 0 } } },
+        commenceTime: { gte: now, lte: windowEnd },
+        status: { in: ["UPCOMING", "LIVE"] },
+      },
+      select: {
+        eventId: true,
+        homeTeam: true,
+        awayTeam: true,
+        rawData: true,
+        oddsData: true,
+        marketsData: true,
+        isActive: true,
+        oddsVerified: true,
+        autoConfigured: true,
+        marketsEnabled: true,
+      },
+    });
+  } catch (error) {
+    if (isMissingColumnError(error)) {
+      missingOddsColumns = true;
+      console.warn("[AutoConfigure] odds_data column missing - running fallback query.");
+      eventsWithOdds = await prisma.sportEvent.findMany({
+        where: {
+          displayedOdds: { some: { isVisible: true, displayOdds: { gt: 0 } } },
+          commenceTime: { gte: now, lte: windowEnd },
+          status: { in: ["UPCOMING", "LIVE"] },
+        },
+        select: {
+          eventId: true,
+          homeTeam: true,
+          awayTeam: true,
+          rawData: true,
+          isActive: true,
+          oddsVerified: true,
+          autoConfigured: true,
+          marketsEnabled: true,
+        },
+      });
+    } else {
+      throw error;
+    }
+  }
 
   let activated = 0;
   for (const event of eventsWithOdds) {
     try {
       const marketsEnabled = event.marketsEnabled.length ? event.marketsEnabled : marketsFromRawData(event.rawData);
-      const bookmakers = Array.isArray(event.oddsData) ? event.oddsData : bookmakersFromRawData(event.rawData);
+      const oddsData = event.oddsData as unknown;
+      const marketsData = event.marketsData as unknown;
+      const bookmakers = Array.isArray(oddsData) ? oddsData : bookmakersFromRawData(event.rawData);
       const processedMarkets = processMarketsFromBookmakers(bookmakers);
+      const updateData: Prisma.SportEventUpdateInput = {
+        isActive: true,
+        oddsVerified: true,
+        autoConfigured: true,
+        marketsEnabled: processedMarkets.length
+          ? Array.from(new Set(processedMarkets.map((market) => market.key)))
+          : marketsEnabled,
+        syncedAt: new Date(),
+      };
+
+      if (!missingOddsColumns) {
+        updateData.oddsData = bookmakers.length ? (bookmakers as unknown as Prisma.InputJsonValue) : undefined;
+        updateData.marketsData = processedMarkets.length
+          ? (processedMarkets as unknown as Prisma.InputJsonValue)
+          : (marketsData as Prisma.InputJsonValue | undefined);
+      }
+
       await prisma.sportEvent.update({
         where: { eventId: event.eventId },
-        data: {
-          isActive: true,
-          oddsVerified: true,
-          autoConfigured: true,
-          oddsData: bookmakers.length ? (bookmakers as unknown as Prisma.InputJsonValue) : undefined,
-          marketsData: processedMarkets.length
-            ? (processedMarkets as unknown as Prisma.InputJsonValue)
-            : event.marketsData ?? undefined,
-          marketsEnabled: processedMarkets.length
-            ? Array.from(new Set(processedMarkets.map((market) => market.key)))
-            : marketsEnabled,
-          syncedAt: new Date(),
-        },
+        data: updateData,
       });
 
       if (!event.isActive || !event.oddsVerified || !event.autoConfigured) {
