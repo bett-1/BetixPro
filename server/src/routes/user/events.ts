@@ -109,7 +109,7 @@ function toMarkets(event: EventWithDisplayedOdds) {
 
   return {
     h2h:
-      homeH2H !== null && drawH2H !== null && awayH2H !== null
+      homeH2H !== null && awayH2H !== null
         ? {
             home: homeH2H,
             draw: drawH2H,

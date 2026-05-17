@@ -25,6 +25,12 @@ type MarketLike = {
   prices?: Array<Record<string, unknown>>;
 };
 
+type BookmakerLike = {
+  key?: string | null;
+  title?: string | null;
+  markets?: MarketLike[];
+};
+
 function normalize(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
@@ -61,6 +67,10 @@ function isH2hMarket(value: unknown) {
   );
 }
 
+function sportRequiresDrawOutcome(value: unknown) {
+  return normalize(value).startsWith("soccer");
+}
+
 function isHomeSide(side: unknown, homeTeam: string) {
   const value = normalize(side);
   return (homeTeam.length > 0 && value === homeTeam) || value === "home" || value === "1";
@@ -94,12 +104,12 @@ function hasCompleteDisplayedH2hOdds(event: Record<string, unknown>) {
     return isH2hMarket(market) && row.isVisible !== false;
   });
 
-  if (h2hRows.length < 3) {
-    return false;
-  }
-
   const homeTeam = normalize(event.homeTeam ?? event.teamHome);
   const awayTeam = normalize(event.awayTeam ?? event.teamAway);
+  const requiresDraw = sportRequiresDrawOutcome(event.sportKey ?? event.sport_key);
+  if (h2hRows.length < (requiresDraw ? 3 : 2)) {
+    return false;
+  }
   const hasHome = h2hRows.some(
     (row) =>
       isPositiveOdd(row.displayOdds ?? row.decimalOdds) &&
@@ -116,13 +126,14 @@ function hasCompleteDisplayedH2hOdds(event: Record<string, unknown>) {
       isAwaySide(row.side, awayTeam),
   );
 
-  return hasHome && hasDraw && hasAway;
+  return hasHome && hasAway && (!requiresDraw || hasDraw);
 }
 
 function hasCompleteMarketArrayOdds(
   markets: MarketLike[],
   homeTeam = "",
   awayTeam = "",
+  requiresDraw = false,
 ) {
   const market1x2 = markets.find((market) =>
     isH2hMarket(
@@ -131,15 +142,12 @@ function hasCompleteMarketArrayOdds(
   );
 
   if (!market1x2) {
-    return false;
+    return hasAnyValidMarketOdds(markets);
   }
 
-  const outcomes =
-    market1x2.outcomes ?? market1x2.values ?? market1x2.prices ?? [];
-
-  if (outcomes.length < 3) {
-    return false;
-  }
+  const outcomes = market1x2.outcomes ?? market1x2.values ?? market1x2.prices ?? [];
+  const minimumOutcomes = requiresDraw ? 3 : 2;
+  if (outcomes.length < minimumOutcomes) return false;
 
   const validOutcomes = outcomes.filter((outcome) =>
     isPositiveOdd(getOddValue(outcome)),
@@ -166,7 +174,82 @@ function hasCompleteMarketArrayOdds(
           !isHomeSide(outcome.name ?? outcome.side ?? outcome.label, homeTeam),
       );
 
-  return validOutcomes.length >= 3 && hasHome && hasDraw && hasAway;
+  return validOutcomes.length >= minimumOutcomes && hasHome && hasAway && (!requiresDraw || hasDraw);
+}
+
+function hasAnyValidMarketOdds(markets: MarketLike[]) {
+  return markets.some((market) => {
+    const outcomes = market.outcomes ?? market.values ?? market.prices ?? [];
+    return outcomes.some((outcome) => isPositiveOdd(getOddValue(outcome)) && Number(getOddValue(outcome)) > 1);
+  });
+}
+
+export function hasAnyPricedOdds(event: unknown): boolean {
+  if (!event || typeof event !== "object") return false;
+  const row = event as Record<string, unknown>;
+
+  if (!Array.isArray(row.bookmakers) || row.bookmakers.length === 0) {
+    return false;
+  }
+
+  return row.bookmakers.some((bookmaker) => {
+    if (!bookmaker || typeof bookmaker !== "object") return false;
+    return hasAnyValidMarketOdds(((bookmaker as BookmakerLike).markets ?? []) as MarketLike[]);
+  });
+}
+
+export function isValidOdds(event: unknown): boolean {
+  if (!event || typeof event !== "object") {
+    console.log("[OddsSync] Invalid: event is not an object");
+    return false;
+  }
+
+  const row = event as { bookmakers?: BookmakerLike[] } & Record<string, unknown>;
+
+  if (!row.bookmakers || !Array.isArray(row.bookmakers)) {
+    console.log("[OddsSync] Invalid: no bookmakers array");
+    return false;
+  }
+
+  if (row.bookmakers.length === 0) {
+    console.log("[OddsSync] Invalid: empty bookmakers array");
+    return false;
+  }
+
+  const bookmakerWithMarkets = row.bookmakers.find(
+    (bookmaker) => Array.isArray(bookmaker.markets) && bookmaker.markets.length > 0,
+  );
+
+  if (!bookmakerWithMarkets) {
+    console.log("[OddsSync] Invalid: no bookmaker has markets", {
+      bookmakerKeys: row.bookmakers.map((bookmaker) => bookmaker.key),
+    });
+    return false;
+  }
+
+  const marketWithOutcomes = bookmakerWithMarkets.markets?.find(
+    (market) => Array.isArray(market.outcomes) && market.outcomes.length > 0,
+  );
+
+  if (!marketWithOutcomes) {
+    console.log("[OddsSync] Invalid: no market has outcomes", {
+      marketKeys: bookmakerWithMarkets.markets?.map((market) => market.key) ?? [],
+    });
+    return false;
+  }
+
+  const outcomeWithPrice = marketWithOutcomes.outcomes?.find(
+    (outcome) => outcome.price !== undefined && outcome.price !== null,
+  );
+
+  if (!outcomeWithPrice) {
+    console.log("[OddsSync] Invalid: no outcome has a price", {
+      outcomes: marketWithOutcomes.outcomes,
+    });
+    return false;
+  }
+
+  return true;
 }
 
 export function hasCompleteOdds(event: unknown): boolean {
@@ -178,6 +261,7 @@ export function hasCompleteOdds(event: unknown): boolean {
     const row = event as Record<string, unknown>;
     const homeTeam = normalize(row.homeTeam ?? row.teamHome ?? row.home_team);
     const awayTeam = normalize(row.awayTeam ?? row.teamAway ?? row.away_team);
+    const requiresDraw = sportRequiresDrawOutcome(row.sportKey ?? row.sport_key);
 
     if (!row.odds && !row.markets && !row.bookmakers && !row.displayedOdds) {
       return false;
@@ -191,13 +275,13 @@ export function hasCompleteOdds(event: unknown): boolean {
       return row.bookmakers.some((bookmaker) => {
         if (!bookmaker || typeof bookmaker !== "object") return false;
         const markets = (bookmaker as { markets?: MarketLike[] }).markets ?? [];
-        return hasCompleteMarketArrayOdds(markets, homeTeam, awayTeam);
+        return hasCompleteMarketArrayOdds(markets, homeTeam, awayTeam, requiresDraw);
       });
     }
 
     const odds = row.odds ?? row.markets;
     if (Array.isArray(odds)) {
-      return hasCompleteMarketArrayOdds(odds as MarketLike[], homeTeam, awayTeam);
+      return hasCompleteMarketArrayOdds(odds as MarketLike[], homeTeam, awayTeam, requiresDraw);
     }
 
     if (odds && typeof odds === "object") {

@@ -79,7 +79,7 @@ export const SPORT_AUTOMATION_CONFIG: SportAutomationConfig[] = [
   {
     key: "basketball",
     displayName: "Basketball",
-    apiSportKeys: ["basketball_nba", "basketball_euroleague"],
+    apiSportKeys: ["basketball_nba", "basketball_wnba", "basketball_euroleague"],
     leagueImportance: 9,
     cacheTTLMinutes: 360,
     fetchPriority: "high",
