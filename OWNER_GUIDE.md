@@ -1,14 +1,14 @@
 # BetixPro Owner Guide
 
-This guide is written for the owner or operator of the BetixPro platform.
+This guide is written for you as the owner or operator of the BetixPro platform.
 
-It explains:
+In this guide, you will find:
 
 - what your customers see and do
 - what you do inside the admin panel
-- how money moves through the system
-- how to manage users, bets, withdrawals, events, odds, risk, and security
-- what to check every day so the platform runs smoothly
+- how money moves through your system
+- how you manage users, bets, withdrawals, events, odds, risk, and security
+- what you should check every day to keep the platform running smoothly
 
 ## Table of Contents
 
@@ -25,21 +25,21 @@ It explains:
 11. [Common Problems And What To Do](#11-common-problems-and-what-to-do)
 12. [Best Practices For Running The Platform Well](#12-best-practices-for-running-the-platform-well)
 13. [Very Important Owner Warnings](#13-very-important-owner-warnings)
-14. [Simple “Who Handles What” Summary](#14-simple-who-handles-what-summary)
+14. [Simple "Who Handles What" Summary](#14-simple-who-handles-what-summary)
 15. [Final Practical Advice](#15-final-practical-advice)
 
 ---
 
 ## 1. What BetixPro Is
 
-BetixPro has two main sides:
+Your BetixPro platform has two main sides:
 
-- `User side`: this is the public/customer side where players register, deposit, browse matches, place bets, track bets, and contact support
-- `Admin side`: this is the  side where you control the platform
+- `User side`: this is the public/customer side where your players register, deposit, browse matches, place bets, track bets, and contact support
+- `Admin side`: this is the management side where you control the platform
 
-Think of it this way:
+Think of your platform this way:
 
-- users place bets
+- your users place bets
 - the wallet records money in and money out
 - the admin panel controls what is allowed, what is visible, and what gets approved
 
@@ -47,7 +47,7 @@ Think of it this way:
 
 ## 2. Quick Map Of The System
 
-### User side includes
+### Your user side includes
 
 - account registration and login
 - password reset
@@ -64,7 +64,7 @@ Think of it this way:
 - FAQ, contact, terms, and privacy pages
 - ban appeal submission if a user account is blocked
 
-### Admin side includes
+### Your admin side includes
 
 - dashboard
 - users
@@ -170,11 +170,11 @@ If these steps work, your main flow is ready.
 
 ## 4. What Your Customers Do On The User Side
 
-As the owner, you should understand the customer journey clearly.
+As the owner, you should understand your customer journey clearly.
 
 ## 4.1 Registration
 
-Users can create an account by entering:
+Your customers can create an account by entering:
 
 - email address
 - Kenyan phone number
@@ -182,11 +182,11 @@ Users can create an account by entering:
 - confirm password
 - agreement to terms and privacy policy
 
-After successful registration, the user is taken into the user area.
+After successful registration, the customer is taken into the user area.
 
 ## 4.2 Login
 
-Users log in with:
+Your customers log in with:
 
 - phone number
 - password
@@ -194,16 +194,16 @@ Users log in with:
 If the account is banned:
 
 - login is blocked
-- the user can be shown the ban reason
-- the user can submit an appeal
+- the customer can be shown the ban reason
+- the customer can submit an appeal
 
 ## 4.3 Forgot Password
 
-Users can request a password reset link by email.
+Your customers can request a password reset link by email.
 
 ## 4.4 Home Page
 
-The user home page is the main betting entrance.
+Your user home page is the main betting entrance.
 
 It includes:
 
@@ -215,11 +215,11 @@ It includes:
 - custom events
 - bet slip
 
-The home page is designed to help users find matches quickly.
+The home page is designed to help your customers find matches quickly.
 
 ## 4.5 Sport Navigation
 
-Users can browse by:
+Your customers can browse by:
 
 - all sports
 - popular sports
@@ -233,19 +233,19 @@ Sports shown here come from your sport category configuration.
 
 ## 4.6 Featured Events
 
-Featured events are special matches you want to promote.
+Featured events are special matches you want to promote to your customers.
 
-These appear separately from the normal event list and help direct user attention.
+These appear separately from the normal event list and help direct your customers' attention.
 
 ## 4.7 Highlights
 
 Highlights help surface important or interesting events.
 
-This gives users a faster path to betting without scrolling through everything.
+This gives your customers a faster path to betting without scrolling through everything.
 
 ## 4.8 Live Betting
 
-Users can open the `Live` section and see:
+Your customers can open the `Live` section and see:
 
 - live matches
 - live scores
@@ -256,7 +256,7 @@ Live betting is only useful when your event and odds feeds are healthy.
 
 ## 4.9 Custom Events
 
-Custom events are owner-created events that are not coming from the regular sports feed.
+Custom events are events you create yourself instead of pulling them from the regular sports feed.
 
 Examples:
 
@@ -265,13 +265,13 @@ Examples:
 - promotional events
 - non-standard events
 
-Users can open custom events, choose a selection, and bet the same way they do on normal events.
+Your customers can open custom events, choose a selection, and bet on them the same way they do on normal events.
 
 ## 4.10 Bet Slip
 
-When a user taps an odd, it goes into the bet slip.
+When a customer taps an odd, it goes into the bet slip.
 
-The bet slip helps the user:
+The bet slip helps your customer:
 
 - review selections
 - see odds
@@ -283,7 +283,7 @@ On mobile, the bet slip can be opened from the bottom navigation.
 
 ## 4.11 Placing a Bet
 
-Basic user flow:
+Your customer’s basic betting flow is:
 
 1. choose an event
 2. tap an odd
@@ -298,9 +298,9 @@ After the bet is placed:
 
 ## 4.12 My Bets
 
-This is where users track betting activity.
+This is where your customers track betting activity.
 
-Users can:
+Your customers can:
 
 - see active and past bets
 - open a bet for full details
@@ -312,7 +312,7 @@ Some bets may also allow cancellation if the system rules still permit it.
 
 ## 4.13 Bet Detail
 
-When a user opens a single bet, they can see:
+When a customer opens a single bet, they can see:
 
 - selections
 - event details
@@ -323,7 +323,7 @@ When a user opens a single bet, they can see:
 
 ## 4.14 Profile
 
-The user profile shows:
+The user profile shows your customer:
 
 - current balance
 - phone number
@@ -332,7 +332,7 @@ The user profile shows:
 - total withdrawals
 - quick links to wallet, bets, and transaction history
 
-Users can also:
+Your customers can also:
 
 - update their phone number
 - sign out
@@ -340,7 +340,7 @@ Users can also:
 
 ## 4.15 Wallet
 
-The wallet is the customer’s money area.
+The wallet is your customer’s money area.
 
 It connects to:
 
@@ -353,7 +353,7 @@ It connects to:
 
 ## 4.16 Deposits
 
-Users can deposit using the payment methods you enable.
+Your customers can deposit using the payment methods you enable.
 
 Currently supported in the system:
 
@@ -369,7 +369,7 @@ The deposit screen supports:
 
 ### M-Pesa deposits
 
-The user:
+Your customer:
 
 1. enters amount
 2. confirms the phone number on the account
@@ -379,7 +379,7 @@ The user:
 
 ### Paystack deposits
 
-The user:
+Your customer:
 
 1. enters amount
 2. is redirected to secure Paystack checkout
@@ -387,20 +387,20 @@ The user:
 4. returns to the app
 5. gets wallet credit after verification
 
-If a payment method is disabled in settings, the user will not be able to use it.
+If a payment method is disabled in settings, your customer will not be able to use it.
 
 ## 4.17 Withdrawals
 
-Users can request a withdrawal from their wallet.
+Your customers can request a withdrawal from their wallet.
 
 The screen shows:
 
 - amount
 - receiving phone number
 - fee
-- net amount the user will receive
+- net amount the customer will receive
 
-The user must confirm before the request is sent.
+The customer must confirm before the request is sent.
 
 Important owner note:
 
@@ -409,7 +409,7 @@ Important owner note:
 
 ## 4.18 Transaction History
 
-Users can review wallet activity such as:
+Your customers can review wallet activity such as:
 
 - deposits
 - withdrawals
@@ -422,7 +422,7 @@ They can also filter the list by transaction type.
 
 ## 4.19 Notifications
 
-Users receive in-app notifications for key events such as:
+Your customers receive in-app notifications for key events such as:
 
 - deposit success
 - withdrawal success
@@ -432,7 +432,7 @@ Users receive in-app notifications for key events such as:
 
 ## 4.20 Contact And Support
 
-Users can send support messages from the contact page.
+Your customers can send support messages from the contact page.
 
 Logged-in users can also review their message history and see statuses like:
 
@@ -475,7 +475,7 @@ You may also hear withdrawal alert sounds if they are enabled in your personal q
 
 Go to `Admin > Dashboard`.
 
-This is your platform overview page.
+This is your main platform overview page.
 
 It shows:
 
@@ -500,7 +500,7 @@ Use this page first every day.
 
 Go to `Admin > Users`.
 
-This is where you manage customer accounts.
+This is where you manage your customer accounts.
 
 You can:
 
@@ -540,7 +540,7 @@ Always record a clear reason.
 
 Go to `Admin > Appeals`.
 
-This area is for reviewing banned users who ask to be reinstated.
+This area is where you review banned users who ask to be reinstated.
 
 You can:
 
@@ -582,7 +582,7 @@ This is especially important when:
 
 Go to `Admin > Payments`.
 
-This area focuses on wallet payment activity, especially deposits.
+This area focuses on your wallet payment activity, especially deposits.
 
 Use it to review:
 
@@ -598,7 +598,7 @@ This helps with reconciliation.
 
 Go to `Admin > Withdrawals`.
 
-This is one of the most important screens in the system.
+This is one of the most important screens in your system.
 
 You can:
 
@@ -645,7 +645,7 @@ Best practice:
 
 Go to `Admin > Events`.
 
-This area has three main parts:
+This area gives you three main working areas:
 
 - feed events
 - custom events
@@ -708,7 +708,7 @@ If a category is hidden or inactive, users may stop seeing that sport.
 
 Go to `Admin > Odds`.
 
-This area helps you review and curate odds.
+This area helps you review and curate the odds your customers will see.
 
 You can:
 
@@ -765,7 +765,7 @@ This helps you decide:
 
 Go to `Admin > Analytics`.
 
-This page is for understanding business performance.
+This page helps you understand your business performance.
 
 It includes:
 
@@ -787,7 +787,7 @@ Use this area for management decisions, not only daily operations.
 
 Go to `Admin > Reports`.
 
-This page is more structured than the analytics page and is organized into tabs.
+This page is more structured than the analytics page and gives you cleaner reports in tabs.
 
 The main tabs are:
 
@@ -836,7 +836,7 @@ Use reports when you want cleaner management summaries over a chosen time period
 
 Go to `Admin > Messages`.
 
-This area contains customer contact form submissions.
+This area contains the contact form submissions your customers send to you.
 
 You can:
 
@@ -858,7 +858,7 @@ Use this area like a simple support inbox.
 
 Go to `Admin > Newsletter`.
 
-This area contains email subscribers.
+This area contains the email subscribers you can use for announcements and marketing.
 
 You can:
 
@@ -872,7 +872,7 @@ Use this for marketing and announcements.
 
 Go to `Admin > Security`.
 
-This is where you protect your own admin account.
+This is where you protect your own admin account and access.
 
 You can:
 
@@ -888,7 +888,7 @@ Never disable 2FA unless absolutely necessary.
 
 Go to `Admin > Settings`.
 
-This is where you control the business rules of the platform.
+This is where you control the business rules of your platform.
 
 The settings area includes sections for:
 
@@ -917,7 +917,7 @@ If a payment gateway is incomplete, do not switch it on.
 
 Go to `Admin > Quick Settings`.
 
-This page is personal to the current admin user on the current device.
+This page is personal to you, the current admin user on the current device.
 
 It does not change the whole platform.
 
@@ -1209,7 +1209,7 @@ If 2FA is enabled, the 6-digit code is required.
 
 ---
 
-## 14. Simple “Who Handles What” Summary
+## 14. Simple "Who Handles What" Summary
 
 ### The user handles
 
