@@ -176,6 +176,8 @@ export function useLiveMatches(filters: LiveFilterState) {
   const scoresPollInFlightRef = useRef(false);
   const updateQueueRef = useRef<PendingUpdate[]>([]);
   const batchFlushTimerRef = useRef<number | null>(null);
+  const mountedRef = useRef(false);
+  const subscribedMatchIdsRef = useRef<Set<string>>(new Set());
   const [matches, setMatches] = useState<LiveMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -207,7 +209,17 @@ export function useLiveMatches(filters: LiveFilterState) {
         }
 
         if (update.type === "match_removed") {
+          // remove match and ensure we unsubscribe from per-match channels
           map.delete(update.matchId);
+          const id = update.matchId;
+          try {
+            const sock = socketRef.current;
+            if (sock && subscribedMatchIdsRef.current.has(id)) {
+              sock.emit("live:unsubscribe", { channel: `live:odds:${id}` });
+              sock.emit("live:unsubscribe", { channel: `live:score:${id}` });
+            }
+          } catch {}
+          subscribedMatchIdsRef.current.delete(id);
           continue;
         }
 
@@ -228,7 +240,17 @@ export function useLiveMatches(filters: LiveFilterState) {
 
         if (update.type === "match_status") {
           if (update.status === "ft") {
+            // finished: remove and unsubscribe
             map.delete(update.matchId);
+            const id = update.matchId;
+            try {
+              const sock = socketRef.current;
+              if (sock && subscribedMatchIdsRef.current.has(id)) {
+                sock.emit("live:unsubscribe", { channel: `live:odds:${id}` });
+                sock.emit("live:unsubscribe", { channel: `live:score:${id}` });
+              }
+            } catch {}
+            subscribedMatchIdsRef.current.delete(id);
             continue;
           }
 
@@ -273,6 +295,23 @@ export function useLiveMatches(filters: LiveFilterState) {
         });
     });
   }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      // Flush any queued updates before unmounting to avoid dropping updates.
+      if (batchFlushTimerRef.current !== null) {
+        window.clearTimeout(batchFlushTimerRef.current);
+        batchFlushTimerRef.current = null;
+      }
+      try {
+        applyQueuedUpdates();
+      } catch {
+        // swallow - trying to flush during unmount should not throw
+      }
+      mountedRef.current = false;
+    };
+  }, [applyQueuedUpdates]);
 
   const queueUpdate = useCallback(
     (update: PendingUpdate) => {
@@ -344,8 +383,12 @@ export function useLiveMatches(filters: LiveFilterState) {
       setIsSocketConnected(true);
       socket.emit("live:subscribe", { channel: "live:matches" });
       for (const match of matchesRef.current) {
-        socket.emit("live:subscribe", { channel: `live:odds:${match.id}` });
-        socket.emit("live:subscribe", { channel: `live:score:${match.id}` });
+        const id = match.id;
+        if (!subscribedMatchIdsRef.current.has(id)) {
+          socket.emit("live:subscribe", { channel: `live:odds:${id}` });
+          socket.emit("live:subscribe", { channel: `live:score:${id}` });
+          subscribedMatchIdsRef.current.add(id);
+        }
       }
     };
 
@@ -586,13 +629,36 @@ export function useLiveMatches(filters: LiveFilterState) {
       return;
     }
 
-    for (const match of matches) {
-      socketRef.current.emit("live:subscribe", {
-        channel: `live:odds:${match.id}`,
-      });
-      socketRef.current.emit("live:subscribe", {
-        channel: `live:score:${match.id}`,
-      });
+    const currentIds = new Set(matches.map((m) => m.id));
+
+    // subscribe to newly added matches
+    for (const id of currentIds) {
+      if (!subscribedMatchIdsRef.current.has(id)) {
+        try {
+          socketRef.current?.emit("live:subscribe", {
+            channel: `live:odds:${id}`,
+          });
+          socketRef.current?.emit("live:subscribe", {
+            channel: `live:score:${id}`,
+          });
+        } catch {}
+        subscribedMatchIdsRef.current.add(id);
+      }
+    }
+
+    // unsubscribe from removed matches
+    for (const id of Array.from(subscribedMatchIdsRef.current)) {
+      if (!currentIds.has(id)) {
+        try {
+          socketRef.current?.emit("live:unsubscribe", {
+            channel: `live:odds:${id}`,
+          });
+          socketRef.current?.emit("live:unsubscribe", {
+            channel: `live:score:${id}`,
+          });
+        } catch {}
+        subscribedMatchIdsRef.current.delete(id);
+      }
     }
   }, [isSocketConnected, matches]);
 
