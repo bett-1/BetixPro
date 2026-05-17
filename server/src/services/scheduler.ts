@@ -30,8 +30,16 @@ import {
 } from "./oddsAutomationConfig";
 import { cleanupOldAlerts, createAlert } from "./adminAlertService";
 import { fetchAndSaveFixtures } from "./fixturesService";
-import { emitCustomEventFinished, emitCustomEventLive } from "../lib/socket";
-import { SPORTS_CONFIG as SIDEBAR_SPORTS_CONFIG, MAX_DAILY_CALLS, TOTAL_MONTHLY_CREDITS } from "../config/sportsConfig";
+import {
+  emitCustomEventFinished,
+  emitCustomEventLive,
+  emitBetUpdate,
+} from "../lib/socket";
+import {
+  SPORTS_CONFIG as SIDEBAR_SPORTS_CONFIG,
+  MAX_DAILY_CALLS,
+  TOTAL_MONTHLY_CREDITS,
+} from "../config/sportsConfig";
 import { getCreditBalance, getDailyCallCount } from "./oddsCache";
 import { activateAllEventsWithOdds } from "./autoConfigureService";
 import { runOddsHealthCheck, scheduleOddsPolling } from "./oddsScheduler";
@@ -73,7 +81,10 @@ let autoConfigureStatus: AutoConfigureStatus = {
   results: null,
 };
 
-async function withJobLock<T>(jobName: JobName, task: () => Promise<T>): Promise<T | null> {
+async function withJobLock<T>(
+  jobName: JobName,
+  task: () => Promise<T>,
+): Promise<T | null> {
   if (runningJobs.has(jobName)) {
     return null;
   }
@@ -91,7 +102,12 @@ async function withJobLock<T>(jobName: JobName, task: () => Promise<T>): Promise
 function getManagedDateRange() {
   const now = new Date();
   const dateTo = new Date(now.getTime() + SEVEN_DAY_WINDOW_MS);
-  return { now, dateTo, dateFromIso: now.toISOString(), dateToIso: dateTo.toISOString() };
+  return {
+    now,
+    dateTo,
+    dateFromIso: now.toISOString(),
+    dateToIso: dateTo.toISOString(),
+  };
 }
 
 function nextRunTime(jobName: JobName) {
@@ -107,15 +123,21 @@ function nextRunTime(jobName: JobName) {
           ? CLEANUP_INTERVAL_MINUTES
           : HEALTH_CHECK_INTERVAL_MINUTES;
 
-  return new Date(lastRun.getTime() + intervalMinutes * 60 * 1000).toISOString();
+  return new Date(
+    lastRun.getTime() + intervalMinutes * 60 * 1000,
+  ).toISOString();
 }
 
 function getSportsToSync(selectedSportKeys?: ManagedSportCategoryKey[]) {
-  const allowed = new Set(selectedSportKeys ?? SPORT_AUTOMATION_CONFIG.map((item) => item.key));
+  const allowed = new Set(
+    selectedSportKeys ?? SPORT_AUTOMATION_CONFIG.map((item) => item.key),
+  );
   return SPORT_AUTOMATION_CONFIG.filter((item) => allowed.has(item.key));
 }
 
-export async function jobEventSync(selectedSportKeys?: ManagedSportCategoryKey[]): Promise<JobResult> {
+export async function jobEventSync(
+  selectedSportKeys?: ManagedSportCategoryKey[],
+): Promise<JobResult> {
   return (
     (await withJobLock("event_sync", async () => {
       const startedAt = Date.now();
@@ -144,7 +166,11 @@ export async function jobEventSync(selectedSportKeys?: ManagedSportCategoryKey[]
         }
       }
 
-      await Promise.all([deactivateEventsWithoutOdds(), enforceSevenDayWindow(), refreshCategorySummaries()]);
+      await Promise.all([
+        deactivateEventsWithoutOdds(),
+        enforceSevenDayWindow(),
+        refreshCategorySummaries(),
+      ]);
       setLastSuccessfulSync();
 
       const durationMs = Date.now() - startedAt;
@@ -153,7 +179,8 @@ export async function jobEventSync(selectedSportKeys?: ManagedSportCategoryKey[]
         status: sportsFailed > 0 ? "partial" : "success",
         sportsProcessed,
         eventsLoaded: eventsSaved,
-        errorMessage: sportsFailed > 0 ? `${sportsFailed} sport fetches failed` : undefined,
+        errorMessage:
+          sportsFailed > 0 ? `${sportsFailed} sport fetches failed` : undefined,
         durationMs,
       });
 
@@ -175,7 +202,13 @@ export async function jobEventSync(selectedSportKeys?: ManagedSportCategoryKey[]
       return {
         success: true,
         message: "Event sync completed.",
-        meta: { sportsProcessed, sportsFailed, eventsSaved, eventsSkipped, durationMs },
+        meta: {
+          sportsProcessed,
+          sportsFailed,
+          eventsSaved,
+          eventsSkipped,
+          durationMs,
+        },
       };
     })) ?? { success: false, message: "Event sync already running." }
   );
@@ -202,12 +235,16 @@ export async function jobLiveEventMonitor(): Promise<JobResult> {
       for (const row of liveSports) {
         if (!row.sportKey) continue;
         const [odds, scores] = await Promise.all([
-          fetchSportOdds(row.sportKey, { dateFrom: new Date(Date.now() - 60 * 60 * 1000).toISOString() }),
+          fetchSportOdds(row.sportKey, {
+            dateFrom: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          }),
           fetchSportScores(row.sportKey),
         ]);
 
         if (odds) {
-          oddsUpdated += await updateLiveOdds(odds.filter((event) => new Date(event.commence_time) <= new Date()));
+          oddsUpdated += await updateLiveOdds(
+            odds.filter((event) => new Date(event.commence_time) <= new Date()),
+          );
         }
 
         if (scores) {
@@ -227,23 +264,48 @@ export async function jobLiveEventMonitor(): Promise<JobResult> {
 export async function jobEventCleanup(): Promise<JobResult> {
   return (
     (await withJobLock("event_cleanup", async () => {
-      const [archived, deactivated, windowFixed, alertsCleaned] = await Promise.all([
-        archiveFinishedEvents(),
-        deactivateEventsWithoutOdds(),
-        enforceSevenDayWindow(),
-        cleanupOldAlerts(),
-      ]);
+      const [archived, deactivated, windowFixed, alertsCleaned] =
+        await Promise.all([
+          archiveFinishedEvents(),
+          deactivateEventsWithoutOdds(),
+          enforceSevenDayWindow(),
+          cleanupOldAlerts(),
+        ]);
 
-        if (archived.finishedEvents.length > 0) {
-          await Promise.all(
-            archived.finishedEvents.map((event) =>
-              createSportMatchEndedUserNotifications({
-                eventId: event.id,
-                eventName: `${event.homeTeam} vs ${event.awayTeam}`,
-              }),
-            ),
-          );
+      if (archived.finishedEvents.length > 0) {
+        // Notify users about match end
+        await Promise.all(
+          archived.finishedEvents.map((event) =>
+            createSportMatchEndedUserNotifications({
+              eventId: event.id,
+              eventName: `${event.homeTeam} vs ${event.awayTeam}`,
+            }),
+          ),
+        );
+
+        // Also prompt clients to refresh their bets by emitting a lightweight bets:update
+        const eventIds = archived.finishedEvents.map((e) => e.id);
+        const bettors = await prisma.bet.findMany({
+          where: { eventId: { in: eventIds } },
+          select: { userId: true },
+          distinct: ["userId"],
+        });
+
+        for (const b of bettors) {
+          try {
+            emitBetUpdate(b.userId, {
+              betId: "",
+              betCode: "",
+              status: "open",
+              placedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              possiblePayout: 0,
+            });
+          } catch (err) {
+            // ignore errors emitting sockets
+          }
         }
+      }
 
       await refreshCategorySummaries();
 
@@ -308,7 +370,11 @@ export async function jobSportHealthCheck(): Promise<JobResult> {
       }
 
       if ((apiStatus.creditsPercent ?? 100) <= 0) {
-        await createAlert("CREDITS_EXHAUSTED", "The Odds API quota is exhausted.", "critical");
+        await createAlert(
+          "CREDITS_EXHAUSTED",
+          "The Odds API quota is exhausted.",
+          "critical",
+        );
       } else if ((apiStatus.creditsPercent ?? 100) < 20) {
         await createAlert(
           "LOW_CREDITS",
@@ -331,18 +397,28 @@ export async function jobSportHealthCheck(): Promise<JobResult> {
 }
 
 export function getAutoConfigureStatus() {
-  const remaining = Math.max(0, lastAutoConfigureAt + AUTO_CONFIGURE_COOLDOWN_MS - Date.now());
+  const remaining = Math.max(
+    0,
+    lastAutoConfigureAt + AUTO_CONFIGURE_COOLDOWN_MS - Date.now(),
+  );
   return { ...autoConfigureStatus, cooldownMs: remaining };
 }
 
-export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryKey[]) {
+export async function runAutoConfigure(
+  selectedSportKeys?: ManagedSportCategoryKey[],
+) {
   if (autoConfigureStatus.running) {
     return { started: false, reason: "Auto-configure is already running." };
   }
 
   if (Date.now() - lastAutoConfigureAt < AUTO_CONFIGURE_COOLDOWN_MS) {
-    const waitSeconds = Math.ceil((lastAutoConfigureAt + AUTO_CONFIGURE_COOLDOWN_MS - Date.now()) / 1000);
-    return { started: false, reason: `Rate limited. Try again in ${waitSeconds} seconds.` };
+    const waitSeconds = Math.ceil(
+      (lastAutoConfigureAt + AUTO_CONFIGURE_COOLDOWN_MS - Date.now()) / 1000,
+    );
+    return {
+      started: false,
+      reason: `Rate limited. Try again in ${waitSeconds} seconds.`,
+    };
   }
 
   lastAutoConfigureAt = Date.now();
@@ -359,7 +435,8 @@ export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryK
   void (async () => {
     try {
       autoConfigureStatus.progress = 10;
-      autoConfigureStatus.currentStep = "Queueing BullMQ odds jobs for the next 7 days...";
+      autoConfigureStatus.currentStep =
+        "Queueing BullMQ odds jobs for the next 7 days...";
       await scheduleOddsPolling();
 
       autoConfigureStatus.progress = 55;
@@ -367,11 +444,13 @@ export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryK
       await runOddsHealthCheck();
 
       autoConfigureStatus.progress = 75;
-      autoConfigureStatus.currentStep = "Archiving finished events and enforcing visibility rules...";
+      autoConfigureStatus.currentStep =
+        "Archiving finished events and enforcing visibility rules...";
       const cleanup = await jobEventCleanup();
 
       autoConfigureStatus.progress = 90;
-      autoConfigureStatus.currentStep = "Activating every event that has visible odds...";
+      autoConfigureStatus.currentStep =
+        "Activating every event that has visible odds...";
       await activateAllEventsWithOdds();
 
       autoConfigureStatus = {
@@ -384,7 +463,8 @@ export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryK
         results: {
           eventsSynced: "queued",
           eventsSkipped: 0,
-          sportsProcessed: selectedSportKeys?.length ?? SIDEBAR_SPORTS_CONFIG.length,
+          sportsProcessed:
+            selectedSportKeys?.length ?? SIDEBAR_SPORTS_CONFIG.length,
           liveOddsUpdated: "queued",
           liveScoresUpdated: "queued",
           finishedArchived: Number(cleanup.meta?.finished ?? 0),
@@ -399,7 +479,11 @@ export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryK
         done: true,
         currentStep: `Failed: ${String(error).slice(0, 100)}`,
       };
-      await createAlert("SYNC_FAILED", `Auto-configure failed: ${String(error).slice(0, 200)}`, "critical");
+      await createAlert(
+        "SYNC_FAILED",
+        `Auto-configure failed: ${String(error).slice(0, 200)}`,
+        "critical",
+      );
     }
   })();
 
@@ -410,7 +494,14 @@ export async function getSystemStatus() {
   const { now, dateTo } = getManagedDateRange();
   const api = getApiStatus();
 
-  const [totalInWindow, eventsWithoutOdds, emptySports, lastSyncLog, creditBalance, dailyCallsUsed] = await Promise.all([
+  const [
+    totalInWindow,
+    eventsWithoutOdds,
+    emptySports,
+    lastSyncLog,
+    creditBalance,
+    dailyCallsUsed,
+  ] = await Promise.all([
     prisma.sportEvent.count({
       where: {
         isActive: true,
@@ -451,10 +542,16 @@ export async function getSystemStatus() {
     getDailyCallCount().catch(() => 0),
   ]);
 
-  const withNoEvents = Array.from(new Set(emptySports.filter((item): item is string => Boolean(item))));
-  const creditsRemaining = creditBalance?.remaining ?? api.creditsRemaining ?? TOTAL_MONTHLY_CREDITS;
+  const withNoEvents = Array.from(
+    new Set(emptySports.filter((item): item is string => Boolean(item))),
+  );
+  const creditsRemaining =
+    creditBalance?.remaining ?? api.creditsRemaining ?? TOTAL_MONTHLY_CREDITS;
   const creditsUsed = creditBalance?.used ?? api.creditsUsed ?? null;
-  const creditsPercent = Math.max(0, Math.round((creditsRemaining / TOTAL_MONTHLY_CREDITS) * 100));
+  const creditsPercent = Math.max(
+    0,
+    Math.round((creditsRemaining / TOTAL_MONTHLY_CREDITS) * 100),
+  );
   const health =
     !api.isOnline || !api.isApiKeyValid || creditsPercent <= 0
       ? "critical"
@@ -477,16 +574,21 @@ export async function getSystemStatus() {
       isRateLimited: api.isRateLimited,
     },
     sync: {
-      lastSyncTime: lastSyncLog?.createdAt?.toISOString() ?? api.lastSuccessfulSync ?? null,
+      lastSyncTime:
+        lastSyncLog?.createdAt?.toISOString() ?? api.lastSuccessfulSync ?? null,
       nextSyncTime: nextRunTime("event_sync"),
     },
     events: {
       totalIn7Days: totalInWindow,
       eventsWithoutOdds,
-      liveCount: await prisma.sportEvent.count({ where: { status: "LIVE", isActive: true } }),
+      liveCount: await prisma.sportEvent.count({
+        where: { status: "LIVE", isActive: true },
+      }),
     },
     sports: {
-      totalActive: new Set(SIDEBAR_SPORTS_CONFIG.map((sport) => sport.sidebarLabel)).size,
+      totalActive: new Set(
+        SIDEBAR_SPORTS_CONFIG.map((sport) => sport.sidebarLabel),
+      ).size,
       withNoEvents,
       withNoEventsCount: withNoEvents.length,
     },
@@ -543,9 +645,14 @@ export async function updateCustomEventStatuses() {
       emitCustomEventFinished({ eventId: event.id });
       void (async () => {
         const [pendingBets, totalBets, totalStake] = await Promise.all([
-          prisma.customBet.count({ where: { eventId: event.id, status: "PENDING" } }),
+          prisma.customBet.count({
+            where: { eventId: event.id, status: "PENDING" },
+          }),
           prisma.customBet.count({ where: { eventId: event.id } }),
-          prisma.customBet.aggregate({ where: { eventId: event.id }, _sum: { stake: true } }),
+          prisma.customBet.aggregate({
+            where: { eventId: event.id },
+            _sum: { stake: true },
+          }),
         ]);
 
         if (!totalBets) return;
@@ -572,19 +679,31 @@ export async function updateCustomEventStatuses() {
 }
 
 void Promise.all([
-  fetchAndSaveFixtures().catch((error) => console.error("[Fixtures] Initial fetch failed:", error)),
-  jobEventCleanup().catch((error) => console.error("[Cleanup] Initial run failed:", error)),
-  updateCustomEventStatuses().catch((error) => console.error("[CustomEvents] Initial run failed:", error)),
+  fetchAndSaveFixtures().catch((error) =>
+    console.error("[Fixtures] Initial fetch failed:", error),
+  ),
+  jobEventCleanup().catch((error) =>
+    console.error("[Cleanup] Initial run failed:", error),
+  ),
+  updateCustomEventStatuses().catch((error) =>
+    console.error("[CustomEvents] Initial run failed:", error),
+  ),
 ]);
 
 cron.schedule("*/30 * * * *", () => {
-  void jobEventCleanup().catch((error) => console.error("[Scheduler] cleanup failed:", error));
+  void jobEventCleanup().catch((error) =>
+    console.error("[Scheduler] cleanup failed:", error),
+  );
 });
 
 cron.schedule("*/15 * * * *", () => {
-  void fetchAndSaveFixtures().catch((error) => console.error("[Scheduler] fixtures failed:", error));
+  void fetchAndSaveFixtures().catch((error) =>
+    console.error("[Scheduler] fixtures failed:", error),
+  );
 });
 
 cron.schedule("* * * * *", () => {
-  void updateCustomEventStatuses().catch((error) => console.error("[Scheduler] custom_events failed:", error));
+  void updateCustomEventStatuses().catch((error) =>
+    console.error("[Scheduler] custom_events failed:", error),
+  );
 });
