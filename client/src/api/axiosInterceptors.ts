@@ -8,12 +8,6 @@ type RetryableRequestConfig = {
 
 let installed = false;
 
-function debugLog(message: string, details: Record<string, unknown>) {
-  if (import.meta.env.DEV) {
-    console.log(message, details);
-  }
-}
-
 function shouldSkipRefresh(url: string | undefined) {
   if (!url) return false;
   return (
@@ -35,20 +29,10 @@ export function installApiInterceptors() {
     let tokenToUse = getAccessToken();
     if (!tokenToUse) {
       tokenToUse = getStoredAccessToken();
-      if (tokenToUse) {
-        debugLog("[Axios] Restored token from localStorage", {
-          hasToken: true,
-          url: config.url,
-        });
-      }
     }
 
     if (tokenToUse) {
       mutableConfig.headers.Authorization = `Bearer ${tokenToUse}`;
-      debugLog("[Axios] Added Authorization header", {
-        url: config.url,
-        hasToken: true,
-      });
     }
 
     return config;
@@ -60,17 +44,33 @@ export function installApiInterceptors() {
       const originalRequest = error.config as RetryableRequestConfig | undefined;
       const status = error.response?.status as number | undefined;
 
-      debugLog("[Axios] Response error received", {
-        url: originalRequest?.url,
-        status,
-        willSkipRefresh:
-          !originalRequest ||
-          status !== 401 ||
-          originalRequest._retry ||
-          shouldSkipRefresh(originalRequest.url),
-        hasRefreshHandler: Boolean(getRefreshHandler()),
-        hasUnauthorizedHandler: Boolean(getUnauthorizedHandler()),
-      });
+      if (
+        status === 401 &&
+        originalRequest &&
+        !originalRequest._retry &&
+        !shouldSkipRefresh(originalRequest.url)
+      ) {
+        originalRequest._retry = true;
+
+        if (getRefreshHandler()) {
+          try {
+            const newToken = await getRefreshHandler()?.();
+            if (newToken) {
+              originalRequest.headers = originalRequest.headers ?? {};
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return api(originalRequest);
+            }
+          } catch (refreshError) {
+            // Refresh failed, fall through to unauthorized handler
+          }
+        }
+
+        // If no refresh handler or refresh fails, call unauthorized handler
+        if (getUnauthorizedHandler()) {
+          getUnauthorizedHandler()?.();
+        }
+      }
+
       return Promise.reject(error);
     },
   );
