@@ -4,6 +4,7 @@ export const LIVE_ODDS_TTL_SECONDS = 240;
 export const NEAR_UPCOMING_ODDS_TTL_SECONDS = 840;
 export const FAR_UPCOMING_ODDS_TTL_SECONDS = 3540;
 const ONE_DAY_SECONDS = 24 * 60 * 60;
+export const DAILY_API_CALL_LIMIT = 80;
 
 export type PollingMode = "normal" | "reduced" | "emergency";
 
@@ -202,7 +203,7 @@ export async function getDailyCallCount(): Promise<number> {
 export async function isWithinDailyLimit(): Promise<boolean> {
   if (!redis) return true;
   try {
-    return (await getDailyCallCount()) < 100;
+    return (await getDailyCallCount()) < DAILY_API_CALL_LIMIT;
   } catch (error) {
     console.warn("[Redis] isWithinDailyLimit failed, allowing call:", getErrorMessage(error));
     return true;

@@ -1,4 +1,9 @@
 import sgMail from "@sendgrid/mail";
+import {
+  canUseSendGrid,
+  handleSendGridError,
+  normalizeSendGridEnvValue,
+} from "./sendgridGuard";
 
 const RESET_SUBJECT = "Reset your Betixpro password";
 
@@ -16,8 +21,7 @@ type SendGridErrorShape = {
 };
 
 function normalizeEnvValue(value: string) {
-  const trimmed = value.trim();
-  return trimmed.replace(/^['\"]|['\"]$/g, "");
+  return normalizeSendGridEnvValue(value);
 }
 
 function getSendGridApiKey() {
@@ -138,6 +142,8 @@ function buildResetEmailHtml(resetUrl: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
+  if (!canUseSendGrid()) return;
+
   sgMail.setApiKey(getSendGridApiKey());
 
   const resetUrl = buildResetUrl(token);
@@ -164,6 +170,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       },
     });
   } catch (error) {
+    if (handleSendGridError(error, "password reset email")) return;
     logSendGridSendError(error, email);
     throw error;
   }
