@@ -30,7 +30,6 @@ const eventSelect = {
   status: true,
   homeScore: true,
   awayScore: true,
-  marketsData: true,
   displayedOdds: {
     where: { isVisible: true },
     select: {
@@ -60,8 +59,11 @@ function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function getStoredMarketsCount(marketsData: Prisma.JsonValue | null | undefined) {
-  return Array.isArray(marketsData) ? marketsData.length : 0;
+function isMissingColumnError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2022" || error.code === "P2021")
+  );
 }
 
 function getBestOdds(
@@ -267,13 +269,11 @@ async function getEvents(args: {
     homeScore: event.homeScore,
     awayScore: event.awayScore,
     markets: toMarkets(event),
-    marketCount:
-      getStoredMarketsCount(event.marketsData) ||
-      new Set(
-        (event.displayedOdds ?? []).map(
-          (odd) => `${odd.marketType}::${odd.bookmakerName}`,
-        ),
-      ).size,
+    marketCount: new Set(
+      (event.displayedOdds ?? []).map(
+        (odd) => `${odd.marketType}::${odd.bookmakerName}`,
+      ),
+    ).size,
     _count: event._count,
   }));
 
@@ -388,6 +388,46 @@ userEventsRouter.get("/user/events/sports", async (req, res, next) => {
   }
 });
 
+/** Full select including new JSON columns; used only where a fallback exists. */
+const marketDetailSelect = {
+  id: true,
+  eventId: true,
+  externalEventId: true,
+  homeTeam: true,
+  awayTeam: true,
+  leagueName: true,
+  sportKey: true,
+  commenceTime: true,
+  status: true,
+  homeScore: true,
+  awayScore: true,
+  rawData: true,
+  oddsData: true,
+  marketsData: true,
+  marketsEnabled: true,
+  isActive: true,
+  oddsVerified: true,
+} satisfies Prisma.SportEventSelect;
+
+/** Fallback select that omits `oddsData` and `marketsData` (pre-migration). */
+const marketDetailFallbackSelect = {
+  id: true,
+  eventId: true,
+  externalEventId: true,
+  homeTeam: true,
+  awayTeam: true,
+  leagueName: true,
+  sportKey: true,
+  commenceTime: true,
+  status: true,
+  homeScore: true,
+  awayScore: true,
+  rawData: true,
+  marketsEnabled: true,
+  isActive: true,
+  oddsVerified: true,
+} satisfies Prisma.SportEventSelect;
+
 userEventsRouter.get("/user/events/:eventId/markets", async (req, res, next) => {
   try {
     logEventsApiRequest(req.path, req.params);
@@ -399,34 +439,39 @@ userEventsRouter.get("/user/events/:eventId/markets", async (req, res, next) => 
       return res.status(400).json({ error: "Invalid event id" });
     }
 
-    const event = await prisma.sportEvent.findFirst({
-      where: {
-        OR: [
-          { eventId: requestedId },
-          { externalEventId: requestedId },
-          ...(isUuid(requestedId) ? [{ id: requestedId }] : []),
-        ],
-      },
-      select: {
-        id: true,
-        eventId: true,
-        externalEventId: true,
-        homeTeam: true,
-        awayTeam: true,
-        leagueName: true,
-        sportKey: true,
-        commenceTime: true,
-        status: true,
-        homeScore: true,
-        awayScore: true,
-        rawData: true,
-        oddsData: true,
-        marketsData: true,
-        marketsEnabled: true,
-        isActive: true,
-        oddsVerified: true,
-      },
-    });
+    const whereClause: Prisma.SportEventWhereInput = {
+      OR: [
+        { eventId: requestedId },
+        { externalEventId: requestedId },
+        ...(isUuid(requestedId) ? [{ id: requestedId }] : []),
+      ],
+    };
+
+    let event: Prisma.SportEventGetPayload<{ select: typeof marketDetailSelect }> | null = null;
+
+    try {
+      event = await prisma.sportEvent.findFirst({
+        where: whereClause,
+        select: marketDetailSelect,
+      });
+    } catch (queryError) {
+      if (isMissingColumnError(queryError)) {
+        console.warn("[EventsAPI] markets_data/odds_data column missing – using fallback query");
+        const fallback = await prisma.sportEvent.findFirst({
+          where: whereClause,
+          select: marketDetailFallbackSelect,
+        });
+        if (fallback) {
+          event = {
+            ...fallback,
+            oddsData: null,
+            marketsData: null,
+          } as Prisma.SportEventGetPayload<{ select: typeof marketDetailSelect }>;
+        }
+      } else {
+        throw queryError;
+      }
+    }
 
     if (!event || !event.isActive || !event.oddsVerified) {
       return res.status(404).json({ error: "Event not found" });
