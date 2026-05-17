@@ -6,26 +6,18 @@ import { incrementDailyCallCount, setOddsCache } from "../services/oddsCache";
 import { recordOddsApiCredits } from "../services/creditTracker";
 import { processAndSaveEvents } from "../services/eventProcessingService";
 import { getOddsApiKey, mapApiSportKeyToCategoryKey } from "../services/oddsAutomationConfig";
-import type { OddsApiEvent } from "../services/oddsApiService";
+import {
+  BOOKMAKERS_TO_FETCH,
+  MARKETS_TO_FETCH,
+  REGIONS_TO_FETCH,
+  type OddsApiEvent,
+} from "../services/oddsApiService";
 
 interface OddsFetchJob {
   sport: string;
   sportLabel: string;
   sidebarLabel?: string;
   tier: "live" | "upcoming_soon" | "upcoming_far";
-}
-
-function getMarketsForSport(sport: string) {
-  if (/(winner|championship|outright)/i.test(sport)) return "outrights";
-  return "h2h,spreads,totals";
-}
-
-function getRegionsForSport(sport: string) {
-  if (/^(basketball_nba|basketball_wnba|americanfootball_nfl|baseball_mlb)$/i.test(sport)) {
-    return "eu,uk,us";
-  }
-
-  return "eu,uk";
 }
 
 function hasValidOdds(event: OddsApiEvent): boolean {
@@ -83,10 +75,11 @@ function buildOddsUrl(sport: string) {
   const inSevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const params = new URLSearchParams({
     apiKey,
-    regions: getRegionsForSport(sport),
-    markets: getMarketsForSport(sport),
+    regions: REGIONS_TO_FETCH,
+    markets: MARKETS_TO_FETCH.join(","),
     dateFormat: "iso",
     oddsFormat: "decimal",
+    bookmakers: BOOKMAKERS_TO_FETCH.join(","),
     commenceTimeFrom: now.toISOString().replace(/\.\d{3}Z$/, "Z"),
     commenceTimeTo: inSevenDays.toISOString().replace(/\.\d{3}Z$/, "Z"),
   });

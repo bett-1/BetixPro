@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Clock, TrendingUp, Share2 } from "lucide-react";
 import { toast } from "sonner";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { shortenUrl } from "../utils/urlShortener";
 
 import EventMarketsModal from "./EventMarketsModal";
@@ -158,6 +158,14 @@ export default function EventCard({
 }: EventCardProps) {
   const [showMarkets, setShowMarkets] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const navigate = useNavigate();
+
+  const openMarketsPage = () => {
+    void navigate({
+      to: "/event/$eventId/markets",
+      params: { eventId: event.eventId },
+    });
+  };
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -299,7 +307,7 @@ export default function EventCard({
               ) : null}
               <button
                 type="button"
-                onClick={() => setShowMarkets(true)}
+                onClick={openMarketsPage}
                 className="event-card-markets event-card-markets-top inline-flex shrink-0 items-center gap-1 rounded border border-[#29425f] bg-[#122235] px-1.5 py-[2px] text-[9px] font-semibold text-[#95afcc] transition hover:border-[#f5c518]/55 hover:text-[#f5c518]"
               >
                 <TrendingUp size={10} />
@@ -326,7 +334,7 @@ export default function EventCard({
 
         <button
           type="button"
-          onClick={() => setShowMarkets(true)}
+          onClick={openMarketsPage}
           className="event-card-matchup w-full px-0 pb-0 pt-1.5 text-left"
         >
           <div className="flex min-w-0 items-center justify-between gap-2">

@@ -8,6 +8,7 @@ import {
 } from "./oddsAutomationConfig";
 import { createAlert } from "./adminAlertService";
 import { isValidOdds } from "../utils/oddsValidator";
+import { processMarketsFromBookmakers } from "./marketProcessor";
 
 const BOOKMAKER_PRIORITY = [
   "bet365",
@@ -194,7 +195,14 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
 
     const marketCount = bestBookmaker.markets.length;
     const featured = shouldFeatureEvent(event, marketCount, bestBookmaker.margin);
-    const marketsEnabled = Array.from(new Set(bestBookmaker.markets.map((market) => market.key)));
+    const processedMarkets = processMarketsFromBookmakers(event.bookmakers ?? []);
+    const marketsEnabled = Array.from(
+      new Set(
+        processedMarkets.length
+          ? processedMarkets.map((market) => market.key)
+          : bestBookmaker.markets.map((market) => market.key),
+      ),
+    );
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -219,6 +227,8 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
             status,
             isActive,
             rawData: event as unknown as Prisma.InputJsonValue,
+            oddsData: (event.bookmakers ?? []) as unknown as Prisma.InputJsonValue,
+            marketsData: processedMarkets as unknown as Prisma.InputJsonValue,
             fetchedAt: now,
             syncedAt: now,
             oddsVerified: isActive,
@@ -240,6 +250,8 @@ export async function processAndSaveEvents(apiEvents: OddsApiEvent[], categoryKe
             status,
             isActive,
             rawData: event as unknown as Prisma.InputJsonValue,
+            oddsData: (event.bookmakers ?? []) as unknown as Prisma.InputJsonValue,
+            marketsData: processedMarkets as unknown as Prisma.InputJsonValue,
             fetchedAt: now,
             syncedAt: now,
             houseMargin,
@@ -375,6 +387,7 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
 
     const bestBookmaker = findBestBookmaker(event.bookmakers ?? []);
     if (!bestBookmaker) continue;
+    const processedMarkets = processMarketsFromBookmakers(event.bookmakers ?? []);
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -394,6 +407,11 @@ export async function updateLiveOdds(events: OddsApiEvent[]) {
             oddsVerified: true,
             isActive: true,
             rawData: event as unknown as Prisma.InputJsonValue,
+            oddsData: (event.bookmakers ?? []) as unknown as Prisma.InputJsonValue,
+            marketsData: processedMarkets as unknown as Prisma.InputJsonValue,
+            marketsEnabled: processedMarkets.length
+              ? Array.from(new Set(processedMarkets.map((market) => market.key)))
+              : undefined,
           },
         });
 

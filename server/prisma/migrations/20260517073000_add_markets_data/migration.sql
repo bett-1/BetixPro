@@ -1,0 +1,3 @@
+ALTER TABLE "sport_events"
+ADD COLUMN IF NOT EXISTS "odds_data" JSONB,
+ADD COLUMN IF NOT EXISTS "markets_data" JSONB;
