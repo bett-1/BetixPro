@@ -468,6 +468,10 @@ export default function DepositPage() {
       );
     } catch (error: any) {
       setIsProcessing(false);
+      const mpesaDebug = error?.response?.data?.mpesaDebug;
+      if (mpesaDebug) {
+        console.error("[M-Pesa Debug]", mpesaDebug);
+      }
       const message =
         error?.response?.data?.message ??
         error?.response?.data?.error ??

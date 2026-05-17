@@ -9,14 +9,18 @@ import { emitWalletUpdate } from "../lib/socket";
 import { createDepositNotifications } from "./notifications.controller";
 import { getSystemSettings } from "../lib/settings";
 import {
+  buildMpesaConfigDebug,
   getMpesaAccessToken,
   getMpesaConfig,
   getTimestamp,
+  isMpesaBrowserDebugEnabled,
   mpesaCallbackSchema,
+  MpesaRequestError,
   normalizePhoneNumber,
   stkPushBodySchema,
   type MpesaStkPushResponse,
   type MpesaStkQueryResponse,
+  withMpesaTokenDebug,
 } from "../lib/mpesa";
 
 const mpesaDepositSchema = stkPushBodySchema;
@@ -503,6 +507,10 @@ export async function initializeMpesaDeposit(req: Request, res: Response) {
 
     const wallet = await getOrCreateWallet(user.id);
     const token = await getMpesaAccessToken(config);
+    const mpesaDebug = withMpesaTokenDebug(
+      buildMpesaConfigDebug(config),
+      token.access_token,
+    );
     const timestamp = getTimestamp();
     const password = buildMpesaPassword(config.shortcode, config.passkey, timestamp);
 
@@ -530,12 +538,26 @@ export async function initializeMpesaDeposit(req: Request, res: Response) {
     const data = (await response.json().catch(() => ({}))) as MpesaStkPushResponse;
 
     if (!response.ok || data.ResponseCode !== "0") {
-      res.status(502).json({
+      const failureResponse: {
+        message: string;
+        mpesaDebug?: Record<string, unknown>;
+      } = {
         message:
           data.errorMessage ||
           data.ResponseDescription ||
           "Unable to start M-Pesa STK push.",
-      });
+      };
+
+      if (isMpesaBrowserDebugEnabled()) {
+        failureResponse.mpesaDebug = {
+          ...mpesaDebug,
+          oauthStatus: response.status,
+          oauthStatusText: response.statusText,
+          responseBodySnippet: JSON.stringify(data).slice(0, 180),
+        };
+      }
+
+      res.status(502).json(failureResponse);
       return;
     }
 
@@ -592,6 +614,22 @@ export async function initializeMpesaDeposit(req: Request, res: Response) {
       },
     });
   } catch (error) {
+    if (error instanceof MpesaRequestError) {
+      const failureResponse: {
+        message: string;
+        mpesaDebug?: Record<string, unknown>;
+      } = {
+        message: error.message,
+      };
+
+      if (isMpesaBrowserDebugEnabled() && error.debug) {
+        failureResponse.mpesaDebug = error.debug;
+      }
+
+      res.status(500).json(failureResponse);
+      return;
+    }
+
     if (error instanceof z.ZodError) {
       res.status(400).json({
         message: error.issues.map((issue) => issue.message).join("; "),
