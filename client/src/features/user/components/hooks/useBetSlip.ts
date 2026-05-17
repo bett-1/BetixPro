@@ -287,10 +287,13 @@ export function useBetSlip() {
             }
 
             const payload = attemptError.response?.data;
-            if (attemptError.response?.status === 402 && payload?.code === "INSUFFICIENT_BALANCE") {
+            if (
+              attemptError.response?.status === 402 &&
+              payload?.code === "INSUFFICIENT_BALANCE"
+            ) {
               const router = getRouter();
               if (router) {
-                router.navigate({ to: "/user/deposit" });
+                router.navigate({ to: "/user/payments/deposit" });
               }
               return;
             }
@@ -384,10 +387,13 @@ export function useBetSlip() {
           return;
         }
 
-        if (placeError.response?.status === 402 && placeError.response?.data?.code === "INSUFFICIENT_BALANCE") {
+        if (
+          placeError.response?.status === 402 &&
+          placeError.response?.data?.code === "INSUFFICIENT_BALANCE"
+        ) {
           const router = getRouter();
           if (router) {
-            router.navigate({ to: "/user/deposit" });
+            router.navigate({ to: "/user/payments/deposit" });
           }
           return;
         }
