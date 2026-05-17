@@ -2,6 +2,15 @@
 
 This guide is for system administrators who need to handle common problems in BetixPro without looking at code or logs. It focuses on what to check, what to try next, and when to ask for technical help.
 
+## Table of Contents
+
+1. [What To Do First](#1-what-to-do-first)
+2. [Common Problems And What To Check](#2-common-problems-and-what-to-check)
+3. [Simple Checks Before Escalating](#3-simple-checks-before-escalating)
+4. [When To Escalate Immediately](#4-when-to-escalate-immediately)
+5. [What Not To Do](#5-what-not-to-do)
+6. [Helpful Reference Points](#6-helpful-reference-points)
+
 ## 1. What To Do First
 
 When something looks wrong, stay calm and check the basics first:
