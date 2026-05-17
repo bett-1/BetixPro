@@ -203,7 +203,7 @@ const sectionDefinitions: SectionDefinition[] = [
         path: "paymentsConfig.mpesa.baseUrl",
         label: "API Base URL",
         type: "text",
-        hint: "Use https://sandbox.safaricom.co.ke for sandbox or https://api.safaricom.co.ke for live credentials.",
+        hint: "Use the live Safaricom endpoint: https://api.safaricom.co.ke",
       },
       { type: "header", label: "M-Pesa B2C (Disbursements)" },
       {
