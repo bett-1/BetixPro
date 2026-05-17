@@ -169,24 +169,21 @@ function normalizeBaseUrl(value: string | undefined): string {
 }
 
 const MPESA_LIVE_BASE_URL = "https://api.safaricom.co.ke";
-const MPESA_SANDBOX_BASE_URL = "https://sandbox.safaricom.co.ke";
 
 function resolveMpesaBaseUrl(value: string | undefined) {
   const configuredBaseUrl = normalizeBaseUrl(value);
-  const normalizedConfiguredBaseUrl = configuredBaseUrl || MPESA_LIVE_BASE_URL;
 
-  if (normalizedConfiguredBaseUrl === MPESA_SANDBOX_BASE_URL) {
+  if (configuredBaseUrl && configuredBaseUrl !== MPESA_LIVE_BASE_URL) {
     console.warn(
-      "[M-Pesa Config] Sandbox base URL detected. Forcing live Safaricom endpoint.",
+      "[M-Pesa Config] Ignoring stored base URL. Forcing live Safaricom endpoint.",
       {
-        configuredBaseUrl: normalizedConfiguredBaseUrl,
+        configuredBaseUrl,
         effectiveBaseUrl: MPESA_LIVE_BASE_URL,
       },
     );
-    return MPESA_LIVE_BASE_URL;
   }
 
-  return normalizedConfiguredBaseUrl;
+  return MPESA_LIVE_BASE_URL;
 }
 
 function fingerprintValue(value: string): string {
