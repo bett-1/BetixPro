@@ -9,6 +9,7 @@ import {
   type AdminSettingsConfig,
   defaultAdminSettings,
 } from "../lib/adminSettingsConfig";
+import { normalizeAdminSettingsConfig } from "../lib/adminSettingsNormalizer";
 
 const RECENT_ACTIVITY_LIMIT = 8;
 const TREND_DAYS = 7;
@@ -2446,30 +2447,10 @@ export async function getAdminSettings(req: Request, res: Response) {
       select: adminSettingsSelect,
     });
 
-    const parsedConfig = adminSettingsSchema.safeParse(toConfig(settings));
-
-    if (!parsedConfig.success) {
-      const repaired = await prisma.adminSettings.update({
-        where: { key: "global" },
-        data: {
-          ...toDbSettingsData(defaultAdminSettings, req.user.id),
-        },
-        select: adminSettingsSelect,
-      });
-
-      return res.status(200).json({
-        config: toConfig(repaired),
-        metadata: {
-          key: repaired.key,
-          updatedBy: repaired.updatedBy,
-          createdAt: repaired.createdAt.toISOString(),
-          updatedAt: repaired.updatedAt.toISOString(),
-        },
-      });
-    }
+    const config = normalizeAdminSettingsConfig(toConfig(settings));
 
     return res.status(200).json({
-      config: parsedConfig.data,
+      config,
       metadata: {
         key: settings.key,
         updatedBy: settings.updatedBy,
