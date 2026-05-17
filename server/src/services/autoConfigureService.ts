@@ -155,6 +155,59 @@ export async function activateAllEventsWithOdds(): Promise<void> {
   console.log("[AutoConfigure] Auto-activation complete", { scanned: eventsWithOdds.length, activated, stale: stale.count });
 }
 
+export async function syncEventStatuses(): Promise<void> {
+  const now = new Date();
+
+  // Mark events as live if they started in last 3 hours
+  // and are still marked as upcoming
+  const toMarkLive = await prisma.sportEvent.updateMany({
+    where: {
+      status: "UPCOMING",
+      isActive: true,
+      commenceTime: {
+        lte: now, // started already
+        gte: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+      },
+    },
+    data: { status: "LIVE" },
+  });
+
+  if (toMarkLive.count > 0) {
+    console.log(`[StatusSync] Marked ${toMarkLive.count} events as live`);
+  }
+
+  // Mark events as finished if they started > 3hrs ago
+  // But only for sports with known durations:
+  const sportsAndDurations: Record<string, number> = {
+    soccer: 2 * 60 * 60 * 1000, // 2 hours
+    basketball: 2.5 * 60 * 60 * 1000, // 2.5 hours
+    icehockey: 2.5 * 60 * 60 * 1000,
+    mma: 3 * 60 * 60 * 1000, // event cards
+    boxing: 4 * 60 * 60 * 1000,
+    rugbyleague: 2 * 60 * 60 * 1000,
+    americanfootball: 4 * 60 * 60 * 1000,
+    baseball: 4 * 60 * 60 * 1000,
+    tennis: 3 * 60 * 60 * 1000,
+  };
+
+  // For each sport, mark events finished if past duration
+  for (const [sport, durationMs] of Object.entries(sportsAndDurations)) {
+    const cutoff = new Date(now.getTime() - durationMs);
+
+    await prisma.sportEvent.updateMany({
+      where: {
+        sportKey: { startsWith: sport },
+        status: "LIVE",
+        commenceTime: { lte: cutoff },
+      },
+      data: {
+        status: "FINISHED",
+        isActive: false,
+      },
+    }).catch(() => {});
+  }
+}
+
 export async function autoConfigureAllEvents(): Promise<void> {
   await activateAllEventsWithOdds();
 }

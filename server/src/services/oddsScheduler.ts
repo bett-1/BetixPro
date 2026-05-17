@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma";
 import { oddsQueue, deepFetchQueue } from "../queues";
 import { DAILY_CREDIT_BUDGET, MAX_DAILY_CALLS, SPORTS_CONFIG, SEVEN_DAY_WINDOW_MS } from "../config/sportsConfig";
 import { getCreditBalance, getDailyCallCount } from "./oddsCache";
-import { activateAllEventsWithOdds } from "./autoConfigureService";
+import { activateAllEventsWithOdds, syncEventStatuses } from "./autoConfigureService";
 import { getActiveSportsList, refreshActiveSportsList } from "./sportsRefreshService";
 import { autoFeatureEvents } from "./autoFeatureService";
 
@@ -201,6 +201,14 @@ export function startOddsScheduler() {
   // Auto-feature: run every 30 minutes + on startup
   setInterval(() => void autoFeatureEvents(), 30 * 60 * 1000);
   setTimeout(() => void autoFeatureEvents(), 15_000);
+
+  // Sync event statuses every 5 minutes + on startup
+  setInterval(() => {
+    syncEventStatuses().catch((err) =>
+      console.error("[StatusSync] Error:", err instanceof Error ? err.message : String(err)),
+    );
+  }, 5 * 60 * 1000);
+  setTimeout(() => void syncEventStatuses(), 5_000);
 
   console.info("[Scheduler] BullMQ odds polling scheduled (with deep market fetch + auto-featuring).");
 }

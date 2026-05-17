@@ -215,6 +215,7 @@ async function getEvents(args: {
   page: number;
   limit: number;
   featuredOnly?: boolean;
+  includeRecentlyStarted?: boolean;
   endpoint: string;
 }) {
   const now = new Date();
@@ -225,17 +226,30 @@ async function getEvents(args: {
     oddsVerified: true,
     ...createCompleteOddsWhere(),
     ...(args.featuredOnly ? { isFeatured: true } : {}),
-    ...(args.status
-      ? { status: args.status }
-      : {
+    ...(args.includeRecentlyStarted
+      ? {
           OR: [
             { status: "LIVE" },
             {
               status: "UPCOMING",
-              commenceTime: { gt: now, lte: windowEnd },
+              commenceTime: {
+                lte: now,
+                gte: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+              },
             },
           ],
-        }),
+        }
+      : args.status
+        ? { status: args.status }
+        : {
+            OR: [
+              { status: "LIVE" },
+              {
+                status: "UPCOMING",
+                commenceTime: { gt: now, lte: windowEnd },
+              },
+            ],
+          }),
     sportKey: args.sport || undefined,
     leagueName: args.league
       ? { contains: args.league, mode: "insensitive" }
@@ -316,7 +330,7 @@ userEventsRouter.get("/user/events/live", async (req, res, next) => {
     const result = await getEvents({
       page: 1,
       limit: 50,
-      status: "LIVE",
+      includeRecentlyStarted: true,
       featuredOnly,
       sport:
         typeof req.query.sport === "string" && req.query.sport.trim().length > 0

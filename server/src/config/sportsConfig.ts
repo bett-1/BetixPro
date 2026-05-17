@@ -162,3 +162,59 @@ export const CREDITS_PER_CALL = 1;
 export const MAX_DAILY_CALLS = Math.floor(DAILY_CREDIT_BUDGET / CREDITS_PER_CALL);
 export const TOTAL_MONTHLY_CREDITS = 20_000;
 export const SEVEN_DAY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+// ── Per-sport valid markets (The Odds API) ──
+// Key = first segment of sportKey (before first underscore)
+export const SPORT_MARKETS: Record<string, string> = {
+  // Soccer/Football — richest market set
+  soccer:
+    "h2h,spreads,totals,btts,draw_no_bet,h2h_lay,alternate_spreads,alternate_totals",
+
+  // Ice Hockey — standard three only
+  icehockey: "h2h,spreads,totals",
+
+  // Basketball
+  basketball: "h2h,spreads,totals,alternate_spreads,alternate_totals",
+
+  // MMA and Boxing — head-to-head + totals only
+  mma: "h2h,totals",
+  boxing: "h2h,totals",
+
+  // Rugby variants
+  rugbyleague: "h2h,spreads,totals",
+  rugbyunion: "h2h,spreads,totals",
+
+  // American Football
+  americanfootball:
+    "h2h,spreads,totals,alternate_spreads,alternate_totals",
+
+  // Baseball
+  baseball: "h2h,spreads,totals,alternate_spreads,alternate_totals",
+
+  // Tennis — head-to-head only (no spreads/totals)
+  tennis: "h2h",
+
+  // Golf — outrights only
+  golf: "outrights",
+
+  // Cricket
+  cricket: "h2h,totals",
+
+  // Volleyball, table tennis, snooker, darts
+  volleyball: "h2h,totals",
+  tabletennis: "h2h,totals",
+  snooker: "h2h,totals",
+  darts: "h2h,totals",
+
+  // Safe fallback
+  __default__: "h2h,spreads,totals",
+};
+
+/**
+ * Return the correct market string for a given sportKey.
+ * sportKey format: "soccer_epl", "icehockey_nhl", etc.
+ */
+export function getMarketsForSport(sportKey: string): string {
+  const category = sportKey.split("_")[0].toLowerCase();
+  return SPORT_MARKETS[category] ?? SPORT_MARKETS["__default__"];
+}
