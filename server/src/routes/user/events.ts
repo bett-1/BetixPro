@@ -8,6 +8,7 @@ import {
   processMarketsFromBookmakers,
   type ProcessedMarket,
 } from "../../services/marketProcessor";
+import { deepFetchQueue } from "../../queues";
 
 const userEventsRouter = Router();
 
@@ -487,6 +488,34 @@ userEventsRouter.get("/user/events/:eventId/markets", async (req, res, next) => 
       markets = processMarketsFromBookmakers(rawEvent.bookmakers);
     }
 
+    // If markets are sparse, trigger an on-demand deep fetch
+    let fetchingMoreMarkets = false;
+    const apiEventId = event.externalEventId ?? event.eventId;
+    if (markets.length < 4 && apiEventId && event.sportKey) {
+      fetchingMoreMarkets = true;
+      await deepFetchQueue
+        .add(
+          `urgent-deep-${apiEventId}`,
+          {
+            eventId: event.id,
+            externalId: apiEventId,
+            sport: event.sportKey,
+            priority: "high" as const,
+          },
+          {
+            jobId: `urgent-deep-${apiEventId}-${Math.floor(Date.now() / (5 * 60 * 1000))}`,
+            priority: 1,
+            delay: 0,
+            attempts: 2,
+            removeOnComplete: 10,
+            removeOnFail: 5,
+          },
+        )
+        .catch((err) =>
+          console.warn("[EventsAPI] Failed to queue urgent deep fetch:", err instanceof Error ? err.message : String(err)),
+        );
+    }
+
     const grouped = groupMarketsByTab(markets);
 
     return res.status(200).json({
@@ -505,6 +534,7 @@ userEventsRouter.get("/user/events/:eventId/markets", async (req, res, next) => 
       grouped,
       totalMarkets: markets.length,
       marketsEnabled: event.marketsEnabled,
+      fetchingMoreMarkets,
     });
   } catch (error) {
     next(error);

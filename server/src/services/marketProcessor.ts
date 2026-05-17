@@ -6,38 +6,76 @@ export const MARKET_CONFIG: Record<
     name: string;
     tab: MarketTab;
     order: number;
+    description?: string;
     sport?: string[];
   }
 > = {
+  // ── FEATURED MARKETS (bulk endpoint) ──
   h2h: {
     name: "1X2 / Match Winner",
     tab: "main",
     order: 1,
+    description: "Predict the match winner",
   },
   spreads: {
     name: "Handicap",
     tab: "main",
     order: 2,
+    description: "Handicap betting",
   },
   totals: {
     name: "Over/Under",
     tab: "goals",
     order: 1,
+    description: "Total goals in the match",
   },
+
+  // ── ADDITIONAL MARKETS (event-odds endpoint) ──
   btts: {
     name: "Both Teams to Score",
     tab: "goals",
     order: 2,
+    description: "Will both teams score?",
+  },
+  draw_no_bet: {
+    name: "Draw No Bet",
+    tab: "main",
+    order: 3,
+    description: "Win or get money back on draw",
   },
   h2h_lay: {
     name: "Lay Betting",
     tab: "main",
+    order: 4,
+    description: "Bet against an outcome",
+  },
+  alternate_spreads: {
+    name: "Alternative Handicap",
+    tab: "main",
+    order: 5,
+    description: "Alternative handicap lines",
+  },
+  alternate_totals: {
+    name: "Alternative Over/Under",
+    tab: "goals",
     order: 3,
+    description: "Alternative over/under lines",
   },
   outrights: {
     name: "Outright Winner",
     tab: "other",
     order: 1,
+    description: "Who wins the tournament/league",
+  },
+  outrights_lay: {
+    name: "Lay Outrights",
+    tab: "other",
+    order: 2,
+  },
+  h2h_3_way: {
+    name: "3-Way Winner",
+    tab: "main",
+    order: 6,
   },
 };
 
@@ -46,6 +84,7 @@ export interface ProcessedMarket {
   name: string;
   tab: MarketTab;
   order: number;
+  description?: string;
   outcomes: ProcessedOutcome[];
   bookmaker: string;
   bookmakerTitle: string;
@@ -99,11 +138,14 @@ function formatOutcomeDescription(marketKey: string, outcome: RawOutcome): strin
 
   switch (marketKey) {
     case "totals":
+    case "alternate_totals":
       return typeof outcome.point === "number" ? `${name} ${outcome.point}` : name;
     case "spreads":
-      return typeof outcome.point === "number"
-        ? `${name} ${outcome.point > 0 ? "+" : ""}${outcome.point}`
-        : name;
+    case "alternate_spreads": {
+      if (typeof outcome.point !== "number") return name;
+      const sign = outcome.point > 0 ? "+" : "";
+      return `${name} (${sign}${outcome.point})`;
+    }
     default:
       return name;
   }
@@ -115,6 +157,17 @@ function formatMarketName(key: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function getBookmakerPriority(key: string | undefined): number {
+  if (!key) return PRIORITY_BOOKMAKERS.length;
+  const index = PRIORITY_BOOKMAKERS.indexOf(key);
+  return index === -1 ? PRIORITY_BOOKMAKERS.length : index;
+}
+
+/**
+ * Process markets from bookmaker data. For each unique market key,
+ * keeps the bookmaker source with the most outcomes (best coverage).
+ * When tied, prefers higher-priority bookmakers.
+ */
 export function processMarketsFromBookmakers(bookmakers: unknown): ProcessedMarket[] {
   if (!Array.isArray(bookmakers) || bookmakers.length === 0) {
     return [];
@@ -122,17 +175,11 @@ export function processMarketsFromBookmakers(bookmakers: unknown): ProcessedMark
 
   const safeBookmakers = bookmakers.filter(isValidBookmaker);
   const marketMap = new Map<string, ProcessedMarket>();
-  const orderedBookmakers = [
-    ...PRIORITY_BOOKMAKERS.map((key) => safeBookmakers.find((bookmaker) => bookmaker.key === key)).filter(
-      (bookmaker): bookmaker is RawBookmaker => Boolean(bookmaker),
-    ),
-    ...safeBookmakers.filter((bookmaker) => !bookmaker.key || !PRIORITY_BOOKMAKERS.includes(bookmaker.key)),
-  ];
 
-  for (const bookmaker of orderedBookmakers) {
+  for (const bookmaker of safeBookmakers) {
     for (const market of bookmaker.markets ?? []) {
       const marketKey = typeof market.key === "string" ? market.key.trim() : "";
-      if (!marketKey || marketMap.has(marketKey)) continue;
+      if (!marketKey) continue;
 
       const config = MARKET_CONFIG[marketKey];
       const outcomes = (market.outcomes ?? [])
@@ -146,16 +193,26 @@ export function processMarketsFromBookmakers(bookmakers: unknown): ProcessedMark
 
       if (outcomes.length === 0) continue;
 
-      marketMap.set(marketKey, {
-        key: marketKey,
-        name: config?.name ?? formatMarketName(marketKey),
-        tab: config?.tab ?? "other",
-        order: config?.order ?? 99,
-        outcomes,
-        bookmaker: bookmaker.key ?? "unknown",
-        bookmakerTitle: bookmaker.title ?? bookmaker.key ?? "Bookmaker",
-        lastUpdated: bookmaker.last_update ?? new Date().toISOString(),
-      });
+      const existing = marketMap.get(marketKey);
+      const shouldReplace =
+        !existing ||
+        outcomes.length > existing.outcomes.length ||
+        (outcomes.length === existing.outcomes.length &&
+          getBookmakerPriority(bookmaker.key) < getBookmakerPriority(existing.bookmaker));
+
+      if (shouldReplace) {
+        marketMap.set(marketKey, {
+          key: marketKey,
+          name: config?.name ?? formatMarketName(marketKey),
+          tab: config?.tab ?? "other",
+          order: config?.order ?? 99,
+          description: config?.description,
+          outcomes,
+          bookmaker: bookmaker.key ?? "unknown",
+          bookmakerTitle: bookmaker.title ?? bookmaker.key ?? "Bookmaker",
+          lastUpdated: bookmaker.last_update ?? new Date().toISOString(),
+        });
+      }
     }
   }
 

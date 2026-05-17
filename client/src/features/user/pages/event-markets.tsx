@@ -46,6 +46,7 @@ type EventMarketsResponse = {
   markets: ProcessedMarket[];
   grouped: Record<MarketTab, ProcessedMarket[]>;
   totalMarkets: number;
+  fetchingMoreMarkets?: boolean;
 };
 
 const TABS: Array<{ key: "all" | MarketTab; label: string }> = [
@@ -192,6 +193,16 @@ export default function EventMarketsPage() {
     return () => window.clearInterval(interval);
   }, [eventId]);
 
+  // Auto-refresh if the backend is still fetching additional markets
+  useEffect(() => {
+    if (event?.fetchingMoreMarkets) {
+      const timeout = window.setTimeout(() => {
+        void fetchMarkets(true);
+      }, 15_000);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [event?.fetchingMoreMarkets]);
+
   const displayedMarkets = useMemo(() => {
     if (!event) return [];
     if (activeTab === "all") return event.markets;
@@ -332,6 +343,12 @@ export default function EventMarketsPage() {
         ) : null}
 
         <main className="grid gap-2 py-3 sm:gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+          {event?.fetchingMoreMarkets ? (
+            <div className="col-span-full mx-1 flex items-center justify-center gap-2.5 rounded-xl border border-[#24415f] bg-[#13233a] px-4 py-3 text-sm text-[#8aa4c5] animate-pulse">
+              <Loader2 className="h-4 w-4 animate-spin text-[#ffd500]" />
+              <span>Loading additional markets…</span>
+            </div>
+          ) : null}
           {displayedMarkets.length === 0 ? (
             <div className="col-span-full grid min-h-[260px] place-items-center rounded-lg border border-dashed border-[#24415f] bg-[#0f1a2d] text-center">
               <div>
