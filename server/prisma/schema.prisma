@@ -297,7 +297,7 @@ model AdminSettings {
   createdAt                        DateTime @default(now()) @map("created_at")
   updatedAt                        DateTime @updatedAt @map("updated_at")
   platformName                     String   @default("BetWise") @map("platform_name")
-  environment                      String   @default("sandbox")
+  environment                      String   @default("live")
   defaultCurrency                  String   @default("KES") @map("default_currency")
   timezone                         String   @default("Africa/Nairobi")
   maintenanceMode                  Boolean  @default(false) @map("maintenance_mode")
@@ -393,7 +393,7 @@ model AdminSettings {
   mpesaB2cSecurityCredential       String   @default("replace-with-credential") @map("mpesa_b2c_security_credential")
   mpesaB2cShortcode                String   @default("174379") @map("mpesa_b2c_shortcode")
   mpesaB2cTimeoutUrl               String   @default("") @map("mpesa_b2c_timeout_url")
-  mpesaBaseUrl                     String   @default("https://sandbox.safaricom.co.ke") @map("mpesa_base_url")
+  mpesaBaseUrl                     String   @default("https://api.safaricom.co.ke") @map("mpesa_base_url")
 
   @@map("admin_settings")
 }

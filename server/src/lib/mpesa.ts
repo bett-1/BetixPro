@@ -168,6 +168,27 @@ function normalizeBaseUrl(value: string | undefined): string {
   return value?.trim().replace(/\/+$/, "") || "";
 }
 
+const MPESA_LIVE_BASE_URL = "https://api.safaricom.co.ke";
+const MPESA_SANDBOX_BASE_URL = "https://sandbox.safaricom.co.ke";
+
+function resolveMpesaBaseUrl(value: string | undefined) {
+  const configuredBaseUrl = normalizeBaseUrl(value);
+  const normalizedConfiguredBaseUrl = configuredBaseUrl || MPESA_LIVE_BASE_URL;
+
+  if (normalizedConfiguredBaseUrl === MPESA_SANDBOX_BASE_URL) {
+    console.warn(
+      "[M-Pesa Config] Sandbox base URL detected. Forcing live Safaricom endpoint.",
+      {
+        configuredBaseUrl: normalizedConfiguredBaseUrl,
+        effectiveBaseUrl: MPESA_LIVE_BASE_URL,
+      },
+    );
+    return MPESA_LIVE_BASE_URL;
+  }
+
+  return normalizedConfiguredBaseUrl;
+}
+
 function fingerprintValue(value: string): string {
   let hash = 0;
 
@@ -256,7 +277,6 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
       missingVars: string[];
     } {
   const mpesa = settings.paymentsConfig.mpesa;
-  const defaultBaseUrl = "https://api.safaricom.co.ke";
 
   const consumerKey = compactCredential(mpesa.consumerKey);
   const consumerSecret = compactCredential(mpesa.consumerSecret);
@@ -284,8 +304,7 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     };
   }
 
-  const configuredBaseUrl = normalizeBaseUrl(mpesa.baseUrl);
-  const baseUrl = configuredBaseUrl || defaultBaseUrl;
+  const baseUrl = resolveMpesaBaseUrl(mpesa.baseUrl);
 
   return {
     isConfigured: true,
