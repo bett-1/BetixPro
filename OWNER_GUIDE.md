@@ -10,6 +10,23 @@ It explains:
 - how to manage users, bets, withdrawals, events, odds, risk, and security
 - what to check every day so the platform runs smoothly
 
+## Table of Contents
+
+1. [What BetixPro Is](#1-what-betixpro-is)
+2. [Quick Map Of The System](#2-quick-map-of-the-system)
+3. [First-Time Owner Setup](#3-first-time-owner-setup)
+4. [What Your Customers Do On The User Side](#4-what-your-customers-do-on-the-user-side)
+5. [How The Owner Uses The Admin Panel](#5-how-the-owner-uses-the-admin-panel)
+6. [Payment Flow Explained Simply](#6-payment-flow-explained-simply)
+7. [Event And Bet Lifecycle](#7-event-and-bet-lifecycle)
+8. [Important Status Words You Will See](#8-important-status-words-you-will-see)
+9. [Daily Owner Checklist](#9-daily-owner-checklist)
+10. [Weekly Owner Checklist](#10-weekly-owner-checklist)
+11. [Common Problems And What To Do](#11-common-problems-and-what-to-do)
+12. [Best Practices For Running The Platform Well](#12-best-practices-for-running-the-platform-well)
+13. [Very Important Owner Warnings](#13-very-important-owner-warnings)
+14. [Simple “Who Handles What” Summary](#14-simple-who-handles-what-summary)
+15. [Final Practical Advice](#15-final-practical-advice)
 
 ---
 
