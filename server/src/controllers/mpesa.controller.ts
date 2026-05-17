@@ -538,14 +538,20 @@ export async function initializeMpesaDeposit(req: Request, res: Response) {
     const data = (await response.json().catch(() => ({}))) as MpesaStkPushResponse;
 
     if (!response.ok || data.ResponseCode !== "0") {
+      const providerMessage =
+        data.errorMessage ||
+        data.ResponseDescription ||
+        "Unable to start M-Pesa STK push.";
+      const isInvalidAccessToken = providerMessage
+        .toLowerCase()
+        .includes("invalid access token");
       const failureResponse: {
         message: string;
         mpesaDebug?: Record<string, unknown>;
       } = {
-        message:
-          data.errorMessage ||
-          data.ResponseDescription ||
-          "Unable to start M-Pesa STK push.",
+        message: isInvalidAccessToken
+          ? `M-Pesa rejected the access token. Confirm that the configured API Base URL matches your Safaricom credentials (${config.baseUrl.includes("sandbox") ? "sandbox" : "live"}).`
+          : providerMessage,
       };
 
       if (isMpesaBrowserDebugEnabled()) {

@@ -12,5 +12,9 @@ services:
         value: 22
       - key: DATABASE_URL
         sync: false
+      - key: ACCESS_TOKEN_SECRET
+        sync: false
+      - key: REFRESH_TOKEN_SECRET
+        sync: false
       - key: JWT_SECRET
         sync: false

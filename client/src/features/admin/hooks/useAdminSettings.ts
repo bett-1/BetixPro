@@ -43,6 +43,7 @@ export interface AdminSettingsConfig {
       consumerKey: string;
       consumerSecret: string;
       passkey: string;
+      baseUrl: string;
       callbackUrl: string;
       b2cShortcode: string;
       initiatorName: string;

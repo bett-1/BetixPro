@@ -58,9 +58,18 @@ function parseBooleanEnv(value: string | undefined) {
 function getRequiredSecret(
   name: "ACCESS_TOKEN_SECRET" | "REFRESH_TOKEN_SECRET",
 ) {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
+  if (value) {
+    return value;
+  }
+
+  const legacyJwtSecret = process.env.JWT_SECRET?.trim();
+  if (legacyJwtSecret) {
+    return legacyJwtSecret;
+  }
+
   if (!value) {
-    throw new Error(`${name} is required.`);
+    throw new Error(`${name} or JWT_SECRET is required.`);
   }
 
   return value;

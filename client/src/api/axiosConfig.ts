@@ -2,6 +2,11 @@ import axios from "axios";
 
 type RefreshHandler = () => Promise<string | null>;
 type UnauthorizedHandler = () => void;
+type RetryableRequestConfig = {
+  headers?: Record<string, string>;
+  _retry?: boolean;
+  url?: string;
+};
 
 const DEFAULT_API_URL = "https://api.betixpro.com";
 const DEFAULT_API_BASE_URL = "https://api.betixpro.com/api";
@@ -32,6 +37,17 @@ let refreshHandler: RefreshHandler | null = null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 
 const AUTH_TOKEN_KEY = "betwise-auth-token";
+
+function shouldSkipRefresh(url: string | undefined) {
+  if (!url) return false;
+
+  return (
+    url.includes("/auth/refresh") ||
+    url.includes("/auth/login") ||
+    url.includes("/auth/register") ||
+    url.includes("/auth/me")
+  );
+}
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
@@ -67,10 +83,12 @@ export function getUnauthorizedHandler() {
 
 api.interceptors.request.use(
   (config) => {
+    config.headers = config.headers ?? {};
+
     // Priority: memory variable > localStorage
     const token = accessToken || getStoredAccessToken();
 
-    if (token && config.headers) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -82,10 +100,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+    const status = error.response?.status as number | undefined;
 
-    // Handle 401 Unauthorized errors
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !shouldSkipRefresh(originalRequest.url)
+    ) {
       console.log("[Axios] 401 detected, attempting refresh...");
       originalRequest._retry = true;
 
@@ -93,6 +116,7 @@ api.interceptors.response.use(
         try {
           const newToken = await refreshHandler();
           if (newToken) {
+            originalRequest.headers = originalRequest.headers ?? {};
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return api(originalRequest);
           }

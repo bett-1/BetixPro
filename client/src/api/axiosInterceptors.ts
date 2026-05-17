@@ -60,28 +60,17 @@ export function installApiInterceptors() {
       const originalRequest = error.config as RetryableRequestConfig | undefined;
       const status = error.response?.status as number | undefined;
 
-      if (status === 401) {
-        getUnauthorizedHandler()?.();
-        return Promise.reject(error);
-      }
-
-      if (
-        !originalRequest ||
-        status !== 401 ||
-        originalRequest._retry ||
-        shouldSkipRefresh(originalRequest.url)
-      ) {
-        return Promise.reject(error);
-      }
-
-      originalRequest._retry = true;
-
-      const refreshHandler = getRefreshHandler();
-      if (!refreshHandler) {
-        getUnauthorizedHandler()?.();
-        return Promise.reject(error);
-      }
-
+      debugLog("[Axios] Response error received", {
+        url: originalRequest?.url,
+        status,
+        willSkipRefresh:
+          !originalRequest ||
+          status !== 401 ||
+          originalRequest._retry ||
+          shouldSkipRefresh(originalRequest.url),
+        hasRefreshHandler: Boolean(getRefreshHandler()),
+        hasUnauthorizedHandler: Boolean(getUnauthorizedHandler()),
+      });
       return Promise.reject(error);
     },
   );
