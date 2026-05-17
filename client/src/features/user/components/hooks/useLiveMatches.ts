@@ -357,6 +357,16 @@ export function useLiveMatches(filters: LiveFilterState) {
       if (!payload || payload.type !== "matches_snapshot") {
         return;
       }
+      // Ignore empty snapshots that would clear an existing list of matches.
+      // This prevents a race where an initial fetch populates matches then
+      // a near-immediate empty socket snapshot wipes them out.
+      if (
+        (payload.matches?.length ?? 0) === 0 &&
+        matchesRef.current.length > 0
+      ) {
+        return;
+      }
+
       setMatches(
         payload.matches.filter(
           (match) => !isFinishedMatch(match) && hasCompleteLiveMatchOdds(match),
