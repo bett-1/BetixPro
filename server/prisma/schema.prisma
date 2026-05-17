@@ -183,6 +183,9 @@ model SportEvent {
   updatedAt        DateTime        @updatedAt @map("updated_at")
   featuredPriority Int             @default(0) @map("featured_priority")
   isFeatured       Boolean         @default(false) @map("is_featured")
+  featuredManual   Boolean         @default(false) @map("featured_manual")
+  featuredAuto     Boolean         @default(false) @map("featured_auto")
+  prominenceScore  Int             @default(0) @map("prominence_score")
   archivedAt       DateTime?       @map("archived_at")
   autoConfigured   Boolean         @default(false) @map("auto_configured")
   bookmakerKey     String?         @map("bookmaker_key")
@@ -201,6 +204,7 @@ model SportEvent {
   @@index([oddsVerified])
   @@index([syncedAt])
   @@index([bookmakerMargin])
+  @@index([isFeatured])
   @@map("sport_events")
 }
 
