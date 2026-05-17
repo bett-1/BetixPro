@@ -19,8 +19,8 @@ export const HEALTH_CHECK_INTERVAL_MINUTES = 360; // Use /sports endpoint (free)
 export const AUTO_CONFIGURE_COOLDOWN_MS = 30 * 60 * 1000; // 30 min cooldown
 
 // ── Budget (FIXED: was 100,000 — your plan is 500) ──
-export const MONTHLY_API_BUDGET = 400; // 500 total, keep 100 as safety buffer
-export const DAILY_API_BUDGET = Math.floor(MONTHLY_API_BUDGET / 30); // ~13/day
+export const MONTHLY_API_BUDGET = 20_000;
+export const DAILY_API_BUDGET = 600;
 
 // ── Quota guard: check before every API call ──
 export function isQuotaSafe(usedThisMonth: number): boolean {
@@ -43,7 +43,11 @@ export type ManagedSportCategoryKey =
   | "americanfootball"
   | "boxing_mma"
   | "baseball"
-  | "golf";
+  | "volleyball"
+  | "tabletennis"
+  | "golf"
+  | "snooker"
+  | "darts";
 
 // Removed: volleyball, tabletennis, snooker, darts
 // (not available on The Odds API free tier — were burning credits with 404s)
@@ -149,6 +153,22 @@ export const SPORT_AUTOMATION_CONFIG: SportAutomationConfig[] = [
     fetchPriority: "medium",
   },
   {
+    key: "volleyball",
+    displayName: "Volleyball",
+    apiSportKeys: ["volleyball_womens_volleyball_nations_league"],
+    leagueImportance: 5,
+    cacheTTLMinutes: 720,
+    fetchPriority: "low",
+  },
+  {
+    key: "tabletennis",
+    displayName: "Table Tennis",
+    apiSportKeys: ["tabletennis"],
+    leagueImportance: 5,
+    cacheTTLMinutes: 720,
+    fetchPriority: "low",
+  },
+  {
     key: "golf",
     displayName: "Golf",
     // FIXED: golf_masters_tournament_winner is seasonal (April only)
@@ -158,6 +178,22 @@ export const SPORT_AUTOMATION_CONFIG: SportAutomationConfig[] = [
     ],
     leagueImportance: 6,
     cacheTTLMinutes: 1440, // Outright winner odds — very stable
+    fetchPriority: "low",
+  },
+  {
+    key: "snooker",
+    displayName: "Snooker",
+    apiSportKeys: ["snooker"],
+    leagueImportance: 5,
+    cacheTTLMinutes: 720,
+    fetchPriority: "low",
+  },
+  {
+    key: "darts",
+    displayName: "Darts",
+    apiSportKeys: ["darts"],
+    leagueImportance: 5,
+    cacheTTLMinutes: 720,
     fetchPriority: "low",
   },
 ];
@@ -206,7 +242,11 @@ export function mapApiSportKeyToCategoryKey(
   if (n.startsWith("americanfootball")) return "americanfootball";
   if (n.startsWith("mma") || n.startsWith("boxing")) return "boxing_mma";
   if (n.startsWith("baseball")) return "baseball";
+  if (n.startsWith("volleyball")) return "volleyball";
+  if (n.startsWith("tabletennis")) return "tabletennis";
   if (n.startsWith("golf")) return "golf";
+  if (n.startsWith("snooker")) return "snooker";
+  if (n.startsWith("darts")) return "darts";
   return null;
 }
 

@@ -27,6 +27,7 @@ import {
 import { requireAdmin } from "../middleware/requireAdmin";
 import { getCacheHitRate, getCreditBalance, getDailyCallCount, getPollingMode } from "../services/oddsCache";
 import { getCreditState } from "../services/creditTracker";
+import { MAX_DAILY_CALLS, TOTAL_MONTHLY_CREDITS } from "../config/sportsConfig";
 
 const adminRouter = Router();
 
@@ -56,6 +57,7 @@ adminRouter.get("/admin/credits", authenticate, requireAdmin, async (_req, res, 
     const memoryState = getCreditState();
     const used = redisBalance?.used ?? memoryState.used ?? 0;
     const remaining = redisBalance?.remaining ?? memoryState.remaining ?? 20_000;
+    const percentage = Math.round((remaining / TOTAL_MONTHLY_CREDITS) * 100);
     const dayOfMonth = Math.max(1, new Date().getDate());
     const dailyAverage = Number((used / dayOfMonth).toFixed(2));
     const projectedMonthEnd = Math.round(dailyAverage * 30);
@@ -68,9 +70,12 @@ adminRouter.get("/admin/credits", authenticate, requireAdmin, async (_req, res, 
     res.status(200).json({
       remaining,
       used,
+      total: TOTAL_MONTHLY_CREDITS,
+      percentage,
+      display: `${remaining.toLocaleString()} (${percentage}%)`,
       dailyAverage,
       dailyCallCount,
-      dailyLimit: 100,
+      dailyLimit: MAX_DAILY_CALLS,
       projectedMonthEnd,
       safeUntil,
       pollingMode,

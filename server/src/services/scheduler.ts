@@ -31,6 +31,10 @@ import {
 import { cleanupOldAlerts, createAlert } from "./adminAlertService";
 import { fetchAndSaveFixtures } from "./fixturesService";
 import { emitCustomEventFinished, emitCustomEventLive } from "../lib/socket";
+import { SPORTS_CONFIG as SIDEBAR_SPORTS_CONFIG, MAX_DAILY_CALLS, TOTAL_MONTHLY_CREDITS } from "../config/sportsConfig";
+import { getCreditBalance, getDailyCallCount } from "./oddsCache";
+import { activateAllEventsWithOdds } from "./autoConfigureService";
+import { runOddsHealthCheck, scheduleOddsPolling } from "./oddsScheduler";
 import {
   createEventEndedAdminNotification,
   createMatchEndedUserNotifications,
@@ -342,20 +346,20 @@ export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryK
   void (async () => {
     try {
       autoConfigureStatus.progress = 10;
-      autoConfigureStatus.currentStep = "Syncing events for the next 7 days...";
-      const sync = await jobEventSync(selectedSportKeys);
+      autoConfigureStatus.currentStep = "Queueing BullMQ odds jobs for the next 7 days...";
+      await scheduleOddsPolling();
 
       autoConfigureStatus.progress = 55;
-      autoConfigureStatus.currentStep = "Monitoring live events and refreshing live odds...";
-      const live = await jobLiveEventMonitor();
+      autoConfigureStatus.currentStep = "Running queue-backed health checks...";
+      await runOddsHealthCheck();
 
       autoConfigureStatus.progress = 75;
       autoConfigureStatus.currentStep = "Archiving finished events and enforcing visibility rules...";
       const cleanup = await jobEventCleanup();
 
       autoConfigureStatus.progress = 90;
-      autoConfigureStatus.currentStep = "Checking category and API health...";
-      const health = await jobSportHealthCheck();
+      autoConfigureStatus.currentStep = "Activating every event that has visible odds...";
+      await activateAllEventsWithOdds();
 
       autoConfigureStatus = {
         running: false,
@@ -365,14 +369,14 @@ export async function runAutoConfigure(selectedSportKeys?: ManagedSportCategoryK
         lastRunAt: new Date().toISOString(),
         cooldownMs: AUTO_CONFIGURE_COOLDOWN_MS,
         results: {
-          eventsSynced: Number(sync.meta?.eventsSaved ?? 0),
-          eventsSkipped: Number(sync.meta?.eventsSkipped ?? 0),
-          sportsProcessed: Number(sync.meta?.sportsProcessed ?? 0),
-          liveOddsUpdated: Number(live.meta?.oddsUpdated ?? 0),
-          liveScoresUpdated: Number(live.meta?.scoresUpdated ?? 0),
+          eventsSynced: "queued",
+          eventsSkipped: 0,
+          sportsProcessed: selectedSportKeys?.length ?? SIDEBAR_SPORTS_CONFIG.length,
+          liveOddsUpdated: "queued",
+          liveScoresUpdated: "queued",
           finishedArchived: Number(cleanup.meta?.finished ?? 0),
           cancelledArchived: Number(cleanup.meta?.cancelled ?? 0),
-          missingSports: Number(health.meta?.missingSports ?? 0),
+          missingSports: 0,
         },
       };
     } catch (error) {
@@ -393,7 +397,7 @@ export async function getSystemStatus() {
   const { now, dateTo } = getManagedDateRange();
   const api = getApiStatus();
 
-  const [totalInWindow, eventsWithoutOdds, emptySports, lastSyncLog] = await Promise.all([
+  const [totalInWindow, eventsWithoutOdds, emptySports, lastSyncLog, creditBalance, dailyCallsUsed] = await Promise.all([
     prisma.sportEvent.count({
       where: {
         isActive: true,
@@ -410,10 +414,11 @@ export async function getSystemStatus() {
       },
     }),
     Promise.all(
-      SPORT_AUTOMATION_CONFIG.map(async (sport) => {
+      SIDEBAR_SPORTS_CONFIG.map(async (sport) => {
+        const sportKeys = [sport.key, ...(sport.alternateKeys ?? [])];
         const count = await prisma.sportEvent.count({
           where: {
-            sportKey: { in: sport.apiSportKeys },
+            sportKey: { in: sportKeys },
             isActive: true,
             oddsVerified: true,
             ...createCompleteOddsWhere(),
@@ -421,7 +426,7 @@ export async function getSystemStatus() {
             commenceTime: { gt: now, lte: dateTo },
           },
         });
-        return count === 0 ? sport.displayName : null;
+        return count === 0 ? sport.sidebarLabel : null;
       }),
     ),
     prisma.apiSyncLog.findFirst({
@@ -429,13 +434,18 @@ export async function getSystemStatus() {
       orderBy: { createdAt: "desc" },
       select: { createdAt: true },
     }),
+    getCreditBalance().catch(() => null),
+    getDailyCallCount().catch(() => 0),
   ]);
 
-  const withNoEvents = emptySports.filter((item): item is string => Boolean(item));
+  const withNoEvents = Array.from(new Set(emptySports.filter((item): item is string => Boolean(item))));
+  const creditsRemaining = creditBalance?.remaining ?? api.creditsRemaining ?? TOTAL_MONTHLY_CREDITS;
+  const creditsUsed = creditBalance?.used ?? api.creditsUsed ?? null;
+  const creditsPercent = Math.max(0, Math.round((creditsRemaining / TOTAL_MONTHLY_CREDITS) * 100));
   const health =
-    !api.isOnline || !api.isApiKeyValid || (api.creditsPercent ?? 100) <= 0
+    !api.isOnline || !api.isApiKeyValid || creditsPercent <= 0
       ? "critical"
-      : (api.creditsPercent ?? 100) < 20 || withNoEvents.length > 0
+      : creditsPercent < 20 || withNoEvents.length > 0
         ? "warning"
         : "healthy";
 
@@ -444,11 +454,12 @@ export async function getSystemStatus() {
     api: {
       isOnline: api.isOnline,
       isApiKeyValid: api.isApiKeyValid,
-      creditsRemaining: api.creditsRemaining,
-      creditsPercent: api.creditsPercent,
-      monthlyBudget: api.monthlyBudget,
-      dailyCallsUsed: null,
-      dailyBudget: null,
+      creditsRemaining,
+      creditsUsed,
+      creditsPercent,
+      monthlyBudget: TOTAL_MONTHLY_CREDITS,
+      dailyCallsUsed,
+      dailyBudget: MAX_DAILY_CALLS,
       lastError: api.lastError,
       isRateLimited: api.isRateLimited,
     },
@@ -462,7 +473,7 @@ export async function getSystemStatus() {
       liveCount: await prisma.sportEvent.count({ where: { status: "LIVE", isActive: true } }),
     },
     sports: {
-      totalActive: SPORT_AUTOMATION_CONFIG.length,
+      totalActive: new Set(SIDEBAR_SPORTS_CONFIG.map((sport) => sport.sidebarLabel)).size,
       withNoEvents,
       withNoEventsCount: withNoEvents.length,
     },
@@ -550,24 +561,11 @@ export async function updateCustomEventStatuses() {
 void Promise.all([
   fetchAndSaveFixtures().catch((error) => console.error("[Fixtures] Initial fetch failed:", error)),
   jobEventCleanup().catch((error) => console.error("[Cleanup] Initial run failed:", error)),
-  jobSportHealthCheck().catch((error) => console.error("[Health] Initial run failed:", error)),
   updateCustomEventStatuses().catch((error) => console.error("[CustomEvents] Initial run failed:", error)),
 ]);
 
-cron.schedule("*/15 * * * *", () => {
-  void jobEventSync().catch((error) => console.error("[Scheduler] event_sync failed:", error));
-});
-
-cron.schedule("* * * * *", () => {
-  void jobLiveEventMonitor().catch((error) => console.error("[Scheduler] live_monitor failed:", error));
-});
-
 cron.schedule("*/30 * * * *", () => {
   void jobEventCleanup().catch((error) => console.error("[Scheduler] cleanup failed:", error));
-});
-
-cron.schedule("0 * * * *", () => {
-  void jobSportHealthCheck().catch((error) => console.error("[Scheduler] health_check failed:", error));
 });
 
 cron.schedule("*/15 * * * *", () => {

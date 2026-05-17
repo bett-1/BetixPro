@@ -1,165 +1,171 @@
-import cron from "node-cron";
 import { prisma } from "../lib/prisma";
-import { mapApiSportKeyToCategoryKey } from "./oddsAutomationConfig";
-import {
-  DAILY_API_CALL_LIMIT,
-  getCreditBalance,
-  getDailyCallCount,
-  getLastPollForSport,
-  getPollingMode,
-} from "./oddsCache";
-import { hydrateCreditStateFromRedis, getCurrentPollingMode } from "./creditTracker";
-import { fetchOddsBatch } from "./oddsApiService";
-import { processAndSaveEvents, transitionToLive } from "./eventProcessingService";
+import { oddsQueue } from "../queues";
+import { DAILY_CREDIT_BUDGET, MAX_DAILY_CALLS, SPORTS_CONFIG, SEVEN_DAY_WINDOW_MS } from "../config/sportsConfig";
+import { getCreditBalance, getDailyCallCount } from "./oddsCache";
+import { activateAllEventsWithOdds } from "./autoConfigureService";
+import { getActiveSportsList, refreshActiveSportsList } from "./sportsRefreshService";
 
-const STAGGER_DELAY_MS = 2_000;
-const MAX_SPORTS_PER_CYCLE = 2;
-
-type PollTier = "live" | "near" | "far";
-
-const NORMAL_INTERVALS: Record<PollTier, number> = {
-  live: 5 * 60 * 1000,
-  near: 20 * 60 * 1000,
-  far: 90 * 60 * 1000,
-};
-
-const REDUCED_INTERVALS: Record<PollTier, number> = {
-  live: 30 * 60 * 1000,
-  near: 3 * 60 * 60 * 1000,
-  far: 4 * 60 * 60 * 1000,
-};
+type PollingMode = "normal" | "reduced" | "emergency";
 
 let started = false;
 let running = false;
-let hourlySummaryStarted = false;
+let healthRunning = false;
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function getPollingMode(remaining: number): PollingMode {
+  if (remaining < 500) return "emergency";
+  if (remaining < 2_000) return "reduced";
+  return "normal";
 }
 
-function tierForEvent(event: { status: string; commenceTime: Date }): PollTier | null {
-  if (event.status === "FINISHED" || event.status === "CANCELLED") return null;
-  if (event.status === "LIVE") return "live";
-
-  const startsInMs = event.commenceTime.getTime() - Date.now();
-  return startsInMs <= 2 * 60 * 60 * 1000 ? "near" : "far";
+async function getActiveSportSet() {
+  let active = await getActiveSportsList();
+  if (!active.length) {
+    active = await refreshActiveSportsList();
+  }
+  return new Set(active);
 }
 
-async function getSportsDueForPolling() {
-  const mode = getCurrentPollingMode();
-  if (mode === "emergency") {
-    console.error("[OddsScheduler] Emergency mode active; all Odds API polling is stopped.");
-    return [];
-  }
+function getPollKeysForSport(config: (typeof SPORTS_CONFIG)[number], activeSports: Set<string>) {
+  return [config.key, ...(config.alternateKeys ?? [])].filter((key) => activeSports.has(key));
+}
 
-  const dailyCount = await getDailyCallCount().catch((error) => {
-    console.error("[OddsScheduler] Could not read daily API call count:", error);
-    return 0;
-  });
-  if (dailyCount >= DAILY_API_CALL_LIMIT) {
-    console.warn("[OddsScheduler] Daily API call limit reached; skipping this polling cycle.");
-    return [];
-  }
-
-  const intervals = mode === "reduced" ? REDUCED_INTERVALS : NORMAL_INTERVALS;
-  const events = await prisma.sportEvent.findMany({
-    where: {
-      isActive: true,
-      oddsVerified: true,
-      status: { in: ["UPCOMING", "LIVE"] },
-      sportKey: { not: null },
-    },
-    select: {
-      eventId: true,
-      sportKey: true,
-      status: true,
-      commenceTime: true,
-    },
-    orderBy: [{ status: "asc" }, { commenceTime: "asc" }],
-    take: 500,
+async function getLiveSports() {
+  const liveEvents = await prisma.sportEvent.findMany({
+    where: { status: "LIVE", isActive: true, sportKey: { not: null } },
+    select: { sportKey: true },
+    distinct: ["sportKey"],
   });
 
-  const dueSports = new Map<string, PollTier>();
-
-  for (const event of events) {
-    if (!event.sportKey) continue;
-    const tier = tierForEvent(event);
-    if (!tier) continue;
-
-    const lastPoll = await getLastPollForSport(event.sportKey).catch(() => null);
-    if (lastPoll && Date.now() - lastPoll < intervals[tier]) continue;
-
-    const existing = dueSports.get(event.sportKey);
-    if (!existing || tier === "live" || (tier === "near" && existing === "far")) {
-      dueSports.set(event.sportKey, tier);
-    }
-  }
-
-  return Array.from(dueSports.entries())
-    .slice(0, Math.min(MAX_SPORTS_PER_CYCLE, Math.max(0, DAILY_API_CALL_LIMIT - dailyCount)))
-    .map(([sportKey, tier]) => ({ sportKey, tier }));
+  return new Set(liveEvents.map((event) => event.sportKey).filter((sportKey): sportKey is string => Boolean(sportKey)));
 }
 
-function startHourlyCreditSummary() {
-  if (hourlySummaryStarted) return;
-  hourlySummaryStarted = true;
-
-  setInterval(() => {
-    void (async () => {
-      const count = await getDailyCallCount().catch(() => 0);
-      const credits = await getCreditBalance().catch(() => null);
-      console.log("[OddsScheduler] Hourly credit summary:", {
-        dailyCallsUsed: count,
-        dailyCallLimit: DAILY_API_CALL_LIMIT,
-        creditsRemaining: credits?.remaining ?? "unknown",
-        creditsUsed: credits?.used ?? "unknown",
-      });
-    })();
-  }, 60 * 60 * 1000);
-}
-
-export async function runOddsPollingCycle() {
+export async function scheduleOddsPolling(): Promise<void> {
   if (running) return;
   running = true;
 
   try {
-    await hydrateCreditStateFromRedis();
-    await transitionToLive();
+    const [credits, dailyCallsUsed, activeSports, liveSports] = await Promise.all([
+      getCreditBalance().catch(() => null),
+      getDailyCallCount().catch(() => 0),
+      getActiveSportSet(),
+      getLiveSports(),
+    ]);
 
-    const dueSports = await getSportsDueForPolling();
-    if (!dueSports.length) return;
+    const remaining = credits?.remaining ?? DAILY_CREDIT_BUDGET;
+    const pollingMode = getPollingMode(remaining);
+    const remainingDailyCalls = Math.max(0, MAX_DAILY_CALLS - dailyCallsUsed);
+    if (remainingDailyCalls <= 0) {
+      console.warn("[Scheduler] Daily Odds API call budget reached; no jobs queued.");
+      return;
+    }
 
-    for (const [index, item] of dueSports.entries()) {
-      if (index > 0) {
-        await delay(STAGGER_DELAY_MS);
-      }
+    let queued = 0;
+    const missingActiveKeys: string[] = [];
 
-      const pollingMode = await getPollingMode().catch(() => getCurrentPollingMode());
-      if (pollingMode === "emergency") {
-        console.error("[OddsScheduler] Polling stopped mid-cycle because emergency mode is active.");
-        break;
-      }
+    for (const sport of SPORTS_CONFIG) {
+      if (!sport.active || queued >= remainingDailyCalls) continue;
 
-      const events = await fetchOddsBatch(item.sportKey);
-      if (!events?.length) continue;
-
-      const categoryKey = mapApiSportKeyToCategoryKey(item.sportKey);
-      if (!categoryKey) {
-        console.warn(`[OddsScheduler] No category mapping for sport ${item.sportKey}; cache updated only.`);
+      const keys = getPollKeysForSport(sport, activeSports);
+      if (!keys.length) {
+        missingActiveKeys.push(sport.key);
         continue;
       }
 
-      await processAndSaveEvents(events, categoryKey);
-      console.info("[OddsScheduler] Polled odds batch", {
-        sport: item.sportKey,
-        tier: item.tier,
-        events: events.length,
-      });
+      for (const key of keys) {
+        if (queued >= remainingDailyCalls) break;
+        const isLive = liveSports.has(key);
+        if (pollingMode === "emergency" && !isLive) continue;
+
+        await oddsQueue.add(
+          `fetch-${key}`,
+          {
+            sport: key,
+            sportLabel: key === sport.key ? sport.label : `${sport.label} (${key})`,
+            sidebarLabel: sport.sidebarLabel,
+            tier: isLive ? "live" : "upcoming_far",
+          },
+          {
+            jobId: `odds-${key}`,
+            priority: sport.priority,
+            attempts: pollingMode === "normal" ? 3 : 2,
+            backoff: { type: "exponential", delay: 30_000 },
+            removeOnComplete: 50,
+            removeOnFail: 20,
+          },
+        );
+        queued += 1;
+      }
     }
-  } catch (error) {
-    console.error("[OddsScheduler] Polling cycle failed:", error);
+
+    console.log("[Scheduler] Odds jobs queued", {
+      queued,
+      pollingMode,
+      dailyCallsUsed,
+      remainingDailyCalls,
+      activeSports: activeSports.size,
+      inactiveConfiguredKeys: missingActiveKeys.length,
+    });
   } finally {
     running = false;
+  }
+}
+
+export async function runOddsHealthCheck(): Promise<void> {
+  if (healthRunning) return;
+  healthRunning = true;
+
+  try {
+    const activeSports = await getActiveSportSet();
+    const now = new Date();
+    const windowEnd = new Date(now.getTime() + SEVEN_DAY_WINDOW_MS);
+
+    for (const sport of SPORTS_CONFIG) {
+      const keys = getPollKeysForSport(sport, activeSports);
+      if (!keys.length) {
+        console.warn(`[HealthCheck] ${sport.sidebarLabel}/${sport.label} has no currently active Odds API key.`);
+        continue;
+      }
+
+      const count = await prisma.sportEvent.count({
+        where: {
+          sportKey: { in: keys },
+          isActive: true,
+          oddsVerified: true,
+          status: { in: ["UPCOMING", "LIVE"] },
+          commenceTime: { gte: now, lte: windowEnd },
+          displayedOdds: { some: { isVisible: true, displayOdds: { gt: 0 } } },
+        },
+      });
+
+      if (count > 0) continue;
+
+      for (const key of keys) {
+        console.log(`[HealthCheck] ${sport.sidebarLabel}/${key} has 0 events; triggering fetch.`);
+        await oddsQueue.add(
+          `emergency-fetch-${key}`,
+          {
+            sport: key,
+            sportLabel: key === sport.key ? sport.label : `${sport.label} (${key})`,
+            sidebarLabel: sport.sidebarLabel,
+            tier: "upcoming_far",
+          },
+          {
+            jobId: `health-odds-${key}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
+            priority: 1,
+            attempts: 5,
+            backoff: { type: "exponential", delay: 30_000 },
+            removeOnComplete: 50,
+            removeOnFail: 20,
+          },
+        );
+      }
+    }
+
+    await activateAllEventsWithOdds();
+  } catch (err) {
+    console.error("[HealthCheck] Error:", err instanceof Error ? err.message : String(err));
+  } finally {
+    healthRunning = false;
   }
 }
 
@@ -167,12 +173,17 @@ export function startOddsScheduler() {
   if (started) return;
   started = true;
 
-  // No API call is made here. The cron waits for its first scheduled tick, which
-  // keeps deploys/restarts from spending credits immediately.
-  cron.schedule("* * * * *", () => {
-    void runOddsPollingCycle();
-  });
-  startHourlyCreditSummary();
+  setInterval(() => void scheduleOddsPolling(), 5 * 60 * 1000);
+  setInterval(() => {
+    console.log("[Scheduler] Hourly full refresh starting...");
+    void scheduleOddsPolling();
+    void activateAllEventsWithOdds();
+  }, 60 * 60 * 1000);
+  setInterval(() => void refreshActiveSportsList(), 24 * 60 * 60 * 1000);
+  setInterval(() => void runOddsHealthCheck(), 30 * 60 * 1000);
 
-  console.info("[OddsScheduler] Credit-safe odds polling scheduled.");
+  void scheduleOddsPolling();
+  void runOddsHealthCheck();
+
+  console.info("[Scheduler] BullMQ odds polling scheduled.");
 }
