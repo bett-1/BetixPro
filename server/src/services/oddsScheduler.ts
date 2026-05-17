@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { oddsQueue } from "../queues";
+import { oddsQueue, deepFetchQueue } from "../queues";
 import { DAILY_CREDIT_BUDGET, MAX_DAILY_CALLS, SPORTS_CONFIG, SEVEN_DAY_WINDOW_MS } from "../config/sportsConfig";
 import { getCreditBalance, getDailyCallCount } from "./oddsCache";
 import { activateAllEventsWithOdds } from "./autoConfigureService";
@@ -182,8 +182,94 @@ export function startOddsScheduler() {
   setInterval(() => void refreshActiveSportsList(), 24 * 60 * 60 * 1000);
   setInterval(() => void runOddsHealthCheck(), 30 * 60 * 1000);
 
+  // Deep market fetch: check every hour, run at 1am UTC (4am EAT)
+  setInterval(() => {
+    const hour = new Date().getUTCHours();
+    if (hour === 1) {
+      console.log("[Scheduler] Daily deep market refresh starting...");
+      void scheduleDeepMarketFetch();
+    }
+  }, 60 * 60 * 1000);
+
   void scheduleOddsPolling();
   void runOddsHealthCheck();
 
-  console.info("[Scheduler] BullMQ odds polling scheduled.");
+  // Trigger initial deep fetch 30s after startup for immediate market population
+  setTimeout(() => void scheduleDeepMarketFetch(), 30_000);
+
+  console.info("[Scheduler] BullMQ odds polling scheduled (with deep market fetch).");
+}
+
+// ── Deep market fetch: per-event additional markets ──
+
+let deepFetchRunning = false;
+
+export async function scheduleDeepMarketFetch(): Promise<void> {
+  if (deepFetchRunning) return;
+  deepFetchRunning = true;
+
+  try {
+    const now = new Date();
+    const windowEnd = new Date(now.getTime() + SEVEN_DAY_WINDOW_MS);
+
+    const events = await prisma.sportEvent.findMany({
+      where: {
+        isActive: true,
+        oddsVerified: true,
+        status: { in: ["UPCOMING", "LIVE"] },
+        commenceTime: { gte: now, lte: windowEnd },
+      },
+      select: {
+        id: true,
+        eventId: true,
+        externalEventId: true,
+        sportKey: true,
+        homeTeam: true,
+        awayTeam: true,
+        commenceTime: true,
+      },
+      orderBy: { commenceTime: "asc" }, // soonest events first
+    });
+
+    console.log(`[DeepFetch] Scheduling deep fetch for ${events.length} events`);
+
+    let queued = 0;
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      const apiEventId = event.externalEventId ?? event.eventId;
+      if (!apiEventId || !event.sportKey) continue;
+
+      // Stagger jobs: 10 seconds apart to stay under rate limits
+      const delayMs = i * 10_000;
+
+      await deepFetchQueue.add(
+        `deep-${apiEventId}`,
+        {
+          eventId: event.id,
+          externalId: apiEventId,
+          sport: event.sportKey,
+          priority: "normal" as const,
+        },
+        {
+          jobId: `deep-market-${apiEventId}-${Math.floor(Date.now() / (12 * 60 * 60 * 1000))}`,
+          delay: delayMs,
+          attempts: 2,
+          removeOnComplete: 30,
+          removeOnFail: 15,
+        },
+      );
+      queued += 1;
+    }
+
+    console.log(
+      `[DeepFetch] Queued ${queued} deep fetches (estimated cost: ~${queued * 5} credits)`,
+    );
+  } catch (error) {
+    console.error(
+      "[DeepFetch] Failed to schedule deep market fetches:",
+      error instanceof Error ? error.message : String(error),
+    );
+  } finally {
+    deepFetchRunning = false;
+  }
 }

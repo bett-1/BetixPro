@@ -52,4 +52,15 @@ export const oddsQueue = new Queue("odds-fetch", {
 export const configureQueue = new Queue("event-configure", { connection });
 export const healthQueue = new Queue("health-check", { connection });
 
+export const deepFetchQueue = new Queue("deep-market-fetch", {
+  connection,
+  defaultJobOptions: {
+    attempts: 2,
+    backoff: { type: "exponential", delay: 10_000 },
+    removeOnComplete: 30,
+    removeOnFail: 15,
+  },
+});
+
 export const oddsQueueEvents = new QueueEvents("odds-fetch", { connection });
+export const deepFetchQueueEvents = new QueueEvents("deep-market-fetch", { connection });

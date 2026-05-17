@@ -212,4 +212,8 @@ worker.on("failed", (job, err) => {
   console.error(`[OddsWorker] Job ${job?.id} failed:`, err.message);
 });
 
+// Start the deep market fetch worker alongside bulk odds worker
+import deepFetchWorker from "../services/deepFetchService";
+console.log(`[OddsWorker] Deep market fetch worker initialized: ${deepFetchWorker.name}`);
+
 export default worker;
