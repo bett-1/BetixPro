@@ -105,7 +105,9 @@ userBetsRouter.post(
         }
 
         if (wallet.balance < stakeAmount) {
-          throw new Error("Insufficient balance");
+          const error = new Error("INSUFFICIENT_BALANCE");
+          (error as Error & { statusCode?: number }).statusCode = 402;
+          throw error;
         }
 
         const dbOdds = await tx.displayedOdds.findFirst({
@@ -237,10 +239,15 @@ userBetsRouter.post(
       });
     } catch (error) {
       if (error instanceof Error) {
+        const statusCode = (error as Error & { statusCode?: number }).statusCode ?? 400;
+        
+        if (error.message === "INSUFFICIENT_BALANCE") {
+          return res.status(statusCode).json({ error: error.message, code: "INSUFFICIENT_BALANCE" });
+        }
+        
         const knownErrors = new Set([
           "Event not available for betting",
           "Wallet not found. Please deposit first.",
-          "Insufficient balance",
           "Market suspended",
         ]);
 

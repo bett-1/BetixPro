@@ -6,6 +6,7 @@ import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
 import { myBetsNavbarCountQueryKey } from "@/features/user/components/hooks/useMyBets";
 import { walletSummaryQueryKey } from "@/features/user/payments/wallet";
+import { getRouter } from "@/lib/router-instance";
 
 export interface BetSelection {
   eventId: string;
@@ -286,6 +287,14 @@ export function useBetSlip() {
             }
 
             const payload = attemptError.response?.data;
+            if (attemptError.response?.status === 402 && payload?.code === "INSUFFICIENT_BALANCE") {
+              const router = getRouter();
+              if (router) {
+                router.navigate({ to: "/user/deposit" });
+              }
+              return;
+            }
+
             if (
               attemptError.response?.status === 409 &&
               payload?.code === "ODDS_CHANGED" &&
@@ -369,9 +378,19 @@ export function useBetSlip() {
         queryKey: myBetsNavbarCountQueryKey,
       });
     } catch (placeError) {
-      if (isAxiosError(placeError) && placeError.response?.status === 401) {
-        redirectToLogin();
-        return;
+      if (isAxiosError(placeError)) {
+        if (placeError.response?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (placeError.response?.status === 402 && placeError.response?.data?.code === "INSUFFICIENT_BALANCE") {
+          const router = getRouter();
+          if (router) {
+            router.navigate({ to: "/user/deposit" });
+          }
+          return;
+        }
       }
 
       const message = getErrorMessage(placeError);

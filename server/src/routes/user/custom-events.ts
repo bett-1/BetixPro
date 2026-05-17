@@ -242,9 +242,9 @@ userCustomEventsRouter.post(
           }
 
           if (wallet.balance < Math.round(stake)) {
-            throw new Error(
-              `Insufficient balance. You have KES ${wallet.balance} but need KES ${Math.round(stake)}`,
-            );
+            const error = new Error("INSUFFICIENT_BALANCE");
+            (error as Error & { statusCode?: number }).statusCode = 402;
+            throw error;
           }
 
           // 3. Calculate potential win
@@ -290,6 +290,10 @@ userCustomEventsRouter.post(
       });
     } catch (error) {
       if (error instanceof Error) {
+        const statusCode = (error as Error & { statusCode?: number }).statusCode ?? 400;
+        if (error.message === "INSUFFICIENT_BALANCE") {
+          return res.status(statusCode).json({ error: error.message, code: "INSUFFICIENT_BALANCE" });
+        }
         return res.status(400).json({ error: error.message });
       }
       next(error);
