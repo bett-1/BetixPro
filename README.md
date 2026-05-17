@@ -6,6 +6,8 @@
 
 If you are the **platform operator** (admin), start with the **[Owner Guide](./OWNER_GUIDE.md)** for the full non-technical walkthrough, then use the **[Operations Guide](./OPERATIONS_GUIDE.md)** as your shorter admin reference.
 
+If you are a **developer**, start with the **[Developer Guide](./DEVELOPER_GUIDE.md)** for the project structure, setup, and maintenance notes.
+
 If you are a **user** of the platform, please refer to the **[User Guide](./USER_GUIDE.md)** for a step-by-step walkthrough of all features.
 
 
