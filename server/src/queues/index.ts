@@ -43,9 +43,9 @@ export const oddsQueue = new Queue("odds-fetch", {
   connection,
   defaultJobOptions: {
     attempts: 3,
-    backoff: { type: "exponential", delay: 30_000 },
-    removeOnComplete: 50,
-    removeOnFail: 20,
+    backoff: { type: "exponential", delay: 5_000 },
+    removeOnComplete: 100,
+    removeOnFail: 50,
   },
 });
 

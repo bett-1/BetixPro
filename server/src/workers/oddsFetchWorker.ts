@@ -20,6 +20,23 @@ interface OddsFetchJob {
   tier: "live" | "upcoming_soon" | "upcoming_far";
 }
 
+function suppressBullMqEvictionWarning<T>(fn: () => T): T {
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    const first = args[0];
+    if (typeof first === "string" && first.includes("Eviction policy")) {
+      return;
+    }
+    originalWarn(...args);
+  };
+
+  try {
+    return fn();
+  } finally {
+    console.warn = originalWarn;
+  }
+}
+
 function hasValidOdds(event: OddsApiEvent): boolean {
   if (!event?.bookmakers?.length) return false;
 
@@ -105,78 +122,86 @@ async function countEventsForSidebarSport(sidebarLabel: string) {
   });
 }
 
-const worker = new Worker<OddsFetchJob>(
-  "odds-fetch",
-  async (job: Job<OddsFetchJob>) => {
-    const { sport, sportLabel, sidebarLabel, tier } = job.data;
-    console.log(`[OddsWorker] Processing: ${sport} (${tier})`);
+const worker = suppressBullMqEvictionWarning(
+  () =>
+    new Worker<OddsFetchJob>(
+      "odds-fetch",
+      async (job: Job<OddsFetchJob>) => {
+        const { sport, sportLabel, sidebarLabel, tier } = job.data;
+        console.log(`[OddsWorker] Processing: ${sport} (${tier})`);
 
-    const apiKey = getOddsApiKey();
-    if (!apiKey) {
-      throw new Error("THE_ODDS_API_KEY or ODDS_API_KEY is required");
-    }
+        const apiKey = getOddsApiKey();
+        if (!apiKey) {
+          throw new Error("THE_ODDS_API_KEY or ODDS_API_KEY is required");
+        }
 
-    const response = await fetch(buildOddsUrl(sport));
-    await recordOddsApiCredits(response.headers);
-    await incrementDailyCallCount().catch((err) =>
-      console.warn("[OddsWorker] Failed to increment daily call count:", err instanceof Error ? err.message : String(err)),
-    );
+        const response = await fetch(buildOddsUrl(sport));
+        await recordOddsApiCredits(response.headers);
+        await incrementDailyCallCount().catch((err) =>
+          console.warn(
+            "[OddsWorker] Failed to increment daily call count:",
+            err instanceof Error ? err.message : String(err),
+          ),
+        );
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log(`[OddsWorker] ${sport} not in season, skipping`);
-        return { skipped: true, reason: "not_in_season" };
-      }
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log(`[OddsWorker] ${sport} not in season, skipping`);
+            return { skipped: true, reason: "not_in_season" };
+          }
 
-      const message = await response.text().catch(() => "");
-      throw new Error(`API error ${response.status}: ${message.slice(0, 200)}`);
-    }
+          const message = await response.text().catch(() => "");
+          throw new Error(`API error ${response.status}: ${message.slice(0, 200)}`);
+        }
 
-    const remaining = response.headers.get("x-requests-remaining");
-    const used = response.headers.get("x-requests-used");
-    console.log(`[OddsWorker] Credits: ${used ?? "unknown"} used, ${remaining ?? "unknown"} remaining`);
+        const remaining = response.headers.get("x-requests-remaining");
+        const used = response.headers.get("x-requests-used");
+        console.log(`[OddsWorker] Credits: ${used ?? "unknown"} used, ${remaining ?? "unknown"} remaining`);
 
-    const events = (await response.json()) as OddsApiEvent[];
-    if (!Array.isArray(events) || events.length === 0) {
-      console.log(`[OddsWorker] No events for ${sport}`);
-      return { sport, processed: 0 };
-    }
+        const events = (await response.json()) as OddsApiEvent[];
+        if (!Array.isArray(events) || events.length === 0) {
+          console.log(`[OddsWorker] No events for ${sport}`);
+          return { sport, processed: 0 };
+        }
 
-    const validEvents = events.filter(hasValidOdds);
-    const invalidEvents = events.length - validEvents.length;
-    if (invalidEvents > 0) {
-      console.warn(`[OddsWorker] ${sport}: filtered ${invalidEvents} event(s) without priced odds before save`, {
-        totalEvents: events.length,
-        eventsWithExtractableMarkets: events.filter((event) => extractMarkets(event.bookmakers).length > 0).length,
-      });
-    }
+        const validEvents = events.filter(hasValidOdds);
+        const invalidEvents = events.length - validEvents.length;
+        if (invalidEvents > 0) {
+          console.warn(`[OddsWorker] ${sport}: filtered ${invalidEvents} event(s) without priced odds before save`, {
+            totalEvents: events.length,
+            eventsWithExtractableMarkets: events.filter((event) => extractMarkets(event.bookmakers).length > 0).length,
+          });
+        }
 
-    const categoryKey = mapApiSportKeyToCategoryKey(sport);
-    if (!categoryKey) {
-      console.warn(`[OddsWorker] No category mapping for ${sport}; caching only.`);
-      await Promise.allSettled(events.map((event) => setOddsCache(event.id, event, tier === "live" ? 240 : 3540)));
-      return { sport, processed: 0, cachedOnly: events.length };
-    }
+        const categoryKey = mapApiSportKeyToCategoryKey(sport);
+        if (!categoryKey) {
+          console.warn(`[OddsWorker] No category mapping for ${sport}; caching only.`);
+          await Promise.allSettled(events.map((event) => setOddsCache(event.id, event, tier === "live" ? 240 : 3540)));
+          return { sport, processed: 0, cachedOnly: events.length };
+        }
 
-    const result = await processAndSaveEvents(validEvents, categoryKey);
-    const skipped = result.skipped + invalidEvents;
+        const result = await processAndSaveEvents(validEvents, categoryKey);
+        const skipped = result.skipped + invalidEvents;
 
-    const ttl = tier === "live" ? 240 : tier === "upcoming_soon" ? 840 : 3540;
-    await Promise.allSettled(events.map((event) => setOddsCache(event.id, event, ttl)));
+        const ttl = tier === "live" ? 240 : tier === "upcoming_soon" ? 840 : 3540;
+        await Promise.allSettled(events.map((event) => setOddsCache(event.id, event, ttl)));
 
-    const sidebarCount = sidebarLabel ? await countEventsForSidebarSport(sidebarLabel) : null;
-    console.log(`[OddsWorker] ${sportLabel}: saved=${result.saved}, skipped=${skipped}, sidebarCount=${sidebarCount ?? "n/a"}`);
+        const sidebarCount = sidebarLabel ? await countEventsForSidebarSport(sidebarLabel) : null;
+        console.log(
+          `[OddsWorker] ${sportLabel}: saved=${result.saved}, skipped=${skipped}, sidebarCount=${sidebarCount ?? "n/a"}`,
+        );
 
-    return { sport, saved: result.saved, skipped, sidebarCount };
-  },
-  {
-    connection,
-    concurrency: 2,
-    limiter: {
-      max: 5,
-      duration: 60_000,
-    },
-  },
+        return { sport, saved: result.saved, skipped, sidebarCount };
+      },
+      {
+        connection,
+        concurrency: 2,
+        limiter: {
+          max: 5,
+          duration: 60_000,
+        },
+      },
+    ),
 );
 
 worker.on("completed", (job) => {
