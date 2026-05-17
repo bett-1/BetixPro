@@ -139,7 +139,7 @@ export function useBetSlip() {
   const { isAuthenticated, openAuthModal } = useAuth();
   const queryClient = useQueryClient();
   const [selections, setSelections] = useState<BetSelection[]>([]);
-  const [stake, setStakeState] = useState(50);
+  const [stake, setStakeState] = useState(500);
   const [isOpen, setIsOpen] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -205,7 +205,7 @@ export function useBetSlip() {
 
   const clearSlip = useCallback(() => {
     setSelections([]);
-    setStakeState(50);
+    setStakeState(500);
     setError(null);
     clearActiveSlip();
     clearPendingSlip();
@@ -227,8 +227,8 @@ export function useBetSlip() {
       return;
     }
 
-    if (stake < 50) {
-      setError("Minimum stake is KES 50.");
+    if (stake < 500) {
+      setError("Minimum stake is KES 500.");
       return;
     }
 

@@ -726,7 +726,7 @@ function BetSlipContent({
               <label className="text-xs text-[#8a9bb0]">Stake (KES)</label>
               <input
                 type="number"
-                min={50}
+                min={500}
                 max={100000}
                 value={betSlip.stake}
                 onChange={(event) =>
