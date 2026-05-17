@@ -4,9 +4,9 @@
 
 ---
 
-If you are the **platform operator** (admin), everything you need to manage the platform is in the **[Operations Guide →](./OPERATIONS_GUIDE.md)**.
+If you are the **platform operator** (admin), start with the **[Owner Guide](./OWNER_GUIDE.md)** for the full non-technical walkthrough, then use the **[Operations Guide](./OPERATIONS_GUIDE.md)** as your shorter admin reference.
 
-If you are a **user** of the platform, please refer to the **[User Guide →](./USER_GUIDE.md)** for a step-by-step walkthrough of all features.
+If you are a **user** of the platform, please refer to the **[User Guide](./USER_GUIDE.md)** for a step-by-step walkthrough of all features.
 
 
 ---
