@@ -1,9 +1,9 @@
 import { prisma } from "./prisma";
 import {
-  adminSettingsSchema,
   defaultAdminSettings,
   type AdminSettingsConfig,
 } from "./adminSettingsConfig";
+import { normalizeAdminSettingsConfig } from "./adminSettingsNormalizer";
 
 export async function getSystemSettings(): Promise<AdminSettingsConfig> {
   try {
@@ -153,16 +153,7 @@ export async function getSystemSettings(): Promise<AdminSettingsConfig> {
       },
     } satisfies AdminSettingsConfig;
 
-    const parsed = adminSettingsSchema.safeParse(config);
-
-    if (!parsed.success) {
-      console.error(
-        "[Settings] Validation failed for admin settings. Falling back to defaults.",
-        parsed.error.format(),
-      );
-    }
-
-    return parsed.success ? parsed.data : defaultAdminSettings;
+    return normalizeAdminSettingsConfig(config);
   } catch (error) {
     console.error("[Settings] Error fetching system settings:", error);
     return defaultAdminSettings;

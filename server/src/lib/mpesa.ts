@@ -132,6 +132,14 @@ export function normalizePhoneNumber(phone: string): string | null {
   return null;
 }
 
+function compactCredential(value: string): string {
+  return value.trim().replace(/\s+/g, "");
+}
+
+function normalizeBaseUrl(value: string | undefined): string {
+  return value?.trim().replace(/\/+$/, "") || "";
+}
+
 export function getMpesaConfig(settings: AdminSettingsConfig):
   | {
       isConfigured: true;
@@ -149,11 +157,11 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
   const mpesa = settings.paymentsConfig.mpesa;
   const defaultBaseUrl = "https://api.safaricom.co.ke";
 
-  const consumerKey = mpesa.consumerKey;
-  const consumerSecret = mpesa.consumerSecret;
-  const shortcode = mpesa.shortcode;
-  const passkey = mpesa.passkey;
-  const callbackUrl = mpesa.callbackUrl;
+  const consumerKey = compactCredential(mpesa.consumerKey);
+  const consumerSecret = compactCredential(mpesa.consumerSecret);
+  const shortcode = compactCredential(mpesa.shortcode);
+  const passkey = compactCredential(mpesa.passkey);
+  const callbackUrl = mpesa.callbackUrl.trim();
 
   const missingVars: string[] = [];
 
@@ -175,7 +183,7 @@ export function getMpesaConfig(settings: AdminSettingsConfig):
     };
   }
 
-  const configuredBaseUrl = mpesa.baseUrl?.trim().replace(/\/+$/, "") || "";
+  const configuredBaseUrl = normalizeBaseUrl(mpesa.baseUrl);
   const baseUrl = configuredBaseUrl || defaultBaseUrl;
 
   return {
@@ -220,17 +228,18 @@ export function getMpesaB2CConfig(settings: AdminSettingsConfig):
   }
 
   const mpesa = settings.paymentsConfig.mpesa;
-  const initiatorName = mpesa.initiatorName;
-  const securityCredential = mpesa.securityCredential;
-  const commandId = mpesa.commandId || "BusinessPayment";
+  const initiatorName = mpesa.initiatorName.trim();
+  const securityCredential = compactCredential(mpesa.securityCredential);
+  const commandId = mpesa.commandId.trim() || "BusinessPayment";
+  const b2cShortcode = compactCredential(mpesa.b2cShortcode);
   const resultUrl =
-    mpesa.resultUrl ||
+    mpesa.resultUrl.trim() ||
     deriveSiblingCallbackUrl(
       baseConfig.callbackUrl,
       "/api/payments/mpesa/withdrawals/result",
     );
   const timeoutUrl =
-    mpesa.timeoutUrl ||
+    mpesa.timeoutUrl.trim() ||
     deriveSiblingCallbackUrl(
       baseConfig.callbackUrl,
       "/api/payments/mpesa/withdrawals/timeout",
@@ -241,7 +250,7 @@ export function getMpesaB2CConfig(settings: AdminSettingsConfig):
     missingVars.push("M-Pesa Initiator Name");
   if (!securityCredential || securityCredential.includes("replace-with"))
     missingVars.push("M-Pesa Security Credential");
-  if (!mpesa.b2cShortcode || mpesa.b2cShortcode.includes("replace-with"))
+  if (!b2cShortcode || b2cShortcode.includes("replace-with"))
     missingVars.push("M-Pesa B2C Shortcode");
 
   if (missingVars.length > 0) {
@@ -256,7 +265,7 @@ export function getMpesaB2CConfig(settings: AdminSettingsConfig):
     baseUrl: baseConfig.baseUrl,
     consumerKey: baseConfig.consumerKey,
     consumerSecret: baseConfig.consumerSecret,
-    shortcode: mpesa.b2cShortcode || baseConfig.shortcode,
+    shortcode: b2cShortcode || baseConfig.shortcode,
     initiatorName: initiatorName as string,
     securityCredential: securityCredential as string,
     commandId,
@@ -282,18 +291,19 @@ export async function getMpesaAccessToken(config: {
   consumerKey: string;
   consumerSecret: string;
 }): Promise<MpesaAuthTokenResponse> {
+  const baseUrl = normalizeBaseUrl(config.baseUrl);
   const authHeader = Buffer.from(
-    `${config.consumerKey.trim()}:${config.consumerSecret.trim()}`,
+    `${compactCredential(config.consumerKey)}:${compactCredential(config.consumerSecret)}`,
   ).toString("base64");
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    console.log("[M-Pesa Auth] Requesting token from:", config.baseUrl);
+    console.log("[M-Pesa Auth] Requesting token from:", baseUrl);
 
     const tokenResponse = await fetch(
-      `${config.baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
+      `${baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
       {
         method: "GET",
         headers: {
@@ -310,7 +320,9 @@ export async function getMpesaAccessToken(config: {
       const errorBody = await tokenResponse.text().catch(() => "(no body)");
       const cleanError = errorBody.includes("<html")
         ? `Safaricom WAF blocked the request (Status ${tokenResponse.status}). Please ensure your server IP is whitelisted or check your M-Pesa settings.`
-        : errorBody;
+        : errorBody.includes("invalid_client")
+          ? `${errorBody} Verify that the consumer key, consumer secret, and Safaricom API environment (live vs sandbox) match exactly.`
+          : errorBody;
 
       console.error("[M-Pesa Auth] Authentication failed:", {
         status: tokenResponse.status,
@@ -323,9 +335,11 @@ export async function getMpesaAccessToken(config: {
       );
     }
 
-    const data = await tokenResponse.json();
+    const data = (await tokenResponse.json()) as Partial<MpesaAuthTokenResponse>;
+    const accessToken =
+      typeof data.access_token === "string" ? data.access_token.trim() : "";
 
-    if (!data.access_token) {
+    if (!accessToken) {
       console.error(
         "[M-Pesa Auth] Invalid response - missing access_token:",
         data,
@@ -336,7 +350,11 @@ export async function getMpesaAccessToken(config: {
     }
 
     console.log("[M-Pesa Auth] Token acquired successfully.");
-    return data as MpesaAuthTokenResponse;
+    return {
+      access_token: accessToken,
+      expires_in:
+        typeof data.expires_in === "string" ? data.expires_in : String(data.expires_in ?? ""),
+    };
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === "AbortError") {
