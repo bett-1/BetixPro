@@ -248,7 +248,9 @@ function BetSlipPanel({
               max={enabledMethodsQuery.data?.betting.maxBetAmount ?? 100000}
               value={stake || ""}
               onChange={handleStakeChange}
-              placeholder={String(enabledMethodsQuery.data?.betting.minBetAmount ?? 500)}
+              placeholder={String(
+                enabledMethodsQuery.data?.betting.minBetAmount ?? 500,
+              )}
               className="w-full bg-transparent px-2.5 py-1.5 text-center text-[15px] font-bold text-white outline-none"
             />
           </div>

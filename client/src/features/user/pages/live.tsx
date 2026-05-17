@@ -11,7 +11,7 @@ import {
   Swords,
   Ticket,
   TrendingUp,
-  X
+  X,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useBetSlip, {
@@ -269,8 +269,8 @@ const LiveOddsButton = memo(function LiveOddsButton({
         "group relative min-h-[32px] rounded-[4px] border border-[#1e3a5f] px-0 py-1 text-center transition-[background-color,transform] duration-150 active:scale-[0.97]",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#F5C518]/55",
         selected
-            ? "bg-[#F5C518] text-[#0d1117]"
-            : "bg-[#0f172a] text-white hover:bg-[#162032]",
+          ? "bg-[#F5C518] text-[#0d1117]"
+          : "bg-[#0f172a] text-white hover:bg-[#162032]",
         tone === "up" ? "[animation:flashGreen_1.5s_ease-out]" : "",
         tone === "down" ? "[animation:flashRed_1.5s_ease-out]" : "",
       ].join(" ")}
@@ -356,10 +356,10 @@ const MatchRow = memo(function MatchRow({
       <div className="flex flex-1 flex-col gap-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-             <div className="h-4 w-1 bg-[#1e3a5f]/30 rounded-full" />
-             <span className="truncate text-[13px] font-bold text-[#f1f6ff]">
-               {match.home_team.name}
-             </span>
+            <div className="h-4 w-1 bg-[#1e3a5f]/30 rounded-full" />
+            <span className="truncate text-[13px] font-bold text-[#f1f6ff]">
+              {match.home_team.name}
+            </span>
           </div>
           <span className="text-[14px] font-black tabular-nums text-[#ef4444]">
             {match.home_team.score}
@@ -368,10 +368,10 @@ const MatchRow = memo(function MatchRow({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-             <div className="h-4 w-1 bg-[#1e3a5f]/30 rounded-full" />
-             <span className="truncate text-[13px] font-bold text-[#f1f6ff]">
-               {match.away_team.name}
-             </span>
+            <div className="h-4 w-1 bg-[#1e3a5f]/30 rounded-full" />
+            <span className="truncate text-[13px] font-bold text-[#f1f6ff]">
+              {match.away_team.name}
+            </span>
           </div>
           <span className="text-[14px] font-black tabular-nums text-[#ef4444]">
             {match.away_team.score}
@@ -423,7 +423,9 @@ const MatchRow = memo(function MatchRow({
               selected={selectedOdds.has(key)}
               onClick={() => {
                 if (!selection?.odds) return;
-                onSelect(toBetSelection(match, primaryMarket, side, selection.odds));
+                onSelect(
+                  toBetSelection(match, primaryMarket, side, selection.odds),
+                );
               }}
             />
           );
@@ -883,7 +885,6 @@ export default function LivePage() {
     };
   }, [filters]);
 
-
   const filterCount =
     Number(filters.highlights) + Number(Boolean(filters.q.trim()));
   const leagueEntries = Object.entries(groupedMatches).sort(([left], [right]) =>
@@ -1291,7 +1292,9 @@ export default function LivePage() {
                                     );
                                   }}
                                   market={filters.market}
-                                  highlighted={highlightedMatchId === row.match.id}
+                                  highlighted={
+                                    highlightedMatchId === row.match.id
+                                  }
                                 />
                               </div>
                             );
@@ -1331,7 +1334,9 @@ export default function LivePage() {
                                       );
                                     }}
                                     market={filters.market}
-                                    highlighted={highlightedMatchId === match.id}
+                                    highlighted={
+                                      highlightedMatchId === match.id
+                                    }
                                   />
                                   {expandedMatchId === match.id ? (
                                     <ExpandedMarkets
