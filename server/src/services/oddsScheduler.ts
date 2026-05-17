@@ -4,6 +4,7 @@ import { DAILY_CREDIT_BUDGET, MAX_DAILY_CALLS, SPORTS_CONFIG, SEVEN_DAY_WINDOW_M
 import { getCreditBalance, getDailyCallCount } from "./oddsCache";
 import { activateAllEventsWithOdds } from "./autoConfigureService";
 import { getActiveSportsList, refreshActiveSportsList } from "./sportsRefreshService";
+import { autoFeatureEvents } from "./autoFeatureService";
 
 type PollingMode = "normal" | "reduced" | "emergency";
 
@@ -197,7 +198,11 @@ export function startOddsScheduler() {
   // Trigger initial deep fetch 30s after startup for immediate market population
   setTimeout(() => void scheduleDeepMarketFetch(), 30_000);
 
-  console.info("[Scheduler] BullMQ odds polling scheduled (with deep market fetch).");
+  // Auto-feature: run every 30 minutes + on startup
+  setInterval(() => void autoFeatureEvents(), 30 * 60 * 1000);
+  setTimeout(() => void autoFeatureEvents(), 15_000);
+
+  console.info("[Scheduler] BullMQ odds polling scheduled (with deep market fetch + auto-featuring).");
 }
 
 // ── Deep market fetch: per-event additional markets ──

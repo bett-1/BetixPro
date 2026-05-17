@@ -9,6 +9,7 @@ import {
   type ProcessedMarket,
 } from "../../services/marketProcessor";
 import { deepFetchQueue } from "../../queues";
+import { sectionEventsWithoutRedundancy, type HomepageEvent } from "../../utils/eventDeduplication";
 
 const userEventsRouter = Router();
 
@@ -584,9 +585,11 @@ userEventsRouter.get("/user/events/:eventId", async (req, res, next) => {
 // ── Sport Categories (cached) ── 
 const SPORT_CATEGORIES_CACHE_TTL_MS = 60_000;
 let sportCategoriesCache: { data: unknown; expiresAt: number } | null = null;
+let homepageCache: { data: unknown; expiresAt: number } | null = null;
 
 export function invalidateUserEventCaches() {
   sportCategoriesCache = null;
+  homepageCache = null;
 }
 
 userEventsRouter.get("/user/sport-categories", async (_req, res, next) => {
@@ -625,5 +628,139 @@ userEventsRouter.get("/user/sport-categories", async (_req, res, next) => {
   }
 });
 
-export { userEventsRouter };
+// ── Unified homepage endpoint (zero redundancy) ──
 
+const HOMEPAGE_CACHE_TTL_MS = 30_000;
+
+const homepageEventSelect = {
+  id: true,
+  eventId: true,
+  homeTeam: true,
+  awayTeam: true,
+  leagueName: true,
+  sportKey: true,
+  commenceTime: true,
+  status: true,
+  homeScore: true,
+  awayScore: true,
+  isFeatured: true,
+  featuredManual: true,
+  featuredAuto: true,
+  prominenceScore: true,
+  displayedOdds: {
+    where: { isVisible: true },
+    select: {
+      id: true,
+      bookmakerId: true,
+      bookmakerName: true,
+      marketType: true,
+      side: true,
+      displayOdds: true,
+    },
+    orderBy: { displayOdds: "desc" as const },
+  },
+  _count: {
+    select: { bets: true },
+  },
+} satisfies Prisma.SportEventSelect;
+
+type HomepageDbEvent = Prisma.SportEventGetPayload<{ select: typeof homepageEventSelect }>;
+
+function toHomepageEvent(event: HomepageDbEvent) {
+  return {
+    id: event.id,
+    eventId: event.eventId,
+    homeTeam: event.homeTeam,
+    awayTeam: event.awayTeam,
+    leagueName: event.leagueName,
+    sportKey: event.sportKey,
+    commenceTime: event.commenceTime,
+    status: event.status,
+    homeScore: event.homeScore,
+    awayScore: event.awayScore,
+    isFeatured: event.isFeatured,
+    featuredManual: event.featuredManual,
+    featuredAuto: event.featuredAuto,
+    prominenceScore: event.prominenceScore,
+    markets: toMarkets(event as unknown as EventWithDisplayedOdds),
+    marketCount: new Set(
+      (event.displayedOdds ?? []).map(
+        (odd) => `${odd.marketType}::${odd.bookmakerName}`,
+      ),
+    ).size,
+    _count: event._count,
+  };
+}
+
+userEventsRouter.get("/user/homepage", async (_req, res, next) => {
+  try {
+    // Serve from cache if fresh
+    if (homepageCache && homepageCache.expiresAt > Date.now()) {
+      return res.status(200).json(homepageCache.data);
+    }
+
+    const now = new Date();
+    const windowEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const dbEvents = await prisma.sportEvent.findMany({
+      where: {
+        isActive: true,
+        oddsVerified: true,
+        ...createCompleteOddsWhere(),
+        OR: [
+          { status: "LIVE" },
+          {
+            status: "UPCOMING",
+            commenceTime: { gt: now, lte: windowEnd },
+          },
+        ],
+      },
+      select: homepageEventSelect,
+      orderBy: [
+        { prominenceScore: "desc" },
+        { commenceTime: "asc" },
+      ],
+    });
+
+    const validEvents = dbEvents.filter((event) =>
+      hasCompleteOdds(event as unknown as EventWithDisplayedOdds),
+    );
+
+    const mapped = validEvents.map(toHomepageEvent);
+
+    // Section events — each event appears in EXACTLY ONE section
+    const sectioned = sectionEventsWithoutRedundancy(
+      mapped as unknown as HomepageEvent[],
+    );
+
+    const payload = {
+      live: sectioned.live.slice(0, 20),
+      featured: sectioned.featured.slice(0, 10),
+      boosted: sectioned.boosted.slice(0, 10),
+      byLeague: Object.fromEntries(
+        Object.entries(sectioned.byLeague).map(([league, events]) => [
+          league,
+          events.slice(0, 20),
+        ]),
+      ),
+      meta: {
+        totalEvents: mapped.length,
+        liveCount: sectioned.live.length,
+        featuredCount: sectioned.featured.length,
+        boostedCount: sectioned.boosted.length,
+        leagueCount: Object.keys(sectioned.byLeague).length,
+      },
+    };
+
+    homepageCache = {
+      data: payload,
+      expiresAt: Date.now() + HOMEPAGE_CACHE_TTL_MS,
+    };
+
+    return res.status(200).json(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+export { userEventsRouter };

@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/api/axiosConfig";
 import BetSlip from "../components/BetSlip";
 import { CustomEventCard } from "../components/CustomEventCard";
 import HighlightsSection from "../components/HighlightsSection";
 import useBetSlip, { type BetSelection } from "../components/hooks/useBetSlip";
-import useEvents from "../components/hooks/useEvents";
+import useEvents, { type ApiEvent } from "../components/hooks/useEvents";
 import { useCustomEvents } from "../components/hooks/useCustomEvents";
 import { getHighlightEvents } from "../utils/highlights";
+import { hasCompleteEventOdds } from "../utils/oddsValidator";
 import SportEvents from "./sport-events";
 import {
   ChevronLeft,
@@ -56,11 +59,33 @@ export default function BettingHome() {
     limit: 500,
     includeLiveEvents: false,
   });
-  const { events: featuredEvents } = useEvents({
-    featured: true,
-    includeLiveEvents: false,
-    includeSports: false,
+
+  // Unified homepage endpoint — pre-deduplicated sections
+  const homepageQuery = useQuery({
+    queryKey: ["user-homepage"],
+    queryFn: async () => {
+      const { data } = await api.get<{
+        live: ApiEvent[];
+        featured: ApiEvent[];
+        boosted: ApiEvent[];
+        byLeague: Record<string, ApiEvent[]>;
+        meta: { totalEvents: number; liveCount: number; featuredCount: number; boostedCount: number };
+      }>("/user/homepage");
+      return data;
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: false,
   });
+  const homepageData = homepageQuery.data;
+  const featuredEvents = useMemo(
+    () => (homepageData?.featured ?? []).filter(hasCompleteEventOdds),
+    [homepageData],
+  );
+  const boostedEvents = useMemo(
+    () => (homepageData?.boosted ?? []).filter(hasCompleteEventOdds),
+    [homepageData],
+  );
   const betSlip = useBetSlip();
   const { events: customEvents } = useCustomEvents();
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
@@ -130,6 +155,15 @@ export default function BettingHome() {
       ? new URLSearchParams(window.location.search).get("section") ===
           "highlights" || window.location.hash === "#highlights"
       : false;
+
+  // Build a set of event IDs already shown in featured/boosted sections
+  const homepageSectionEventIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const e of featuredEvents) ids.add(e.eventId);
+    for (const e of boostedEvents) ids.add(e.eventId);
+    return ids;
+  }, [featuredEvents, boostedEvents]);
+
   const upcomingEvents = nonLiveEvents.filter((event) => {
     const commenceMs = new Date(event.commenceTime).getTime();
     return Number.isFinite(commenceMs) && commenceMs > nowMs;
@@ -173,8 +207,11 @@ export default function BettingHome() {
   const filteredFeaturedEvents = nonLiveFeaturedEvents.filter(
     (event) => !highlightedRegularEventIds.has(event.eventId),
   );
+  // Remove events already in featured/boosted/highlights from upcoming
   const filteredUpcomingEvents = upcomingEvents.filter(
-    (event) => !highlightedRegularEventIds.has(event.eventId),
+    (event) =>
+      !highlightedRegularEventIds.has(event.eventId) &&
+      !homepageSectionEventIds.has(event.eventId),
   );
   const heroImages = [heroOne, heroTwo, heroThree, heroFour, heroFive];
   const hasSelections = betSlip.selections.length > 0;
@@ -493,6 +530,30 @@ export default function BettingHome() {
                 <div className="p-1.5 sm:p-3 md:p-4">
                   <SportEvents
                     events={filteredFeaturedEvents.slice(0, 5)}
+                    onOddsSelect={betSlip.addSelection}
+                    selectedOdds={selectedOdds}
+                    cardsPerRow={2}
+                  />
+                </div>
+              </section>
+            ) : null}
+
+            {boostedEvents.length > 0 ? (
+              <section className="mobile-home-panel mb-3 overflow-hidden rounded-xl border border-[#ffd500]/10 bg-gradient-to-b from-[#0f1a2d] to-[#0b1525] shadow-[0_8px_24px_rgba(0,0,0,0.25)] sm:mb-4 sm:rounded-2xl">
+                <div className="flex items-center justify-between border-b border-[#1e3350]/40 px-3 py-2 sm:px-4 sm:py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Flame className="h-4 w-4 text-[#ffd500]" />
+                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white sm:text-[11px]">
+                      Boosted Odds
+                    </h2>
+                    <span className="rounded-md bg-[#ffd500]/10 px-1.5 py-0.5 text-[9px] font-bold text-[#ffd500]">
+                      {boostedEvents.length}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-1.5 sm:p-3 md:p-4">
+                  <SportEvents
+                    events={boostedEvents.slice(0, 5)}
                     onOddsSelect={betSlip.addSelection}
                     selectedOdds={selectedOdds}
                     cardsPerRow={2}

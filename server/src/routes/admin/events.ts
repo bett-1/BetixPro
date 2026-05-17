@@ -657,16 +657,28 @@ eventsAdminRouter.patch("/admin/events/:eventId", async (req, res, next) => {
       return res.status(400).json({ message: "Invalid event update." });
     }
 
+    const updateData: Record<string, unknown> = {};
+
+    if (typeof parsedBody.data.featuredPriority === "number") {
+      updateData.featuredPriority = parsedBody.data.featuredPriority;
+    }
+
+    if (typeof parsedBody.data.isFeatured === "boolean") {
+      updateData.isFeatured = parsedBody.data.isFeatured;
+      // Admin toggle controls the manual flag
+      updateData.featuredManual = parsedBody.data.isFeatured;
+      // If admin is featuring, clear auto flag (manual takes priority)
+      // If admin is un-featuring, clear auto so next auto-cycle decides
+      if (parsedBody.data.isFeatured) {
+        updateData.featuredAuto = false;
+      } else {
+        updateData.featuredAuto = false;
+      }
+    }
+
     const updatedEvent = await prisma.sportEvent.update({
       where: { eventId },
-      data: {
-        ...(typeof parsedBody.data.isFeatured === "boolean" && {
-          isFeatured: parsedBody.data.isFeatured,
-        }),
-        ...(typeof parsedBody.data.featuredPriority === "number" && {
-          featuredPriority: parsedBody.data.featuredPriority,
-        }),
-      },
+      data: updateData,
       select: {
         id: true,
         eventId: true,
@@ -680,6 +692,8 @@ eventsAdminRouter.patch("/admin/events/:eventId", async (req, res, next) => {
         awayScore: true,
         isActive: true,
         isFeatured: true,
+        featuredManual: true,
+        featuredAuto: true,
         featuredPriority: true,
         houseMargin: true,
         marketsEnabled: true,
