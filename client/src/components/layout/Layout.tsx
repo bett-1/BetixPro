@@ -5,10 +5,22 @@ import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileBottomNav from "@/components/layout/MobileBottomNav"; // <-- Added your import back!
 import "@/styles/layout.css";
+import { useAuth } from "@/context/AuthContext";
 import { useWalletRealtime } from "@/features/user/payments/wallet";
+import { useNavigate } from "@tanstack/react-router";
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const navigate = useNavigate();
   useWalletRealtime();
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || user?.role !== "ADMIN") {
+      return;
+    }
+
+    void navigate({ to: "/admin", replace: true });
+  }, [isAuthenticated, isLoading, navigate, user?.role]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
