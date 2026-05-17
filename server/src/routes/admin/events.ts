@@ -5,6 +5,8 @@ import { prisma } from "../../lib/prisma";
 import { authenticate } from "../../middleware/authenticate";
 import { requireAdmin } from "../../middleware/requireAdmin";
 import { refreshCategorySummaries } from "../../services/eventProcessingService";
+import { getCreditBalance } from "../../services/oddsCache";
+import { TOTAL_MONTHLY_CREDITS } from "../../config/sportsConfig";
 import { invalidateUserEventCaches } from "../user/events";
 import { chunkArray } from "../../utils/arrayUtils";
 
@@ -17,6 +19,13 @@ type EventsStatsResponse = {
   configuredCount: number;
   noOddsCount: number;
   finishedToday: number;
+  credits: {
+    remaining: number | null;
+    used: number | null;
+    total: number;
+    percentage: number | null;
+    display: string;
+  };
 };
 
 type EventsConfiguredResponse = {
@@ -222,7 +231,8 @@ eventsAdminRouter.get("/admin/events/stats", async (_req, res, next) => {
       prisma.sportEvent.count({
         where: {
           isActive: true,
-          houseMargin: { gt: 0 },
+          autoConfigured: true,
+          displayedOdds: { some: { isVisible: true, displayOdds: { gt: 0 } } },
         },
       }),
       prisma.sportEvent.count({
@@ -242,6 +252,11 @@ eventsAdminRouter.get("/admin/events/stats", async (_req, res, next) => {
       }),
     ]);
 
+    const creditData = await getCreditBalance().catch(() => null);
+    const remaining = creditData?.remaining ?? null;
+    const used = creditData?.used ?? null;
+    const percentage = remaining !== null ? Math.round((remaining / TOTAL_MONTHLY_CREDITS) * 100) : null;
+
     const payload: EventsStatsResponse = {
       liveCount,
       upcomingCount,
@@ -249,6 +264,16 @@ eventsAdminRouter.get("/admin/events/stats", async (_req, res, next) => {
       configuredCount,
       noOddsCount,
       finishedToday,
+      credits: {
+        remaining,
+        used,
+        total: TOTAL_MONTHLY_CREDITS,
+        percentage,
+        display:
+          percentage !== null && remaining !== null
+            ? `${remaining.toLocaleString()} (${percentage}%)`
+            : "Loading...",
+      },
     };
 
     eventsStatsCache = {
@@ -430,7 +455,12 @@ eventsAdminRouter.get("/admin/events", async (req, res, next) => {
         ? { leagueName: { contains: leagueName, mode: "insensitive" } }
         : {}),
       ...(isActive !== undefined ? { isActive } : {}),
-      ...(hasMargin ? { houseMargin: { gt: 0 } } : {}),
+      ...(hasMargin
+        ? {
+            autoConfigured: true,
+            displayedOdds: { some: { isVisible: true, displayOdds: { gt: 0 } } },
+          }
+        : {}),
       ...(hasOdds === true
         ? { displayedOdds: { some: {} } }
         : hasOdds === false
