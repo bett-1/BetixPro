@@ -199,6 +199,12 @@ const sectionDefinitions: SectionDefinition[] = [
         label: "Online Passkey",
         type: "text",
       },
+      {
+        path: "paymentsConfig.mpesa.baseUrl",
+        label: "API Base URL",
+        type: "text",
+        hint: "Use https://sandbox.safaricom.co.ke for sandbox or https://api.safaricom.co.ke for live credentials.",
+      },
       { type: "header", label: "M-Pesa B2C (Disbursements)" },
       {
         path: "paymentsConfig.mpesa.b2cShortcode",
@@ -325,10 +331,22 @@ export default function Settings() {
     gatewayId: string,
   ) => {
     if (gatewayId === "mpesa") {
-      const { shortcode, consumerKey, consumerSecret, passkey, callbackUrl } =
+      const {
+        shortcode,
+        consumerKey,
+        consumerSecret,
+        passkey,
+        baseUrl,
+        callbackUrl,
+      } =
         config.paymentsConfig.mpesa;
       return Boolean(
-        shortcode && consumerKey && consumerSecret && passkey && callbackUrl,
+        shortcode &&
+          consumerKey &&
+          consumerSecret &&
+          passkey &&
+          baseUrl &&
+          callbackUrl,
       );
     }
     if (gatewayId === "paystack") {

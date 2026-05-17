@@ -263,8 +263,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    let hasValidAuth = false;
-    const currentToken = accessTokenState ?? getStoredToken();
+    const currentToken =
+      accessTokenRef.current ?? accessTokenState ?? getStoredToken();
     const isRecoveryFlowActive = Boolean(currentToken);
 
     // Avoid noisy unauthenticated probes for first-time visitors.
@@ -274,34 +274,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const me = await withTimeout(
-        api.get<MeResponse>("/auth/me"),
+        api.get<MeResponse>("/auth/me", {
+          headers: currentToken
+            ? { Authorization: `Bearer ${currentToken}` }
+            : undefined,
+        }),
         SESSION_REFRESH_TIMEOUT_MS,
       );
       setUser(me.data.user);
-      hasValidAuth = true;
 
       if (currentToken) {
+        setAccessTokenState(currentToken);
+        accessTokenRef.current = currentToken;
+        setAccessToken(currentToken);
         persistAuthState(currentToken, me.data.user);
       }
+      clearRecoveryFlag();
       return currentToken;
     } catch (meError) {
-      // Immediate failure on 401
+      console.warn("[Auth] Access token check failed, attempting refresh", {
+        message: meError instanceof Error ? meError.message : "Unknown error",
+      });
+    }
+
+    // If the bearer token probe fails, try the refresh cookie before logging out.
+    try {
+      const { data } = await withTimeout(
+        api.post<AuthResponse>("/auth/refresh"),
+        SESSION_REFRESH_TIMEOUT_MS,
+      );
+      updateSession(data);
+      return data.accessToken;
+    } catch (refreshError) {
       clearAuthState(setUser, setAccessTokenState);
       accessTokenRef.current = null;
       openAuthModal("login");
+      console.warn("[Auth] Session refresh failed", {
+        message:
+          refreshError instanceof Error ? refreshError.message : "Unknown error",
+      });
       return null;
     }
-
-    // Both /auth/me and /auth/refresh failed — session is dead
-    if (!hasValidAuth) {
-      clearAuthState(setUser, setAccessTokenState);
-      accessTokenRef.current = null;
-      openAuthModal("login");
-      return null;
-    }
-
-    return currentToken;
-  }, [accessTokenState, updateSession]);
+  }, [accessTokenState, openAuthModal, updateSession]);
 
   const logout = useCallback(async () => {
     try {

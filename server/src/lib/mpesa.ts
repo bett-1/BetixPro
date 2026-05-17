@@ -52,6 +52,34 @@ export type MpesaCallbackItem = {
   Value?: string | number;
 };
 
+export type MpesaBrowserDebug = {
+  environment: "live" | "sandbox" | "custom";
+  baseUrl: string;
+  callbackUrl?: string;
+  shortcode?: string;
+  consumerKeyFingerprint?: string;
+  consumerSecretFingerprint?: string;
+  passkeyFingerprint?: string;
+  authHeaderFingerprint?: string;
+  accessTokenFingerprint?: string;
+  accessTokenLength?: number;
+  oauthStatus?: number;
+  oauthStatusText?: string;
+  responseBodySnippet?: string;
+};
+
+export const MPESA_BROWSER_DEBUG_ENABLED = true;
+
+export class MpesaRequestError extends Error {
+  debug?: MpesaBrowserDebug;
+
+  constructor(message: string, debug?: MpesaBrowserDebug) {
+    super(message);
+    this.name = "MpesaRequestError";
+    this.debug = debug;
+  }
+}
+
 export const stkPushBodySchema = z.object({
   phone: z.string().trim().min(10),
   amount: z.number().int().positive(),
@@ -138,6 +166,79 @@ function compactCredential(value: string): string {
 
 function normalizeBaseUrl(value: string | undefined): string {
   return value?.trim().replace(/\/+$/, "") || "";
+}
+
+function fingerprintValue(value: string): string {
+  let hash = 0;
+
+  for (const char of value) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+
+  return `${value.length}:${hash.toString(16)}`;
+}
+
+function detectMpesaEnvironment(baseUrl: string): "live" | "sandbox" | "custom" {
+  if (baseUrl.includes("sandbox.safaricom.co.ke")) {
+    return "sandbox";
+  }
+
+  if (baseUrl.includes("api.safaricom.co.ke")) {
+    return "live";
+  }
+
+  return "custom";
+}
+
+function createResponseBodySnippet(value: string): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, 180);
+}
+
+export function isMpesaBrowserDebugEnabled(): boolean {
+  return MPESA_BROWSER_DEBUG_ENABLED;
+}
+
+export function buildMpesaConfigDebug(config: {
+  baseUrl: string;
+  callbackUrl?: string;
+  shortcode?: string;
+  consumerKey?: string;
+  consumerSecret?: string;
+  passkey?: string;
+}): MpesaBrowserDebug {
+  const baseUrl = normalizeBaseUrl(config.baseUrl);
+  const consumerKey = compactCredential(config.consumerKey ?? "");
+  const consumerSecret = compactCredential(config.consumerSecret ?? "");
+  const passkey = compactCredential(config.passkey ?? "");
+  const authHeader = Buffer.from(`${consumerKey}:${consumerSecret}`).toString(
+    "base64",
+  );
+
+  return {
+    environment: detectMpesaEnvironment(baseUrl),
+    baseUrl,
+    callbackUrl: config.callbackUrl?.trim(),
+    shortcode: config.shortcode ? compactCredential(config.shortcode) : undefined,
+    consumerKeyFingerprint: consumerKey
+      ? fingerprintValue(consumerKey)
+      : undefined,
+    consumerSecretFingerprint: consumerSecret
+      ? fingerprintValue(consumerSecret)
+      : undefined,
+    passkeyFingerprint: passkey ? fingerprintValue(passkey) : undefined,
+    authHeaderFingerprint: authHeader ? fingerprintValue(authHeader) : undefined,
+  };
+}
+
+export function withMpesaTokenDebug(
+  debug: MpesaBrowserDebug,
+  accessToken: string,
+): MpesaBrowserDebug {
+  return {
+    ...debug,
+    accessTokenFingerprint: fingerprintValue(accessToken),
+    accessTokenLength: accessToken.length,
+  };
 }
 
 export function getMpesaConfig(settings: AdminSettingsConfig):
@@ -292,6 +393,7 @@ export async function getMpesaAccessToken(config: {
   consumerSecret: string;
 }): Promise<MpesaAuthTokenResponse> {
   const baseUrl = normalizeBaseUrl(config.baseUrl);
+  const debug = buildMpesaConfigDebug(config);
   const authHeader = Buffer.from(
     `${compactCredential(config.consumerKey)}:${compactCredential(config.consumerSecret)}`,
   ).toString("base64");
@@ -328,10 +430,17 @@ export async function getMpesaAccessToken(config: {
         status: tokenResponse.status,
         statusText: tokenResponse.statusText,
         body: errorBody,
+        debug,
       });
 
-      throw new Error(
+      throw new MpesaRequestError(
         `M-Pesa API authentication failed: ${tokenResponse.status} ${tokenResponse.statusText}. ${cleanError}`,
+        {
+          ...debug,
+          oauthStatus: tokenResponse.status,
+          oauthStatusText: tokenResponse.statusText,
+          responseBodySnippet: createResponseBodySnippet(errorBody),
+        },
       );
     }
 
@@ -361,13 +470,17 @@ export async function getMpesaAccessToken(config: {
         console.error(
           "[M-Pesa Auth] Request timeout (10s) connecting to M-Pesa API",
         );
-        throw new Error(
+        throw new MpesaRequestError(
           "M-Pesa API connection timeout. Please check network connectivity and firewall rules.",
+          debug,
         );
       }
       throw error;
     }
-    throw new Error("M-Pesa API authentication failed: Unknown error");
+    throw new MpesaRequestError(
+      "M-Pesa API authentication failed: Unknown error",
+      debug,
+    );
   } finally {
     clearTimeout(timeoutId);
   }
