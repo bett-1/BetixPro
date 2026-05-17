@@ -6,6 +6,7 @@ import { api } from "@/api/axiosConfig";
 import { useAuth } from "@/context/AuthContext";
 import { myBetsNavbarCountQueryKey } from "@/features/user/components/hooks/useMyBets";
 import { walletSummaryQueryKey } from "@/features/user/payments/wallet";
+import { getRouter } from "@/lib/router-instance";
 
 export interface BetSelection {
   eventId: string;
@@ -138,7 +139,7 @@ export function useBetSlip() {
   const { isAuthenticated, openAuthModal } = useAuth();
   const queryClient = useQueryClient();
   const [selections, setSelections] = useState<BetSelection[]>([]);
-  const [stake, setStakeState] = useState(50);
+  const [stake, setStakeState] = useState(500);
   const [isOpen, setIsOpen] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -204,7 +205,7 @@ export function useBetSlip() {
 
   const clearSlip = useCallback(() => {
     setSelections([]);
-    setStakeState(50);
+    setStakeState(500);
     setError(null);
     clearActiveSlip();
     clearPendingSlip();
@@ -226,8 +227,8 @@ export function useBetSlip() {
       return;
     }
 
-    if (stake < 50) {
-      setError("Minimum stake is KES 50.");
+    if (stake < 500) {
+      setError("Minimum stake is KES 500.");
       return;
     }
 
@@ -286,6 +287,17 @@ export function useBetSlip() {
             }
 
             const payload = attemptError.response?.data;
+            if (
+              attemptError.response?.status === 402 &&
+              payload?.code === "INSUFFICIENT_BALANCE"
+            ) {
+              const router = getRouter();
+              if (router) {
+                router.navigate({ to: "/user/payments/deposit" });
+              }
+              return;
+            }
+
             if (
               attemptError.response?.status === 409 &&
               payload?.code === "ODDS_CHANGED" &&
@@ -369,9 +381,22 @@ export function useBetSlip() {
         queryKey: myBetsNavbarCountQueryKey,
       });
     } catch (placeError) {
-      if (isAxiosError(placeError) && placeError.response?.status === 401) {
-        redirectToLogin();
-        return;
+      if (isAxiosError(placeError)) {
+        if (placeError.response?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (
+          placeError.response?.status === 402 &&
+          placeError.response?.data?.code === "INSUFFICIENT_BALANCE"
+        ) {
+          const router = getRouter();
+          if (router) {
+            router.navigate({ to: "/user/payments/deposit" });
+          }
+          return;
+        }
       }
 
       const message = getErrorMessage(placeError);

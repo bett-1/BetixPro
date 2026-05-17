@@ -51,13 +51,17 @@ userBetsRouter.post(
       if (stake < minBetAmount) {
         return res
           .status(400)
-          .json({ error: `Minimum stake is KES ${minBetAmount.toLocaleString()}.` });
+          .json({
+            error: `Minimum stake is KES ${minBetAmount.toLocaleString()}.`,
+          });
       }
 
       if (stake > maxBetAmount) {
         return res
           .status(400)
-          .json({ error: `Maximum stake is KES ${maxBetAmount.toLocaleString()}.` });
+          .json({
+            error: `Maximum stake is KES ${maxBetAmount.toLocaleString()}.`,
+          });
       }
 
       const activeBetsCount = await prisma.bet.count({
@@ -105,7 +109,9 @@ userBetsRouter.post(
         }
 
         if (wallet.balance < stakeAmount) {
-          throw new Error("Insufficient balance");
+          const error = new Error("INSUFFICIENT_BALANCE");
+          (error as Error & { statusCode?: number }).statusCode = 402;
+          throw error;
         }
 
         const dbOdds = await tx.displayedOdds.findFirst({
@@ -237,10 +243,18 @@ userBetsRouter.post(
       });
     } catch (error) {
       if (error instanceof Error) {
+        const statusCode =
+          (error as Error & { statusCode?: number }).statusCode ?? 400;
+
+        if (error.message === "INSUFFICIENT_BALANCE") {
+          return res
+            .status(statusCode)
+            .json({ error: error.message, code: "INSUFFICIENT_BALANCE" });
+        }
+
         const knownErrors = new Set([
           "Event not available for betting",
           "Wallet not found. Please deposit first.",
-          "Insufficient balance",
           "Market suspended",
         ]);
 
