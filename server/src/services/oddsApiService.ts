@@ -81,7 +81,7 @@ type ApiHealthState = {
 
 const ODDS_API_BASE_URL =
   process.env.ODDS_API_BASE_URL?.trim() || "https://api.the-odds-api.com/v4";
-const DEFAULT_MARKETS = ["h2h"];
+const DEFAULT_MARKETS = ["h2h", "spreads", "totals"];
 const MAX_BACKOFF_MS = 30 * 60 * 1000;
 
 let consecutiveFailures = 0;
@@ -228,6 +228,14 @@ function getDefaultMarketsForSport(sportKey: string): string[] {
     return ["outrights"];
   }
   return DEFAULT_MARKETS;
+}
+
+function getRegionsForSport(sportKey: string): string {
+  if (/^(basketball_nba|basketball_wnba|americanfootball_nfl|baseball_mlb)$/i.test(sportKey)) {
+    return "eu,uk,us";
+  }
+
+  return "eu,uk";
 }
 
 async function logApiCall(data: {
@@ -477,8 +485,9 @@ class OddsApiService {
     const apiKey = getOddsApiKey();
     const query = new URLSearchParams({
       apiKey,
-      regions: "eu",
+      regions: getRegionsForSport(sportKey),
       markets: (options?.markets?.length ? options.markets : getDefaultMarketsForSport(sportKey)).join(","),
+      dateFormat: "iso",
       oddsFormat: "decimal",
     });
 

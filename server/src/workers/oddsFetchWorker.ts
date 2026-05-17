@@ -17,7 +17,64 @@ interface OddsFetchJob {
 
 function getMarketsForSport(sport: string) {
   if (/(winner|championship|outright)/i.test(sport)) return "outrights";
-  return "h2h,spreads";
+  return "h2h,spreads,totals";
+}
+
+function getRegionsForSport(sport: string) {
+  if (/^(basketball_nba|basketball_wnba|americanfootball_nfl|baseball_mlb)$/i.test(sport)) {
+    return "eu,uk,us";
+  }
+
+  return "eu,uk";
+}
+
+function hasValidOdds(event: OddsApiEvent): boolean {
+  if (!event?.bookmakers?.length) return false;
+
+  for (const bookmaker of event.bookmakers) {
+    for (const market of bookmaker.markets || []) {
+      for (const outcome of market.outcomes || []) {
+        if (typeof outcome.price === "number" && outcome.price > 1) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function formatMarketName(marketKey: string) {
+  const names: Record<string, string> = {
+    h2h: "Moneyline",
+    spreads: "Spread",
+    totals: "Totals",
+    outrights: "Outrights",
+  };
+
+  return names[marketKey] ?? marketKey.replace(/_/g, " ");
+}
+
+function extractMarkets(bookmakers: OddsApiEvent["bookmakers"]): any[] {
+  if (!bookmakers?.length) return [];
+
+  const bestBookmaker = bookmakers.reduce((best, current) => {
+    const currentMarkets = current.markets?.length ?? 0;
+    const bestMarkets = best.markets?.length ?? 0;
+    return currentMarkets > bestMarkets ? current : best;
+  }, bookmakers[0]);
+
+  return (bestBookmaker.markets || [])
+    .filter((market) => (market.outcomes?.length ?? 0) > 0)
+    .map((market) => ({
+      key: market.key,
+      name: formatMarketName(market.key),
+      outcomes: market.outcomes?.map((outcome) => ({
+        name: outcome.name,
+        price: outcome.price,
+        point: outcome.point ?? null,
+      })) ?? [],
+    }));
 }
 
 function buildOddsUrl(sport: string) {
@@ -26,7 +83,7 @@ function buildOddsUrl(sport: string) {
   const inSevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const params = new URLSearchParams({
     apiKey,
-    regions: "eu,uk",
+    regions: getRegionsForSport(sport),
     markets: getMarketsForSport(sport),
     dateFormat: "iso",
     oddsFormat: "decimal",
@@ -92,6 +149,15 @@ const worker = new Worker<OddsFetchJob>(
       return { sport, processed: 0 };
     }
 
+    const validEvents = events.filter(hasValidOdds);
+    const invalidEvents = events.length - validEvents.length;
+    if (invalidEvents > 0) {
+      console.warn(`[OddsWorker] ${sport}: filtered ${invalidEvents} event(s) without priced odds before save`, {
+        totalEvents: events.length,
+        eventsWithExtractableMarkets: events.filter((event) => extractMarkets(event.bookmakers).length > 0).length,
+      });
+    }
+
     const categoryKey = mapApiSportKeyToCategoryKey(sport);
     if (!categoryKey) {
       console.warn(`[OddsWorker] No category mapping for ${sport}; caching only.`);
@@ -99,15 +165,16 @@ const worker = new Worker<OddsFetchJob>(
       return { sport, processed: 0, cachedOnly: events.length };
     }
 
-    const result = await processAndSaveEvents(events, categoryKey);
+    const result = await processAndSaveEvents(validEvents, categoryKey);
+    const skipped = result.skipped + invalidEvents;
 
     const ttl = tier === "live" ? 240 : tier === "upcoming_soon" ? 840 : 3540;
     await Promise.allSettled(events.map((event) => setOddsCache(event.id, event, ttl)));
 
     const sidebarCount = sidebarLabel ? await countEventsForSidebarSport(sidebarLabel) : null;
-    console.log(`[OddsWorker] ${sportLabel}: saved=${result.saved}, skipped=${result.skipped}, sidebarCount=${sidebarCount ?? "n/a"}`);
+    console.log(`[OddsWorker] ${sportLabel}: saved=${result.saved}, skipped=${skipped}, sidebarCount=${sidebarCount ?? "n/a"}`);
 
-    return { sport, saved: result.saved, skipped: result.skipped, sidebarCount };
+    return { sport, saved: result.saved, skipped, sidebarCount };
   },
   {
     connection,
